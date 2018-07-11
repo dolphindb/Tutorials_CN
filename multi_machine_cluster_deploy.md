@@ -119,9 +119,11 @@ mkdir /DolphinDB/server/data
 mkdir /DolphinDB/server/log
 ```
 
-在config目录下，创建agent.cfg文件，并填写如下内容。用户可根据实际情况，调整参数。 下面列出P1,P2,P3,P5每台服务器上的agent.cfg内容。请注意，节点别名在集群内部必须是唯一的。如果两个节点采用同一个别名，将会造成节点无法响应请求。
+在config目录下，创建agent.cfg文件，并填写如下内容。用户可根据实际情况，调整参数。 下面列出P1,P2,P3,P5每台服务器上的agent.cfg内容。这些参数中localSite和controllerSite是必须的，其它参数可选。
 
-这里需要注意的是，由于集群中controller是唯一的, agent与controller建立联系的通道是根据controllerSite这个参数指定的地址，而controller的地址是通过在controller.cfg的localSite参数来指定的，所以controller在controller.cfg里面的localSite要和所有agent里面的controllerSite的配置完全相同。如果controller的localSite更改了(即使只是别名更改），所有agent里的controllerSite配置也必须做出相应更改。在本教程中，controller.cfg的localSite是 **10.1.1.7:8990:master**, 所有agent的 controllerSite的参数配置也是**10.1.1.7:8990:master**.
+localSite中的代理节点别名在集群内部必须是唯一的。如果两个节点采用同一个别名，将会造成节点无法响应请求。localSite的定义也必须出现在3.1.2的cluster.nodes文件中，否则控制节点不会接受这个代理节点。使用这个规则，我们可以在同一个物理集群上创建多个DolphinDB集群。
+
+代理节点同控制节点建立联系的通道是根据controllerSite这个参数指定的地址，而控制节点的地址是在controller.cfg中的localSite参数来指定的，所以控制节点在controller.cfg里面的localSite要和所有代理节点中controllerSite的配置完全相同。如果controller的localSite更改了(即使只是别名更改），所有agent里的controllerSite配置也必须做出相应更改。在本教程中，controller.cfg的localSite是 **10.1.1.7:8990:master**, 所有agent的 controllerSite的参数配置也是**10.1.1.7:8990:master**.
 
 #### P1
 ```
