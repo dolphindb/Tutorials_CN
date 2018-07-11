@@ -261,7 +261,7 @@ h = xdb("10.1.1.7", 8900, "admin","123456")
 h(startDataNode,["P1-NODE1", "P2-NODE1","P3-NODE1","P5-NODE1"])
 ```
 
-#### 4. 基于Web的集群管理器
+#### 4. 基于Web的集群管理
 
 点击刷新按钮直到所有节点成功启动，成功启动后，State列会用绿色对号显示成功启动。下图左侧为所有的agents, 右侧为controller和data nodes。左上角的DFS Explorer是分布式数据库浏览器。
 
