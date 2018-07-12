@@ -11,11 +11,11 @@
 
 #### 2. DolphinDB分区和基于MPP架构的数据存储的区别
 
-MPP(Mass Parallel Processing) 是目前主流的基于大规模并行处理技术的数据仓库普遍采用的一种方案。典型的采用该技术方案在PostgreSQ基础上的开源软件Greenplum，还有亚马逊的Reshift等。首先是MPP有一个主节点，每个客户都连接到这个主节点。DolphinDB在数据库层面不存在主节点，是点对点结构，每个客户端可以连接到任何一个数据节点，不会出现主节点瓶颈问题。
+MPP(Massive Parallel Processing) 是目前主流数据仓库普遍采用的一种方案, 包括开源软件Greenplum，云数据库AWS Reshift等。MPP有一个主节点，每个客户都连接到这个主节点。DolphinDB在数据库层面不存在主节点，是点对点结构，每个客户端可以连接到任何一个数据节点，不会出现主节点瓶颈问题。
 
-其次MPP一般通过哈希规则，将数据分布分到各个节点上。容易出现各个节点分布不均匀的问题。另外查询的时候有可能所有数据都落到一个节点上，不能充分利用所有节点的资源。DolphinDB将数据存储于分布式文件系统，有分布式文件系统全局性的统筹优化分区的存放，系统的扩容非常容易。还有一个我们在架构图上看不到的不同之处。MPP的一个表一般最多支持几万个分区，DolphinDB可以支持百万千万级别的分区数据，如果一百万个分区，每个分区1G的数据量，轻松就实现了PB级数据的存储和快速查询。
+MPP一般通过哈希规则，将数据分布分到各个节点上（水平分割），在各个节点内部再进行分区（垂直分割）。哈希时容易出现各个节点数据分布不均匀的问题。DolphinDB将各个节点的存储空间交给分布式文件系统（DFS）统一进行管理，分区的规则与分区的存储位置解耦，数据分割不再按水平和垂直两个步骤进行，而是进行全局优化。这样一来，分区的粒度更细更均匀，在计算时能充分的利用集群的所有计算资源。
 
-DolphinDB以最小分区为单位，将分区均匀地分配到所有节点，分区数目独立于节点数目。每一个存储数据的节点都兼顾了任务调度和计算的能力，所以我们对任意节点发起查询命令，都可以被分解给存储相关数据的节点去完成, 由于我们把数据和计算紧密结合，系统对内部的数据和资源信息有较强的感知能力，与开源集成系统相比，我们在资源调度上具有更高的效率。
+由于分布式文件系统具有强大的分区管理、容错、复制机制，以及事务管理机制，使得DolphinDB的单表能轻松的支持上百万的分区数据。如果一百万个分区，每个分区1G的数据量，轻松就实现了PB级数据的存储和快速查询。另外，通过引入DFS，数据库的存储和数据库节点相分离，使得DolphinDB在集群水平扩展（新增节点）上更加简单。
 
 ![](images/distributed_mpp.JPG)
 
@@ -35,7 +35,7 @@ DolphinDB以最小分区为单位，将分区均匀地分配到所有节点，�
 为了学习方便， 以下分区例子使用windows本地目录，用户可以改成数据库创建使用的路径改成linux和dfs目录。
 
 
-#### 3.1. 顺序(SEQ)分区
+#### 3.1 顺序(SEQ)分区
 在顺序域（SEQ）中，分区基于输入数据文件中行的顺序。**SEQ**只能在本地文件系统中使用，不能在分布式文件系统中使用。下面例子，在“C/DolphinDB/data/seqdb”文件夹下，创建了8个子文件夹。它们中的每一个对应于输入数据文件的分区。
 
 ```
@@ -52,10 +52,10 @@ pt = loadTextEx(db, `pt, , "C:/DolphinDB/Data/t.txt")
 ```
 ![](images/database/seq.png)
 
-#### 3.2. 区间(RANGE)分区
+#### 3.2 范围(RANGE)分区
 分区由区间决定，区间由分区向量的任意两个相邻元素定义。起始值是包含的，结尾值是不包含的。
 
-在下面的例子中，数据库db有两个分区：[0,5) 和[5,10]。使用函数savePartition，表t被保存为分区表pt，并在数据库db中使用ID作为分区列。
+在下面的例子中，数据库db有两个分区：[0,5)和[5,10]。使用函数savePartition，表t被保存为分区表pt，并在数据库db中使用ID作为分区列。
 
 ```
 n=1000000
@@ -91,9 +91,9 @@ pt=loadTable(db,`pt)
 select count(x) from pt
 ```
 
-#### 3.3.  值(VALUE)分区
+#### 3.3  值(VALUE)分区
 
-在值域（VALUE）分区中，分区方案向量的每个元素都确定一个分区。
+在值域（VALUE）分区中，用一个值代表一个分区。
 
 ```
 n=1000000
@@ -120,7 +120,7 @@ select count(x) from pt
 
 #### 3.4 列表(LIST)分区
 
-在列表域（LIST）中，分区方案向量的每个元素都确定一个分区。
+在列表（LIST）分区中，我们用一个包含多个元素的一个列表代表一个分区。列表分区
 
 ```
 n=1000000
@@ -142,9 +142,10 @@ select count(x) from pt
 
 ![](images/database/list.png)
 
-#### 3.5 复合(COMPO)分区
+#### 3.5 组合(COMPO)分区
 
-在复合（COMPO）中，可以定义2或3个分区列。每列可以是区间(RANGE)，值(VALUE)或列表(LIST)分区。
+组合（COMPO）分区可以定义2或3个分区列。每列可以独立采用范围(RANGE)，值(VALUE)或列表(LIST)分区。组合分区的多个列在逻辑上是并列的，不存在从属关系或优先级关系。
+
 
 ```
 n=1000000
@@ -177,10 +178,10 @@ select count(x) from pt
 
 #### 4. 分区的原则
 
-分区的总原则是大部分查询语句可以与分区模式相匹配，只扫描部分分区数据即可实现，避免低效的全表扫描。下面详细介绍一下，分区的原则。
+分区的总原则是让数据管理更加高效，提高查询和计算的性能，包括延时和吞吐量。下面是设计和优化分区表的需要考虑的因素，以供参考。
 
-#### 4.1.选择合适的数据字段
-在DolphinDB中，适合分区的数据类型包括整型(例如：CHAR, INT, SHORT)，日期类型(例如：DATE, MONTH)，以及可控数量的字符串(例如：SYMBOL)。
+#### 4.1 选择合适的分区字段
+在DolphinDB中，可以用于分区的数据类型必须是可以用32位整型来表示的，包括整型(CHAR, SHORT, INT)，日期类型(DATE, MONTH, TIME, SECOND, MINUTE, DATETIME)，以及SYMBOL)。
 
 ```
 db=database("dfs://rangedb1", RANGE,  0.0 5.0 10.0)
@@ -191,362 +192,111 @@ The data type DOUBLE can't be used for a partition column
 
 ```
 
-下表显示哪些DolphinDB数据类型支持分区，哪些不支持。
-
-
-| 数据类型        | 是否支持          |
-| ------------- |:-------------:|
-| VOID     | 否 |
-| BOOL      | 否 |
-| LONG| 否 |
-| TIMESTAMP| 否 |
-| NANOTIME| 否 |
-| NANOTIMESTAMP| 否 |
-| FLOAT| 否 |
-| DOUBLE| 否 |
-| STRING| 否 |
-| CHAR | 是 |
-| SHORT| 是 |
-| INT| 是 |
-| DATE| 是 |
-| MONTH| 是 |
-| TIME| 是 |
-| MINUTE| 是 |
-| SECOND| 是 |
-| DATETIME| 是 |
-| SYMBOL| 是 |
-
-
 虽然DolphinDB支持对TIME, SECOND, DATETIME类型字段的分区， 但是在实际使用中要谨慎使用，避免采用值分区，以免分区粒度过细，将大量系统时间耗费在创建或查询几百上千万的只包含几条记录的文件目录。
 
-例如下面这个例子就会产生过多的分区。
+例如下面这个例子就会产生过多的分区。因为序列：2012.06.01T09:30:00..2012.06.30T16:00:00包含2,529,001个元素，所以如果用这个序列做值分区，将会产生在磁盘上产生2,529,001分区，即产生2,529,001文件目录和相关文件。从而使得分区表创建、写入、查询都会变得缓慢。
+
 ```
 db=database("dfs://valuedb1",VALUE , 2012.06.01T09:30:00..2012.06.30T16:00:00);
 ```
 
-因为序列：2012.06.01T09:30:00..2012.06.30T16:00:00包含2,529,001个元素。所以如果用这个序列做值分区，将会产生在磁盘上产生2,529,001分区，即产生2,529,001文件目录和相关文件。从而使得分区表创建、写入、查询都会变得缓慢。
+除了考虑数据类型之外，分区字段的值一般是不会变化的。例如， 股票代码可以作为分区字段，但股票的交易量不适合作为分区字段，因为同一股票的交易量每天都有变化，就会造成归属到不同的分区中。
+
+另外，用于分区的字段一般在业务层面，很容易切分。譬如在证券交易领域，股票交易日期和股票代码在业务层面都很容易切分。在5.3中会提到DolphinDB的事务机制，不允许多个writer的事务在分区上有重叠。因此如果业务上按照该字段不容易切分，在数据写入时，可能会造成问题。
+
+一个分区字段相当于给数据表建了一个物理索引。如果查询时用到了该字段做数据过滤，SQL引擎就能快速定位需要的数据块，而无需对整表进行扫描，从而大幅度提高处理速度。因此，分区字段应该是查询和计算时经常用到的过滤字段。
+
+
+#### 4.2 分区粒度不要过大
+
+DolphinDB单个分区支持最大记录条数是20亿条。但合理的记录数目应该远远小于这个数。一个分区内的多个列以文件形式独立存储在磁盘上，通常数据是经过压缩的。使用的时候，系统从磁盘读取所需要的列，解压后加载到内存。分区粒度过大，可能会造成多个工作线程并行时内存不足，或者导致系统频繁地在磁盘和工作内存之间切换，影响性能。一个经验公式是，数据节点的可用内存是S，工作线程（worker）的的数量是W，则建议每个分区的表（全部字段）解压后在内存中的大小不超过S/8W。假设工作内存上限32G，8个worker，建议单个分区表解压后的大小不超过512兆。
+
+DolphinDB的子任务以分区为单位。因此分区粒度过大会造成无法有效利用多节点多分区的优势，将本来可以并行计算的任务转化成了顺序计算任务。
+
+DolphinDB是为OLAP的场景优化设计的，支持数据追加的方式，不支持对个别行进行删除或更新。如果要修改数据，以分区为单位覆盖全部数据。如果分区过大，降低效率。DolphinDB在节点之间复制副本数据时，同样以分区为单位，分区过大，不利于数据在节点之间的复制。
+
+综上各种因素，建议一个分区未压缩前的原始数据大小控制在100M~1G之间。当然这个数字可结合实际情况调整。譬如在大数据应用中，我们经常看到宽表设计，一个表达到几百个字段，但是在单个应用中只会使用一部分字段。这种情况下，可以适当放大上限的范围。
+
+如果发现分区粒度过大，可以采用几种方法，（1）采用组合分区(COMPO)，（2）增加范围分区的区间个数，甚至（3）将范围改为值分区。
+
+
+#### 4.3 分区粒度不要过小
+
+分区粒度过小，一个查询和计算作业往往会生成大量的子任务，这会增加数据节点和控制节点，以及控制节点之间的通讯和调度成本。分区粒度过小，也会造成很多低效的磁盘访问（小文件读写)，造成系统负荷过重。另外，所有的分区的元数据都会驻留在控制节点的内存中。分区粒度过小，分区数过多，可能会导致控制节点内存不足。我们建议每个分区未压缩前的数据量不要小于100M。
+
+譬如股票的日内交易数据按照交易日期和股票代码的值做组合分区，导致很多小股票一天内的交易数据量太少。如果将股票代码的维度按照范围分区的方法来切分数据，将多个小股票组合在一个分区内，可以有效解决分区粒度过小的问题，提高系统的性能。
+
+
+#### 4.4 数据分布均匀
+
+当各个分区的数据量差异很大时，会造成系统负荷不均衡，部分节点任务过重，而其它节点处于闲置等待状态。当一个任务有多个子任务时，只有最后一个子任务完成了，才会将结果返回给用户。因此数据分布不均匀，会增大作业延时，影响用户体验。
+
+为了方便根据数据的分布进行分区，DolphinDB提供了一个非常有用的工具cutPoints(X, N, [freq]) 这里X是一个数组，**N**指需要产生多少个**buckets**, 而**freq**是**X**的等长数组，其中每个元素对应着**X**中元素出现的**频率**。函数返回具有（N + 1）个元素的数组，使得**X**中的数据均匀地分布在由向量指示的**N**个**buckets**中。它可用于在分布式数据库中获取区间域的分区方案
+
+下面的例子中，需要对股票的报价数据按日期和股票代码两个维度做数据分区。因为股票代码有8000多个，而且每天的股票代码可能有变动（IPO或股票退市），采用列表分区不是一个可行的办法。如果简单的按股票的首字母进行范围分区，极易造成数据分布不均，因为不同股票的quotes数据量可能相差几千倍。使用cutPoints，根据样本数据来划分分区，是一个可行的办法。
 
 ```
->size(2012.06.01T09:30:00..2012.06.30T16:00:00);
-2529001
-```
-
-避免使用STRING数据类型，因为STRING数据类型DolphinDB在后端无法通过转换成整型进行性能优化，所以无论写入还是查询效率都会降低。如果确定要采用字符串来进行分区，尽量使用SYMBOL,SYMBOL是将所有的字符串转换成整型，适用于字符串数目有限可控，例如：所有的股票代码。
-如果该字段是任意字符串(STRING)就不适合用来进行分区。比如下面某论坛的留言字段。
-
-```
-我对产品很满意！
-性能与我期望有差距。
-...
-```
-
-##### 除了考虑数据类型之外，分区指端的值一般是不会变化的
-例如， 股票代码可以作为分区字段，但股票价格不适合作为分区字段。因为股票的交易量不适合作为分区字段，因为同一股票的交易量每天都有变化，就会造成归属到不同的分区中。
-
-
-#### 4.2.分区粒度的控制
-分区粒度过大或过小都会造成系统效率降低。分区粒度过大会造成无法有效利用多节点多分区的优势，将本来可以并行计算的任务转化成了顺序计算任务。分区粒度过小又会造成过多并发子任务，过多磁盘访问，造成系统负荷过重。另外，当分区粒度过大，就需要频繁地在磁盘和工作内存之间进行切换，从而拖慢系统。
-
-##### 单个分区不要过大
-一般来说，合理的分区大小应该在几百兆到一个GB。由于分区列需要导入内存，如果单个分区过大，在多个用户同时使用的情况下，有可能会造成内存溢出。另外需要注意的是，DolphinDB单个分区支持最大记录条数是20亿。要对数据的大小的增长幅度有一个预估。
-
-例如, 如果每天产生几亿条记录，按日期区间(RANGE)大粒度分区就不适合，而应该采用按值(VALUE)分区。
-
-```
-// 不适合
-db=database("dfs://valuedb1", VALUE, 2017.07.01 2017.08.01 2017.09.01 2017.10.02)
-
-// 适合
-db=database("dfs://valuedb1", VALUE, 2017.07.01..2017.10.01)
-```
-
-更进一步，也可以采用复合分区(COMPO)。下面例子采用复合分区进行再度细分。
-
-```
-db1= database("", VALUE, 2017.07.01..2018.06.30)
-db2 = database("", RANGE, `A...`ZZZZ)
-
-//首先按日期进行第一层分区，然后再按字母分成26个子分区。
-db = database("dfs://compodb1", COMPO, [db1, db2])
-
-```
-
-##### 单个分区不要过小
-
-应该避免分区粒度过细，要确保每个分区内有足够多的数据。分区太小，会造成磁盘读取读效率太低。例如，读一个1MB和读一个1KB的文件时间是一样的。另外，所有的分区信息都会驻留在Name Node内存中，所以分区数过多太小， 可能会导致Name Node内存不足。
-
-如果按下列这个**不恰当**的分区方案，一共只有100万条记录， 系统需要创建100万个文件目录，每个目录下面只存放一条记录。
-
-```
-n=1000000
-t1=table(1..1000000 as id, rand(100.0, n) as v)
-db=database("dfs://valuedb2", VALUE, 1..1000000)
-db.createPartitionedTable(t1,`t1,`id).append!(t1)
-```
-
-#### 4.3.确保大部分查询语句与分区模式相符
-
-当大部分查询语句与分区模式匹配时，就能确保我们的查询语句只是到需要的分区上查找数据，而无需对整表进行扫描，从而大幅度提高处理速度。例如，对一个股票交易的数据表，如果我们大部分语句都是按日期下载数据，并不涉及具体的股票代码，就不适合按股票代码进行分区。因为要取得一天的数据，就要涉及所有的股票代码的分区。所以合适的选择应该是按日期分区。
-例如我们的数据列中包含日期date和股票代号symbol字段， 而我们大部分查询语句（如下）都是涉及date和symbol这两个字段。就可以考虑先按date,再按symbol来进行分层分区。
-
-```
-select * from mytable where date=2018.06.28, symbol='TLSA'
-
-//或者
-select * from mytable where date between 2018.06.24:2018.06.29, symbol in `FB`AMZN`TSLA`GOOG`AAPL
-
-
-//或者
-select sum(bidsiz) from mytable where date between 2018.06.24:2018.06.29, symbol in `FB`AMZN`TSLA`GOOG`AAPL group by date, symbol
-
-```
-
-那么这个分区数据库就可以这样配置。
-
-```
-db1= database("", VALUE, 2017.07.01..2018.06.30)
-db2 = database("", RANGE, `A...`ZZZZ)
-db = database("dfs://test", COMPO, [db1, db2])
-```
-
-#### 4.4.均匀分区
-
-只有均匀分区才能最大程度的利用每个计算节点，否则会造成系统负荷不均衡，部分节点任务过重，而其它节点处于闲置等待状态。为了方便根据数据的分布进行分区，DolphinDB提供了一个非常有用的工具cutPoints(X, N, [freq]) 这里X是一个数组，**N**是需要产生多少个**buckets**, 而**freq**是**X**的等长数组，其中每个元素对应着**X**中元素出现的**频率**。
-函数返回具有（N + 1）个元素的数组，使得**X**中的数据均匀地分布在由向量指示的**N**个**buckets**中。它可用于在分布式数据库中获取区间域的分区方案
-
-假设大概100亿条关于8000个股票代码的记录，最好的方法就是用cutPoints根据数据分布产生均匀分区，而不是通过一个从字母A到Z的包含26个区间的简单序列。
-
-```
-db1= database("", VALUE, 2017.07.01..2018.06.30)
-
-// **不是最优的分区方法**
-db2 = database("", RANGE, `A...`ZZZZ)
-
-// 首先按日期进行第一层分区，然后再按字母分成26个子分区。
-db = database("dfs://test", COMPO, [db1, db2])
-```
-
-更合理的分区方法是，将一天或者一周数据做一个抽样统计。
-
-```
-
 // 将数据并行导入
-t=ploadText(WORK_DIR+"/TAQ20070801.csv")
+t = ploadText(WORK_DIR+"/TAQ20070801.csv")
 
 // 选择2007.08.1这天的数据来计算股票代码的分布
 t=select count(*) as ct from t where date=2007.08.01 group by symbol
 
 // 通过分布数据，以及cutPoints函数，按照股票代码按字母顺序产生128个均匀区间。每个区间内部的股票的报价记录数是相当的。
-buckets = cutPoints(exec symbol from t, 128, exec ct from t)
+buckets = cutPoints(t.symbol, 128, t.ct)
 
-// 将最后一个区间结束设置成不会出现的最大的数值。
-buckets[size(buckets)-1]=`ZZZZZ
+// 将最后一个区间的结束边界替换成不会出现的最大的股票代码。
+buckets[size(buckets)-1] = `ZZZZZ
 
-//这个对字符串操作产生的buckets的结果如下：
+//buckets的结果如下：
 //["A",'ABA','ACEC','ADP','AFN','AII','ALTU','AMK',..., 'XEL','XLG','XLPRACL','XOMA','ZZZZZ']
-//这样使得在每个子区间内的股票代码的数目相对均匀。
 
-db1= database("", VALUE, 2017.07.01..2018.06.30)
-
- // **更贴近实际的分区方法**
-db2 = database("", RANGE, buckets)
-
- // 首先按日期进行第一层分区，然后再按字母分成26个子分区。
-db = database("dfs://test", COMPO, [db1, db2])
+dateDomain = database("", VALUE, 2017.07.01..2018.06.30)
+symDomain = database("", RANGE, buckets)
+stockDB = database("dfs://stockDBTest", COMPO, [dateDomain, symDomain])
 ```
 
-#### 4.5.时序类型分区
+除了使用区间分区的方法，列表分区也是解决数据分布不均匀的有效方法。
 
-DolphinDB提供了更灵活的时序类型分区，只要保证分区的数据类型精度小于实际数据类型即可。比如说，如果数据库是按月份区，但数据库里面是date,datetime类型也是可以的。
+#### 4.5 时序类型分区
 
-```
-// 数据库按月分区
-db = database("dfs://valuedb_month", VALUE, 2018.01M 2018.02M 2018.03M)
-
-// table column可以是date,datetime
-2018.01.09
-
-//  或者
-2018.01.09 09:35：12
+时间是实际数据中最常见的一个维度。DolphinDB提供了丰富时间类型以满足用户的需求。当我们以时间类型字段作为分区字段时，在时间取值上需要预留足够的空间以容纳将来的数据。下面的例子，我们创建一个数据库，以天为单位，将2000.01.01到2030.01.01的日期分区。注意，只有当实际数据写入数据库时，数据库才会真正创建需要的分区。
 
 ```
-
-另外日期分区可以将将来时间作为分区区间。如下列把从1990年1月开始到2031年1月结束每个月作为一个分区。
-
-```
-partitions=1990.01M..2031.01M
+dateDB = database("dfs://testDate", VALUE, 2000.01.01 .. 2030.01.01)
 ```
 
+DolphinDB使用时间类型作为分区字段时，还有一个特殊的优点。数据库定义的分区字段类型和数据表实际采用的时间类型可以不一致。确切的说，只要保证定义的分区字段数据类型精度小于等于实际数据类型即可。比如说，如果数据库是按月（month）份区，数据表的字段可以是，month, date, datetime, timestamp和 nanotimestamp。系统自动会作数据类型的转换。
 
-#### 4.6. 多表共享一个分区数据库
 
-当多个分区表存在于一个分区数据库内的时候，我们要保证多个分区表使用相同的分区。以下列子，三个分区表都使用同一个分区方案。
+#### 4.6 多表采用相同的分区机制
 
-```
-// 内存中创建三个表 t1,t2,t3
-t1=table(1 2 5 20 50 as id, 1..5 as v)
-t2=table(3 5 11 20 40 as id, 6..10 as v)
-t3=table(1 2 11 20 35 as id3, 11..15 as v3)
-
-// 创建RANGE分区数据库rangedb,分区区间为 1 10 20 30 51
-// 分别以t1,t2,t3为模板创建并添加分区表pt1,pt2,pt3
-db=database("dfs://rangedb",RANGE, 1 10 20 30 51)
-db.createPartitionedTable(t1, `pt1, `id).append!(t1)
-db.createPartitionedTable(t2, `pt2, `id).append!(t2)
-db.createPartitionedTable(t3, `pt3, `id3).append!(t3)
-
-//加载 pt1,pt2,pt3
-pt1=db.loadTable("pt1")
-pt2=db.loadTable("pt2")
-pt3=db.loadTable("pt3")
-
-// pt1, pt3 相同分区，相同字段名， inner join
-select * from ej(pt1,pt2,`id)
->
-id, v, pt2_v
-5,  3, 7
-20, 4, 9
-
-// pt1, pt3 相同分区，不同字段名, inner join
-select * from ej(pt1,pt3,`id, `id3)
->
-id, v, v3
-1,  1, 11
-2, 2, 12
-20, 4, 14
+在分布式数据库中，如果多个分区的事实表要联结（join）通常十分耗时，因为涉及到的分区可能在不同的节点上，需要在不同节点之间复制数据。为解决这个问题，DolphinDB推出了共存储位置的分区机制。采用同一个分区机制的多个表，DolphinDB确保相同分区下的多个子表的数据存储在相同的节点上。这样这些表在join的时候会非常高效。DolphinDB当前版本对采用不同分区机制的多个表不提供联结功能。
 
 ```
+dateDomain = database("", VALUE, 2018.05.01..2018.07.01)
+symDomain = database("", RANGE, string('A'..'Z') join `ZZZZZ)
+stockDB = database("dfs://stockDB", COMPO, [dateDomain, symDomain])
 
+quoteSchema = table(10:0, `sym`date`time`bid`bidSize`ask`askSize, [SYMBOL,DATE,TIME,DOUBLE,INT,DOUBLE,INT])
+stockDB.createPartitionedTable(quoteSchema, "quotes", `date`sym)
 
-#### 5. 分区表的写入
-
-#### 5.1 从文本文件导入
-
-##### 5.1.1 在内存中产生数据，然后通过append!方法追加到数据库
-
-以下例子，在内存中创建表t1, 在DFS中创建分区数据库testdb，然后以t1为模板，创建分区表pt1,最后将t1的数据追加到pt1中。注意：使用DFS存储，用户不用担心具体物理存储路，径系统会根据集群配置时指定的节点名，以及物理卷标，来自行分配。
+tradeSchema = table(10:0, `sym`date`time`price`vol, [SYMBOL,DATE,TIME,DOUBLE,INT])
+stockDB.createPartitionedTable(tradeSchema, "trades", `date`sym)
 ```
-t1 = table(1..10 as id)
+上面的例子中，quotes和trades两个分区表采用同一个分区机制，在不同的分区上，确保相同的存储位置。
 
-// 按区间将数据分成两个区 1~5, 5~10, 区间不包含上界。
-db = database("dfs://testdb",RANGE, 1 5 10)
+#### 5. 导入数据到分布式数据表
 
-// 以t1为schema模板，id为分区列名，创建名为pt1的分区表，并将内存表t1中的数据添加到分区数据库中。
-db.createPartitionedTable(t1,`pt1, `id).append!(t1)
-```
+#### 5.1 DolphinDB的适用场景
+DolphinDB是为OLAP设计的系统，主要是解决海量结构化数据的快速存储和计算，或者通过内存数据库和流数据实现高性能的数据处理。DolphinDB不适合数据频繁更改的OLTP业务系统。DolphinDB的数据写入跟Hadoop HDFS类似，快速在每个分区或文件的末尾批量插入数据。插入的数据会压缩存储到磁盘，一般压缩比例在20%~25%。数据一旦追加到基于磁盘的数据表后，不能快速更新或删除某些符合条件的记录，必须以分区为单位对数据表进行修改。这也是分区原则中提到单个分区不宜过大的原因之一。
 
-类似的我们也可以给出具体磁盘路径，创建一个本地分区数据库，并将t1添加到pt1中。
+#### 5.2 多副本机制
+DolphinDB允许为每一个分区保留多个副本，默认的副本个数是2，可以修改控制节点的参数dfsReplicationFactor来设置副本数量。设置冗余数据的目的有两个：（1）当某个数据节点失效或者或磁盘数据损坏时，系统提供容错功能继续提供服务；（2）当大量并发用户访问时，多副本提供负载均衡的功能，提高系统吞吐量，降低访问延时。DolphinDB通过两阶段事务提交机制，确保数据写入时，同一副本在多节点之间的数据强一致性。
 
-```
-t1 = table(1..10 as id)
-db = database("C:/DolphinDB/testdb",RANGE, 1 5 10)
-db.createPartitionedTable(t1,`pt1, `id).append!(t1)
-```
-
-##### 5.1.2 通过loadText, ploadText将数据导入内存，然后通过append!方法追加到数据库
-
-loadText适合于物理内存大于数据量的情况， 因为数据将被全部导入内存。
-
-**首先通过如下代码产生数据，用于导入DolphinDB数据库**
+在控制节点的参数文件controller.cfg中，还有一个非常重要的参数dfsReplicaReliabilityLevel。 该参数决定是否允许多个副本驻留在同一台物理服务器的多个数据节点上。在development阶段，允许在一个机器上配置多个节点，同时允许多个副本驻留在同一台物理服务器（dfsReplicaReliabilityLevel=0）， 但是production阶段需要设置成为1，否则可能起不到容错备份的作用。
 
 ```
-// 产生数据
-n=10000000
-workDir = "C:/DolphinDB/Data"
-if(!exists(workDir)) mkdir(workDir)
-trades=table(rand(`IBM`MSFT`GM`C`FB`GOOG`V`F`XOM`AMZN`TSLA`PG`S,n) as sym, 2000.01.01+rand(365,n) as date, 10.0+rand(2.0,n) as price1, 100.0+rand(20.0,n) as price2, 1000.0+rand(200.0,n) as price3, 10000.0+rand(2000.0,n) as price4, 10000.0+rand(3000.0,n) as price5, 10000.0+rand(4000.0,n) as price6, rand(10,n) as qty1, rand(100,n) as qty2, rand(1000,n) as qty3, rand(10000,n) as qty4, rand(10000,n) as qty5, rand(10000,n) as qty6)
-trades.saveText(workDir + "/trades.txt")
-
-```
-
-**通过loadText方法**
-
-```
-// 按值分区的内存数据库
-db = database("dfs://valuedb", VALUE, `IBM`MSFT`GM`C`FB`GOOG`V`F`XOM`AMZN`TSLA`PG`S)
-pt1=db.createPartitionedTable(trades, `ptrades, `sym)
-t1=loadText(workDir + "/trades.txt")
-pt1.append!(t1)
-
-```
-
-**通过ploadText方法**
-ploadText是通过多线程并行的方式将数据导入到内存，速度要比loadText有大幅度提升，但是内存占用大概是loadText的二倍。
-
-```
-t1=ploadText(workDir + "/trades.txt")
-pt1.append!(t1)
-```
-
-##### 5.1.3 通过loadTextEx直接将数据添加到分区数据表（最高效模式）
-
-通过oadTextEx可以直接将文本数据导入分区表。它的优点是：并行处理速度快,而且物理内存不必要大于数据占用内。,是DolphinDB推荐使用的加载文本数据的方法。 其实loadTextEx在内部帮助用户实现append!了方法。
-
-```
-loadTextEx(db, "pt1", "sym", workDir + "/trades.txt")
-```
-
-##### 5.1.4 通过loadTextEx并行写入数据
-
-假设在每个数据节点的相同目录下，都有需要加载的相同格式的数据文件，但是数据没有重复，我们就可以通过以下方法将数据并行加载到数据库valuedb中。
-
-```
-def loadJob(){
-    filedir='C:/DolphinDB/Data/'
-
-    // 到路径下取出数据文件名
-	filenames = exec filename from files(filedir)
-
-	// 加载数据库
-	db = database("dfs://valuedb")
-
-	// 对每个文件，通过文件名产生jobId前缀。
-	// 通过函数submitJob提交后台程序调用loadTextEx将数据加在到数据库valuedb中。
-	for(fname in filenames){
-		jobId = fname.strReplace(".txt", "")
-		jobName = jobId
-
-	    //注意到这里loadTextEx使用花括号的“{}”,这个是偏函数的方法，方便将该函数
-	    //所需要的参数封装在一起，传递给调用函数。
-		submitJob(jobId,jobName, loadTextEx{db, "pt1", `sym,filedir+'/'+fname})
-	}
-}
-
-//通过pnodeRun将loadJob这个任务发送到集群的每个数据节点进行并行加载。
-pnodeRun(loadJob)
-
-//通过pnodeRun查看刚刚提交任务进展，该函数返回一个DolphinDB table，里面包含所有任务的开始时间，结束时间，状态，异常等信息。
-pnodeRun(getRecentJobs)
-```
-
-
-#### 5.2 订阅一个流数据，批量写入
-
-DolphinDB数据库支持流数据的处理。用户可以订阅一个流数据，系统会将订阅到的流数据批量写入到用户表中。详细内容，请参阅帮助文档关于流计算的部分。
-
-#### 5.3 通过ODBC
-
-用户也可以通过ODBC Plugin， 将其它数据源中的数据导入到DolphinDB中。下面例子通过ODCB将mysql中的employees表导入到DolphinDB。ODBC Plugin存放在server/plugins/odbc/。
-
-```
-loadPlugin("/DOLPHINDB_DIR/server/plugins/odbc/odbc.cfg")
-use odbc
-conn=connect("Driver=MySQL;Data Source = mysql-employees;server=127.0.0.1;uid=[username];pwd=[password]database=employees")
-mysqlTable=query(conn,"select * from employees")
-select * from mysqlTable
-```
-
-#### 5.4 通过API
-
-DolhinDB提供了Python, Java, 以及C#API。用户在主页上下载，参照README来将数据通过这些API接口导入到DolphinDB。
-
-#### 5.5 分区副本
-
-在controller.cfg中，有两个非常重要的参数：dfsReplicationFactor和dfsReplicaReliabilityLevel。 dfsReplicationFactor用于决定每个表分区的副本数量。用途是某数据节点的数据损坏或者丢失，可以通过备份数据进行数据恢复。 dfsReplicaReliabilityLevel用于决定是否允许多个副本驻留在同一台服务器上。
-在development阶段，允许在一个机器上配置多个节点，同时允许多个副本驻留在同一台物理服务器（dfsReplicaReliabilityLevel=0）， 但是production阶段需要设置成为1，否则起不到备份作用。
-
-```
-
  // 每个表分区或文件块的副本数量。默认值是2。
 dfsReplicationFactor=2
 
@@ -554,18 +304,132 @@ dfsReplicationFactor=2
 dfsReplicaReliabilityLevel=0
 ```
 
-#### 5.6 分区事务
-DolphinDB的分区支持事务管理，方便出现异常时候，事务回滚，恢复数据。但要注意两点：
-1）一个事务只能包含写或者读，不能同时进行写和读。
-2）多个用户的写入，对同一个分区写。
+#### 5.3 事务机制
+DolphinDB对基于磁盘（分布式文件系统）的数据库表的读写支持事务，也就是说确保事务的原子性，一致性，隔离性和持久化。DolphinDB采用多版本机制实现快照级别的隔离。在这种隔离机制下，数据的读操作和写操作互相不阻塞，可以最大程度优化数据仓库读的性能。
 
+为最大程序优化数据仓库查询、分析、计算的性能，DolphinDB对事务作了一些限制。首先，一个事务只能包含写或者读，不能同时进行写和读。其次，一个写事务可以跨越多个分区，但是同一个分区不能被多个writer并发写入。也就是说当一个分区被某一个事务A锁定了，另一个事务B试图再次去锁定这个分区时，系统立刻会抛出异常导致事务B失败回滚。
 
-#### 6. 更多详细信息，请参阅帮助文档
+#### 5.4 多Writer并行写入
+DolphinDB提供了强大的分区机制，单个数据表可以支持几百万的分区数量，这为高性能的并行数据加载创造了条件。特别是当第一次将海量的数据从别的系统导入到DolphinDB时，或者需要将实时数据以准实时的方式写入到数据仓库时，并行加载显得尤为重要。
 
-中文
+下面的例子将股票报价数据（quotes）并行加载到数据库stockDB。stockDB以日期和股票代码做复合分区。数据存储在csv文件中，每个文件保存一天的quotes数据。
 
-http://dolphindb.com/cn/help/Newtopic48.html
+```
+//创建数据库和数据表
+dateDomain = database("", VALUE, 2018.05.01..2018.07.01)
+symDomain = database("", RANGE, string('A'..'Z') join `ZZZZZ)
+stockDB = database("dfs://stockDB", COMPO, [dateDomain, symDomain])
+quoteSchema = table(10:0, `sym`date`time`bid`bidSize`ask`askSize, [SYMBOL,DATE,TIME,DOUBLE,INT,DOUBLE,INT])
+stockDB.createPartitionedTable(quoteSchema, "quotes", `date`sym)
 
-英文
+def loadJob(){
+	fileDir='/stockData/'
 
-http://dolphindb.com/help/DistributedDatabase.html
+    // 到路径下取出数据文件名
+	filenames = exec filename from files(filedir)
+
+	// 加载数据库
+	db = database("dfs://stockDB")
+
+	// 对每个文件，通过文件名产生jobId前缀。
+	// 通过函数submitJob提交后台程序调用loadTextEx将数据加载到stockDB数据库中。
+	for(fname in filenames){
+		jobId = fname.strReplace(".txt", "")
+		jobName = jobId
+		submitJob(jobId,jobName, loadTextEx{db, "quotes", `date`sym, filedir+'/'+fname})
+	}
+}
+
+//通过pnodeRun将loadJob这个任务发送到集群的每个数据节点进行并行加载。
+pnodeRun(loadJob)
+```
+多个writer并行加载数据要确保这些writer不会同时往同一个分区写入数据，否则会导致事务失败。在上面的例子中，每一个文件存储了一天的数据，而quotes表的一个分区字段是日期，从而确保所有加载数据的作业不会产生有重叠的事务。
+
+#### 5.5 数据导入的常用方法
+
+DolphinDB的分布式数据库提供标准方法append!函数批量追加数据到到数据库。各种数据导入方法实际上就是直接或间接的调用这个函数将数据写入到数据库。后面的所有例子，都以5.4中创建的stockDB的quotes表为例。
+
+```
+//模拟产生100万条quote记录
+n = 1000000
+syms = `IBM`MSFT`GM`C`FB`GOOG`V`F`XOM`AMZN`TSLA`PG`S
+time = 09:30:00 + rand(21600000, n)
+bid = rand(10.0, n)
+bidSize = 1 + rand(100, n)
+ask = rand(10.0, n)
+askSize = 1 + rand(100, n)
+quotes = table(rand(syms, n) as sym, 2018.05.04 as date, time, bid, bidSize, ask, askSize)
+
+//将内存表quotes批量写入到数据库
+loadTable("dfs://stockDB", "quotes").append!(quotes)
+```
+
+##### 5.5.1 从文本文件导入数据
+
+文本文件是各个系统之间常用的数据交换方式。DolphinDB提供三个函数loadText，ploadText和loadTextEx加载文本数据。
+
+```
+//将模拟产生的quotes表以csv的格式保存到本地文件
+workDir = "C:/DolphinDB/Data"
+if(!exists(workDir)) mkdir(workDir)
+quotes.saveText(workDir + "/quotes.txt")
+```
+
+使用loadText或ploadText将数据从文件加载到内存，然后再调用append!函数。这种方法适合于物理内存大于数据量的情况， 因为数据将被全部导入内存。 ploadText和loadText的区别是前者采用并行方法加载文本文件。
+
+```
+t=loadText(workDir + "/trades.txt")
+loadTable("dfs://stockDB", "quotes").append!(t)
+```
+
+通过oadTextEx直接将文本数据导入到数据库分区表。它的优点是：并行处理速度快,而且文件尺寸可远远大于物理内存。这是DolphinDB推荐使用的加载文本数据的方法。 其实loadTextEx在内部帮助用户调用了append!函数。
+
+```
+db = database("dfs://stockDB")
+loadTextEx(db, "quotes", `date`sym, workDir + "/quotes.txt")
+```
+
+##### 5.5.2 订阅一个流数据，批量写入
+
+DolphinDB支持流数据的处理。用户可以订阅一个流数据，将订阅到的流数据批量写入到分布式表中。详细内容，请参阅帮助文档关于流计算的部分。
+
+```
+dfsQuotes = loadTable("dfs://stockDB", "quotes")
+saveQuotesToDFS=def(mutable t, msg): t.append!(select today() as date,* from msg)
+subscribeTable(, "quotes_stream", "quotes", -1, saveQuotesToDFS{dfsQuotes}, true, 10000, 6)
+```
+上面的例子中，我们订阅了流数据表quotes_stream，等待时间超过6秒或缓存的quotes记录达到1万条，批量写入到分布式表dfs://stockDB/quotes中。
+
+##### 5.5.3 通过ODBC导入数据
+
+用户也可以通过ODBC Plugin， 将其它数据源中的数据导入到DolphinDB中。下面例子通过ODCB将mysql中的employees表导入到DolphinDB。ODBC Plugin存放在server/plugins/odbc/。
+
+```
+loadPlugin("/DOLPHINDB_DIR/server/plugins/odbc/odbc.cfg")
+conn=odbc::connect("Driver=MySQL;Data Source = mysql-stock;server=127.0.0.1;uid=[xxx];pwd=[xxx]database=stockDB")
+t=odbc::query(conn,"select * from quotes")
+loadTable("dfs://stockDB", "quotes").append!(t)
+```
+
+##### 5.5.4 通过Programming API导入数据
+
+DolhinDB提供了Python, Java, 以及C#的编程接口。用户可以在这些编程语言中准备好数据，然后调用append!函数，将数据导入到DolphinDB的分布式表。下面我们以java为例，给出核心的代码。
+
+```
+DBConnection conn = new DBConnection();
+
+//连接并登录到DolphnDB服务器
+conn.connect("localhost", 8848, "admin", "123456");
+
+//定义函数saveQuotes
+conn.run("def saveQuotes(t){ loadTable('dfs://stockDB','quotes').append!(t)}");
+
+//准备一个数据表，具体过程省略
+BasicTable quotes = ...
+
+//调用服务端函数saveQuotes
+List<Entity> args = new ArrayList<Entity>(1);
+args.add(quotes);
+conn.run("saveQuotes", args)
+```
+
