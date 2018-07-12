@@ -413,7 +413,7 @@ loadTable("dfs://stockDB", "quotes").append!(t)
 
 ##### 5.5.4 通过Programming API导入数据
 
-DolhinDB提供了Python, Java, 以及C#的编程接口。用户可以在这些编程语言中准备好数据，然后调用append!函数，将数据导入到DolphinDB的分布式表。下面我们以java为例，给出核心的代码。
+DolphinDB提供了Python, Java, 以及C#的编程接口。用户可以在这些编程语言中准备好数据，然后调用append!函数，将数据导入到DolphinDB的分布式表。下面我们以java为例，给出核心的代码。
 
 ```
 DBConnection conn = new DBConnection();
