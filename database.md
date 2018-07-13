@@ -402,7 +402,7 @@ subscribeTable(, "quotes_stream", "quotes", -1, saveQuotesToDFS{dfsQuotes}, true
 
 ##### 5.5.3 通过ODBC导入数据
 
-用户也可以通过ODBC Plugin， 将其它数据源中的数据导入到DolphinDB中。下面例子通过ODBC将mysql中的employees表导入到DolphinDB。ODBC Plugin存放在server/plugins/odbc/。
+用户也可以通过ODBC Plugin， 将其它数据源中的数据导入到DolphinDB中。下面例子通过ODBC将mysql中的quotes表导入到DolphinDB。ODBC Plugin存放在server/plugins/odbc/。
 
 ```
 loadPlugin("/DOLPHINDB_DIR/server/plugins/odbc/odbc.cfg")
