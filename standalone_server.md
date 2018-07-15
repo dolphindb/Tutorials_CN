@@ -22,11 +22,11 @@ DolphinDB 单节点安装非常容易。只要DolphinDB软件包下载、解压�
 
 // 2. 直接运行dolphindb
 
-// Linux: execuate the following command
+// Linux: 执行以下指令
 ./dolphindb
 
 
-//windows: execaute the following command
+//windows: 执行以下指令
 dolphindb.exe
 ```
 
@@ -60,9 +60,12 @@ dolphindb.exe -localHost:8900:local8900 -maxMem 32
 
 #### 4. 通过网络界面运行DolphinDB脚本
 
+The figure above shows the out put of the following DolphinDB script.
 
 ```
-print "hello world!"
+//创建一个内存表
+
+table(1..5 as id, 6..10 as v)
 
 ```
 
