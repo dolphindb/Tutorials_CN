@@ -405,7 +405,7 @@ subscribeTable(, "quotes_stream", "quotes", -1, saveQuotesToDFS{dfsQuotes}, true
 
 ```
 loadPlugin("/DOLPHINDB_DIR/server/plugins/odbc/odbc.cfg")
-conn=odbc::connect("Driver=MySQL;Data Source = mysql-stock;server=127.0.0.1;uid=[xxx];pwd=[xxx]database=stockDB")
+conn=odbc::connect("Driver=MySQL;Data Source = mysql-stock;server=127.0.0.1;uid=[xxx];pwd=[xxx];database=stockDB")
 t=odbc::query(conn,"select * from quotes")
 loadTable("dfs://stockDB", "quotes").append!(t)
 ```
