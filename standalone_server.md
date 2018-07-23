@@ -25,9 +25,11 @@ DolphinDB 单节点安装非常容易。只要DolphinDB软件包下载、解压�
 // Linux: 执行以下指令
 ./dolphindb
 
-
 //windows: 执行以下指令
 dolphindb.exe
+
+// Linux: 后台执行dolphindb，执行以下命令
+nohup ./dolphindb -console 0 &
 ```
 
 系统默认端口号是8848. 如果需要指定其它端口可以通过如下命令行
