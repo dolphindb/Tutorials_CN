@@ -165,16 +165,18 @@ controllerSite=10.1.1.7:8990:master
 
 登录**P1**,**P2**,**P3**和**P5**，在每一台服务器的server目录，即可执行文件所在目录运行以下命令行。agent.log文件存放在log子目录下，如果出现agent无法正常启动的情况，可以根据此日志文件来诊断错误原因。
 
-#### Linux
-
-建议通过Linux命令**nohup**（头） 和 **&**（尾）启动为后台运行模式，这样即使终端失去连接，DolphinDB也会持续运行。 “-console”默认是为 1，如果要设置为后台运行，必须要设置为 0，否者nohup的log文件会占用很大磁盘空间。“-mode”表示节点启动为agent模式，“-home”指定数据以及元数据存储路径，“-config”指定配置文件路径，“-logFile”指定log文件路径。
-
-#### 后台模式启动
+#### Linux后台模式启动
 ```
 nohup ./dolphindb -console 0 -mode agent -home data -config config/agent.cfg -logFile log/agent.log &
 ```
+建议通过Linux命令**nohup**（头） 和 **&**（尾）启动为后台运行模式，这样即使终端失去连接，DolphinDB也会持续运行。 
 
-#### 前端交互模式启动
+“-console”默认是为 1，如果要设置为后台运行，必须要设置为0（"-console 0")，否则系统运行一段时间后会自动退出。。
+
+“-mode”表示节点性质，“-home”指定数据以及元数据存储路径，“-config”指定配置文件路径，“-logFile”指定log文件路径。
+
+
+#### Linux前端交互模式启动
 
 ```
 ./dolphindb -mode agent -home data -config config/agent.cfg -logFile log/agent.log
