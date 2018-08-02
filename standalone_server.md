@@ -18,21 +18,23 @@
 
 #### 2. 运行 DolphinDB Server
 
-进入server目录 /DolphinDB/server/, 运行dolphindb
+进入server目录 /DolphinDB/server/, 运行dolphindb。
 
-Linux: 执行以下指令
+Linux: 执行以下指令：
 ```
 ./dolphindb
 ```
-Windows: 运行dolphindb.exe
-
 Linux 后台执行dolphindb，执行以下指令:
 ```
 nohup ./dolphindb -console 0 &
 ```
-注意：该场景下，如果要使得dolphindb后台运行，除了命令行首尾加"nohup" 和 "&" 外，参数 -console 0 也是必须的，如果不加该参数，会导致dolphindb运行一段时间后自动退出。 原因是如果不加 -console 0,dolpindb默认会从当前标准输入读取命令行，而nohup重定向了标准输入为/dev/null，因此使得程序一直能成功读取到内容为空的命令，无限循环，最终内存耗尽，被操作系统强制终止。
+建议通过Linux命令nohup（头） 和 &（尾）启动为后台运行模式，这样即使终端失去连接，DolphinDB也会持续运行。 
 
-系统默认端口号是8848. 如果需要指定其它端口可以通过如下命令行：
+“-console”默认是为 1，如果要设置为后台运行，必须要设置为0（"-console 0")，否则系统运行一段时间后会自动退出。。
+
+Windows: 运行dolphindb.exe。
+
+系统默认端口号是8848。如果需要指定其它端口可以通过如下命令行：
 
 Linux:
 ```
@@ -44,15 +46,15 @@ Windows:
 dolphindb.exe -localhost:8900:local8900
 ```
 
-软件授权书指定 DolphinDB 可用的最大内存。用户也可以根据实际情况来调低此上限。这个设置在启动dophindb的时候可以通过参数 -maxMem 来调整，以GB为单位。
+软件授权书指定 DolphinDB 可用的最大内存。用户也可以根据实际情况来调低此上限。这个设置在启动dophindb的时候可以通过参数 -maxMemSize 来调整，以GB为单位。
 
 Linux:
 ```
-./dolphindb -localHost:8900:local8900 -maxMem 32
+./dolphindb -localHost:8900:local8900 -maxMemSize 32
 ```
 Windows:
 ```
-dolphindb.exe -localHost:8900:local8900 -maxMem 32
+dolphindb.exe -localHost:8900:local8900 -maxMemSize 32
 ```
 
 
