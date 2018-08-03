@@ -95,7 +95,7 @@ Time elapsed: 12.968 ms
 
 DolphinDB支持函数式编程的大部分功能，包括（1）纯函数（pure function），（2）自定义函数（user defined function，udf），（3）lambda函数，（4）高阶函数（higher order function），（5）部分应用（partial application），和（6）闭包（closure）。详细请参考[用户手册第七章](http://www.dolphindb.com/cn/help/index.html?7.html)。
 
-#### 3.1 自定义函数和lamnda函数（User Defined Function & Lamnda Function）
+#### 3.1 自定义函数和lambda函数（User Defined Function & Lambda Function）
 DolphinDB的用户可以创建自定义函数，函数可以有名称或者没有名称（通常是lambda函数）。创建的函数符合纯函数的要求，也就是说只有函数的输入参数可以影响函数的输出结果。DolphinDB与Python不同，函数体内只能引用函数参数和函数内的局部变量，不能使用函数体外定义的变量。从软件工程的角度看，这牺牲了一部分语法糖的灵活性，但对提高软件质量大有脾益。
 ```
 //定义一个函数返回工作日
