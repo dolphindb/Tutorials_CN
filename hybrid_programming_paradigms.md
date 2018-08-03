@@ -29,7 +29,7 @@ print s
 
 //打印矩阵每一列的均值
 m = matrix(1 2 3, 4 5 6, 7 8 9)
-for(c in m) print c.mean()
+for(c in m) print c.avg()
 
 //计算product表中每一个产品的销售额
 t= table(["TV set", "Phone", "PC"] as productId, 1200 600 800 as price, 10 20 7 as qty)
