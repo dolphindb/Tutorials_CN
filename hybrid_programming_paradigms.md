@@ -29,7 +29,7 @@ print s
 
 //打印矩阵每一列的均值
 m = matrix(1 2 3, 4 5 6, 7 8 9)
-for(c in m) print c.max()
+for(c in m) print c.mean()
 
 //计算product表中每一个产品的销售额
 t= table(["TV set", "Phone", "PC"] as productId, 1200 600 800 as price, 10 20 7 as qty)
@@ -88,7 +88,7 @@ Time elapsed: 12.968 ms
 
 向量化编程也有其局限性。首先，不是所有的操作都可以用向量化计算来完成。在机器学习和统计分析中，有不少场景，我们只能对逐行数据进行迭代处理，无法向量化。针对这种场景，DolphinDB即将在后续的版本中推出即时编译技术（JIT），能将用for语句编写的逐行处理代码在运行时动态编译成机器码来执行，提升性能。
 
-其次，向量化计算通常要将整个向量全部加载到一段连续内存中，matlab和R都有这样的要求。有时候因为内存碎片原因，可能无法找打大段的连续内存。DolphinDB针对内存碎片，特别引入了big array，可以将物理上不连续的内存块组成一个逻辑上连续的向量。系统是否采用big array是动态决定的，对用户透明。通常，对big array进行扫描，性能损耗对于连续内存而言，在1%~5%之间；对big array进行随机访问，性能损耗在20%~30%左右。所以，DolphinDB是以可以接受的微量性能损失换取系统的可用性。
+其次，向量化计算通常要将整个向量全部加载到一段连续内存中，matlab和R都有这样的要求。有时候因为内存碎片原因，可能无法找到大段的连续内存。DolphinDB针对内存碎片，特别引入了big array，可以将物理上不连续的内存块组成一个逻辑上连续的向量。系统是否采用big array是动态决定的，对用户透明。通常，对big array进行扫描，性能损耗对于连续内存而言，在1%~5%之间；对big array进行随机访问，性能损耗在20%~30%左右。所以，DolphinDB是以可以接受的微量性能损失换取系统的可用性。
 
 
 #### 3. 函数化编程(Functional Programming)
@@ -96,7 +96,7 @@ Time elapsed: 12.968 ms
 DolphinDB支持函数式编程的大部分功能，包括（1）纯函数（pure function），（2）自定义函数（user defined function，udf），（3）lambda函数，（4）高阶函数（higher order function），（5）部分应用（partial application），和（6）闭包（closure）。详细请参考[用户手册第七章](http://www.dolphindb.com/cn/help/index.html?7.html)。
 
 #### 3.1 自定义函数和lambda函数（User Defined Function & Lambda Function）
-DolphinDB的用户可以创建自定义函数，函数可以有名称或者没有名称（通常是lambda函数）。创建的函数符合纯函数的要求，也就是说只有函数的输入参数可以影响函数的输出结果。DolphinDB与Python不同，函数体内只能引用函数参数和函数内的局部变量，不能使用函数体外定义的变量。从软件工程的角度看，这牺牲了一部分语法糖的灵活性，但对提高软件质量大有脾益。
+DolphinDB的用户可以创建自定义函数，函数可以有名称或者没有名称（通常是lambda函数）。创建的函数符合纯函数的要求，也就是说只有函数的输入参数可以影响函数的输出结果。DolphinDB与Python不同，函数体内只能引用函数参数和函数内的局部变量，不能使用函数体外定义的变量。从软件工程的角度看，这牺牲了一部分语法上的灵活性，但对提高软件质量大有裨益。
 ```
 //定义一个函数返回工作日
 def getWorkDays(dates){
