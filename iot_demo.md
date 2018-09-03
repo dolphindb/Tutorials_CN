@@ -1,4 +1,4 @@
-# DolphinDB物联网数据解决方案
+# DolphinDB在工业物联网的应用
 
 ### 1 背景
 
