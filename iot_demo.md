@@ -154,13 +154,16 @@ select gmtime(time) as time, tempavg1 from aggregateResult where hardwareId = 1
 
 ### 4 系统性能观测及调整
 
-1. 集群的配置： 此案例里我们使用一台i7,16G内存的工作站，部署一个单机四节点的集群
-2. 数据量：数据流速24Mbps，持续100秒，保存的总数据量是2.4G。
-3. 运行结果：在运行完成后，记录CPU最高占用为17.3%, 内存最大占用6.04G
+4.1 系统运行性能总结
+
+* 集群的配置： 此案例里我们使用一台i7,16G内存的工作站，部署一个单机四节点的集群
+* 数据量：数据流速24Mbps，持续100秒，保存的总数据量是2.4G。
+* 运行结果：在运行完成后，记录CPU最高占用为17.3%, 内存最大占用6.04G
 
 **由结果可以看出，DolphinDB面对物联网场景，即使在普通工作站上也可以胜任高频数据流的接收、实时分析计算、分布式存储等一系列并行任务。**
 
-* 如何观察高频数据流是否被及时的处理？
+4.2 系统性能调优
+通过脚本
 ```
 select * from getStreamingStat().subWorkers:
 ```
@@ -168,11 +171,11 @@ select * from getStreamingStat().subWorkers:
 当流入数据积压并且没有下降的趋势，但是cpu资源还有余力时，可以适当缩短聚合计算的时间间隔，加快数据消费的速度。
 
 ### 5 FAQ
-* 如何观察数据是否被保存到分布式数据库？
-1. 可以通过集群管理web界面上的Dfs Explorer来观察
-2. 可以通过dfsTable = database("dfs://iotDemoDB").loadTable("sensorInfoTable");select top 100 from dfsTable 来观察表内的实时记录
+5.1 如何观察数据是否被保存到分布式数据库？
+* 可以通过集群管理web界面上的Dfs Explorer来观察
+* 可以通过dfsTable = database("dfs://iotDemoDB").loadTable("sensorInfoTable");select top 100 from dfsTable 来观察表内的实时记录
 
-* 发现数据流并没有保存到分布式数据库？
+5.2 发现数据流并没有保存到分布式数据库？
 请确认
 ```
 db2 = database("",VALUE,2018.08.14..2018.12.20) 
