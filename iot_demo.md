@@ -1,4 +1,4 @@
-# DolphinDB物联网解决方案
+# DolphinDB物联网数据解决方案
 
 ### 1 背景
 
@@ -41,20 +41,19 @@
 
 ### 3 物联网方案具体实现
 
-我们要
+
 
 3.1 集群架设
-
-我们首先要为上述的场景部署一个DolphinDB集群，部署指南参照 
 
 [单机多节点集群部署指南](https://github.com/dolphindb/Tutorials_CN/blob/master/single_machine_cluster_deploy.md)
 
 [多物理机集群部署指南](https://github.com/dolphindb/Tutorials_CN/blob/master/multi_machine_cluster_deploy.md)
 
-3.3 具体配置示例 
+要使用分布式数据库，需要架设一个集群，在这个Demo里，我们采用了单机4节点集群，而实际生产环境下，建议使用多物理机集群。
+
+具体配置示例 
 
 根据案例设计中提到的特性，我们需要在集群中启用以下配置：
-* 启动 DFS 分布式文件系统 : enableDFS = 1
 * 启用 流数据持久化 : 指定 persistenceDir 目录
 * 启用 Streaming发布和订阅：指定maxPubConnections和subPort
 
@@ -66,16 +65,12 @@ cluster.node
   maxPubConnections = 64
   persistenceDir = /home/persistenceDir/
 ```
-controller.cfg
-```
-  enableDFS = 1
-```
 
-3.4 表结构及脚本设计
+3.2 表结构及脚本设计
 
 数据上传过程中，DolphinDB将高频数据流接收到sensorInfoTable表中，并会每5秒钟对数据进行一次回溯1分钟求均值运算，将运算结果保存到一个新的数据流表aggregateResult中。
 
-* 高频表字段定义如下
+3.2.1 高频表字段定义如下
 
 字段名称 | 字段说明
 ---|---
@@ -85,7 +80,7 @@ temp1 | 1号温度传感器数据
 temp2 | 2号温度传感器数据
 temp3 | 3号温度传感器数据
 
-* 低频表字段定义
+3.2.2 低频表字段定义
 
 字段名称 | 字段说明
 ---|---
@@ -93,23 +88,23 @@ time | 窗口最后一条记录时间(timestamp)
 hardwareId | 设备编号
 tempavg1 | 1号传感器均值
 
-* 模拟数据生成脚本
+3.2.3 模拟数据生成脚本
 此处模拟10000个设备，以每个点3个维度、10ms每次的频率生成数据，以每个维度8个Byte(Double类型)计算，数据流速是 10000 * 1000/10 *3 * 8 * 8 = 24Mbps，持续100秒，保存的总数据量是2.4G。
 ```
 share streamTable(1000000:0,`hardwareId`ts`temp1`temp2`temp3,[INT,TIMESTAMP,DOUBLE,DOUBLE,DOUBLE]) as sensorInfoTable
 enableTablePersistence(sensorInfoTable, true, false, 1000000)
 
-def writeData(){
+def writeData(infoTable){
 	hardwareNumber = 10000
 	for (i in 0:10000) {
 		data = table(take(1..hardwareNumber,hardwareNumber) as hardwareId ,take(now(),hardwareNumber) as ts,rand(20..41,hardwareNumber) as temp1,rand(30..71,hardwareNumber) as temp2,rand(70..151,hardwareNumber) as temp3)
-		sensorInfoTable.append!(data)
+		infoTable.append!(data)
 		sleep(10)
 	}
 }
 ```
 
-* 监测指标实时运算
+3.2.4 监测指标实时运算
 
 实时运算使用了DolphinDB的createStreamAggregator函数
 
@@ -122,7 +117,7 @@ metrics = createStreamAggregator(60000,5000,<[avg(temp1),avg(temp2),avg(temp3)]>
 subscribeTable(, "sensorInfoTable", "metric_engine", -1, append!{metrics},true)
 ```
 
-* 高频数据的保存
+3.2.5 高频数据的保存
 
 在对流数据进行实时运算的同时，DolphinDB通过订阅高频流数据，把原始数据保存到分布式数据库中。我们这里将日期作为第一个分区维度，在物联网大数据场景下，经常要清除过时的数据，这样分区的模式可以简单的通过删除指定日期分区就可以快速的清理过期数据。
 
@@ -137,22 +132,21 @@ dfsTable = db.createPartitionedTable(tableSchema,"sensorInfoTable",`ts`hardwareI
 subscribeTable(, "sensorInfoTable", "save_to_db", -1, append!{dfsTable}, true, 1000000,10)
 ```
 
-* 启动整个Demo
-
+3.2.6 启动整个Demo
 ```
-    submitJob("simulateData", "simulate sensor data", writeData)
+    submitJob("simulateData", "simulate sensor data", writeData{sensorInfoTable})
 ```
 
-3.5 前端展示配置
+3.3 前端展示配置
 
-- Grafana系统配置
+3.3.1 Grafana系统配置
 
 要观察实时的数据，我们需要一个支持时序数据展示的前端平台，DolphinDB和Grafana做了数据对接。
  
 [Grafana配置教程](https://www.github.com/dolphindb/grafana-datasource/blob/master/README.md)
 
 
-* 轮询脚本配置
+3.3.2 轮询脚本配置
 
   在参照教程添加好数据源之后，在 Metics Tab 脚本输入框中输入：
 ```
