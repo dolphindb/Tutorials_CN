@@ -82,8 +82,7 @@ maxPubConnections=4
 share streamTable(1000000:0,`hardwareId`ts`temp1`temp2`temp3,[INT,TIMESTAMP,DOUBLE,DOUBLE,DOUBLE]) as sensorTemp
 enableTablePersistence(sensorTemp, true, false, 1000000)
 ```
-在模拟产生的高频数据流开始进入系统之后，DolphinDB通过订阅高频流数据，把数据实时保存到分布式数据库中。我们这里将日期作为第一个分区维度，设备编号作为第二分区维度。
-> *在物联网大数据场景下，经常要清除过时的数据，这样分区的模式可以简单的通过删除指定日期分区就可以快速的清理过期数据。*
+当设备采集的温度流数据进入系统时，DolphinDB通过订阅高频流数据，把数据实时保存到分布式数据库中。我们这里将日期作为第一个分区维度，设备编号作为第二分区维度。在物联网大数据场景下，经常要清除过时的数据，这样分区的模式可以简单的通过删除指定日期分区就可以快速的清理过期数据。这里我们通过subscribe最后两个参数控制数据保存的频率，只有订阅数据达到100万或时间间隔达到10秒才批量将数据写入分布式数据库。
 
 ```
 db1 = database("",VALUE,2018.08.14..2018.12.20)
@@ -115,7 +114,7 @@ select gmtime(time) as time, tempavg1, tempavg2, tempavg3 from sensorTempAvg whe
 ![image](images/datasource.PNG)
 
 
-最后，启动数据模拟程序，生成高频数据并写入流数据表
+最后，启动数据模拟生成程序，生成高频数据并写入流数据表
  > *高频数据规模: 1000 个设备，以每个点3个维度、10ms的频率生成数据，以每个维度8个Byte ( Double类型 ) 计算，数据流速是 24Mbps，持续100秒。*
 ```
 def writeData(){
