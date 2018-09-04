@@ -103,14 +103,16 @@ subscribeTable(, "sensorTemp", "metric_engine", -1, append!{metrics},true)
 ```
 
 在DolphinDB Server端在对高频数据流做保存、分析的时候，Grafana前端程序每秒钟会轮询实时运算的结果，并刷新平均温度的趋势图。DolphinDB提供了Grafana_DolphinDB的datasource插件，关于Grafana的安装以及DolphinDB的插件配置请参考[Grafana配置教程](https://www.github.com/dolphindb/grafana-datasource/blob/master/README.md)
-。在完成grafana的基本配置之后，新增一个Graph Panel, 在Metrics tab里输入
+。
+
+在完成grafana的基本配置之后，新增一个Graph Panel, 在Metrics tab里输入
 
 ```
 select gmtime(time) as time, tempavg1, tempavg2, tempavg3 from sensorTempAvg where hardwareId = 1
 ```
 > *这段脚本是选出1号设备实时运算得到的平均温度表*
 
-![image](https://github.com/dolphindb/Tutorials_CN/blob/master/images/datasource.JPG)
+![image](images/datasource.PNG)
 
 
 最后，启动数据模拟程序，生成高频数据并写入流数据表
