@@ -12,8 +12,8 @@
 
 对于传统的信息系统来说，这里有几个难点需要突破：
  
- * 数据吞吐量：按照上述场景，每个维度的数据占8Byte(Double)来计算，数据流入的速度是192mbps,这还只是单点三个维度的数据，当维度数据增长到几百乃至上千时，这个流入速度任何传统的单点系统是无法承载的。
- * 实时运算：高频流数据的实时运算，流行的应对流数据实时运算的做法需要采用内存消息队列结合第三方系统订阅来处理，而当流数据频率极高时，这样的方式会导致数据频繁的在系统间迁移，使得响应性能急剧下降。
+ * 数据吞吐量：物联网数据的流入速度轻易就能达到几百乃至上千的MBps，这是任何传统的单点系统无法承载的。
+ * 实时运算：高频流数据的实时运算，当下流行的应对流数据实时运算的做法需要采用内存消息队列结合第三方系统订阅来处理，而当流数据频率极高时，这样的方式会导致数据频繁的在系统间迁移，使得响应性能急剧下降。
  * 需要在高频流数据接收、实时运算和保存分布式数据的同时，实时响应前端展示平台的每秒轮询。对于传统数据库平台，在密集地往磁盘写入数据同时，根本无法满足再从磁盘load数据响应查询的需求。
 
 所以，现在这些海量的设备运转数据只能作为冷数据简单的备份在磁盘上，不仅无法达成实时预警指导生产的功能，甚至连事后分析也非常的困难。
@@ -28,35 +28,37 @@
 
 ### 3 案例综述
 
-企业的生产车间内总共有10000个传感设备，每个设备每10ms采集一次数据，为演示方便，假设采集的数据仅有三个维度，均为温度。，系统通过前端Grafana平台来展示实时的温度数据。
+* 企业的生产车间内总共有10000个传感设备，每个设备每10ms采集一次数据，为演示方便，假设采集的数据仅有三个维度，均为温度，系统通过前端Grafana平台来展示实时的温度数据。
 
 * 在实际运转中，为了避免一些异常数据导致错误的预警，我们需要对监测数据做移动平均运算，过滤掉一些异常数据，这个运算每两秒钟要进行一次。
 
 * 因为设备的管理者需要在最快的时间内掌握温度变化，所以前端展示界面每秒查询一次实时运算的结果并刷新温度变化趋势图。
 在工厂环境里，很多设备的运转对于温度是非常敏感的，每当设备的温度发生异常时，往往需要系统以秒级的速度来提供预警，使得管理者能够及时介入和调整，若预警时间太迟轻则产出残次品重则导致设备损坏，所以系统的运行指标要求是必须要达到秒级实时响应。
 
-- 
-
-
 ### 4 案例实施
 
 4.1 系统的功能模块设计
+	
+首先我们需要在DolphinDB中配置支持流数据，
 
-
+支持数据保存到分布式数据库: 部署多节点集群，启用分布式文件系统，支持数据库分布式存储
+* 支持流数据: 启用Streaming, 支持实时流数据的发布和订阅
+* 
+* 支持前端实时展示趋势图：部署Grafana平台，安装dolphindb-grafana datasource 插件支持grafana连接dolphindb server。
 
 4.2 服务器部署
+
+在本章示例环境里，我们采用了单机4节点集群，而实际生产环境下，建议使用多物理机集群。
 
 [单机多节点集群部署指南](https://github.com/dolphindb/Tutorials_CN/blob/master/single_machine_cluster_deploy.md)
 
 [多物理机集群部署指南](https://github.com/dolphindb/Tutorials_CN/blob/master/multi_machine_cluster_deploy.md)
 
-要使用分布式数据库，需要架设一个集群，在这个Demo里，我们采用了单机4节点集群，而实际生产环境下，建议使用多物理机集群。
-
-根据案例设计中提到的特性，我们需要在集群中启用以下配置：
+4.2.1 根据案例设计中提到的特性，我们需要在集群中启用以下配置：
 * 启用 流数据持久化 : 指定 persistenceDir 目录
 * 启用 Streaming发布和订阅：指定maxPubConnections和subPort
 
-cluster.node
+4.2.2 cluster.node文件配置内容示例
 
 由于本demo里面只用到node1来订阅，所以仅配置了node1.subPort。
 ```
@@ -69,26 +71,27 @@ cluster.node
 
 数据上传过程中，DolphinDB将高频数据流接收到sensorInfoTable表中，并会每5秒钟对数据进行一次回溯1分钟求均值运算，将运算结果保存到一个新的数据流表aggregateResult中。
 
-4.3.1 高频表字段定义如下
+4.3.1 高频表 ( sensorInfoTable ) 字段定义如下
 
 字段名称 | 字段说明
 ---|---
 hardwareId | 设备编号
-ts | 采集时间(timestamp)
+ts | 采集时间 ( timestamp )
 temp1 | 1号温度传感器数据
 temp2 | 2号温度传感器数据
 temp3 | 3号温度传感器数据
 
-4.3.2 低频表字段定义
+4.3.2 低频表 ( aggregateResult ) 字段定义
 
 字段名称 | 字段说明
 ---|---
-time | 窗口最后一条记录时间(timestamp)
+time | 窗口最后一条记录时间 ( timestamp )
 hardwareId | 设备编号
 tempavg1 | 1号传感器均值
 
 4.3.3 模拟数据生成脚本
-此处模拟10000个设备，以每个点3个维度、10ms每次的频率生成数据，以每个维度8个Byte(Double类型)计算，数据流速是 10000 * 1000/10 *3 * 8 * 8 = 24Mbps，持续100秒，保存的总数据量是2.4G。
+
+此处模拟10000个设备，以每个点3个维度、10ms每次的频率生成数据，以每个维度8个Byte ( Double类型 ) 计算，数据流速是 10000 * 1000/10 *3 * 8 * 8 = 24Mbps，持续100秒，保存的总数据量是2.4G。
 ```
 share streamTable(1000000:0,`hardwareId`ts`temp1`temp2`temp3,[INT,TIMESTAMP,DOUBLE,DOUBLE,DOUBLE]) as sensorInfoTable
 enableTablePersistence(sensorInfoTable, true, false, 1000000)
@@ -105,11 +108,11 @@ def writeData(infoTable){
 
 4.3.4 监测指标实时运算
 
-实时运算使用了DolphinDB的createStreamAggregator函数
+实时运算使用了DolphinDB的 createStreamAggregator 实时运算函数
 
-createStreamAggregator参数可以分别指定：窗口时间，运算间隔时间，聚合运算元数据，输入表，输出表，时序字段，分组字段，执行GC记录上限。
+createStreamAggregator 参数可以分别指定：窗口时间，运算间隔时间，聚合运算元数据，输入表，输出表，时序字段，分组字段，触发GC记录数阈值。
 
-通过subscribeTable 订阅实时数据并将实时运算结果写入aggregateResult表中。
+通过subscribeTable 订阅实时数据并将实时运算结果写入 aggregateResult 表中。
 ```
 share streamTable(1000000:0, `time`hardwareId`tempavg1`tempavg2`tempavg3, [TIMESTAMP,INT,DOUBLE,DOUBLE,DOUBLE]) as aggregateResult
 metrics = createStreamAggregator(60000,5000,<[avg(temp1),avg(temp2),avg(temp3)]>,sensorInfoTable,aggregateResult,`ts,`hardwareId,2000)
@@ -153,9 +156,9 @@ select gmtime(time) as time, tempavg1 from aggregateResult where hardwareId = 1
 ```
 (这段脚本是选出1号传感器的过去一分钟的平均温度)
 
-### 5 系统性能观测及调整
+4.5 系统性能观测及调整
 
-5.1 系统运行性能总结
+4.5.1 系统运行性能总结
 
 * 集群的配置： 此案例里我们使用一台i7,16G内存的工作站，部署一个单机四节点的集群
 * 数据量：数据流速24Mbps，持续100秒，保存的总数据量是2.4G。
@@ -163,7 +166,7 @@ select gmtime(time) as time, tempavg1 from aggregateResult where hardwareId = 1
 
 **由结果可以看出，DolphinDB面对物联网场景，即使在普通工作站上也可以胜任高频数据流的接收、实时分析计算、分布式存储等一系列并行任务。**
 
-5.2 系统性能调优
+4.5.2 系统性能调优
 通过脚本
 ```
 select * from getStreamingStat().subWorkers:
