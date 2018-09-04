@@ -93,9 +93,9 @@ subscribeTable(, "sensorInfoTable", "save_to_db", -1, append!{dfsTable}, true, 1
 ```
 > *需要观察分布式数据，可以通过以下两种途径 1.可以通过集群管理web界面上的Dfs Explorer来观察。2. 可以通过dfsTable = database("dfs://iotDemoDB").loadTable("sensorInfoTable"); select top 100 * from dfsTable 来观察表内的实时记录*
 
-在对流数据做分布式保存数据库的同时，系统使用DolphinDB内置的 createStreamAggregator 实时运算函数来定义实时运算的过程。这个脚本里指定了一个窗口大小为60秒，每2秒钟对所有温度数据做一次求均值运算，其中第三个参数是运算的元代码，可以由用户自己指定计算函数，所以这里并不限于均值运算。然后通过subscribeTable订阅高频数据并在有新数据进来时触发实时计算，并将运算结果保存到一个新的数据流表aggregateResult中。
+在对流数据做分布式保存数据库的同时，系统使用DolphinDB内置的 createStreamAggregator 实时运算函数来定义实时运算的过程。这个脚本里指定了一个窗口大小为60秒，每2秒钟对所有温度数据做一次求均值运算，其中第三个参数是运算的元代码，可以由用户自己指定计算函数，任何系统支持的或用户自定义的聚合函数这里都能支持。然后通过subscribeTable订阅高频数据并在有新数据进来时触发实时计算，并将运算结果保存到一个新的数据流表aggregateResult中。
 
-> *createStreamAggregator 参数可以分别指定：窗口时间，运算间隔时间，聚合运算元数据，输入原始数据表，输出运算结果表，时序字段，分组字段，触发GC记录数阈值。*
+> *createStreamAggregator 参数说明：窗口时间，运算间隔时间，聚合运算元代码，原始数据输入表，运算结果输出表，时序字段，分组字段，触发GC记录数阈值。*
 
 ```
 share streamTable(1000000:0, `time`hardwareId`tempavg1`tempavg2`tempavg3, [TIMESTAMP,INT,DOUBLE,DOUBLE,DOUBLE]) as aggregateResult
