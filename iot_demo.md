@@ -28,7 +28,7 @@
 
 ### 3. 案例综述
 
-* 企业的生产车间内总共有10000个传感设备，每个设备每10ms采集一次数据，为简化demo脚本，假设采集的数据仅有三个维度，均为温度，系统通过前端Grafana平台来展示实时的温度数据。
+* 企业的生产车间内总共有1000个传感设备，每个设备每10ms采集一次数据，为简化demo脚本，假设采集的数据仅有三个维度，均为温度，系统通过前端Grafana平台来展示实时的温度数据。
 
 * 在实际运转中，为了避免一些异常数据导致错误的预警，我们需要对监测数据做移动平均运算，过滤掉一些异常数据，这个运算每两秒钟要进行一次。
 
@@ -65,12 +65,12 @@ localhost:8084:node4,datanode
 
 cluster.cfg
 ```
-maxMemSize=12
-workerNum=1
+maxMemSize=2
+workerNum=4
 persistenceDir=dbcache
 maxSubConnections=4
 node1.subPort=8085
-maxPubConnections=8
+maxPubConnections=4
 ```
 实际生产环境下，建议使用多物理机集群，可以参考 [多物理机集群部署指南](https://github.com/dolphindb/Tutorials_CN/blob/master/multi_machine_cluster_deploy.md)
 
@@ -111,10 +111,10 @@ select gmtime(time) as time, tempavg1 from aggregateResult where hardwareId = 1
 > *这段脚本是选出1号传感器实时运算得到的平均温度表*
 
 最后，启动数据模拟程序，生成高频数据并写入流数据表
- > *高频数据规模: 10000 个设备，以每个点3个维度、10ms的频率生成数据，以每个维度8个Byte ( Double类型 ) 计算，数据流速是 24Mbps，持续100秒。*
+ > *高频数据规模: 1000 个设备，以每个点3个维度、10ms的频率生成数据，以每个维度8个Byte ( Double类型 ) 计算，数据流速是 24Mbps，持续100秒。*
 ```
 def writeData(infoTable){
-	hardwareNumber = 10000
+	hardwareNumber = 1000
 	for (i in 0:10000) {
 		data = table(take(1..hardwareNumber,hardwareNumber) as hardwareId ,take(now(),hardwareNumber) as ts,rand(20..41,hardwareNumber) as temp1,rand(30..71,hardwareNumber) as temp2,rand(70..151,hardwareNumber) as temp3)
 		infoTable.append!(data)

@@ -4,7 +4,7 @@ share streamTable(1000000:0,`hardwareId`ts`temp1`temp2`temp3,[INT,TIMESTAMP,DOUB
 enableTablePersistence(sensorInfoTable, true, false, 1000000)
 
 def writeData(){
-	hardwareNumber = 10000
+	hardwareNumber = 1000
 	for (i in 0:10000) {
 		data = table(take(1..hardwareNumber,hardwareNumber) as hardwareId ,take(now(),hardwareNumber) as ts,rand(20..41,hardwareNumber) as temp1,rand(30..71,hardwareNumber) as temp2,rand(70..151,hardwareNumber) as temp3)
 		sensorInfoTable.append!(data)
