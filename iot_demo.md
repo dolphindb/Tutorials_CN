@@ -50,7 +50,7 @@
 
 4.2 服务器部署
 
-为了使用分布式数据库，我们需要使用一个单机多节点集群，可以参考[单机多节点集群部署指南](https://github.com/dolphindb/Tutorials_CN/blob/master/single_machine_cluster_deploy.md)。这里我们配置了1个controller+1个agent+4个datanode的集群，下面列出主要的配置文件内容供参考：
+在本次demo里，为了使用分布式数据库，我们需要使用一个单机多节点集群，可以参考[单机多节点集群部署指南](https://github.com/dolphindb/Tutorials_CN/blob/master/single_machine_cluster_deploy.md)。这里我们配置了1个controller+1个agent+4个datanode的集群，下面列出主要的配置文件内容供参考：
 
 cluster.nodes
 ```
@@ -62,6 +62,7 @@ localhost:8082:node3,datanode
 localhost:8084:node4,datanode
 ```
 由于DolphinDB系统默认是不启用Streaming的发布和订阅，所以我们需要通过在cluster.cfg里做显式配置来启用它，因为本次demo里涉及的数据量并不大，所以这里只启用了node1来做数据订阅
+
 cluster.cfg
 ```
 maxMemSize=12
@@ -75,7 +76,7 @@ maxPubConnections=8
 
 4.3 实现步骤
 
-数据上传过程中，DolphinDB将高频数据流接收到sensorInfoTable表中，并会每5秒钟对数据进行一次回溯1分钟求均值运算，将运算结果保存到一个新的数据流表aggregateResult中。高频表 ( sensorInfoTable ) 和低频表 ( aggregateResult ) 定义如下
+数据上传过程中，DolphinDB将高频数据流接收到sensorInfoTable表中，并会每2秒钟对数据进行一次回溯1分钟求均值运算，将运算结果保存到一个新的数据流表aggregateResult中。高频表 ( sensorInfoTable ) 和低频表 ( aggregateResult ) 定义如下
 > *sensorInfoTable[hardwareId,ts,temp1,temp2,temp3]*
 
 > *aggregateResult[time,hardwareId,tempavg1,tempavg2,tempavg3]*
