@@ -41,11 +41,12 @@
 	
 针对上述的案例，我们首先要启用DolphinDB的分布式数据库，创建一个命名为iotDemoDB的分布式数据库用于保存实时数据，为了利于日后的过期数据清理，采用日期作为第一个维度分区，设备编号作为第二个维度分区；
 
-我们启用集群各节点的数据发布和订阅，可以订阅高频数据流做实时运算处理，也可以将实时运算结果再次发布出去；
+启用流数据发布和订阅功能，可以订阅高频数据流做实时运算处理，也可以将实时运算结果再次发布出去；
 
-为了避免高频数据流临时积压导致内存不足，我们对数据流启用持久化处理，每累计满100万行数据进行一次数据持久化，这样内存中保留的高频数据记录永远只保留100万以内，保证内存使用率稳定；
+为了避免高频数据流临时积压导致内存不足，我们对流数据启用持久化处理，每累计满100万行数据进行一次数据持久化，这样内存中保留的高频数据记录永远只保留100万以内，保证内存使用率稳定；
 
 系统设计createStreamingAggregator函数对高频数据做实时运算，我们在案例里指定运算窗口是1分钟，每2秒钟运算一次过往1分钟的温度均值，然后将运算结果保存到低频数据表中供前端轮询；
+
 部署前端Grafana平台展示运算结果的趋势图，设置每1秒钟轮询一次DolphinDB Server并刷新展示界面。
 
 4.2 服务器部署
@@ -81,7 +82,7 @@ maxPubConnections=4
 share streamTable(1000000:0,`hardwareId`ts`temp1`temp2`temp3,[INT,TIMESTAMP,DOUBLE,DOUBLE,DOUBLE]) as sensorInfoTable
 enableTablePersistence(sensorInfoTable, true, false, 1000000)
 ```
-在模拟产生的高频数据流开始进入系统之后，DolphinDB通过订阅高频流数据，把原始数据保存到分布式数据库中。我们这里将日期作为第一个分区维度，设备编号作为第二分区维度。
+在模拟产生的高频数据流开始进入系统之后，DolphinDB通过订阅高频流数据，把数据实时保存到分布式数据库中。我们这里将日期作为第一个分区维度，设备编号作为第二分区维度。
 > *在物联网大数据场景下，经常要清除过时的数据，这样分区的模式可以简单的通过删除指定日期分区就可以快速的清理过期数据。*
 
 ```
@@ -93,7 +94,7 @@ subscribeTable(, "sensorInfoTable", "save_to_db", -1, append!{dfsTable}, true, 1
 ```
 > *需要观察分布式数据，可以通过以下两种途径 1.可以通过集群管理web界面上的Dfs Explorer来观察。2. 可以通过dfsTable = database("dfs://iotDemoDB").loadTable("sensorInfoTable"); select top 100 * from dfsTable 来观察表内的实时记录*
 
-在对流数据做分布式保存数据库的同时，系统使用DolphinDB内置的 createStreamAggregator 实时运算函数来定义实时运算的过程。这个脚本里指定了一个窗口大小为60秒，每2秒钟对所有温度数据做一次求均值运算，其中第三个参数是运算的元代码，可以由用户自己指定计算函数，任何系统支持的或用户自定义的聚合函数这里都能支持。然后通过subscribeTable订阅高频数据并在有新数据进来时触发实时计算，并将运算结果保存到一个新的数据流表aggregateResult中。
+在对流数据做分布式保存数据库的同时，系统使用DolphinDB内置的 createStreamAggregator 实时运算函数来定义实时运算的过程。脚本里指定了窗口大小为60秒，每2秒钟对窗口宽度内的温度数据做一次求均值运算，其中第三个参数是运算的元代码，可以由用户自己指定计算函数，任何系统支持的或用户自定义的聚合函数这里都能支持。最后通过subscribeTable订阅高频流数据，并在有新数据进来时触发实时计算，并将运算结果保存到一个新的数据流表aggregateResult中。
 
 > *createStreamAggregator 参数说明：窗口时间，运算间隔时间，聚合运算元代码，原始数据输入表，运算结果输出表，时序字段，分组字段，触发GC记录数阈值。*
 
@@ -102,13 +103,13 @@ share streamTable(1000000:0, `time`hardwareId`tempavg1`tempavg2`tempavg3, [TIMES
 metrics = createStreamAggregator(60000,2000,<[avg(temp1),avg(temp2),avg(temp3)]>,sensorInfoTable,aggregateResult,`ts,`hardwareId,2000)
 subscribeTable(, "sensorInfoTable", "metric_engine", -1, append!{metrics},true)
 ```
-在DolphinDB Server端在对高频数据流做保存、分析的时候，Grafana前端程序需要每秒钟轮询实时运算的结果，展示最新的运算结果的趋势图。关于Grafana的安装以及DolphinDB的接口配置请参考[Grafana配置教程](https://www.github.com/dolphindb/grafana-datasource/blob/master/README.md)
+在DolphinDB Server端在对高频数据流做保存、分析的时候，Grafana前端程序每秒钟会轮询实时运算的结果，并刷新平均温度的趋势图。关于Grafana的安装以及DolphinDB的接口配置请参考[Grafana配置教程](https://www.github.com/dolphindb/grafana-datasource/blob/master/README.md)
 。在完成grafana的基本配置之后，新增一个Graph Panel, 在Metrics tab里输入
 
 ```
-select gmtime(time) as time, tempavg1 from aggregateResult where hardwareId = 1
+select gmtime(time) as time, tempavg1, tempavg2, tempavg3 from aggregateResult where hardwareId = 1
 ```
-> *这段脚本是选出1号传感器实时运算得到的平均温度表*
+> *这段脚本是选出1号设备实时运算得到的平均温度表*
 
 最后，启动数据模拟程序，生成高频数据并写入流数据表
  > *高频数据规模: 1000 个设备，以每个点3个维度、10ms的频率生成数据，以每个维度8个Byte ( Double类型 ) 计算，数据流速是 24Mbps，持续100秒。*
