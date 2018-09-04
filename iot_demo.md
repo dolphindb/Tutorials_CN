@@ -28,7 +28,7 @@
 
 ### 3 案例综述
 
-* 企业的生产车间内总共有10000个传感设备，每个设备每10ms采集一次数据，为演示方便，假设采集的数据仅有三个维度，均为温度，系统通过前端Grafana平台来展示实时的温度数据。
+* 企业的生产车间内总共有10000个传感设备，每个设备每10ms采集一次数据，为简化demo脚本，假设采集的数据仅有三个维度，均为温度，系统通过前端Grafana平台来展示实时的温度数据。
 
 * 在实际运转中，为了避免一些异常数据导致错误的预警，我们需要对监测数据做移动平均运算，过滤掉一些异常数据，这个运算每两秒钟要进行一次。
 
@@ -39,12 +39,15 @@
 
 4.1 系统的功能模块设计
 	
-首先我们需要在DolphinDB中配置支持流数据，
+针对上述的案例，我们首先要启用DolphinDB的分布式数据库，创建一个iotDemoDB的分布式数据库用于保存实时数据，为了利于日后的过期数据清理，采用日期作为第一个维度分区，设备编号作为第二个维度分区；
 
-支持数据保存到分布式数据库: 部署多节点集群，启用分布式文件系统，支持数据库分布式存储
-* 支持流数据: 启用Streaming, 支持实时流数据的发布和订阅
-* 
-* 支持前端实时展示趋势图：部署Grafana平台，安装dolphindb-grafana datasource 插件支持grafana连接dolphindb server。
+我们启用集群各节点的数据发布和订阅，可以订阅高频数据流做实时运算处理，也可以将实时运算结果再次发布出去；
+
+为了避免高频数据流临时积压导致内存不足，我们对数据流启用持久化处理，每满100万数据进行一次数据持久化，这样内存中保留的高频数据记录永远只保留100万以内，保证内存使用率稳定；
+
+系统设计createStreamingAggregator函数对高频数据做实时运算，我们在案例里指定运算窗口是1分钟，每2秒钟运算一次过往1分钟的温度均值，然后将运算结果保存到低频数据表中供前端轮询；
+部署前端Grafana平台展示运算结果的趋势图，设置每1秒钟轮询一次DolphinDB Server并刷新展示界面。
+
 
 4.2 服务器部署
 
@@ -115,7 +118,7 @@ createStreamAggregator 参数可以分别指定：窗口时间，运算间隔时
 通过subscribeTable 订阅实时数据并将实时运算结果写入 aggregateResult 表中。
 ```
 share streamTable(1000000:0, `time`hardwareId`tempavg1`tempavg2`tempavg3, [TIMESTAMP,INT,DOUBLE,DOUBLE,DOUBLE]) as aggregateResult
-metrics = createStreamAggregator(60000,5000,<[avg(temp1),avg(temp2),avg(temp3)]>,sensorInfoTable,aggregateResult,`ts,`hardwareId,2000)
+metrics = createStreamAggregator(60000,2000,<[avg(temp1),avg(temp2),avg(temp3)]>,sensorInfoTable,aggregateResult,`ts,`hardwareId,2000)
 subscribeTable(, "sensorInfoTable", "metric_engine", -1, append!{metrics},true)
 ```
 
@@ -133,6 +136,15 @@ db = database("dfs://iotDemoDB",COMPO,[db1,db2])
 dfsTable = db.createPartitionedTable(tableSchema,"sensorInfoTable",`ts`hardwareId)
 subscribeTable(, "sensorInfoTable", "save_to_db", -1, append!{dfsTable}, true, 1000000,10)
 ```
+需要观察分布式数据，可以通过以下两种途径
+* 可以通过集群管理web界面上的Dfs Explorer来观察
+* 可以通过dfsTable = database("dfs://iotDemoDB").loadTable("sensorInfoTable");select top 100 from dfsTable 来观察表内的实时记录
+
+如果发现数据库没有数据被保存，请确认
+```
+db2 = database("",VALUE,2018.08.14..2018.12.20) 
+```
+这句脚本里的开始结束时间是否包含了当前时间，如果没有，需要调整结束时间参数来包含当前时间。
 
 4.3.6 启动整个Demo
 ```
@@ -173,15 +185,3 @@ select * from getStreamingStat().subWorkers:
 ```
 观察当前streaming的发布队列和消费队列的数据，用于判断数据的消费速度是否跟得上流入速度。
 当流入数据积压并且没有下降的趋势，但是cpu资源还有余力时，可以适当缩短聚合计算的时间间隔，加快数据消费的速度。
-
-### 6 FAQ
-6.1 如何观察数据是否被保存到分布式数据库？
-* 可以通过集群管理web界面上的Dfs Explorer来观察
-* 可以通过dfsTable = database("dfs://iotDemoDB").loadTable("sensorInfoTable");select top 100 from dfsTable 来观察表内的实时记录
-
-6.2 为什么数据流并没有保存到分布式数据库？
-请确认
-```
-db2 = database("",VALUE,2018.08.14..2018.12.20) 
-```
-这句脚本里的开始结束时间是否包含了当前时间，如果没有，需要调整结束时间参数来包含当前时间。
