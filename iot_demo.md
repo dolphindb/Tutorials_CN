@@ -64,22 +64,22 @@ maxPubConnections=4
 
 4.3 实现步骤
 
-首先我们定义一个sensorTemp流数据表用于接收实时采集的温度数据，我们使用enableTablePersistence函数对sensorTemp表做持久化，每累计满100万行数据进行一次数据持久化。
+首先我们定义一个sensorTemp流数据表用于接收实时采集的温度数据，我们使用enableTablePersistence函数对sensorTemp表做持久化，内存中保留的最大数据量是100万行。
 ```
 share streamTable(1000000:0,`hardwareId`ts`temp1`temp2`temp3,[INT,TIMESTAMP,DOUBLE,DOUBLE,DOUBLE]) as sensorTemp
 enableTablePersistence(sensorTemp, true, false, 1000000)
 ```
-当设备采集的温度数据进入系统时，DolphinDB通过订阅流数据，把数据实时保存到分布式数据库中。我们这里将日期作为第一个分区维度，设备编号作为第二分区维度。在物联网大数据场景下，经常要清除过时的数据，这样分区的模式可以简单的通过删除指定日期分区就可以快速的清理过期数据。这里我们通过subscribeTable最后两个参数控制数据保存的频率，只有订阅数据达到100万或时间间隔达到10秒才批量将数据写入分布式数据库。
+通过订阅流数据表sensorTmp，把采集的数据准实时的批量保存到分布式数据库中。分布式表使用日期和设备编号两个分区维度。在物联网大数据场景下，经常要清除过时的数据，这样分区的模式可以简单的通过删除指定日期分区就可以快速的清理过期数据。subscribeTable函数最后两个参数控制数据保存的频率，只有订阅数据达到100万或时间间隔达到10秒才批量将数据写入分布式数据库。
 
 ```
 db1 = database("",VALUE,2018.08.14..2018.12.20)
 db2 = database("",RANGE,0..10*100)
 db = database("dfs://iotDemoDB",COMPO,[db1,db2])
-dfsTable = db.createPartitionedTable(tableSchema,"sensorTemp",`ts`hardwareId)
-subscribeTable(, "sensorTemp", "save_to_db", -1, append!{dfsTable}, true, 1000000,10)
+dfsTable = db.createPartitionedTable(sensorTemp,"sensorTemp",`ts`hardwareId)
+subscribeTable(, "sensorTemp", "save_to_db", -1, append!{dfsTable}, true, 1000000, 10)
 ```
 
-在对流数据做分布式保存数据库的同时，系统使用DolphinDB内置的 createStreamAggregator 实时运算函数来定义实时运算的过程。函数第一个参数指定了窗口大小为60秒，第二个参数指定每2秒钟做一次求均值运算，第三个参数是运算的元代码，可以由用户自己指定计算函数，任何系统支持的或用户自定义的聚合函数这里都能支持，通过指定分组字段hardwareId，函数会将流数据按设备分成1000个队列进行均值运算，每个设备都会按各自的窗口计算得到对应的平均温度。最后通过subscribeTable订阅流数据，在有新数据进来时触发实时计算，并将运算结果保存到一个新的数据流表sensorTempAvg中。
+在对流数据做分布式保存数据库的同时，系统使用createStreamAggregator函数创建一个指标聚合引擎， 用于实时计算。函数第一个参数指定了窗口大小为60秒，第二个参数指定每2秒钟做一次求均值运算，第三个参数是运算的元代码，可以由用户自己指定计算函数，任何系统支持的或用户自定义的聚合函数这里都能支持，通过指定分组字段hardwareId，函数会将流数据按设备分成1000个队列进行均值运算，每个设备都会按各自的窗口计算得到对应的平均温度。最后通过subscribeTable订阅流数据，在有新数据进来时触发实时计算，并将运算结果保存到一个新的数据流表sensorTempAvg中。
 createStreamAggregator 参数说明：窗口时间，运算间隔时间，聚合运算元代码，原始数据输入表，运算结果输出表，时序字段，分组字段，触发GC记录数阈值。
 
 ```
