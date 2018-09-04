@@ -77,7 +77,7 @@ maxPubConnections=4
 
 4.3 实现步骤
 
-首先我们定义一个表sensorTemp用于接收采集的温度数据，为了避免数据表占用过多内存，我们使用enableTablePersistence函数对数据表做持久化。
+首先我们定义一个sensorTemp表用于接收实时采集的温度数据，为了避免数据表占用过多内存，我们使用enableTablePersistence函数对sensorTemp表做持久化。
 ```
 share streamTable(1000000:0,`hardwareId`ts`temp1`temp2`temp3,[INT,TIMESTAMP,DOUBLE,DOUBLE,DOUBLE]) as sensorTemp
 enableTablePersistence(sensorTemp, true, false, 1000000)
