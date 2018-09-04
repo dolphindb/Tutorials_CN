@@ -43,11 +43,10 @@
 
 我们启用集群各节点的数据发布和订阅，可以订阅高频数据流做实时运算处理，也可以将实时运算结果再次发布出去；
 
-为了避免高频数据流临时积压导致内存不足，我们对数据流启用持久化处理，每满100万数据进行一次数据持久化，这样内存中保留的高频数据记录永远只保留100万以内，保证内存使用率稳定；
+为了避免高频数据流临时积压导致内存不足，我们对数据流启用持久化处理，每累计满100万行数据进行一次数据持久化，这样内存中保留的高频数据记录永远只保留100万以内，保证内存使用率稳定；
 
 系统设计createStreamingAggregator函数对高频数据做实时运算，我们在案例里指定运算窗口是1分钟，每2秒钟运算一次过往1分钟的温度均值，然后将运算结果保存到低频数据表中供前端轮询；
 部署前端Grafana平台展示运算结果的趋势图，设置每1秒钟轮询一次DolphinDB Server并刷新展示界面。
-
 
 4.2 服务器部署
 
@@ -76,23 +75,10 @@ maxPubConnections=8
 
 4.3 实现步骤
 
-数据上传过程中，DolphinDB将高频数据流接收到sensorInfoTable表中，并会每5秒钟对数据进行一次回溯1分钟求均值运算，将运算结果保存到一个新的数据流表aggregateResult中。高频表 ( sensorInfoTable ) 和低频表 ( aggregateResult )的定义如下，
+数据上传过程中，DolphinDB将高频数据流接收到sensorInfoTable表中，并会每5秒钟对数据进行一次回溯1分钟求均值运算，将运算结果保存到一个新的数据流表aggregateResult中。高频表 ( sensorInfoTable ) 和低频表 ( aggregateResult ) 定义如下
+> *sensorInfoTable[hardwareId,ts,temp1,temp2,temp3]*
 
----
-字段名称 | 字段说明
----|---
-hardwareId | 设备编号
-ts | 采集时间 ( timestamp )
-temp1 | 1号温度传感器数据
-temp2 | 2号温度传感器数据
-temp3 | 3号温度传感器数据
----
-字段名称 | 字段说明
----|---
-time | 窗口最后一条记录时间 ( timestamp )
-hardwareId | 设备编号
-tempavg1 | 1号传感器均值
----
+> *aggregateResult[time,hardwareId,tempavg1,tempavg2,tempavg3]*
 
 首先我们使用一段脚本来模拟产生高频物联网数据： 10000个设备，以每个点3个维度、10ms的频率生成数据，以每个维度8个Byte ( Double类型 ) 计算，数据流速是 24Mbps，持续100秒，生成总数据量是2.4G，为了避免高频数据表占用过多内存，我们使用enableTablePersistence函数对高频数据表做持久化。
 ```
@@ -131,14 +117,13 @@ share streamTable(1000000:0, `time`hardwareId`tempavg1`tempavg2`tempavg3, [TIMES
 metrics = createStreamAggregator(60000,2000,<[avg(temp1),avg(temp2),avg(temp3)]>,sensorInfoTable,aggregateResult,`ts,`hardwareId,2000)
 subscribeTable(, "sensorInfoTable", "metric_engine", -1, append!{metrics},true)
 ```
-在DolphinDB Server端在对高频数据流做保存、分析的时候，Grafana前端程序需要每秒钟轮询实时运算的结果，并且把最新的运算结果已趋势图的方式展示到前端界面上。关于DolphinDB和Grafana的接口配置请参考[Grafana配置教程](https://www.github.com/dolphindb/grafana-datasource/blob/master/README.md)
+在DolphinDB Server端在对高频数据流做保存、分析的时候，Grafana前端程序需要每秒钟轮询实时运算的结果，展示最新的运算结果的趋势图。关于Grafana的安装以及DolphinDB的接口配置请参考[Grafana配置教程](https://www.github.com/dolphindb/grafana-datasource/blob/master/README.md)
 。在完成grafana的基本配置之后，新增一个Graph Panel, 在Metrics tab里输入
 
 ```
 select gmtime(time) as time, tempavg1 from aggregateResult where hardwareId = 1
 ```
 > *这段脚本是选出1号传感器实时运算得到的平均温度表*
-
 
 最后，通过submitJob来启动整个Demo
 ```
