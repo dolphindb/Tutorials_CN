@@ -51,31 +51,34 @@
 
 4.2 服务器部署
 
-在本章示例环境里，我们采用了单机4节点集群，而实际生产环境下，建议使用多物理机集群。
+为了使用分布式数据库，我们需要使用一个单机多节点集群，可以参考[单机多节点集群部署指南](https://github.com/dolphindb/Tutorials_CN/blob/master/single_machine_cluster_deploy.md)。这里我们配置了1个controller+1个agent+4个datanode的集群，下面列出主要的配置文件内容供参考：
 
-[单机多节点集群部署指南](https://github.com/dolphindb/Tutorials_CN/blob/master/single_machine_cluster_deploy.md)
-
-[多物理机集群部署指南](https://github.com/dolphindb/Tutorials_CN/blob/master/multi_machine_cluster_deploy.md)
-
-4.2.1 根据案例设计中提到的特性，我们需要在集群中启用以下配置：
-* 启用 流数据持久化 : 指定 persistenceDir 目录
-* 启用 Streaming发布和订阅：指定maxPubConnections和subPort
-
-4.2.2 cluster.node文件配置内容示例
-
-由于本demo里面只用到node1来订阅，所以仅配置了node1.subPort。
+cluster.nodes
 ```
-  node1.subPort = 8089
-  maxPubConnections = 64
-  persistenceDir = /home/persistenceDir/
+localSite,mode
+localhost:8701:agent1,agent
+localhost:8081:node1,datanode
+localhost:8083:node2,datanode
+localhost:8082:node3,datanode
+localhost:8084:node4,datanode
 ```
+由于DolphinDB系统默认是不启用Streaming的发布和订阅，所以我们需要通过在cluster.cfg里做显式配置来启用它，因为本次demo里涉及的数据量并不大，所以这里只启用了node1来做数据订阅
+cluster.cfg
+```
+maxMemSize=12
+workerNum=1
+persistenceDir=dbcache
+maxSubConnections=4
+node1.subPort=8085
+maxPubConnections=8
+```
+实际生产环境下，建议使用多物理机集群，可以参考 [多物理机集群部署指南](https://github.com/dolphindb/Tutorials_CN/blob/master/multi_machine_cluster_deploy.md)
 
-4.3 表结构及脚本设计
+4.3 实现步骤
 
-数据上传过程中，DolphinDB将高频数据流接收到sensorInfoTable表中，并会每5秒钟对数据进行一次回溯1分钟求均值运算，将运算结果保存到一个新的数据流表aggregateResult中。
+数据上传过程中，DolphinDB将高频数据流接收到sensorInfoTable表中，并会每5秒钟对数据进行一次回溯1分钟求均值运算，将运算结果保存到一个新的数据流表aggregateResult中。高频表 ( sensorInfoTable ) 和低频表 ( aggregateResult )的定义如下，
 
-4.3.1 高频表 ( sensorInfoTable ) 字段定义如下
-
+---
 字段名称 | 字段说明
 ---|---
 hardwareId | 设备编号
@@ -83,18 +86,15 @@ ts | 采集时间 ( timestamp )
 temp1 | 1号温度传感器数据
 temp2 | 2号温度传感器数据
 temp3 | 3号温度传感器数据
-
-4.3.2 低频表 ( aggregateResult ) 字段定义
-
+---
 字段名称 | 字段说明
 ---|---
 time | 窗口最后一条记录时间 ( timestamp )
 hardwareId | 设备编号
 tempavg1 | 1号传感器均值
+---
 
-4.3.3 模拟数据生成脚本
-
-此处模拟10000个设备，以每个点3个维度、10ms每次的频率生成数据，以每个维度8个Byte ( Double类型 ) 计算，数据流速是 10000 * 1000/10 *3 * 8 * 8 = 24Mbps，持续100秒，保存的总数据量是2.4G。
+首先我们使用一段脚本来模拟产生高频物联网数据： 10000个设备，以每个点3个维度、10ms的频率生成数据，以每个维度8个Byte ( Double类型 ) 计算，数据流速是 24Mbps，持续100秒，生成总数据量是2.4G，为了避免高频数据表占用过多内存，我们使用enableTablePersistence函数对高频数据表做持久化。
 ```
 share streamTable(1000000:0,`hardwareId`ts`temp1`temp2`temp3,[INT,TIMESTAMP,DOUBLE,DOUBLE,DOUBLE]) as sensorInfoTable
 enableTablePersistence(sensorInfoTable, true, false, 1000000)
@@ -108,23 +108,8 @@ def writeData(infoTable){
 	}
 }
 ```
-
-4.3.4 监测指标实时运算
-
-实时运算使用了DolphinDB的 createStreamAggregator 实时运算函数
-
-createStreamAggregator 参数可以分别指定：窗口时间，运算间隔时间，聚合运算元数据，输入表，输出表，时序字段，分组字段，触发GC记录数阈值。
-
-通过subscribeTable 订阅实时数据并将实时运算结果写入 aggregateResult 表中。
-```
-share streamTable(1000000:0, `time`hardwareId`tempavg1`tempavg2`tempavg3, [TIMESTAMP,INT,DOUBLE,DOUBLE,DOUBLE]) as aggregateResult
-metrics = createStreamAggregator(60000,2000,<[avg(temp1),avg(temp2),avg(temp3)]>,sensorInfoTable,aggregateResult,`ts,`hardwareId,2000)
-subscribeTable(, "sensorInfoTable", "metric_engine", -1, append!{metrics},true)
-```
-
-4.3.5 高频数据的保存
-
-在对流数据进行实时运算的同时，DolphinDB通过订阅高频流数据，把原始数据保存到分布式数据库中。我们这里将日期作为第一个分区维度，在物联网大数据场景下，经常要清除过时的数据，这样分区的模式可以简单的通过删除指定日期分区就可以快速的清理过期数据。
+在模拟产生的高频数据流开始进入系统之后，DolphinDB通过订阅高频流数据，把原始数据保存到分布式数据库中。我们这里将日期作为第一个分区维度，设备编号作为第二分区维度。
+> *在物联网大数据场景下，经常要清除过时的数据，这样分区的模式可以简单的通过删除指定日期分区就可以快速的清理过期数据。*
 
 ```
 if(exists("dfs://iotDemoDB")){
@@ -136,52 +121,26 @@ db = database("dfs://iotDemoDB",COMPO,[db1,db2])
 dfsTable = db.createPartitionedTable(tableSchema,"sensorInfoTable",`ts`hardwareId)
 subscribeTable(, "sensorInfoTable", "save_to_db", -1, append!{dfsTable}, true, 1000000,10)
 ```
-需要观察分布式数据，可以通过以下两种途径
-* 可以通过集群管理web界面上的Dfs Explorer来观察
-* 可以通过dfsTable = database("dfs://iotDemoDB").loadTable("sensorInfoTable");select top 100 from dfsTable 来观察表内的实时记录
+> *需要观察分布式数据，可以通过以下两种途径 1.可以通过集群管理web界面上的Dfs Explorer来观察。2. 可以通过dfsTable = database("dfs://iotDemoDB").loadTable("sensorInfoTable"); select top 100 * from dfsTable 来观察表内的实时记录*
 
-如果发现数据库没有数据被保存，请确认
+在对流数据做分布式保存数据库的同时，系统使用DolphinDB内置的 createStreamAggregator 实时运算函数来定义实时运算的过程,通过subscribeTable订阅高频数据并在有新数据进来时触发实时计算。
+> *createStreamAggregator 参数可以分别指定：窗口时间，运算间隔时间，聚合运算元数据，输入原始数据表，输出运算结果表，时序字段，分组字段，触发GC记录数阈值。*
+
 ```
-db2 = database("",VALUE,2018.08.14..2018.12.20) 
+share streamTable(1000000:0, `time`hardwareId`tempavg1`tempavg2`tempavg3, [TIMESTAMP,INT,DOUBLE,DOUBLE,DOUBLE]) as aggregateResult
+metrics = createStreamAggregator(60000,2000,<[avg(temp1),avg(temp2),avg(temp3)]>,sensorInfoTable,aggregateResult,`ts,`hardwareId,2000)
+subscribeTable(, "sensorInfoTable", "metric_engine", -1, append!{metrics},true)
 ```
-这句脚本里的开始结束时间是否包含了当前时间，如果没有，需要调整结束时间参数来包含当前时间。
+在DolphinDB Server端在对高频数据流做保存、分析的时候，Grafana前端程序需要每秒钟轮询实时运算的结果，并且把最新的运算结果已趋势图的方式展示到前端界面上。关于DolphinDB和Grafana的接口配置请参考[Grafana配置教程](https://www.github.com/dolphindb/grafana-datasource/blob/master/README.md)
+。在完成grafana的基本配置之后，新增一个Graph Panel, 在Metrics tab里输入
 
-4.3.6 启动整个Demo
-```
-    submitJob("simulateData", "simulate sensor data", writeData{sensorInfoTable})
-```
-
-4.4 前端展示配置
-
-4.4.1 Grafana系统配置
-
-要观察实时的数据，我们需要一个支持时序数据展示的前端平台，DolphinDB和Grafana做了数据对接。
- 
-[Grafana配置教程](https://www.github.com/dolphindb/grafana-datasource/blob/master/README.md)
-
-
-4.4.2 轮询脚本配置
-
-  在参照教程添加好数据源之后，在 Metics Tab 脚本输入框中输入：
 ```
 select gmtime(time) as time, tempavg1 from aggregateResult where hardwareId = 1
 ```
-(这段脚本是选出1号传感器的过去一分钟的平均温度)
+> *这段脚本是选出1号传感器实时运算得到的平均温度表*
 
-4.5 系统性能观测及调整
 
-4.5.1 系统运行性能总结
-
-* 集群的配置： 此案例里我们使用一台i7,16G内存的工作站，部署一个单机四节点的集群
-* 数据量：数据流速24Mbps，持续100秒，保存的总数据量是2.4G。
-* 运行结果：在运行完成后，记录CPU最高占用为17.3%, 内存最大占用6.04G
-
-**由结果可以看出，DolphinDB面对物联网场景，即使在普通工作站上也可以胜任高频数据流的接收、实时分析计算、分布式存储等一系列并行任务。**
-
-4.5.2 系统性能调优
-通过脚本
+最后，通过submitJob来启动整个Demo
 ```
-select * from getStreamingStat().subWorkers:
+    submitJob("simulateData", "simulate sensor data", writeData{sensorInfoTable})
 ```
-观察当前streaming的发布队列和消费队列的数据，用于判断数据的消费速度是否跟得上流入速度。
-当流入数据积压并且没有下降的趋势，但是cpu资源还有余力时，可以适当缩短聚合计算的时间间隔，加快数据消费的速度。
