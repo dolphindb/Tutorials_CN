@@ -124,4 +124,4 @@ def writeData(infoTable){
 submitJob("simulateData", "simulate sensor data", writeData)
 ```
 
-[demo脚本下载](iot_demo_script.txt)
+[demo完整脚本](iot_demo_script.txt)
