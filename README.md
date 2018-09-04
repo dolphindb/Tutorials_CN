@@ -7,4 +7,4 @@
 #### [内存分区表加载和操作](https://github.com/dolphindb/Tutorials_CN/blob/master/partitioned_in_memory_table.md)
 #### [权限管理和安全](https://github.com/dolphindb/Tutorials_CN/blob/master/ACL_and_Security.md)
 #### [脚本语言的混合范式编程](https://github.com/dolphindb/Tutorials_CN/blob/master/hybrid_programming_paradigms.md)
-#### [DolphinDB在工业物联网的应用](https://github.com/dolphindb/Tutorials_CN/blob/master/iotDemo.md)
+#### [DolphinDB在工业物联网的应用](https://github.com/dolphindb/Tutorials_CN/blob/master/iot_Demo.md)
