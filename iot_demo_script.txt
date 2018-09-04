@@ -1,0 +1,34 @@
+login("admin","123456")
+//-===================start 
+share streamTable(1000000:0,`hardwareId`ts`temp1`temp2`temp3,[INT,TIMESTAMP,DOUBLE,DOUBLE,DOUBLE]) as sensorInfoTable
+enableTablePersistence(sensorInfoTable, true, false, 1000000)
+
+def writeData(){
+	hardwareNumber = 10000
+	for (i in 0:10000) {
+		data = table(take(1..hardwareNumber,hardwareNumber) as hardwareId ,take(now(),hardwareNumber) as ts,rand(20..41,hardwareNumber) as temp1,rand(30..71,hardwareNumber) as temp2,rand(70..151,hardwareNumber) as temp3)
+		sensorInfoTable.append!(data)
+		sleep(10)
+	}
+}
+
+share streamTable(1000000:0, `time`hardwareId`tempavg1`tempavg2`tempavg3, [TIMESTAMP,INT,DOUBLE,DOUBLE,DOUBLE]) as aggregateResult
+metrics = createStreamAggregator(60000,2000,<[avg(temp1),avg(temp2),avg(temp3)]>,sensorInfoTable,aggregateResult,`ts,`hardwareId,2000) 
+subscribeTable(, "sensorInfoTable", "metric_engine", -1, append!{metrics},true)
+
+if(exists("dfs://iotDemoDB")){
+	dropDatabase("dfs://iotDemoDB")
+}
+tableSchema = table(1000000:0,`hardwareId`ts`temp1`temp2`temp3,[INT,TIMESTAMP,DOUBLE,DOUBLE,DOUBLE])
+db1 = database("",VALUE,2018.08.14..2018.09.20) 
+db2 = database("",RANGE,0..10*100)
+db = database("dfs://iotDemoDB",COMPO,[db1,db2])
+dfsTable = db.createPartitionedTable(tableSchema,"sensorInfoTable",`ts`hardwareId)
+subscribeTable(, "sensorInfoTable", "save_to_db", -1, append!{dfsTable}, true, 1000000,10)
+
+jobId = submitJob("simulateData", "simulate sensor data", writeData)
+//===========clear
+getJobReturn(jobId,true)
+clearTablePersistence(sensorInfoTable)
+unsubscribeTable(,"sensorInfoTable", "metric_engine")
+unsubscribeTable(,"sensorInfoTable", "save_to_db")

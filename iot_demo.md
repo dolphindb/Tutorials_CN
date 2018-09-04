@@ -76,32 +76,15 @@ maxPubConnections=8
 
 4.3 实现步骤
 
-数据上传过程中，DolphinDB将高频数据流接收到sensorInfoTable表中，并会每2秒钟对数据进行一次回溯1分钟求均值运算，将运算结果保存到一个新的数据流表aggregateResult中。高频表 ( sensorInfoTable ) 和低频表 ( aggregateResult ) 定义如下
-> *sensorInfoTable[hardwareId,ts,temp1,temp2,temp3]*
-
-> *aggregateResult[time,hardwareId,tempavg1,tempavg2,tempavg3]*
-
-首先我们使用一段脚本来模拟产生高频物联网数据： 10000个设备，以每个点3个维度、10ms的频率生成数据，以每个维度8个Byte ( Double类型 ) 计算，数据流速是 24Mbps，持续100秒，生成总数据量是2.4G，为了避免高频数据表占用过多内存，我们使用enableTablePersistence函数对高频数据表做持久化。
+首先我们定义一个表sensorInfoTable用于保存高频数据，为了避免高频数据表占用过多内存，我们使用enableTablePersistence函数对高频数据表做持久化。
 ```
 share streamTable(1000000:0,`hardwareId`ts`temp1`temp2`temp3,[INT,TIMESTAMP,DOUBLE,DOUBLE,DOUBLE]) as sensorInfoTable
 enableTablePersistence(sensorInfoTable, true, false, 1000000)
-
-def writeData(infoTable){
-	hardwareNumber = 10000
-	for (i in 0:10000) {
-		data = table(take(1..hardwareNumber,hardwareNumber) as hardwareId ,take(now(),hardwareNumber) as ts,rand(20..41,hardwareNumber) as temp1,rand(30..71,hardwareNumber) as temp2,rand(70..151,hardwareNumber) as temp3)
-		infoTable.append!(data)
-		sleep(10)
-	}
-}
 ```
 在模拟产生的高频数据流开始进入系统之后，DolphinDB通过订阅高频流数据，把原始数据保存到分布式数据库中。我们这里将日期作为第一个分区维度，设备编号作为第二分区维度。
 > *在物联网大数据场景下，经常要清除过时的数据，这样分区的模式可以简单的通过删除指定日期分区就可以快速的清理过期数据。*
 
 ```
-if(exists("dfs://iotDemoDB")){
-	dropDatabase("dfs://iotDemoDB")
-}
 db1 = database("",VALUE,2018.08.14..2018.12.20)
 db2 = database("",RANGE,0..10*100)
 db = database("dfs://iotDemoDB",COMPO,[db1,db2])
@@ -110,7 +93,8 @@ subscribeTable(, "sensorInfoTable", "save_to_db", -1, append!{dfsTable}, true, 1
 ```
 > *需要观察分布式数据，可以通过以下两种途径 1.可以通过集群管理web界面上的Dfs Explorer来观察。2. 可以通过dfsTable = database("dfs://iotDemoDB").loadTable("sensorInfoTable"); select top 100 * from dfsTable 来观察表内的实时记录*
 
-在对流数据做分布式保存数据库的同时，系统使用DolphinDB内置的 createStreamAggregator 实时运算函数来定义实时运算的过程,通过subscribeTable订阅高频数据并在有新数据进来时触发实时计算。
+在对流数据做分布式保存数据库的同时，系统使用DolphinDB内置的 createStreamAggregator 实时运算函数来定义实时运算的过程。这个脚本里指定了一个窗口大小为60秒，每2秒钟对所有温度数据做一次求均值运算，其中第三个参数是运算的元代码，可以由用户自己指定计算函数，所以这里并不限于均值运算。然后通过subscribeTable订阅高频数据并在有新数据进来时触发实时计算，并将运算结果保存到一个新的数据流表aggregateResult中。
+
 > *createStreamAggregator 参数可以分别指定：窗口时间，运算间隔时间，聚合运算元数据，输入原始数据表，输出运算结果表，时序字段，分组字段，触发GC记录数阈值。*
 
 ```
@@ -126,7 +110,18 @@ select gmtime(time) as time, tempavg1 from aggregateResult where hardwareId = 1
 ```
 > *这段脚本是选出1号传感器实时运算得到的平均温度表*
 
-最后，通过submitJob来启动整个Demo
+最后，启动数据模拟程序，生成高频数据并写入流数据表
+ > *高频数据规模: 10000 个设备，以每个点3个维度、10ms的频率生成数据，以每个维度8个Byte ( Double类型 ) 计算，数据流速是 24Mbps，持续100秒。*
 ```
-    submitJob("simulateData", "simulate sensor data", writeData{sensorInfoTable})
+def writeData(infoTable){
+	hardwareNumber = 10000
+	for (i in 0:10000) {
+		data = table(take(1..hardwareNumber,hardwareNumber) as hardwareId ,take(now(),hardwareNumber) as ts,rand(20..41,hardwareNumber) as temp1,rand(30..71,hardwareNumber) as temp2,rand(70..151,hardwareNumber) as temp3)
+		infoTable.append!(data)
+		sleep(10)
+	}
+}
+submitJob("simulateData", "simulate sensor data", writeData)
 ```
+
+[demo脚本下载](iot_demo_script.txt)
