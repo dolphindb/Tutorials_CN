@@ -39,18 +39,18 @@
 
 4.1 系统的功能模块设计
 	
-        针对上述的案例，我们首先要启用DolphinDB的分布式数据库，创建一个iotDemoDB的分布式数据库用于保存实时数据，为了利于日后的过期数据清理，采用日期作为第一个维度分区，设备编号作为第二个维度分区；
+针对上述的案例，我们首先要启用DolphinDB的分布式数据库，创建一个iotDemoDB的分布式数据库用于保存实时数据，为了利于日后的过期数据清理，采用日期作为第一个维度分区，设备编号作为第二个维度分区；
 
-	    我们启用集群各节点的数据发布和订阅，可以订阅高频数据流做实时运算处理，也可以将实时运算结果再次发布出去；
+我们启用集群各节点的数据发布和订阅，可以订阅高频数据流做实时运算处理，也可以将实时运算结果再次发布出去；
 
-        为了避免高频数据流临时积压导致内存不足，我们对数据流启用持久化处理，每累计满100万行数据进行一次数据持久化，这样内存中保留的高频数据记录永远只保留100万以内，保证内存使用率稳定；
+为了避免高频数据流临时积压导致内存不足，我们对数据流启用持久化处理，每累计满100万行数据进行一次数据持久化，这样内存中保留的高频数据记录永远只保留100万以内，保证内存使用率稳定；
 
-        系统设计createStreamingAggregator函数对高频数据做实时运算，我们在案例里指定运算窗口是1分钟，每2秒钟运算一次过往1分钟的温度均值，然后将运算结果保存到低频数据表中供前端轮询；
-        部署前端Grafana平台展示运算结果的趋势图，设置每1秒钟轮询一次DolphinDB Server并刷新展示界面。
+系统设计createStreamingAggregator函数对高频数据做实时运算，我们在案例里指定运算窗口是1分钟，每2秒钟运算一次过往1分钟的温度均值，然后将运算结果保存到低频数据表中供前端轮询；
+部署前端Grafana平台展示运算结果的趋势图，设置每1秒钟轮询一次DolphinDB Server并刷新展示界面。
 
 4.2 服务器部署
 
-        为了使用分布式数据库，我们需要使用一个单机多节点集群，可以参考[单机多节点集群部署指南](https://github.com/dolphindb/Tutorials_CN/blob/master/single_machine_cluster_deploy.md)。这里我们配置了1个controller+1个agent+4个datanode的集群，下面列出主要的配置文件内容供参考：
+为了使用分布式数据库，我们需要使用一个单机多节点集群，可以参考[单机多节点集群部署指南](https://github.com/dolphindb/Tutorials_CN/blob/master/single_machine_cluster_deploy.md)。这里我们配置了1个controller+1个agent+4个datanode的集群，下面列出主要的配置文件内容供参考：
 
 cluster.nodes
 ```
@@ -61,7 +61,7 @@ localhost:8083:node2,datanode
 localhost:8082:node3,datanode
 localhost:8084:node4,datanode
 ```
-        由于DolphinDB系统默认是不启用Streaming的发布和订阅，所以我们需要通过在cluster.cfg里做显式配置来启用它，因为本次demo里涉及的数据量并不大，所以这里只启用了node1来做数据订阅
+由于DolphinDB系统默认是不启用Streaming的发布和订阅，所以我们需要通过在cluster.cfg里做显式配置来启用它，因为本次demo里涉及的数据量并不大，所以这里只启用了node1来做数据订阅
 cluster.cfg
 ```
 maxMemSize=12
@@ -71,7 +71,7 @@ maxSubConnections=4
 node1.subPort=8085
 maxPubConnections=8
 ```
-        实际生产环境下，建议使用多物理机集群，可以参考 [多物理机集群部署指南](https://github.com/dolphindb/Tutorials_CN/blob/master/multi_machine_cluster_deploy.md)
+实际生产环境下，建议使用多物理机集群，可以参考 [多物理机集群部署指南](https://github.com/dolphindb/Tutorials_CN/blob/master/multi_machine_cluster_deploy.md)
 
 4.3 实现步骤
 
