@@ -61,7 +61,7 @@ localhost:8083:node2,datanode
 localhost:8082:node3,datanode
 localhost:8084:node4,datanode
 ```
-由于DolphinDB系统默认是不启用Streaming的发布和订阅，所以我们需要通过在cluster.cfg里做显式配置来启用它，因为本次demo里涉及的数据量并不大，所以这里只启用了node1来做数据订阅
+由于DolphinDB系统默认是不启用Streaming模块功能的，所以我们需要通过在cluster.cfg里做显式配置来启用它，因为本次demo里使用的数据量不大，为了避免demo复杂化，所以这里只启用了node1来做数据订阅
 
 cluster.cfg
 ```
