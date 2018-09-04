@@ -114,7 +114,7 @@ select gmtime(time) as time, tempavg1, tempavg2, tempavg3 from sensorTempAvg whe
 ![image](images/datasource.PNG)
 
 
-最后，启动数据模拟生成程序，生成高频数据并写入流数据表
+最后，启动数据模拟生成程序，生成模拟温度数据并写入流数据表
  > *高频数据规模: 1000 个设备，以每个点3个维度、10ms的频率生成数据，以每个维度8个Byte ( Double类型 ) 计算，数据流速是 24Mbps，持续100秒。*
 ```
 def writeData(){
@@ -127,5 +127,5 @@ def writeData(){
 }
 submitJob("simulateData", "simulate sensor data", writeData)
 ```
-
+---
 [demo完整脚本](script/iot_demo_script.txt)
