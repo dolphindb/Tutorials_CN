@@ -108,19 +108,14 @@ ploadText函数的特点可以快速载入大文件，它在设计上充分利�
 	t = table(ints as int, symbols as symbol, dates as date, floats as float, times as time)
 	t.saveText(filePath)
 ```
-分别通过loadText和ploadText来载入文件，节点设置 `localExecutors=7`。
+分别通过loadText和ploadText来载入文件，该节点是4核8超线程的CPU。
 ```
 timer loadText(filePath);
-```
-
-> Time elapsed: `39728.393` ms
-
-```
+//Time elapsed: 39728.393 ms
 timer ploadText(filePath);
+//Time elapsed: 10685.838 ms
 ```
-
-> Time elapsed: `10685.838` ms
-
+最后的结果显示ploadText的性能差不多是是loadText的4倍
 
 #### 2.3. loadTextEx
 
