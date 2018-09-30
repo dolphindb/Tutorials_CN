@@ -184,7 +184,7 @@ tb = hdf5::loadHdf5(dataFilePath,datasetName)
 db=database(dfsPath,VALUE,2018.01.01..2018.01.31)  
 db.createPartitionedTable(tb, "cycle", "tradingDay")
 ```
-然后将HDF5文件通过`hdf5::loadHdf5Ex`函数导入
+然后将HDF5文件通过`hdf5::loadHdf5Ex`函数导入：
 ```
 hdf5::loadHdf5Ex(db, "cycle", "tradingDay", dataFilePath,datasetName)
 ```
@@ -302,6 +302,7 @@ db = database(dbPath, COMPO, [dbDate, dbID])
 
 pt=db.createPartitionedTable(table(1000000:0,columns,types), tableName, `tradingDay`symbol)
 ```
+需要注意的是，CHUNK(最底层分区数据块)是DolphinDB存储数据的最小单位，DolphinDB对CHUNK的写入操作是**独占式的**，当任务并行进行的时候，需要避免多任务同时向一个CHUNK写入数据。本案例中每年的数据交给一个单独任务去做，各任务操作的数据边界没有重合，所以不可能发生多任务写入同一CHUNK的情况。
 
 #### 5.2. 导入数据
 数据导入脚本的主要思路很简单，就是通过循环目录树，将所有的CSV文件逐个读取并写入到分布式数据库表`dfs://SAMPLE_TRDDB`中，但是具体导入过程中还是会有很多细节问题。
@@ -325,7 +326,7 @@ def loadCsvFromYearPath(path, dbPath, tableName){
 	}
 }
 ```
-然后通过 [rpc](https://www.dolphindb.com/help/rpc.html) 函数结合 [submitJob](https://www.dolphindb.com/help/submitJob.html) 函数把上面定义的函数提交到各节点去执行：
+最后通过 [rpc](https://www.dolphindb.com/help/rpc.html) 函数结合 [submitJob](https://www.dolphindb.com/help/submitJob.html) 函数把上面定义的函数提交到各节点去执行：
 ```
 nodesAlias="NODE" + string(1..4)
 years= files(rootDir)[`filename]
@@ -338,12 +339,15 @@ for(year in years){
 	index=index+1
 }
 ```
+数据导入完成，详细脚本请至附录下载。
 
-需要注意的是，CHUNK(最底层分区数据块)是DolphinDB存储数据的最小单位，DolphinDB对CHUNK的写入操作是**独占式的**，当任务并行进行的时候，需要避免多任务同时向一个CHUNK写入数据。案例中我们设计每年的数据写入交给一个单独任务去做，各任务操作的数据边界没有重合，所以不可能发生多任务写入同一CHUNK的情况。
 
-### 6. 附录
-文中示例使用的CSV和HDF5格式提供下载，供脚本演练使用。
 
-[candle_201801.csv](https://github.com/dolphindb/Tutorials_CN/blob/master/data/candle_201801.csv)
 
-[candle_201801.h5](https://github.com/dolphindb/Tutorials_CN/blob/master/data/candle_201801.h5)
+### 6. 附录 
+
+CSV导入数据文件[ [点击下载] ](https://github.com/dolphindb/Tutorials_CN/blob/master/data/candle_201801.csv)
+
+HDF5导入数据文件[ [点击下载] ](https://github.com/dolphindb/Tutorials_CN/blob/master/data/candle_201801.h5) 
+
+案例完整脚本 [点击下载](https://github.com/dolphindb/Tutorials_CN/blob/master/data/demoScript.txt)
