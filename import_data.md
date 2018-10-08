@@ -69,7 +69,7 @@ open|DOUBLE
 high|DOUBLE
 low	|DOUBLE
 close|DOUBLE
-volume|INT
+volume|LONG
 turnover|DOUBLE
 unixTime|LONG
 
