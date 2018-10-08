@@ -8,13 +8,25 @@ DolphinDB提供了多种灵活的数据导入方法，来帮助用户方便的�
 - 通过HDF5文件导入。
 - 通过ODBC接口导入。
 
-### 1. DolphinDB数据库基本概念
+#### 1. DolphinDB数据库基本概念和特点
 
-DolphinDB里数据以结构化数据表的方式保存。数据表按存储介质可以分为内存表，本地磁盘表，分布式表；按是否分区可以分为普通表和分区表。
+本章中多处使用到DolphinDB的数据库和表的概念，这也是DolphinDB的核心之一，所以这里首先做一个介绍。
 
-在传统的数据库系统，数据库(Database)更多理解为数据对象的容器，而在DolphinDB里，Database是定义了数据分区方式和存储相关的元数据信息。最关键的区别是，传统的数据库里分区是针对Table定义的，而DolphinDB的分区是针对Database来定义的，也就是说同一个Database下的Table只能使用同一种分区机制。
+在DolphinDB里数据以结构化数据表的方式保存。数据表按存储介质可以分为：
 
-### 2. 通过CSV文本文件导入
+- 内存表：数据仅保存在本节点内存，存取速度最快，但是节点关闭数据就不存在了。
+- 本地磁盘表：数据保存在本地磁盘上，即使节点关闭，通过脚本就可以方便的从磁盘加载到内存。
+- 分布式表：数据在物理上分布在不同的节点，通过DolphinDB的分布式计算引擎，逻辑上仍然可以像本地表一样做统一查询。
+
+按是否分区可以分为：
+
+- 普通表。
+- 分区表。
+
+在传统的数据库系统，分区是针对数据表定义的，就是同一个数据库里的每个数据表都可以有自己的分区定义；
+而DolphinDB的分区是针对Database定义的，也就是说同一个数据库下的数据表只能使用同一种分区机制，这也意味着如果两张表要使用不同的分区机制，那么它们是不能放在一个数据库下的。
+
+#### 2. 通过CSV文本文件导入
 
 通过CSV文件进行数据中转是比较通用化的一种数据迁移方式，方式简单易操作。DolphinDB提供了 [loadText](http://www.dolphindb.com/cn/help/index.html?loadText.html)，
 [ploadText](https://www.dolphindb.com/help/index.html?ploadText.html)，[loadTextEx](https://www.dolphindb.com/help/index.html?loadTextEx.html) 三个函数来载入CSV文本文件。
@@ -57,7 +69,7 @@ open|DOUBLE
 high|DOUBLE
 low	|DOUBLE
 close|DOUBLE
-volume|INT
+volume|LONG
 turnover|DOUBLE
 unixTime|LONG
 
@@ -96,19 +108,14 @@ ploadText函数的特点可以快速载入大文件，它在设计上充分利�
 	t = table(ints as int, symbols as symbol, dates as date, floats as float, times as time)
 	t.saveText(filePath)
 ```
-分别通过loadText和ploadText来载入文件，节点设置 `localExecutors=7`。
+分别通过loadText和ploadText来载入文件，该节点是4核8超线程的CPU。
 ```
 timer loadText(filePath);
-```
-
-> Time elapsed: `39728.393` ms
-
-```
+//Time elapsed: 39728.393 ms
 timer ploadText(filePath);
+//Time elapsed: 10685.838 ms
 ```
-
-> Time elapsed: `10685.838` ms
-
+最后的结果显示ploadText的性能差不多是是loadText的4倍
 
 #### 2.3. loadTextEx
 
@@ -130,7 +137,7 @@ loadTextEx(db, "cycle", "tradingDay", dataFilePath)
 ```
 tb = database("dfs://dataImportCSVDB").loadTable("cycle")
 ```
-### 3. 通过HDF5文件导入
+#### 3. 通过HDF5文件导入
 
 HDF5是一种比CSV更高效的二进制数据文件格式，在数据分析领域广泛使用。DolphinDB也支持通过HDF5格式文件导入数据。
 
@@ -189,7 +196,7 @@ db.createPartitionedTable(tb, "cycle", "tradingDay")
 hdf5::loadHdf5Ex(db, "cycle", "tradingDay", dataFilePath,datasetName)
 ```
 
-### 4. 通过ODBC接口导入
+#### 4. 通过ODBC接口导入
 
 DolphinDB支持ODBC接口连接第三方数据库，从数据库中直接将表读取成DolphinDB的内存数据表。
 
@@ -240,7 +247,7 @@ tb.append!(data);
 ```
 通过ODBC导入数据避免了文件导出导入的过程，而且通过DolphinDB的定时作业机制，它还可以作为时序数据定时同步的数据通道。
 
-### 5. 金融数据导入案例
+#### 5. 金融数据导入案例
 
 下面以证券市场日K线图数据文件导入作为示例，数据以CSV文件格式保存在磁盘上，共有10年的数据，按年度分目录保存，一共大约100G的数据，路径示例如下：
 ```
@@ -249,7 +256,7 @@ tb.append!(data);
     ---- 000002.csv
     ---- 000003.csv
     ---- 000004.csv
-	---- ...
+    ---- ...
 2009
 ...
 2018
@@ -273,9 +280,9 @@ tb.append!(data);
 yearRange =date(2008.01M + 12*0..22)
 ```
 
-这里股票代码有几千个，如果按单个股票分区，那么每个分区只是几兆大小，而分区数量则很多。分布式系统在执行查询时，会将查询语句分成多个子任务分发到不同的分区执行，上面的分区方式会导致任务数量非常多，而任务执行时间极短，导致系统在管理任务上花费的时间反而大于任务本身的执行时间，这样的分区方式明显是不合理的，这里我们按照范围将股票代码均分成100个区间，每个区间作为一个分区，最终分区的大小约100M左右。 考虑到后期有新的股票数据进来，所以增加了一个虚拟的代码999999，跟最后一个股票代码组成一个分区，用来保存后续新增股票的数据。
+这里股票代码有几千个，如果对股票代码按值(VALUE)分区，那么每个分区只是几兆大小，而分区数量则很多。分布式系统在执行查询时，会将查询语句分成多个子任务分发到不同的分区执行，所以按值分区方式会导致任务数量非常多，而任务执行时间极短，导致系统在管理任务上花费的时间反而大于任务本身的执行时间，这样的分区方式明显是不合理的。这里我们按照范围将所有股票代码均分成100个区间，每个区间作为一个分区，最终分区的大小约100M左右。 考虑到后期有新的股票数据进来，所以增加了一个虚拟的代码999999，跟最后一个股票代码组成一个分区，用来保存后续新增股票的数据。
 
-通过下面的脚本得到 symbol 字段的分区范围 symRanges：
+通过下面的脚本得到 symbol 字段的分区范围：
 ```
 //遍历所有的年度目录，去重整理出股票代码清单，并通过cutPoint分成100个区间
 symbols = array(SYMBOL, 0, 100)
@@ -302,7 +309,7 @@ db = database(dbPath, COMPO, [dbDate, dbID])
 
 pt=db.createPartitionedTable(table(1000000:0,columns,types), tableName, `tradingDay`symbol)
 ```
-需要注意的是，CHUNK(最底层分区数据块)是DolphinDB存储数据的最小单位，DolphinDB对CHUNK的写入操作是**独占式的**，当任务并行进行的时候，需要避免多任务同时向一个CHUNK写入数据。本案例中每年的数据交给一个单独任务去做，各任务操作的数据边界没有重合，所以不可能发生多任务写入同一CHUNK的情况。
+需要注意的是，分区是DolphinDB存储数据的最小单位，DolphinDB对分区的写入操作是**独占式的**，当任务并行进行的时候，需要避免多任务同时向一个分区写入数据。本案例中每年的数据交给一个单独任务去做，各任务操作的数据边界没有重合，所以不可能发生多任务写入同一分区的情况。
 
 #### 5.2. 导入数据
 数据导入脚本的主要思路很简单，就是通过循环目录树，将所有的CSV文件逐个读取并写入到分布式数据库表`dfs://SAMPLE_TRDDB`中，但是具体导入过程中还是会有很多细节问题。
@@ -339,12 +346,11 @@ for(year in years){
 	index=index+1
 }
 ```
-数据导入完成，详细脚本请至附录下载。
+数据导入过程中，可以通过`pnodeRun(getRecentJobs)`来观察后台任务的完成情况。
 
+本案例的详细脚本请至附录下载。
 
-
-
-### 6. 附录 
+#### 6. 附录 
 
 CSV导入数据文件[ [点击下载] ](https://github.com/dolphindb/Tutorials_CN/blob/master/data/candle_201801.csv)
 
