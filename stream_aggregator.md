@@ -67,7 +67,7 @@ createStreamAggregator(windowTime, rollingTime, aggregators, dummyTable, outputT
 下表列出了当前已优化的聚合函数清单：
 
 函数名 | 函数说明 
----|---|---
+---|---
 corr|相关性
 covar|协方差
 first|第一个元素
