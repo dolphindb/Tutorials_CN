@@ -57,7 +57,7 @@ createStreamAggregator(windowTime, rollingTime, aggregators, dummyTable, outputT
 由于原始的聚合函数是对每个窗口内的全部数据进行计算，为了提升流数据聚合的性能，DolphinDB进行了针对性的优化，函数在计算时充分利用上一个窗口的计算结果，最大程度降低了重复计算，可显著提高运行速度。下表列出了当前已优化的聚合函数清单：
 
 函数名 | 函数说明 
----|---|---
+---|---
 corr|相关性
 covar|协方差
 first|第一个元素
