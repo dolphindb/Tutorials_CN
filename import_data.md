@@ -83,7 +83,7 @@ tt=loadText(dataFilePath,,schemaTb)
 	t = table(ints as int, symbols as symbol, dates as date, floats as float, times as time)
 	t.saveText(filePath)
 ```
-分别通过`loadText`和`ploadText`来载入文件。本例所用节点是4核8超线程的CPU。
+分别通过`loadText`和`ploadText`来载入文件。本例所用节点是4核8线程的CPU。
 ```
 timer loadText(filePath);
 Time elapsed: 39728.393 ms
