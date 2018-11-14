@@ -54,7 +54,7 @@ tmpTB = loadText(dataFilePath)
 DolphinDB在导入数据的同时，随机提取一部分的行以确定各列数据类型。所以只指定文件即可导入大部分CSV文件，非常方便。但有时系统自动识别的数据类型并不符合预期或需求，比如导入数据的volume列被识别为INT类型, 而需要的volume类型是LONG类型，这时就需要使用`schema`参数。例如可使用如下脚本构建`schema`表：
 ```
 nameCol = `symbol`exchange`cycle`tradingDay`date`time`open`high`low`close`volume`turnover`unixTime
-typeCol = [SYMBOL,SYMBOL,INT,DATE,DATE,INT,DOUBLE,DOUBLE,DOUBLE,DOUBLE,INT,DOUBLE,LONG]
+typeCol = `SYMBOL`SYMBOL`INT`DATE`DATE`INT`DOUBLE`DOUBLE`DOUBLE`DOUBLE`INT`DOUBLE`LONG
 schemaTb = table(nameCol as name,typeCol as type)
 ```
 当表字段非常多的时候，写这样一个脚本费时费力，为了简化操作，DolphinDB提供了`extractTextSchema`(https://www.dolphindb.com/cn/help/index.html?extractTextSchema.html) 函数，可从文本文件中提取表的结构生成`schema`表。只需修改少数指定字段的数据类型，就可得到理想的`schema`表。
