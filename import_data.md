@@ -95,7 +95,7 @@ Time elapsed: 10685.838 ms
 
 #### 2.3. `loadTextEx`
 
-`loadText`函数总是把数据全量导入内存。当数据文件体积非常庞大时，服务器的内存很容易成为瓶颈。DolphinDB提供的`loadTextEx`(http://www.dolphindb.com/cn/help/index.html?loadText.html)函数可以较好的解决这个问题。它通过边载入边保存的方式，将静态CSV文件以较为平缓的数据流的方式"另存为"DolphinDB的分布式数据表，而不是采用全量载入内存再另存分区表的方式，可以大大降低内存使用需求。
+`loadText`函数总是把数据全量导入内存。当数据文件体积非常庞大时，服务器的内存很容易成为瓶颈。DolphinDB提供的`loadTextEx`(http://www.dolphindb.com/cn/help/index.html?loadText.html) 函数可以较好的解决这个问题。它通过边载入边保存的方式，将静态CSV文件以较为平缓的数据流的方式"另存为"DolphinDB的分布式数据表，而不是采用全量载入内存再另存分区表的方式，可以大大降低内存使用需求。
 
 首先创建用于保存数据的分布式表：
 ```
@@ -137,7 +137,7 @@ use hdf5
 loadHdf5(filePath,tableName);
 ```
 
-要使用DolphinDB的插件，首先需要下载HDF5插件(http://www.dolphindb.com/downloads/HDF5_V0.7.zip)，再将插件部署到节点的plugins目录下，使用以下脚本加载插件：
+要使用DolphinDB的插件，首先需要下载HDF5插件(http://www.dolphindb.com/downloads/HDF5_V0.7.zip) ，再将插件部署到节点的plugins目录下，使用以下脚本加载插件：
 ```
 loadPlugin("plugins/hdf5/PluginHdf5.txt")
 ```
