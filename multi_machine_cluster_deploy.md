@@ -19,7 +19,7 @@ P5: 10.1.1.9
 
 #### 1. 下载
 
-在每个物理节点上，从DolphindB网站下载DolphinDB，并解压到一个指定目录。例如解压到如下目录
+在每个物理节点上，从DolphinDB网站下载DolphinDB，并解压到一个指定目录。例如解压到如下目录
 
 ```
 /DolphinDB
@@ -54,7 +54,7 @@ mkdir /DolphinDB/server/log
 在config目录下，创建**controller.cfg**文件，可填写以下集群管理的常用参数。用户可根据实际需要调整参数。**controller.cfg**文件中只有**localSite**是必需的。其它参数都是可选参数。
 
 ```
-localSite=10.1.1.7:8900:master
+localSite=10.1.1.7:8990:master
 localExecutors=3
 maxConnections=128
 maxMemSize=16
@@ -68,7 +68,7 @@ dfsReplicaReliabilityLevel=0
 
 | 参数配置        | 解释          |
 |:------------- |:-------------|
-|localSite=10.1.1.7::master|     节点局域网信息,格式为 IP地址:端口号:节点别名，所有字段都是必选项。|
+|localSite=10.1.1.7:8990:master|     节点局域网信息,格式为 IP地址:端口号:节点别名，所有字段都是必选项。|
 |localExecutors=3          |         本地执行者的数量。默认值是CPU的内核数量 - 1。|
 |maxConnections=128     |            最大向内连接数|
 |maxMemSize=16          |            最大内存（GB）|
@@ -361,7 +361,7 @@ DolphinDB集群可以部署在局域网内，也可以部署在私有云或公�
 
 中文
 
-http://dolphindb.com/cn/help/Newtopic47.html
+http://dolphindb.com/cn/help/ClusterSetup.html
 
 英文
 
