@@ -40,7 +40,7 @@ DolphinDB默认的管理员用户名为“admin”，密码为“123456”。
 
 ### 2 把数据导入到DolphinDB服务器
 
-DolphinDB数据库根据存储介质可以分为3种类型：分布式文件系统（DFS）中的数据库、本地文件系统的数据库和内存数据库。DolphinDB在DFS模式中性能达到最优。DFS能够自动管理数据存储和备份。因此，我们推荐用户使用分布式文件系统，部署方式请参开[多服务器集群部署](https://github.com/dolphindb/Tutorials_CN/blob/master/multi_machine_cluster_deploy.md)。为了能够让用户快速开始，我们在本教程中给出了本地文件系统和分布式文件系统的例子。DFS数据库的路径以“dfs://”开头。
+DolphinDB数据库根据存储介质可以分为3种类型：分布式文件系统（DFS）中的数据库、本地文件系统的数据库和内存数据库。DolphinDB在DFS模式中性能达到最优。DFS能够自动管理数据存储和备份。因此，我们推荐用户使用分布式文件系统，部署方式请参考[多服务器集群部署](https://github.com/dolphindb/Tutorials_CN/blob/master/multi_machine_cluster_deploy.md)。为了能够让用户快速开始，我们在本教程中给出了本地文件系统和分布式文件系统的例子。DFS数据库的路径以“dfs://”开头。
 
 #### 2.1 把数据导入到内存表中
 
