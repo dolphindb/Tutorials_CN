@@ -228,6 +228,46 @@ print(s.loadTable("test").toDF())
 3   3      A    26.0
 ```
 
+#### 2.4.3 数据类型转换
+
+上传数据时，Python中的一些基础类型，如bool, int64, float64，会自动转换为DolphinDB的BOOL, INT, DOUBLE类型。但是，时间类型需要做特殊的处理。DolphinDB提供DATE, MONTH, TIME, MINUTE, SECOND, DATETIME, TIMESTAMP, NANOTIME, NANOTIMESTAMP九种类型的时间类型，最高精度可以到纳秒级。Python中时间类型为datetime64类型，会被转换成DolphinDB的NANOTIMESTAMP类型。Python API提供了**from_time**,**from_date**或**from_datetime**方法，能够把dateitme64类型转换成DolphinDB的时间类型。下面列举了如何在Python中创建DolphinDB时间类型对象：
+
+```
+# 需要导入DolphinDB数据类型包
+from dolphindb.type_util import *
+```
+
+|类型|例子|上传到DolphinDB的结果|
+|--------|---------------|--------------|
+|DATE|Date.from_date(date(2012,12,20))|2012.12.20|
+|MONTH|Month.from_date(date(2012,12,26))|2012.12M|
+|TIME|Time.from_time(time(12,30,30,8))|12:30:30.008|
+|MINUTE|Minute.from_time(time(12,30))|12:30m|
+|SECOND|Second.from_time(time(12,30,30))|12:30:30|
+|DATETIME|Datetime.from_datetime(datetime(2012,12,30,15,12,30))|2012.12.30 15:12:30|
+|TIMESTAMP|Timestamp.from_datetime(datetime(2012,12,30,15,12,30,8))|2012.12.30 15:12:30.008|
+|NANOTIME|NanoTime.from_time(time(13,30,10,706))|13:30:10.000706000|
+|NANOTIMESTAMP|NanoTimestamp.from_datetime(datetime(2012,12,24,13,30,10,80706))|2012.12.24 13:30:10.080706000|
+
+Python中的np.NaN是特殊的float，上传数据时，DolphinDB也会把它们识别为float。如果需要上传DolphinDB类型的NULL，必须使用Python API提供的NULL值，保证数据上传后仍然为相应类型的NULL。下面列举了如何在Python中创建DolphinDB类型的NULL：
+
+|类型|对应的NULL|
+|-------|--------|
+|BOOL|boolNan|
+|CHAR|byteBan|
+|SHORT|shortNan|
+|INT|intNan|
+|DATE|Date.null()|
+|MONTH|Month.null()|
+|TIME|Time.null()|
+|SECOND|Second.null()|
+|DATETIME|Datetime.null()|
+|TIMESTAMP|Timestamp.null()|
+|NANOTIME|NanoTime.null()|
+|NANOTIMESTAMP|NanoTimestamp.null()|
+
+注意，上传字典或Dataframe时，同一列中不能同时包含Python的原生类型和DolphinDB Python API提供的类型。例如：'date':[date(2012,12,30),Date.from_date(date(2012,12,31)),Date.null()]，date列同时包含了Python的datetime64类型和DolphinDB Python API提供的DATE类型，会导致上传失败。
+
 #### 3 从DolphinDB数据库中加载数据
 
 #### 3.1 使用loadTable函数
@@ -297,6 +337,65 @@ print(trade.rows)
 5286
 ```
 
+#### 3.3 类型转换
+
+从DolphinDB数据库中下载数据到Python，数据类型会做相应的转换。对于一些基础类型，如BOOL、INT，会被转换为Python中的bool和int64类型。DolphinDB中的CHAR、SHORT、INT、LONG类型会被转换成int64类型。用户可以使用chr()函数把整数转换为字符。对于DOUBLE和FLOAT类型，会被转换为float64类型。对于SYMBOL和STRING类型，会被转换为Python中的object。对于DolphinDB中的时间类型，会被转换为datetime64类型。MONTH类型，如2012.06M，会被转换为2012-06-01，TIME、MINUTE、SECOND、NANOTIME类型不包含日期信息，转换时，会自动添加1970-01-01，例如13:30m会被转换为1970-01-01 13:30:00。
+
+|DolphinDB类型|Python类型|
+|-------------|----------|
+|BOOL|bool|
+|CHAR, SHORT, INT, LONG|int64|
+|DOUBLE, FLOAT|float64|
+|SYMBOL, STRING|object|
+|DATE, MONTH, TIME, MINUTE, SECOND, DATETIME, TIMESTAMP, NANOTIME, NANOTIMESTAMP|datetime64|
+
+下面的例子列举了各种DolphinDB类型转换后的结果：
+
+```
+//DolphinDB创建表的脚本：
+db=database(WORK_DIR+"/testPython")
+t1 = table(10000:0,`cid`cbool`cchar`cshort`cint`clong`cdate`cmonth`ctime`cminute`csecond`cdatetime`ctimestamp`cnanotime`cnanotimestamp`cfloat`cdouble`csymbol`cstring,[INT,BOOL,CHAR,SHORT,INT,LONG,DATE,MONTH,TIME,MINUTE,SECOND,DATETIME,TIMESTAMP,NANOTIME,NANOTIMESTAMP,FLOAT,DOUBLE,SYMBOL,STRING])
+insert into t1 values (1,true,'a',122h,21,22l,2012.06.12,2012.06M,13:10:10.008,13:30m,13:30:10,2012.06.13 13:30:10,2012.06.13 13:30:10.008,13:30:10.008007006,2012.06.13 13:30:10.008007006,2.1f,2.1,"ABC","abc")
+insert into t1 values (2,,,,,,,,,,,,,,,,,"","")
+insert into t1 values (3,bool(),char(),short(),int(),long(),date(),month(),time(),minute(),second(),datetime(),timestamp(),nanotime(),nanotimestamp(),float(),double(),"",string())
+saveTable(db,t1,`t1)
+```
+
+
+```
+t=s.loadTable(WORK_DIR+"/testPython",tableName="t1")
+print(t.toDF())
+```
+
+|  |cid |cbool |cchar |cshort |cint |clong |cdate |cmonth |ctime |cminute |csecond |cdatetime |ctimestamp|cnanotime |cnanotimestamp |cfloat |cdouble |csymbol |cstring |
+|--|----|------|------|-------|-----|------|------|-------|------|--------|--------|----------|----------|----------|---------------|-------|--------|--------|--------|
+|0 |1 |True |97 |122 |21 |22 |2012-06-12 |2012-06-01 |1970-01-01 13:10:10.008 |1970-01-01 13:30:00 |1970-01-01 13:30:10 |2012-06-13 13:30:10 |2012-06-13 13:30:10.000008 |1970-01-01 13:30:10.008007006 |2012-06-13 13:30:10.008007006 |2.1 |2.1 |ABC |abc |
+|1 |2 |nan  |nan|nan |nan|nan|NaT        |NaT        |NaT                     |NaT                 |NaT                 |NaT                 |NaT                        |NaT                          |NaT                           |nan |nan |    |    |
+|2 |3 |nan  |nan|nan |nan|nan| NaT       |NaT        |NaT                     |NaT                 |NaT                 |NaT                 |NaT                        |NaT                          |NaT                           |nan |nan |    |    |
+
+```
+t.toDF().dtypes
+
+cbool                       bool
+cchar                      int64
+cshort                     int64
+cint                       int64
+clong                      int64
+cdate             datetime64[ns]
+cmonth            datetime64[ns]
+ctime             datetime64[ns]
+cminute           datetime64[ns]
+csecond           datetime64[ns]
+cdatetime         datetime64[ns]
+ctimestamp        datetime64[ns]
+cnanotime         datetime64[ns]
+cnanotimestamp    datetime64[ns]
+cfloat                   float64
+cdouble                  float64
+csymbol                   object
+cstring                   object
+dtype: object
+```
 
 #### 4 操作数据库和表
 
