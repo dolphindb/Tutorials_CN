@@ -188,7 +188,7 @@ ODBC插件提供了以下四个方法用于操作第三方数据源数据：
 
 - odbc::execute : 在第三方数据库内执行给定的SQL语句，不返回结果。
 
-注意在使用ODBC插件之前，需要先给系统安装ODBC驱动，请参考ODBC插件使用教程(https://github.com/dolphindb/DolphinDBPlugin/blob/master/odbc/README.md)。
+注意在使用ODBC插件之前，需要先给系统安装ODBC驱动，请参考[ODBC插件使用教程](https://github.com/dolphindb/DolphinDBPlugin/blob/master/odbc/README.md)。
 
 以使用ODBC插件连接以下SQL Server作为实例：
 - server：172.18.0.15
