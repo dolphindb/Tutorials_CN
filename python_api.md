@@ -268,6 +268,12 @@ Python中的np.NaN是特殊的float，上传数据时，DolphinDB也会把它们
 
 注意，上传字典或Dataframe时，同一列中不能同时包含Python的原生类型和DolphinDB Python API提供的类型。例如：'date':[date(2012,12,30),Date.from_date(date(2012,12,31)),Date.null()]，date列同时包含了Python的datetime64类型和DolphinDB Python API提供的DATE类型，会导致上传失败。
 
+如果需要在python2.7中使用中文，在文件开头指定编码为UTF-8.
+
+```
+# -*- coding: utf-8 -*-
+```
+
 #### 3 从DolphinDB数据库中加载数据
 
 #### 3.1 使用loadTable函数
