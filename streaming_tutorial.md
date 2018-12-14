@@ -214,9 +214,9 @@ undef("pubStreamTable",SHARED)
 ```
 persisitenceDir = /data/streamCache
 ```
-在脚本中执行[`enableTablePersistence`](https://www.dolphindb.com/cn/help/enableTablePersistence.html)命令设置针对某一个流数据表启用持久化。下面的示例针对pubTable表启用持久化，其中`asyn = true, compress = true, cacheSize=1000000`，即当流数据表达到100万行数据时启用持久化，将其中50%的数据采用异步方式压缩保存到磁盘，cacheSize的最小值是100,000。
+在脚本中执行[`enableTablePersistence`](https://www.dolphindb.com/cn/help/enableTablePersistence.html)命令设置针对某一个流数据表启用持久化。下面的示例针对pubTable表启用持久化，其中`asyn = true, compress = true, cacheSize=1000000`，即当流数据进入pubTable表时，采用异步方式压缩保存到磁盘，当流数据表记录数达到100万行数据时，将较早的50%数据从内存中清除。
 
-若执行`enableTablePersistence`时，磁盘上已经存在pubTable表的持久化数据，那么系统会加载最新的`cacheSize=1000000` 行记录到内存中。
+若执行`enableTablePersistence`时，磁盘上已经存在pubTable表的持久化数据，那么系统会加载最新的 `cacheSize=1000000` 行记录到内存中。
 
 对于持久化是否启用异步，需要对持久化数据一致性和性能之间作权衡。当流数据的一致性要求极高时，可以使用同步方式，这样可以保证持久化完成以后，数据才会进入发布队列；若对实时性要求极高，不希望磁盘IO影响到流数据的实时性，那么可以启用异步方式，只有启用异步方式时，持久化工作线程数`persistenceWorkerNum`配置项才会起作用，当有多个发布表需要持久化，增加`persistenceWorkerNum`可以提升异步保存的效率。
 ```
