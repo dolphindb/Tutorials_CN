@@ -119,7 +119,7 @@ nohup ./dolphindb -console 0 -mode agent -home data -config config/agent.cfg -lo
 ```
 建议通过Linux命令**nohup**（头） 和 **&**（尾）启动为后台运行模式，这样即使终端失去连接，DolphinDB也会持续运行。 
 
-“-console”默认是为 1，如果要设置为后台运行，必须要设置为0（"-console 0")，否则系统运行一段时间后会自动退出。。
+“-console”默认是为 1，如果要设置为后台运行，必须要设置为0（"-console 0")，否则系统运行一段时间后会自动退出。
 
 “-mode”表示节点性质，“-home”指定数据以及元数据存储路径，“-config”指定配置文件路径，“-logFile”指定log文件路径。
 
