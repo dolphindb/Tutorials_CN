@@ -245,8 +245,8 @@ startDataNode(["DFS_NODE1", "DFS_NODE2","DFS_NODE3","DFS_NODE4"])
 
 中文
 
-http://dolphindb.com/cn/help/Newtopic47.html
+http://www.dolphindb.com/cn/help/ClusterSetup.html
 
 英文
 
-http://dolphindb.com/help/ClusterSetup.html
+http://www.dolphindb.com/help/ClusterSetup.html
