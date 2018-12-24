@@ -2,7 +2,7 @@
 
 DolphinDB Cluster包括三种类型节点：数据节点（data node），代理节点（agent）和控制节点（controller）。
   *  数据节点用于数据存储，查询以及计算
-  *  代理节点用于关闭或开启data node
+  *  代理节点用于关闭或开启数据节点
   *  控制节点用于集群管理
 
 本教程假设有五个物理节点: **P1**, **P2**, **P3**, **P4**, **P5**。
@@ -51,7 +51,7 @@ mkdir /DolphinDB/server/data
 mkdir /DolphinDB/server/log
 ```
 ##### 3.1.1 配置控制节点的参数文件
-在config目录下，创建**controller.cfg**文件，可填写以下集群管理的常用参数。用户可根据实际需要调整参数。**controller.cfg**文件中只有**localSite**是必需的。其它参数都是可选参数。
+在config目录下，创建controller.cfg文件，可填写以下集群管理的常用参数。用户可根据实际需要调整参数。controller.cfg文件中只有localSite是必需的。其它参数都是可选参数。
 
 ```
 localSite=10.1.1.7:8990:master
@@ -79,7 +79,7 @@ dfsReplicaReliabilityLevel=0
 
 ##### 3.1.2 配置集群成员参数文件
 
-在config目录下，创建**cluster.nodes**文件，可填写如下内容。用户可根据实际需要调整参数。**cluster.nodes**用于存放集群代理节点和数据节点信息。本教程使用5个物理节点。该配置文件分为两列，第一例存放节点IP地址，端口号和节点别名。这三个信息由冒号:分隔。第二列是说明节点类型。比如代理节点类型为agent,而数据节点类型为datanode。节点别名是大小写敏感的，而且在集群内必须是唯一的。
+在config目录下，创建cluster.nodes文件，可填写如下内容。用户可根据实际需要调整参数。cluster.nodes用于存放集群代理节点和数据节点信息。本教程使用5个物理节点。该配置文件分为两列，第一例存放节点IP地址，端口号和节点别名。这三个信息由冒号:分隔。第二列是说明节点类型。比如代理节点类型为agent,而数据节点类型为datanode。节点别名是大小写敏感的，而且在集群内必须是唯一的。
 
 本例中集群的节点配置信息需要包含位于**P1**,**P2**,**P3**,**P5**的代理节点和数据节点信息。
 
@@ -169,7 +169,7 @@ controllerSite=10.1.1.7:8990:master
 ```
 nohup ./dolphindb -console 0 -mode agent -home data -config config/agent.cfg -logFile log/agent.log &
 ```
-建议通过Linux命令**nohup**（头） 和 **&**（尾）启动为后台运行模式，这样即使终端失去连接，DolphinDB也会持续运行。 
+建议通过Linux命令`nohup`（头） 和 `&`（尾）启动为后台运行模式，这样即使终端失去连接，DolphinDB也会持续运行。 
 
 “-console”默认是为 1，如果要设置为后台运行，必须要设置为0（"-console 0")，否则系统运行一段时间后会自动退出。。
 
@@ -232,7 +232,7 @@ DolphinDB提供了良好的安全机制。只有系统管理员才有权限做�
 
 ```
 系统管理员帐号名: admin
-默认密码       : 123456
+默认密码: 123456
 ```
 
 点击登录链接
@@ -253,7 +253,7 @@ DolphinDB提供了良好的安全机制。只有系统管理员才有权限做�
 
 ![](images/multi_started.JPG)
 
-如果出现长时间无法正常启动，请查看log目录下该即诶但的logFile. 如果节点名字是DFS_NODE1，那对应的logFile应该在 log/DFS_NODE1.log。
+如果出现长时间无法正常启动，请查看log目录下该节点的logFile. 如果节点名字是DFS_NODE1，那对应的logFile应该在 log/DFS_NODE1.log。
 
 log文件中有可能出现错误信息"Failed to bind the socket on XXXX"。这里的XXXX是待启动的节点端口号。这可能是因为此端口号被其它程序占用，这种情况下将其他程序关闭再重新启动节点即可。也可能是因为刚刚关闭了使用此端口的数据节点，Linux kernel还没有释放此端口号。这种情况下稍等30秒，再启动节点即可。
 
@@ -265,7 +265,7 @@ startDataNode(["P1-NODE1", "P2-NODE1","P3-NODE1","P5-NODE1"])
 
 #### 4. 基于Web的集群管理
 
-经过上述步骤，我们已经成功部署DolphinDB集群。在实际使用中我们经常会需要改变集群配置。DolphinDB的网络界面提供更改DolphinDB集群配置的所有功能。
+经过上述步骤，我们已经成功部署DolphinDB集群。在实际使用中我们经常会需要改变集群配置。DolphinDB的网络界面提供更改集群配置的所有功能。
 
 #### 4.1 控制节点参数配置
 
@@ -279,7 +279,7 @@ startDataNode(["P1-NODE1", "P2-NODE1","P3-NODE1","P5-NODE1"])
 
 ![](images/multi_nodes_setup.JPG)
 
-若新的数据节点位于一个新的物理机器上，我们必须在此物理机器上根据3.2中的步骤配置并启动一个新的代理节点，在**cluster.nodes**中增添有关新的代理节点和数据节点的信息，并重新启动控制节点。
+若新的数据节点位于一个新的物理机器上，我们必须在此物理机器上根据3.2中的步骤配置并启动一个新的代理节点，在cluster.nodes中增添有关新的代理节点和数据节点的信息，并重新启动控制节点。
 
 #### 4.3 修改数据节点参数
 
@@ -354,7 +354,7 @@ P5-NODE1.volumes=/VOL1/P5-NODE1,/VOL2/P5-NODE1
 
 #### 5. 云部署
 
-DolphinDB集群可以部署在局域网内，也可以部署在私有云或公有云上。DolphinDB默认集群的所有节点在一个局域网内(lanCluster=1)并通过UDP广播来监测节点心跳。但是在云平台上，所有节点不一定在一个局域网内，也有可能不支持UDP。在云平台上，需要在controller.cfg和agent.cfg填入 lanCluster=0 的参数配置来实现非UDP模式的节点之间的通讯。否则，由于可能无法正常检测到节点的心跳，集群可能无法正常工作。
+DolphinDB集群可以部署在局域网内，也可以部署在私有云或公有云上。DolphinDB默认集群的所有节点在一个局域网内(lanCluster=1)并通过UDP广播来监测节点心跳。但是在云平台上，所有节点不一定在一个局域网内，也有可能不支持UDP。在云平台上，需要在controller.cfg和agent.cfg填入lanCluster=0的参数配置来实现非UDP模式的节点之间的通讯。否则，由于可能无法正常检测到节点的心跳，集群可能无法正常工作。
 
 
 更多详细信息，请参考DolphinDB帮助文档第10章

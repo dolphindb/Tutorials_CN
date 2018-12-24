@@ -18,7 +18,7 @@ DolphinDB的集群是由控制节点(controller)，代理节点(agent)及数据�
 扩展数据节点的主要步骤如下：
 - 在新服务器上部署agent，并且配置好agent.cfg
 - 向controller注册新的data node信息和agent信息
-- 重启集群内controller和所有data Node
+- 重启集群内controller和所有data node
 
 若仅对某data node存储空间进行扩展，例如增加硬盘，只需要修改节点配置文件，为指定节点volumes属性增加路径。
 
@@ -68,7 +68,7 @@ nohup ./dolphindb -console 0 -mode controller -script dolphindb.dos -config conf
 ./dolphindb -mode agent -home data -script dolphindb.dos -config config/agent.cfg -logFile log/agent.log
 ```
 
-为了在扩展工作完成之后可以验证效果，我们在集群内创建一个分布式数据库，并写入初始数据
+为了在扩展工作完成之后可以验证效果，我们在集群内创建一个分布式数据库，并写入初始数据。
 ```
 data = table(1..1000 as id,rand(`A`B`C,1000) as name)
 //分区时预留了1000的余量，预备后续写入测试用
@@ -76,12 +76,11 @@ db = database("dfs://scaleout_test_db",RANGE,cutPoints(1..2000,10))
 tb = db.createPartitionedTable(data,"scaleoutTB",`id)
 tb.append!(data)
 ```
-执行完后通过集群web界面dfs explorer观察生成的数据分布情况
+执行完后通过集群web界面dfs explorer观察生成的数据分布情况。
 
 ![image](https://github.com/dolphindb/Tutorials_CN/blob/master/images/scaleout/scale_dfs_exp1.PNG?raw=true)
 
 在后续完成节点和存储的扩展之后，我们会用同样的方式追加数据，来验证新节点和存储是否已经启用。
-
 
 > *需要了解集群初始化配置可以参考 [多物理机上部署集群教程](https://github.com/dolphindb/Tutorials_CN/blob/master/multi_machine_cluster_deploy.md)*
 
@@ -123,9 +122,10 @@ localSite,mode
  ![image](https://github.com/dolphindb/Tutorials_CN/blob/master/images/scaleout/controller_stopAll.PNG?raw=true)
 
 - 在172.18.0.10服务器上执行 ```pkill dolphindb``` 关闭controller。
+
 - 等待半分钟之后(等待端口释放，可能根据操作系统这个时间有不同)，重新再启动controller。
 
-- 回到web管理界面，可以看到已经新增了一个agent4并且是已启动状态，在web界面上启动所有数据节点
+- 回到web管理界面，可以看到已经新增了一个agent4并且是已启动状态，在web界面上启动所有数据节点。
 
  ![image](https://github.com/dolphindb/Tutorials_CN/blob/master/images/scaleout/Controller_StartAll.PNG?raw=true)
 
@@ -138,23 +138,21 @@ localSite,mode
 tb = database("dfs://scaleout_test_db").loadTable("scaleoutTB")
 tb.append!(table(1001..1500 as id,rand(`A`B`C,500) as name))
 ```
-观察 dfs explorer，可以看到数据已经分布到新的 node4 节点上。
+点击DFS Explorer并打开scaleout_test_db，可以看到数据已经分布到新的 node4 节点上。
 
 ![image](https://github.com/dolphindb/Tutorials_CN/blob/master/images/scaleout/scale_dfs_exp2.PNG?raw=true)
 
 ### 3.5. 扩展数据节点后的数据分布机制
 
-在流行的MPP架构的集群中，添加节点后必须要对一部分数据resharding，因为hash值变了，而通常对海量数据做resharding需要很长时间。
-而DolphinDB的数据存储基于底层分布式文件系统，通过元数据进行数据副本的管理，所以扩展了节点之后，原有的数据不需要有resharding这个过程，而新增的数据会按照分布策略保存到新的数据节点去。
-当然通过resharding可以让数据分布更加均匀，DolphinDB正在开发这样的工具。
+在流行的MPP架构的集群中，添加节点后因为hash值变了，必须要对一部分数据resharding，而通常对海量数据做resharding需要很长时间。DolphinDB的数据存储基于底层分布式文件系统，通过元数据进行数据副本的管理，所以扩展了节点之后，不需要对原有的数据进行resharding，新增的数据会保存到新的数据节点去。当然通过resharding可以让数据分布更加均匀，DolphinDB正在开发这样的工具。
 
 ## 4. 扩展存储
 
-由于node3所在服务器本身的磁盘空间不足，现扩展了一块磁盘，路径为/dev/disk2，将这块磁盘纳入node3的存储。
+由于node3所在服务器本身的磁盘空间不足，为node3扩展了一块磁盘，路径为/dev/disk2。
 
 ### 4.1 步骤
 
-DolphinDB的节点存储可以通过配置文件中的volumes属性来配置，上述案例中没有配置，那么默认的存储路径<HomeDir>/<Data Node Alias>/Storage, 在本例中即 /home/server/data/node3/storage 目录下
+DolphinDB的节点存储可以通过配置文件中的volumes属性来配置，默认的存储路径<HomeDir>/<Data Node Alias>/Storage。本例中没有配置，为/home/server/data/node3/storage目录。
 
 > 若从默认路径增加磁盘，那么在设置volumes属性时，必须要将原默认路径显式设置，否则会导致默认路径下元数据丢失
 
@@ -164,7 +162,7 @@ cluster.cfg
 ```
 node3.volumes=/home/server/data/node3/storage 
 ```
-新的磁盘路径 /dev/disk2/node3要增加到node3节点,只要在上述配置后面用逗号分隔新增路径即可
+新的磁盘路径 /dev/disk2/node3要增加到node3节点，只要在上述配置后面用逗号分隔新增路径即可。
 
 cluster.cfg
 ```
@@ -177,12 +175,12 @@ node3.volumes=/home/server/data/node3/storage,/dev/disk2/node3
 
 ### 4.2 验证
 
-配置完成后，通过下面的语句向集群写入新数据，查看数据是否被写入新的磁盘
+配置完成后，通过下面的语句向集群写入新数据，查看数据是否被写入新的磁盘。
 ```
 tb = database("dfs://scaleout_test_db").loadTable("scaleoutTB")
 tb.append!(table(1501..2000 as id,rand(`A`B`C,500) as name))
 ```
-到磁盘下观察数据已被写入
+观察数据已被写入：
 
 ![image](https://github.com/dolphindb/Tutorials_CN/blob/master/images/scaleout/3.PNG?raw=true)
 

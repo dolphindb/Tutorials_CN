@@ -37,7 +37,7 @@
 
 #### 2.1. `loadText` 
 
-`loadText`函数有三个参数，第一个参数`filename`是文件名，第二个参数`delimiter`用于指定不同字段的分隔符，默认是","，第三个参数`schema`是用来指定导入后表的每个字段的数据类型，schema参数是一个数据表，格式示例如下：
+`loadText`函数有三个参数，第一个参数filename是文件名，第二个参数delimiter用于指定不同字段的分隔符，默认是","，第三个参数schema是用来指定导入后表的每个字段的数据类型，schema参数是一个数据表，格式示例如下：
 
 name|type
 ---|---
@@ -68,7 +68,7 @@ tt=loadText(dataFilePath,,schemaTb)
 ```
 #### 2.2. `ploadText`
 
-`ploadText`函数的特点可以快速载入大文件。它在设计中充分利用了多个CPU core来并行载入文件，并行程度取决于服务器本身core数量和节点的`localExecutors`配置。
+`ploadText`函数的特点可以快速载入大文件。它在设计中充分利用了多个CPU core来并行载入文件，并行程度取决于服务器本身core数量和节点的localExecutors配置。
 
 首先通过脚本生成一个4G左右的CSV文件：
 ```
@@ -83,7 +83,7 @@ tt=loadText(dataFilePath,,schemaTb)
 	t = table(ints as int, symbols as symbol, dates as date, floats as float, times as time)
 	t.saveText(filePath)
 ```
-分别通过`loadText`和`ploadText`来载入文件。本例所用节点是4核8线程的CPU。
+分别通过`loadText`和`ploadText`来载入文件。本例所用节点是4核8超线程的CPU。
 ```
 timer loadText(filePath);
 Time elapsed: 39728.393 ms
@@ -95,7 +95,7 @@ Time elapsed: 10685.838 ms
 
 #### 2.3. `loadTextEx`
 
-`loadText`函数总是把数据全量导入内存。当数据文件体积非常庞大时，服务器的内存很容易成为瓶颈。DolphinDB提供的`loadTextEx`(http://www.dolphindb.com/cn/help/index.html?loadText.html) 函数可以较好的解决这个问题。它通过边载入边保存的方式，将静态CSV文件以较为平缓的数据流的方式"另存为"DolphinDB的分布式数据表，而不是采用全量载入内存再另存分区表的方式，可以大大降低内存使用需求。
+`loadText`函数总是把数据全量导入内存。当数据文件体积非常庞大时，服务器的内存很容易成为瓶颈。DolphinDB提供的`loadTextEx`(http://www.dolphindb.com/cn/help/index.html?loadTextEx.html)函数可以较好的解决这个问题。它通过边载入边保存的方式，将CSV文件以较为平缓的数据流的方式保存为DolphinDB的分布式数据表，而不是采用全量载入内存再另存分区表的方式，可以大大降低内存使用需求。
 
 首先创建用于保存数据的分布式表：
 ```
@@ -109,7 +109,7 @@ db.createPartitionedTable(tb, "cycle", "tradingDay")
 loadTextEx(db, "cycle", "tradingDay", dataFilePath)
 ```
 
-当需要使用数据做分析的时候，通过`loadTable`函数将分区元数据先载入内存，在实际执行查询的时候，DolphinDB会按需加载所需数据到内存。
+当需要使用数据时，通过`loadTable`函数将分区元数据先载入内存，在实际执行查询的时候，会按需加载所需数据到内存。
 ```
 tb = database("dfs://dataImportCSVDB").loadTable("cycle")
 ```
@@ -137,12 +137,12 @@ use hdf5
 loadHdf5(filePath,tableName);
 ```
 
-要使用DolphinDB的插件，首先需要下载HDF5插件(http://www.dolphindb.com/downloads/HDF5_V0.7.zip) ，再将插件部署到节点的plugins目录下，使用以下脚本加载插件：
+要使用DolphinDB的插件，首先需要下载HDF5插件(http://www.dolphindb.com/downloads/HDF5_V0.7.zip)，再将插件部署到节点的plugins目录下，使用以下脚本加载插件：
 ```
 loadPlugin("plugins/hdf5/PluginHdf5.txt")
 ```
 
-HDF5文件的导入与CSV文件类似。若要将candle_201801.h5文件导入，而candle_201801.h5文件内包含一个Dataset: candle_201801，那么最简单的导入方式如下：
+HDF5文件的导入与CSV文件类似。若要将candle_201801.h5文件导入，而candle_201801.h5文件内包含一个Dataset candle_201801，那么最简单的导入方式如下：
 ```
 dataFilePath = "/home/data/candle_201801.h5"
 datasetName = "candle_201801"
@@ -156,7 +156,7 @@ schema=hdf5::extractHdf5Schema(dataFilePath,datasetName)
 update schema set type=`LONG where name=`volume        
 tt=hdf5::loadHdf5(dataFilePath,datasetName,schema)
 ```
-如果h5文件非常庞大，服务器内存无法支持全量载入，可以使用`hdf5::loadHdf5Ex`方式来载入数据
+如果h5文件非常庞大，服务器内存无法支持全量载入，可以使用`hdf5::loadHdf5Ex`方式来载入数据。
 
 首先创建用于保存数据的分布式表：
 ```
@@ -176,7 +176,7 @@ hdf5::loadHdf5Ex(db, "cycle", "tradingDay", dataFilePath,datasetName)
 
 DolphinDB支持ODBC接口连接第三方数据库，从其中直接将表读取成DolphinDB的内存数据表。
 
-DolphinDB官方提供[ODBC插件](https://github.com/dolphindb/DolphinDBPlugin/blob/master/odbc/README.md)用于连接第三方数据源，使用该插件可以方便的从ODBC支持的数据库中迁移数据至DolphinDB中。
+DolphinDB官方提供[ODBC插件](https://github.com/dolphindb/DolphinDBPlugin/blob/master/odbc/README.md)用于连接第三方数据源，使用该插件可以方便的从ODBC支持的数据库迁移数据至DolphinDB中。
 
 ODBC插件提供了以下四个方法用于操作第三方数据源数据：
 
@@ -188,7 +188,7 @@ ODBC插件提供了以下四个方法用于操作第三方数据源数据：
 
 - odbc::execute : 在第三方数据库内执行给定的SQL语句，不返回结果。
 
-注意在使用ODBC插件之前，需要先给系统安装ODBC驱动，请参考[ODBC插件使用教程](https://github.com/dolphindb/DolphinDBPlugin/blob/master/odbc/README.md)。
+注意在使用ODBC插件之前，需要先给系统安装ODBC驱动，请参考ODBC插件使用教程(https://github.com/dolphindb/DolphinDBPlugin/blob/master/odbc/README.md)。
 
 以使用ODBC插件连接以下SQL Server作为实例：
 - server：172.18.0.15
@@ -250,13 +250,13 @@ tb.append!(data);
 确定分区字段要考虑日常的查询语句执行频率。以WHERE, GROUP BY, 或CONTEXT BY中常用字段作为分区字段，可以极大的提升数据检索和分析的效率。例如金融领域使用的查询经常与交易日期和股票代码有关，所以我们建议采用
 tradingDay和symbol这两列进行组合(COMPO)分区。
 
-接下来需要分别定义两个分区的粒度。现有数据的时间跨度是从2008-2017年，可以按照年度对数据进行值(VALUE)分区。在规划时间分区时要考虑为后续进入的数据留出足够的空间，所以这里可把时间范围设置为2008-2030年。
+接下来需要决定两个分区的粒度。现有数据的时间跨度是从2008-2017年，可以按照年度对数据进行值(VALUE)分区。在规划时间分区时要考虑为后续进入的数据留出足够的空间，所以这里可把时间范围设置为2008-2030年。
 
 ```
 yearRange =date(2008.01M + 12*0..22)
 ```
 
-数据中有几千个股票代码，如果对股票代码按值(VALUE)分区，那么会产生很多几兆大小的分区。分布式系统在执行查询时，会将查询语句分成多个子任务分发到不同的分区执行，若分区数量过多，会产生大量任务，而每个任务执行时间极短。这可能导致系统在管理任务上花费的时间大于任务本身的执行时间，这样的分区方式明显是不合理的。
+数据中有几千个股票代码，数据量分布极不均衡，存在大量数据量极少的股票。如果对股票代码按值(VALUE)分区，那么会产生很多几兆大小的分区。分布式系统在执行查询时，会将查询语句分成多个子任务分发到不同的分区执行，若分区数量过多，会产生大量任务，而每个任务执行时间极短。这可能导致系统在管理任务上花费的时间大于任务本身的执行时间，这样的分区方式明显是不合理的。
 
 这里我们将所有股票代码均分成100个区间，每个区间作为一个分区，最终每个分区的大小约100M左右。考虑到后期可能增加的新的股票代码会超出现有最大股票代码，我们增加了一个虚拟的代码999999，与最后一些股票代码组成一个分区。
 
@@ -292,11 +292,11 @@ pt=db.createPartitionedTable(table(1000000:0,columns,types), tableName, `trading
 #### 5.2. 导入数据
 数据导入脚本的主要思路是通过循环目录树，将所有的CSV文件逐个读取并写入到分布式数据库表 dfs://SAMPLE_TRDDB 中，但是具体导入过程中会有一些细节问题。
 
-首先碰到的问题是，CSV文件中保存的数据格式与DolphinDB内部的数据格式存在差异，比如time字段，原始数据文件里是以“9390100000”表示精确到毫秒的时间，如果直接读入会被识别成数值类型，而不是time类型，所以这里需要用到数据转换函数`datetimeParse`结合格式化函数`format`在数据导入时进行转换。例如可采用以下脚本：
+例如，CSV文件中保存的数据格式与DolphinDB内部的数据格式存在差异，比如time字段，原始数据文件里是以“9390100000”表示精确到毫秒的时间，如果直接读入会被识别成数值类型，而不是time类型，所以这里需要用到数据转换函数`datetimeParse`结合格式化函数`format`在数据导入时进行转换。例如可采用以下脚本：
 ```
 datetimeParse(format(time,"000000000"),"HHmmssSSS")
 ```
-虽然通过循环导入实现起来非常简单，但是实际上100G的数据是由极多的5M左右的细碎文件组成，如果单线程操作会等待很久。为了充分利用集群的资源，我们按照年度把数据导入拆分成多个子任务，发送到各节点的任务队列并行执行，提高导入的效率。这个过程分下面两步实现：
+虽然通过循环导入实现起来非常简单，但是100G的数据是由极多的5MB左右的细碎文件组成，如果单线程操作会等待很久。为了充分利用集群的资源，我们按照年度把数据导入拆分成多个子任务，发送到各节点的任务队列并行执行，提高导入的效率。这个过程分下面两步实现：
 
 先定义一个自定义函数，以导入指定年度目录下的所有文件：
 ```

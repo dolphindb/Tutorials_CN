@@ -2,7 +2,7 @@
 
 DolphinDB集群包括三种类型节点：数据节点（data node），代理节点（agent）和控制节点（controller）。
   *  数据节点用于数据存储，查询以及计算
-  *  代理节点用于关闭或开启data node
+  *  代理节点用于关闭或开启数据节点
   *  控制节点用于集群管理
 
 #### 1. 下载
@@ -41,7 +41,7 @@ mkdir /DolphinDB/server/log
 ```
 
 #### 3.1.1 配置控制节点的参数文件
-在config目录下，创建**controller.cfg**文件，可填写以下集群管理的常用参数。用户可根据实际需要调整参数。**controller.cfg**文件中只有**localSite**是必需的。其它参数都是可选参数。
+在config目录下，创建controller.cfg文件，可填写以下集群管理的常用参数。用户可根据实际需要调整参数。controller.cfg文件中只有localSite参数是必需的，其它参数都是可选参数。
 
 ```
 localSite=localhost:8920:ctl8920
@@ -71,7 +71,7 @@ dfsReplicaReliabilityLevel=0
 
 #### 3.1.2 配置集群成员参数文件
 
-在config目录下，创建**cluster.nodes**文件，可填写如下内容。用户可根据实际需要调整参数。**cluster.nodes**用于存放集群代理节点和数据节点信息。本教程使用4个数据节点，用户可更改节点个数。该配置文件分为两列，第一例存放节点IP地址，端口号，和节点别名。这三个信息由冒号：分隔。第二列是说明节点类型。比如代理节点类型为agent, 而数据节点类型为datanode。节点别名是大小写敏感的，而且在集群内必须是唯一的。
+在config目录下，创建cluster.nodes文件，可填写如下内容。用户可根据实际需要调整参数。cluster.nodes用于存放集群代理节点和数据节点信息。本教程使用4个数据节点，用户可更改节点个数。该配置文件分为两列，第一例存放节点IP地址，端口号，和节点别名。这三个信息由冒号：分隔。第二列是说明节点类型。比如代理节点类型为agent, 而数据节点类型为datanode。节点别名是大小写敏感的，而且在集群内必须是唯一的。
 
 ```
 localSite,mode
@@ -82,7 +82,7 @@ localhost:8923:DFS_NODE3,datanode
 localhost:8924:DFS_NODE4,datanode
 ```
 #### 3.1.3 配置数据节点参数文件
-在config目录下，创建**cluster.cfg**文件，可填写如下内容。用户可根据实际需要调整参数。**cluster.cfg**的配置适用于集群中所有数据节点。
+在config目录下，创建cluster.cfg文件，可填写如下内容。用户可根据实际需要调整参数。cluster.cfg的配置适用于集群中所有数据节点。
 
 ```
 maxConnections=128
@@ -94,7 +94,7 @@ webWorkerNum=2
 
 #### 3.2 配置代理节点参数文件
 
-在config目录下，创建**agent.cfg**文件，可填写如下常用参数。用户可根据实际需要调整参数。只有**LocalSite**和**controllerSite**是必需参数。其它参数均为可选参数。
+在config目录下，创建agent.cfg文件，可填写如下常用参数。用户可根据实际需要调整参数。只有LocalSite和controllerSite是必需参数。其它参数均为可选参数。
 
 ```
 workerNum=3
@@ -103,7 +103,7 @@ maxMemSize=4
 localSite=localhost:8910:agent
 controllerSite=localhost:8920:ctl8920
 ```
-在**controller.cfg**中的参数**localSite**应当与所有代理节点的配置文件**agent.cfg**中的参数**controllerSite**一致, 因为代理节点使用**agent.cfg**中的参数**controllerSite**来寻找controller。若**controller.cfg**中的参数**localSite**有变化，即使只是node alias有改变，所有代理节点的配置文件**agent.cfg**中的参数**controllerSite**都应当做相应的改变。
+在controller.cfg中的参数localSite应当与所有代理节点的配置文件agent.cfg中的参数controllerSite一致, 因为代理节点使用agent.cfg中的参数controllerSite来寻找controller。若controller.cfg中的参数localSite有变化，即使只是node alias有改变，所有代理节点的配置文件agent.cfg中的参数controllerSite都应当做相应的改变。
 
 #### 3.3. DolphinDB集群启动
 
@@ -117,9 +117,9 @@ controllerSite=localhost:8920:ctl8920
 nohup ./dolphindb -console 0 -mode agent -home data -config config/agent.cfg -logFile log/agent.log &
 
 ```
-建议通过Linux命令**nohup**（头） 和 **&**（尾）启动为后台运行模式，这样即使终端失去连接，DolphinDB也会持续运行。 
+建议通过Linux命令`nohup`（头） 和 `&`（尾）启动为后台运行模式，这样即使终端失去连接，DolphinDB也会持续运行。 
 
-“-console”默认是为 1，如果要设置为后台运行，必须要设置为0（"-console 0")，否则系统运行一段时间后会自动退出。
+“-console”默认是为 1，如果要设置为后台运行，必须要设置为0（"-console 0")，否则系统运行一段时间后会自动退出。。
 
 “-mode”表示节点性质，“-home”指定数据以及元数据存储路径，“-config”指定配置文件路径，“-logFile”指定log文件路径。
 
@@ -137,7 +137,7 @@ dolphindb.exe -mode agent -home data -config config/agent.cfg -logFile log/agent
 
 #### 3.3.2 启动控制节点
 
-在可执行文件所在目录(server目录)运行以下命令行。注意到controller.log存放在log子目录下，如果出现agent无法正常启动的情况，可以根据此log file来诊断错误原因。
+在可执行文件所在目录(server目录)运行以下命令行。注意到controller.log存放在log子目录下，如果出现agent无法正常启动的情况，可以根据此log文件来诊断错误原因。
 
 #### Linux
 
@@ -164,14 +164,14 @@ dolphindb.exe -mode controller -home data -config config/controller.cfg -cluster
 quit
 ```
 
-如果是启动为后台交互模式，需要用linux系统kill命令。假设运行命令的linux系统用户名为 "ec2-user"
+如果是启动为后台交互模式，需要用Linux系统`kill`命令。假设运行命令的Linux系统用户名为 "ec2-user"
 ```
 ps aux | grep dolphindb  | grep -v grep | grep ec2-user|  awk '{print $2}' | xargs kill -TERM
 ```
 
 #### 3.3.4 启动网络上的集群管理器
 
-启动控制节点和代理节点之后，可以通过DolphinDB提供的集群管理界面来开启或关闭数据节点。在浏览器的地址栏中输入(目前支持浏览器为chrome, firefox)：
+启动控制节点和代理节点之后，可以通过DolphinDB提供的集群管理界面来开启或关闭数据节点。在浏览器的地址栏中输入(目前支持浏览器为Chrome与Firefox)：
 
 ```
  localhost:8920 
@@ -207,7 +207,7 @@ DolphinDB提供了良好的安全机制。只有系统管理员才有权限做�
 
 ![](images/cluster_web_started.JPG)
 
-如果出现长时间无法正常启动，请查看log目录下该即诶但的logFile. 如果节点名字是DFS_NODE1，那对应的logFile应该在 log/DFS_NODE1.log。
+如果出现长时间无法正常启动，请查看log目录下该节点的logFile. 如果节点名字是DFS_NODE1，那对应的logFile应该在 log/DFS_NODE1.log。
 
 log文件中有可能出现错误信息"Failed to bind the socket on XXXX"。这里的XXXX是待启动的节点端口号。这可能是因为此端口号被其它程序占用，这种情况下将其他程序关闭再重新启动节点即可。也可能是因为刚刚关闭了使用此端口的数据节点，Linux kernel还没有释放此端口号。这种情况下稍等30秒，再启动节点即可。
 
@@ -218,7 +218,7 @@ startDataNode(["DFS_NODE1", "DFS_NODE2","DFS_NODE3","DFS_NODE4"])
 
 #### 4. 基于Web的集群管理
 
-经过上述步骤，我们已经成功部署DolphinDB集群。在实际使用中我们经常会需要改变集群配置。DolphinDB的网络界面提供更改DolphinDB集群配置的所有功能。
+经过上述步骤，我们已经成功部署DolphinDB集群。在实际使用中我们经常会需要改变集群配置。DolphinDB的网络界面提供更改集群配置的所有功能。
 
 #### 4.1. 控制节点参数配置
 
@@ -232,7 +232,7 @@ startDataNode(["DFS_NODE1", "DFS_NODE2","DFS_NODE3","DFS_NODE4"])
 
 ![](images/cluster_web_nodes_setup.JPG)
 
-若新的数据节点位于一个新的物理机器上，我们必须在此物理机器上根据3.2中的步骤配置并启动一个新的代理节点，在**cluster.nodes**中增添有关新的代理节点和数据节点的信息，并重新启动控制节点。
+若新的数据节点位于一个新的物理机器上，我们必须在此物理机器上根据3.2中的步骤配置并启动一个新的代理节点，在cluster.nodes中增添有关新的代理节点和数据节点的信息，并重新启动控制节点。
 
 #### 4.3. 修改数据节点参数
 

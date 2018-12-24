@@ -1,28 +1,30 @@
 # DolphinDB Python API
 
-DolphinDB的Python API支持Python 2.7和Python 3.6及更高版本。
+DolphinDB的Python API支持Python 2.7和Python 3.6及更高版本。 
 
-Python API本质上封装了DolphinDB的脚本语言。执行的时候，Python代码实际上被转换成DolphinDB脚本，当某些方法被触发时，DolphinDB服务器会执行这些方法，并且把执行结果保存到服务器会话中或者序列化到Python客户端。为此，Python API提供了两种方法。第一种方法不触发脚本的执行，只生成DolphinDB脚本。第二种方法触发脚本的执行。下表列出了所有生成DolphinDB脚本或触发脚本执行的方法。
+Python API实质上封装了DolphinDB的脚本语言。Python代码被转换成DolphinDB脚本在DolphinDB服务器执行，执行结果保存到DolphinDB服务器或者序列化到Python客户端。
+
+Python API中的方法分为两类。第一类方法不触发脚本的执行，只生成DolphinDB脚本。第二类方法触发脚本的执行。下表列出了所有触发脚本执行的方法，均为table类的方法。
 
 | 方法名        | 详情          |
 |:------------- |:-------------|
-|connect(host, port, [username, password])|将会话连接到DolphinDB服务器|
-|toDF()|把DolphinDB表对象转换成pandas的Dataframe对象|
-|executeAs(tableName)|指定表名并把表保存到DolphinDB服务器中|
-|execute()|与**update**和**delete**一起使用|
-|database(dbPath, ......)|创建或加载数据库|
-|dropDatabase(dbPath)|删除数据库|
-|dropPartition(dbPath, partitionPaths)|删除数据库的某个分区|
-|dropTable(dbPath, tableName)|删除数据库中的表|
-|drop(colNameList)|删除表中的某列|
-|ols(Y, X, intercept)|计算普通最小二乘回归，返回结果是一个字典|
+|connect(host, port, [username, password])|将会话连接到DolphinDB服务器。|
+|toDF()|把DolphinDB表对象转换成pandas的Dataframe对象。|
+|executeAs(tableName)|执行结果保存为指定表名的内存表。|
+|execute()|执行脚本。与`update`和`delete`一起使用。|
+|database(dbPath, ......)|创建或加载数据库。|
+|dropDatabase(dbPath)|删除数据库。|
+|dropPartition(dbPath, partitionPaths)|删除数据库的某个分区。|
+|dropTable(dbPath, tableName)|删除数据库中的表。|
+|drop(colNameList)|删除表中的某列。|
+|ols(Y, X, intercept)|计算普通最小二乘回归，返回结果是一个字典。|
 
 
-本教程使用了一个csv文件：[example.csv](data/example.csv)。
+本教程例子中使用了一个csv文件：[example.csv](data/example.csv)。
 
 ### 1 连接DolphinDB
 
-Python通过会话与DolphinDB进行交互。在下面的例子中，首先在Python中创建一个会话，然后使用指定的域名或IP地址和端口号把会话连接到DolphinDB服务器。在执行以下Python脚本前，需要先启动DolphinDB服务器。
+Python通过会话与DolphinDB进行交互。在下面的例子中，首先在Python中创建一个会话，然后使用指定的域名或IP地址和端口号把该会话连接到DolphinDB服务器。在执行以下Python脚本前，需要先启动DolphinDB服务器。
 
 ```
 import dolphindb ad ddb
@@ -40,11 +42,11 @@ DolphinDB默认的管理员用户名为“admin”，密码为“123456”。
 
 ### 2 把数据导入到DolphinDB服务器
 
-DolphinDB数据库根据存储介质可以分为3种类型：分布式文件系统（DFS）中的数据库、本地文件系统的数据库和内存数据库。DolphinDB在DFS模式中性能达到最优。DFS能够自动管理数据存储和备份。因此，我们推荐用户使用分布式文件系统，部署方式请参考[多服务器集群部署](https://github.com/dolphindb/Tutorials_CN/blob/master/multi_machine_cluster_deploy.md)。为了能够让用户快速开始，我们在本教程中给出了本地文件系统和分布式文件系统的例子。DFS数据库的路径以“dfs://”开头。
+DolphinDB数据库根据存储方式可以分为3种类型：内存数据库、本地文件系统的数据库和分布式文件系统（DFS）中的数据库。DFS能够自动管理数据存储和备份，并且DolphinDB在DFS模式中性能达到最优。因此，推荐用户使用分布式文件系统，部署方式请参考[多服务器集群部署](https://github.com/dolphindb/Tutorials_CN/blob/master/multi_machine_cluster_deploy.md)。为简化起见，在本教程中也给出了本地文件系统数据库的例子。
 
 #### 2.1 把数据导入到内存表中
 
-我们可以使用**loadText**方法把文本文件导入到DolphinDB的内存表中。该方法会在Python中返回一个DolphinDB内存表对象。我们可以使用**toDF**方法把Python中的DolphinDB Table对象转换成pandas DataFrame。
+可以使用`loadText`方法把文本文件导入到DolphinDB的内存表中。该方法会在Python中返回一个DolphinDB内存表对象。可以使用`toDF`方法把Python中的DolphinDB Table对象转换成pandas DataFrame。
 
 ```
 WORK_DIR = "C:/DolphinDB/Data"
@@ -69,8 +71,7 @@ TICKER        date       VOL        PRC        BID       ASK
 13135   NFLX  2016.12.30   4455012  123.80000  123.80000  123.8300
 
 ```
-
-**loadText**函数导入文件时的默认分隔符是“,”。用户可以指定其他符号作为分隔符。例如，导入表格形式的文本文件：
+`loadText`函数导入文件时的默认分隔符是“,”。用户也可指定其他符号作为分隔符。例如，导入表格形式的文本文件：
 
 ```
 t1=s.loadText(WORK_DIR+"/t1.tsv", '\t')
@@ -78,19 +79,18 @@ t1=s.loadText(WORK_DIR+"/t1.tsv", '\t')
 
 #### 2.2 把数据导入到分区数据库中
 
-如果需要导入的文件比可用内存大，我们可以把数据导入到分区数据库中。
-
+如果需要导入的文件比可用内存大，可把数据导入到分区数据库中。
 
 #### 2.2.1 创建分区数据库
 
-创建了分区数据库后，我们不能改变它的分区方案。为了保证使用的不是已经存在的数据库，需要先检查数据库“valuedb”是否存在。如果存在，将其删除。
+创建了分区数据库后，不能改变它的分区方案。为了保证使用的不是已经存在的数据库，需要先检查数据库valuedb是否存在。如果存在，将其删除。
 
 ```
 if s.existsDatabase(WORK_DIR+"/valuedb"):
     s.dropDatabase(WORK_DIR+"/valuedb")
 ```
 
-使用**database**方法创建值分区（VALUE）的数据库。由于example.csv文件中只有3个股票代码，使用股票代码作为分区字段。参数**partitions**表示分区方案。
+使用`database`方法创建值分区（VALUE）的数据库。由于example.csv文件中只有3个股票代码，使用股票代码作为分区字段。参数partitions表示分区方案。
 
 ```
 # 'db' indicates the database handle name on the DolphinDB server.
@@ -98,22 +98,22 @@ s.database('db', partitionType=ddb.VALUE, partitions=["AMZN","NFLX","NVDA"], dbP
 # this is equivalent to executing 'db=database(=WORK_DIR+"/valuedb", VALUE, ["AMZN","NFLX", "NVDA"])' on DolphinDB server.
 ```
 
-在DFS（分布式文件系统）创建分区数据库，只需把数据库的路径改成以“dfs://”开头。下面的例子需要在集群中执行。请参考教程[多服务器集群部署](https://github.com/dolphindb/Tutorials_CN/blob/master/multi_machine_cluster_deploy.md)配置集群。
+在DFS（分布式文件系统）创建分区数据库，只需把数据库的路径改成以"dfs://"开头。下面的例子需要在集群中执行。请参考教程[多服务器集群部署](https://github.com/dolphindb/Tutorials_CN/blob/master/multi_machine_cluster_deploy.md)配置集群。
 
 ```
 s.database('db', partitionType=VALUE, partitions=["AMZN","NFLX", "NVDA"], dbPath="dfs://valuedb")
 ```
 
-除了值分区（VALUE），DolphinDB还支持顺序分区（SEQ）、哈希分区（HASH）、范围分区（RANGE）、组合分区（COMBO）和哈希分区（HASH）。
+除了值分区（VALUE），DolphinDB还支持顺序分区（SEQ）、哈希分区（HASH）、范围分区（RANGE）、列表分区（LIST）与组合分区（COMBO）。
 
 #### 2.2.2 创建分区表，并把数据追加到表中
 
-创建数据库后，我们可以使用函数**loadTextEx**把文本文件导入到分区数据库的分区表中。如果分区表不存在，函数会自动生成该分区表并把数据追加到表中。如果分区表已经存在，则直接把数据追加到分区表中。
+创建数据库后，可使用函数`loadTextEx`把文本文件导入到分区数据库的分区表中。如果分区表不存在，函数会自动生成该分区表并把数据追加到表中。如果分区表已经存在，则直接把数据追加到分区表中。
 
-函数**loadTextEx**的各个参数如下：
-**dbPath**表示数据库路径，**tableName**表示分区表的名称，**partitionColumns**表示分区列，**filePath**表示文本文件的绝对路径，**delimiter**表示文本文件的分隔符（默认分隔符是逗号）。
+函数`loadTextEx`的各个参数如下：
+dbPath表示数据库路径，tableName表示分区表的名称，partitionColumns表示分区列，filePath表示文本文件的绝对路径，delimiter表示文本文件的分隔符（默认分隔符是逗号）。
 
-下面的例子使用函数**loadTextEx**创建了分区表**trade**，并把example.csv中的数据追加到表中。
+下面的例子使用函数`loadTextEx`创建了分区表trade，并把example.csv中的数据追加到表中。
 
 ```
 if s.existsDatabase(WORK_DIR+"/valuedb"):
@@ -161,26 +161,24 @@ print(trade.schema)
  trade = s.table(dbPath=WORK_DIR+"/valuedb", data="trade")
 ```
 
-
-
 #### 2.3 把数据导入到内存的分区表中
 
-#### 2.3.1 使用loadTextEx
-我们可以把数据导入到内存的分区表中。由于内存分区表使用了并行计算，因此对它进行操作比对内存未分区进行操作要快。
+#### 2.3.1 使用`loadTextEx`
 
-同样地，使用**loadTextEx**函数创建内存分区数据库时，**dbPath**参数为空字符串。
+可把数据导入到内存的分区表中。由于内存分区表使用了并行计算，因此对它进行操作比对内存未分区表进行操作要快。
+
+使用`loadTextEx`函数创建内存分区数据库时，dbPath参数为空字符串。
 
 ```
 s.database('db', partitionType=ddb.VALUE, partitions=["AMZN","NFLX","NVDA"], dbPath="")
 
-# "dbPath='db'" means that the system uses database handle 'db' to import data into in-memory partitioned table trade
 trade=s.loadTextEx(dbPath="db", partitionColumns=["TICKER"], tableName='trade', filePath=WORK_DIR + "/example.csv")
 
 ```
 
-#### 2.3.2 使用ploadText
+#### 2.3.2 使用`ploadText`
 
-**ploadText**函数可以并行加载文本文件到内存分区表中。它的加载速度要比**loadText**函数快。
+`ploadText`函数可以并行加载文本文件到内存分区表中。它的加载速度要比`loadText`函数快。
 ```
 trade=s.ploadText(WORK_DIR+"/example.csv")
 print(trade.rows)
@@ -189,12 +187,74 @@ print(trade.rows)
 13136
 ```
 
-
 #### 2.4 从Python上传数据到DolphinDB服务器
 
-#### 2.4.1 使用upload函数
+#### 2.4.1 数据类型转换
 
-**upload**可以把Python对象上传到DolphinDB服务器。**upload**函数的输入是Python的字典对象，它的key对应的是DolphinDB中的变量名，value对应的是Python对象。
+上传数据时，Python中的一些基础类型，如bool, int64, float64，会自动转换为DolphinDB的BOOL, INT, DOUBLE类型。但是，时间类型需要做特殊的处理。DolphinDB提供DATE, MONTH, TIME, MINUTE, SECOND, DATETIME, TIMESTAMP, NANOTIME, NANOTIMESTAMP九种类型的时间类型。Python中时间类型均为datetime64类型，会被转换成DolphinDB的NANOTIMESTAMP类型。Python API提供了`from_time`,`from_date`或`from_datetime`方法，能够把datetime64类型转换成DolphinDB的各种时间类型。下表列举了如何在Python中创建DolphinDB时间类型对象：
+
+```
+# 导入DolphinDB数据类型包
+from dolphindb.type_util import *
+```
+
+|类型|例子|上传到DolphinDB的结果|
+|--------|---------------|--------------|
+|DATE|Date.from_date(date(2012,12,20))|2012.12.20|
+|MONTH|Month.from_date(date(2012,12,26))|2012.12M|
+|TIME|Time.from_time(time(12,30,30,8))|12:30:30.008|
+|MINUTE|Minute.from_time(time(12,30))|12:30m|
+|SECOND|Second.from_time(time(12,30,30))|12:30:30|
+|DATETIME|Datetime.from_datetime(datetime(2012,12,30,15,12,30))|2012.12.30 15:12:30|
+|TIMESTAMP|Timestamp.from_datetime(datetime(2012,12,30,15,12,30,8))|2012.12.30 15:12:30.008|
+|NANOTIME|NanoTime.from_time(time(13,30,10,706))|13:30:10.000706000|
+|NANOTIMESTAMP|NanoTimestamp.from_datetime(datetime(2012,12,24,13,30,10,80706))|2012.12.24 13:30:10.080706000|
+
+Python中的np.NaN是特殊的float数据类型，上传时，DolphinDB也会把它们识别为float。如果需要上传结果为DolphinDB类型的NULL，必须使用Python API提供的NULL值，保证数据上传后仍然为相应类型的NULL。下面列举了如何在Python中创建DolphinDB类型的NULL：
+
+|类型|对应的NULL|
+|-------|--------|
+|BOOL|boolNan|
+|CHAR|byteBan|
+|SHORT|shortNan|
+|INT|intNan|
+|DATE|Date.null()|
+|MONTH|Month.null()|
+|TIME|Time.null()|
+|SECOND|Second.null()|
+|DATETIME|Datetime.null()|
+|TIMESTAMP|Timestamp.null()|
+|NANOTIME|NanoTime.null()|
+|NANOTIMESTAMP|NanoTimestamp.null()|
+
+注意，上传字典或Dataframe时，同一列中不能同时包含Python的原生类型和DolphinDB Python API提供的类型。
+例如：'date':[date(2012,12,30),Date.from_date(date(2012,12,31)),Date.null()]，date列同时包含了Python的datetime64类型和DolphinDB Python API提供的DATE类型，会导致上传失败。
+
+如果需要在python2.7中使用中文，在文件开头指定编码为UTF-8.
+
+```
+# -*- coding: utf-8 -*-
+```
+
+#### 2.4.2 使用`upload`函数上传
+
+`upload`可以把Python对象上传到DolphinDB服务器。`upload`函数的输入是Python的字典对象，它的key对应的是DolphinDB中的变量名，value对应的是Python对象。
+
+
+#### 上传Python list
+
+```
+a = [1,2,3,4,5,6]
+s.upload({'a':a})
+a_new = s.run("a"))
+print(a_new)
+
+#output
+[1,2,3,4,5,6]
+
+```
+
+#### 上传pandas DataFrame
 
 ```
 import pandas as pd
@@ -207,9 +267,9 @@ print(s.run("t1.value.avg()"))
 5.44
 ```
 
-#### 2.4.2 使用table函数
+#### 2.4.3 使用`table`函数上传
 
-我们可以在Python中使用**table**函数创建DolphinDB表对象。**table**函数的输入可以是字典、Dataframe或DolphinDB中的表名。
+可在Python中使用`table`函数创建DolphinDB表对象。`table`函数的输入可以是字典、Dataframe或DolphinDB中的表名。
 
 ```
 # save the table to DolphinDB server as table "test"
@@ -228,59 +288,66 @@ print(s.loadTable("test").toDF())
 3   3      A    26.0
 ```
 
-#### 2.4.3 数据类型转换
+#### 2.4.4 上传一个包含空值的数据表
 
-上传数据时，Python中的一些基础类型，如bool, int64, float64，会自动转换为DolphinDB的BOOL, INT, DOUBLE类型。但是，时间类型需要做特殊的处理。DolphinDB提供DATE, MONTH, TIME, MINUTE, SECOND, DATETIME, TIMESTAMP, NANOTIME, NANOTIMESTAMP九种类型的时间类型，最高精度可以到纳秒级。Python中时间类型为datetime64类型，会被转换成DolphinDB的NANOTIMESTAMP类型。Python API提供了**from_time**,**from_date**或**from_datetime**方法，能够把dateitme64类型转换成DolphinDB的时间类型。下面列举了如何在Python中创建DolphinDB时间类型对象：
+有时需要使用Python API来向DolphinDB服务器的分区表中追加数据。以下用例使用Python中的字典来保存一个数据表，并通过`table`函数将数据上传到DolphinDB，追加到一个数据表中。
 
-```
-# 需要导入DolphinDB数据类型包
-from dolphindb.type_util import *
-```
-
-|类型|例子|上传到DolphinDB的结果|
-|--------|---------------|--------------|
-|DATE|Date.from_date(date(2012,12,20))|2012.12.20|
-|MONTH|Month.from_date(date(2012,12,26))|2012.12M|
-|TIME|Time.from_time(time(12,30,30,8))|12:30:30.008|
-|MINUTE|Minute.from_time(time(12,30))|12:30m|
-|SECOND|Second.from_time(time(12,30,30))|12:30:30|
-|DATETIME|Datetime.from_datetime(datetime(2012,12,30,15,12,30))|2012.12.30 15:12:30|
-|TIMESTAMP|Timestamp.from_datetime(datetime(2012,12,30,15,12,30,8))|2012.12.30 15:12:30.008|
-|NANOTIME|NanoTime.from_time(time(13,30,10,706))|13:30:10.000706000|
-|NANOTIMESTAMP|NanoTimestamp.from_datetime(datetime(2012,12,24,13,30,10,80706))|2012.12.24 13:30:10.080706000|
-
-Python中的np.NaN是特殊的float，上传数据时，DolphinDB也会把它们识别为float。如果需要上传DolphinDB类型的NULL，必须使用Python API提供的NULL值，保证数据上传后仍然为相应类型的NULL。下面列举了如何在Python中创建DolphinDB类型的NULL：
-
-|类型|对应的NULL|
-|-------|--------|
-|BOOL|boolNan|
-|CHAR|byteBan|
-|SHORT|shortNan|
-|INT|intNan|
-|DATE|Date.null()|
-|MONTH|Month.null()|
-|TIME|Time.null()|
-|SECOND|Second.null()|
-|DATETIME|Datetime.null()|
-|TIMESTAMP|Timestamp.null()|
-|NANOTIME|NanoTime.null()|
-|NANOTIMESTAMP|NanoTimestamp.null()|
-
-注意，上传字典或Dataframe时，同一列中不能同时包含Python的原生类型和DolphinDB Python API提供的类型。例如：'date':[date(2012,12,30),Date.from_date(date(2012,12,31)),Date.null()]，date列同时包含了Python的datetime64类型和DolphinDB Python API提供的DATE类型，会导致上传失败。
-
-如果需要在python2.7中使用中文，在文件开头指定编码为UTF-8.
+DolphinDB服务器端脚本（创建数据表）：
 
 ```
-# -*- coding: utf-8 -*-
+db = database("dfs://testPython", VALUE, 1..100)
+t1 = table(10000:0,`id`cbool`cchar`cshort`cint`clong`cdate`cmonth`ctime`cminute`csecond`cdatetime`ctimestamp`cnanotime`cnanotimestamp`cfloat`cdouble`csymbol`cstring,[BOOL,CHAR,SHORT,INT,LONG,DATE,MONTH,TIME,MINUTE,SECOND,DATETIME,TIMESTAMP,NANOTIME,NANOTIMESTAMP,FLOAT,DOUBLE,SYMBOL,STRING])
+insert into t1 values (0,true,'a',122h,21,22l,2012.06.12,2012.06M,13:10:10.008,13:30m,13:30:10,2012.06.13 13:30:10,2012.06.13 13:30:10.008,13:30:10.008007006,2012.06.13 13:30:10.008007006,2.1f,2.1,"","")
+db.createPartitionedTable(t1, `t1, `id)
+```
+
+Python脚本 （拼接数据表并上传追加）：
+
+```
+tbl = {'cbool': [True, False, boolNan],
+            'cchar': [1, 2, byteNan],
+            'cshort': [12, 13, shortNan],
+            'cint': [0, 1, intNan],
+            'clong': [0, 1, 2],
+            'cdate': [Date.from_date(date(2012, 12, 24)), Date.from_date(date(2012, 12, 25)), Date.null()],
+            'cmonth': [Month.from_date(date(2012, 12, 12)), Month.from_date(date(2016, 12, 12)), Month.null()],
+            'ctime': [Time.from_time(time(12, 30, 30, 123)), Time.from_time(time(12, 30, 30, 8)), Time.null()],
+            'cminute': [Minute.from_time(time(12, 30)), Minute.from_time(time(12, 31)), Minute.null()],
+            'csecond': [Second.from_time(time(12, 30, 10)), Second.from_time(time(12, 30, 11)),Second.null()],
+            'cdatetime': [Datetime.from_datetime(datetime(2012, 12, 30, 15, 12, 30)),
+                           Datetime.from_datetime(datetime(2012, 12, 30, 15, 12, 31)), Datetime.null()],
+            'ctimestamp': [Timestamp.from_datetime(datetime(2012, 12, 30, 15, 12, 30, 8)),
+                           Timestamp.from_datetime(datetime(2012, 12, 30, 15, 12, 30, 8)), Timestamp.null()],
+            'cnanotime': [NanoTime.from_time(time(13, 30, 10, 706)), NanoTime.from_time(time(13, 30, 10, 128006)),
+                           NanoTime.null()],
+            'cnanotimestamp': [NanoTimestamp.from_datetime(datetime(2012, 12, 24, 13, 30, 10, 80706)),
+                               NanoTimestamp.from_datetime(datetime(2012, 12, 24, 13, 30, 10, 128076)),
+                               NanoTimestamp.null()],
+            'cfloat': [2.1, 2.658956, floatNan],
+            'cdouble': [0., 47.456213, doubleNan],
+            'csymbol': ['A', 'B', ''],
+            'cstring': ['abc', 'def', '']}
+    
+ tmp=s.table(data=tbl)
+ t1=s.loadTable(dbPath="dfs://testPython", tableName="t1")
+ t1.append(tmp)
+ print(t1.rows)
+```
+
+原来数据表中有一条数据，追加之后有4条数据。
+
+```
+#output
+4
 ```
 
 #### 3 从DolphinDB数据库中加载数据
 
-#### 3.1 使用loadTable函数
+#### 3.1 使用`loadTable`函数
 
-我们可以使用**loadTable**从数据库中加载数据。参数**tableName**表示分区表的名称，**dbPath**表示数据库的路径。如果没有指定**dbPath**，**loadTable**函数会加载内存中名为**tableName**的表。
+可以使用`loadTable`从数据库中加载数据。参数tableName表示分区表的名称，dbPath表示数据库的路径。如果没有指定dbPath，`loadTable`函数会加载内存中的表。
 
-对于分区表，如果参数**memoryMode**=true，把表中的所有数据加载到内存的分区表中（如果指定了**partition**参数，则加载指定的分区数据）；如果参数**memoryMode**=false，只把元数据加载到内存。
+对于分区表，若参数memoryMode=true且未指定partition参数，把表中的所有数据加载到内存的分区表中；若参数memoryMode=true且指定了partition参数，则只加载指定的分区数据到内存的分区表中；如果参数memoryMode=false，只把元数据加载到内存。
 
 #### 3.1.1 加载整个表的数据
 
@@ -315,8 +382,6 @@ print(trade.rows)
 4941
 ```
 
-#### 3.1.3 把分区表加载到内存表中
-
 ```
 trade = s.loadTable(tableName="trade",dbPath=WORK_DIR+"/valuedb", partitions=["NFLX","NVDA"], memoryMode=True)
 print(trade.rows)
@@ -325,9 +390,9 @@ print(trade.rows)
 8195
 ```
 
-#### 3.2 使用loadTableBySQL函数
+#### 3.2 使用`loadTableBySQL`函数
 
-**loadTableBySQL**函数通过SQL查询把磁盘上的分区表加载到内存的分区表中。
+`loadTableBySQL`函数把磁盘上的分区表中满足SQL语句过滤条件的数据加载到内存的分区表中。
 
 ```
 import os
@@ -343,65 +408,35 @@ print(trade.rows)
 5286
 ```
 
-#### 3.3 类型转换
+#### 3.3 从DolphinDB下载数据到Python时的数据类型转换
 
-从DolphinDB数据库中下载数据到Python，数据类型会做相应的转换。对于一些基础类型，如BOOL、INT，会被转换为Python中的bool和int64类型。DolphinDB中的CHAR、SHORT、INT、LONG类型会被转换成int64类型。用户可以使用chr()函数把整数转换为字符。对于DOUBLE和FLOAT类型，会被转换为float64类型。对于SYMBOL和STRING类型，会被转换为Python中的object。对于DolphinDB中的时间类型，会被转换为datetime64类型。MONTH类型，如2012.06M，会被转换为2012-06-01，TIME、MINUTE、SECOND、NANOTIME类型不包含日期信息，转换时，会自动添加1970-01-01，例如13:30m会被转换为1970-01-01 13:30:00。
+下表展示了从DolphinDB数据库中通过`toDF`函数下载数据到Python时，数据类型的转换。需要指出的是：
+- DolphinDB CHAR类型会被转换成Python int64类型。对此结果，用户可以使用Python的`chr`函数使之转换为字符。
+- 由于Python pandas中所有有关时间的数据类型均为datetime64，DolphinDB中的所有时间类型数据均会被转换为datetime64类型。MONTH类型，如2012.06M，会被转换为2012-06-01。
+- TIME、MINUTE、SECOND、NANOTIME类型不包含日期信息，转换时，会自动添加1970-01-01，例如13:30m会被转换为1970-01-01 13:30:00。
 
-|DolphinDB类型|Python类型|
-|-------------|----------|
-|BOOL|bool|
-|CHAR, SHORT, INT, LONG|int64|
-|DOUBLE, FLOAT|float64|
-|SYMBOL, STRING|object|
-|DATE, MONTH, TIME, MINUTE, SECOND, DATETIME, TIMESTAMP, NANOTIME, NANOTIMESTAMP|datetime64|
+|DolphinDB类型|Python类型|DolphinDB数据|Pythton数据|
+|-------------|----------|-------------|-----------|
+|BOOL|bool|[true,00b]|[True, nan]|
+|CHAR|int64|[12c,00c]|[12, nan]|
+|SHORT|int64|[12,00h]|[12, nan]|
+|INT|int64|[12,00i]|[12, nan]|
+|LONG|int64|[12l,00l]|[12, nan]|
+|DOUBLE|float64|[3.5,00F]|[3.5,nan]|
+|FLOAT|float64|[3.5,00f]|[3.5, nan]|
+|SYMBOL|object|symbol(["AAPL",NULL])|["AAPL",""]|
+|STRING|object|["AAPL",string()]|["AAPL", ""]|
+|DATE|datetime64|[2012.6.12,date()]|[2012-06-12, NaT]|
+|MONTH|datetime64|[2012.06M, month()]|[2012-06-01, NaT]|
+|TIME|datetime64|[13:10:10.008,time()]|[1970-01-01 13:10:10.008, NaT]|
+|MINUTE|datetime64|[13:30,minute()]|[1970-01-01 13:30:00, NaT]|
+|SECOND|datetime64|[13:30:10,second()]|[1970-01-01 13:30:10, NaT]|
+|DATETIME|datetime64|[2012.06.13 13:30:10,datetime()]|[2012-06-13 13:30:10,NaT]|
+|TIMESTAMP|datetime64|[2012.06.13 13:30:10.008,timestamp()]|[2012-06-13 13:30:10.008,NaT]|
+|NANOTIME|datetime64||[13:30:10.008007006, nanotime()]|[1970-01-01 13:30:10.008007006,NaT]|
+|NANOTIMESTAMP|datetime64|[2012.06.13 13:30:10.008007006,nanotimestamp()]|[2012-06-13 13:30:10.008007006,NaT]|
 
-下面的例子列举了各种DolphinDB类型转换后的结果：
 
-```
-//DolphinDB创建表的脚本：
-db=database(WORK_DIR+"/testPython")
-t1 = table(10000:0,`cid`cbool`cchar`cshort`cint`clong`cdate`cmonth`ctime`cminute`csecond`cdatetime`ctimestamp`cnanotime`cnanotimestamp`cfloat`cdouble`csymbol`cstring,[INT,BOOL,CHAR,SHORT,INT,LONG,DATE,MONTH,TIME,MINUTE,SECOND,DATETIME,TIMESTAMP,NANOTIME,NANOTIMESTAMP,FLOAT,DOUBLE,SYMBOL,STRING])
-insert into t1 values (1,true,'a',122h,21,22l,2012.06.12,2012.06M,13:10:10.008,13:30m,13:30:10,2012.06.13 13:30:10,2012.06.13 13:30:10.008,13:30:10.008007006,2012.06.13 13:30:10.008007006,2.1f,2.1,"ABC","abc")
-insert into t1 values (2,,,,,,,,,,,,,,,,,"","")
-insert into t1 values (3,bool(),char(),short(),int(),long(),date(),month(),time(),minute(),second(),datetime(),timestamp(),nanotime(),nanotimestamp(),float(),double(),"",string())
-saveTable(db,t1,`t1)
-```
-
-
-```
-t=s.loadTable(WORK_DIR+"/testPython",tableName="t1")
-print(t.toDF())
-```
-
-|  |cid |cbool |cchar |cshort |cint |clong |cdate |cmonth |ctime |cminute |csecond |cdatetime |ctimestamp|cnanotime |cnanotimestamp |cfloat |cdouble |csymbol |cstring |
-|--|----|------|------|-------|-----|------|------|-------|------|--------|--------|----------|----------|----------|---------------|-------|--------|--------|--------|
-|0 |1 |True |97 |122 |21 |22 |2012-06-12 |2012-06-01 |1970-01-01 13:10:10.008 |1970-01-01 13:30:00 |1970-01-01 13:30:10 |2012-06-13 13:30:10 |2012-06-13 13:30:10.000008 |1970-01-01 13:30:10.008007006 |2012-06-13 13:30:10.008007006 |2.1 |2.1 |ABC |abc |
-|1 |2 |nan  |nan|nan |nan|nan|NaT        |NaT        |NaT                     |NaT                 |NaT                 |NaT                 |NaT                        |NaT                          |NaT                           |nan |nan |    |    |
-|2 |3 |nan  |nan|nan |nan|nan| NaT       |NaT        |NaT                     |NaT                 |NaT                 |NaT                 |NaT                        |NaT                          |NaT                           |nan |nan |    |    |
-
-```
-t.toDF().dtypes
-
-cbool                       bool
-cchar                      int64
-cshort                     int64
-cint                       int64
-clong                      int64
-cdate             datetime64[ns]
-cmonth            datetime64[ns]
-ctime             datetime64[ns]
-cminute           datetime64[ns]
-csecond           datetime64[ns]
-cdatetime         datetime64[ns]
-ctimestamp        datetime64[ns]
-cnanotime         datetime64[ns]
-cnanotimestamp    datetime64[ns]
-cfloat                   float64
-cdouble                  float64
-csymbol                   object
-cstring                   object
-dtype: object
-```
 
 #### 4 操作数据库和表
 
@@ -409,7 +444,7 @@ dtype: object
 
 #### 4.1.1 创建数据库
 
-使用**database**创建分区数据库。
+使用`database`创建分区数据库。
 
 ```
 s.database('db', partitionType=ddb.VALUE, partitions=["AMZN","NFLX", "NVDA"], dbPath=WORK_DIR+"/valuedb")
@@ -417,7 +452,7 @@ s.database('db', partitionType=ddb.VALUE, partitions=["AMZN","NFLX", "NVDA"], db
 
 #### 4.1.2 删除数据库
 
-使用**dropDatabase**删除数据库。
+使用`dropDatabase`删除数据库。
 
 ```
 if s.existsDatabase(WORK_DIR+"/valuedb"):
@@ -426,7 +461,7 @@ if s.existsDatabase(WORK_DIR+"/valuedb"):
 
 #### 4.1.3 删除DFS数据库的分区
 
-使用**dropPartition**删除DFS数据库的分区。
+使用`dropPartition`删除DFS数据库的分区。
 
 ```
 if s.existsDatabase("dfs://valuedb"):
@@ -450,13 +485,13 @@ print(trade.select("distinct TICKER").toDF())
 0            NVDA
 ```
 
-#### 4.2 操作表
+#### 4.2 表操作
 
 #### 4.2.1 加载数据库中的表
 
 见3.1节。
 
-#### 4.2.2 把数据追加到表
+#### 4.2.2 数据表添加数据
 
 下面的例子把数据追加到磁盘上的分区表。如果需要使用追加数据后的表，需要重新把它加载到内存中。
 
@@ -495,7 +530,7 @@ print(t1.rows)
 
 #### 4.3 更新表
 
-**update**只能用于更新内存表，并且必须和**execute**一起使用。
+`update`只能用于更新内存表，并且必须和`execute`一起使用。
 
 ```
 trade = s.loadTable(tableName="trade", dbPath=WORK_DIR+"/valuedb", memoryMode=True)
@@ -521,7 +556,7 @@ print(t1.toDF())
 
 #### 4.4 删除表中的记录
 
-**delete**必须与**execute**一起使用来删除表中的记录。
+`delete`必须与`execute`一起使用来删除表中的记录。
 
 ```
 trade = s.loadTable(tableName="trade", dbPath=WORK_DIR+"/valuedb", memoryMode=True)
@@ -557,10 +592,9 @@ s.dropTable(WORK_DIR + "/valuedb", "trade")
 
 DolphinDB提供了灵活的方法来生成SQL语句。
 
-#### 5.1 **select**
+#### 5.1 `select`
 
 #### 5.1.1 使用一系列的列名作为输入内容
-
 
 ```
 trade = s.loadTable(tableName="trade",dbPath=WORK_DIR+"/valuedb", memoryMode=True)
@@ -576,8 +610,7 @@ print(trade.select(['ticker','date','bid','ask','prc','vol']).toDF())
 ...
 
 ```
-
-我们可以使用**showSQL**来展示SQL语句。
+可以使用`showSQL`来展示SQL语句。
 
 ```
 print(trade.select(['ticker','date','bid','ask','prc','vol']).where("date=2012.09.06").where("vol<10000000").showSQL())
@@ -600,9 +633,9 @@ print(trade.select("ticker,date,bid,ask,prc,vol").where("date=2012.09.06").where
 
 ```
 
-#### 5.2 **top**
+#### 5.2 `top`
 
-**top**用于取表中的前n条记录。
+`top`用于取表中的前n条记录。
 
 ```
 trade = s.loadTable(tableName="trade",dbPath=WORK_DIR+"/valuedb")
@@ -618,9 +651,9 @@ trade.top(5).toDF()
 
 ```
 
-#### 5.3 where
+#### 5.3 `where`
 
-**where**用于过滤数据。
+`where`用于过滤数据。
 
 #### 5.3.1 多个条件过滤
 
@@ -644,7 +677,7 @@ print(t1.rows)
 765
 ```
 
-我们可以使用**showSQL**来查看SQL语句。
+可以使用`showSQL`来查看SQL语句。
 
 ```
 print(trade.select(['date','bid','ask','prc','vol']).where('TICKER=`AMZN').where('bid!=NULL').where('ask!=NULL').where('vol>10000000').sort('vol desc').showSQL())
@@ -655,7 +688,7 @@ select date,bid,ask,prc,vol from Tff260d29 where TICKER=`AMZN and bid!=NULL and 
 
 #### 5.3.2 使用字符串作为输入内容
 
-**select**的输入内容可以是包含多个列名的字符串，**where**的输入内容可以是包含多个条件的字符串。
+`select`的输入内容可以是包含多个列名的字符串，`where`的输入内容可以是包含多个条件的字符串。
 
 ```
 trade = s.loadTable(tableName="trade",dbPath=WORK_DIR+"/valuedb")
@@ -674,9 +707,9 @@ print(trade.select("ticker, date, vol").where("bid!=NULL, ask!=NULL, vol>5000000
 40   NVDA  2016.12.29   54384676
 ```
 
-#### 5.4 **groupby**
+#### 5.4 `groupby`
 
-**groupby**后面需要使用聚合函数，如**count**、**sum**、**agg**和**agg2**。
+`groupby`后面需要使用聚合函数，如`count`、`sum`、`agg`和`agg2`。
 
 ```
 trade = s.loadTable(tableName="trade",dbPath=WORK_DIR+"/valuedb")
@@ -690,7 +723,7 @@ print(trade.select('count(*)').groupby(['ticker']).sort(bys=['ticker desc']).toD
 
 ```
 
-分别计算每个股票的vol总和和prc总和。
+分别计算每个股票的vol总和与prc总和。
 
 ```
 trade = s.loadTable(tableName="trade",dbPath=WORK_DIR+"/valuedb")
@@ -704,8 +737,7 @@ print(trade.select(['vol','prc']).groupby(['ticker']).sum().toDF())
 2   NVDA  46879603806  127139.51092
 ```
 
-
-**groupby**与**having**一起使用：
+`groupby`与`having`一起使用：
 
 ```
 trade = s.loadTable(tableName="trade",dbPath=WORK_DIR+"/valuedb")
@@ -725,9 +757,9 @@ print(trade.select('count(ask)').groupby(['vol']).having('count(ask)>1').toDF())
 
 ```
 
-#### 5.5 **contextby**
+#### 5.5 `contextby`
 
-**contextby**与**groupby**相似，区别在于**groupby**为每个组返回一个标量，但是**contextby**为每个组返回一个向量。返回的向量与每组之间的记录行数相同。
+`contextby`与`groupby`相似，区别在于`groupby`为每个组返回一个标量，但是`contextby`为每个组返回一个向量。每组返回的向量长度与这一组的行数相同。
 
 ```
 df= s.loadTable(tableName="trade",dbPath=WORK_DIR+"/valuedb").contextby('ticker').top(3).toDF()
@@ -800,11 +832,11 @@ print(df)
 
 #### 5.6 表连接
 
-**merge**用于内部连接、左连接和外部连接，**merge_asof**用于asof join，**merge_window**用于窗口连接。
+`merge`用于内部连接、左连接和外部连接，`merge_asof`表示asof join，`merge_window`表示窗口连接。
 
-#### 5.6.1 **merge**
+#### 5.6.1 `merge`
 
-如果连接列名称相同，使用**on**参数指定连接列，如果连接列名称不同，使用**left_on**和**right_on**参数指定连接列。可选参数**how**表示表连接的类型。默认的连接类型时内部连接。
+如果连接列名称相同，使用on参数指定连接列，如果连接列名称不同，使用left_on和right_on参数指定连接列。可选参数how表示表连接的类型。默认的连接类型时内部连接。
 
 ```
 trade = s.loadTable(dbPath=WORK_DIR+"/valuedb", tableName="trade")
@@ -818,7 +850,7 @@ print(trade.merge(t1,on=["TICKER","date"]).toDF())
 2   AMZN  2015.12.31  3749860  675.89001  675.85999  675.94000   695
 ```
 
-当连接列名称不相同时，我们需要指定**left_on**参数和**right_on**参数。
+当连接列名称不相同时，需要指定left_on参数和right_on参数。
 
 ```
 trade = s.loadTable(dbPath=WORK_DIR+"/valuedb", tableName="trade")
@@ -832,7 +864,7 @@ print(trade.merge(t1,left_on=["TICKER","date"], right_on=["TICKER1","date1"]).to
 2   AMZN  2015.12.31  3749860  675.89001  675.85999  675.94000   695
 ```
 
-左连接时，把**how**参数设置为“left”。
+左连接时，把how参数设置为“left”。
 
 ```
 trade = s.loadTable(dbPath=WORK_DIR+"/valuedb", tableName="trade")
@@ -849,7 +881,7 @@ print(trade.merge(t1,how="left", on=["TICKER","date"]).where('TICKER=`AMZN').whe
 5   AMZN 2015-12-31  3749860  675.89001  675.85999  675.94000  695.0
 ```
 
-外部连接时，把**how**参数设置为“outer”。分区表只能与分区表进行外部链接，内存表只能与内存表进行外部链接。
+外部连接时，把how参数设置为“outer”。分区表只能与分区表进行外部链接，内存表只能与内存表进行外部链接。
 
 ```
 t1 = s.table(data={'TICKER': ['AMZN', 'AMZN', 'NFLX'], 'date': ['2015.12.29', '2015.12.30', '2015.12.31'], 'open': [674, 685, 942]})
@@ -870,15 +902,15 @@ print(t1.merge(t2, how="outer", on=["TICKER","date"]).toDF())
 3  936.0  
 ```
 
-#### 5.6.2 **merge_asof**
+#### 5.6.2 `merge_asof`
 
-**merge_asof**对应DolphinDB中的asof join（aj）。asof join用于非同步连接，它与left join非常相似，主要有以下区别：
+`merge_asof`对应DolphinDB中的asof join（aj）。asof join用于非同步连接，它与left join非常相似，主要有以下区别：
 
 1.asof join的最后一个连接列通常是时序类型。对于左表中某行的时间t，如果右表没有与t对应的时间，asof join会取右表中t之前的最近时间对应的记录。如果有多个相同的时间，它会取最后一个时间对应的记录。
 
-2.如果只有一个连接列，右表必须按照连接列排好序。如果有多个连接列，右表必须在其他连接列定义的每个组内根据最后一个连接列排好序，右表不需要按照其他连接列排序，左表不需要排序。如果右表不满足这些条件，计算结果将会不符合预期。
+2.如果只有一个连接列，右表必须按照连接列排好序。如果有多个连接列，右表必须在其他连接列的每个组内根据最后一个连接列排好序，右表不需要按照其他连接列排序，左表不需要排序。如果右表不满足这些条件，计算结果将会不符合预期。
 
-下面的例子使用了[trades.csv](data/trades.csv)和[quotes.csv](data/quotes.csv)，它们包含了NYSE提供的APPL和FB的股票数据。
+本节与下节的例子使用了[trades.csv](data/trades.csv)和[quotes.csv](data/quotes.csv)，它们含有NYSE网站下载的AAPL和FB的2016年10月24日的交易与报价数据。
 
 ```
 WORK_DIR = "C:/DolphinDB/Data"
@@ -937,11 +969,11 @@ print(trades.merge_asof(quotes, on=["Symbol","Time"]).select("sum(Trade_Volume*a
 1     FB  2.722923
 ```
 
-#### 5.6.3 merge_window
+#### 5.6.3 `merge_window`
 
-**merge_window**对应DolphinDB中的window join，它是asof join的扩展。**leftBound**参数和**rightBound**参数用于指定窗口的边界w1和w2，左表中最后一个连接列对应的时间为t，在右表中选择(t+w1)到(t+w2)的时间并且其他连接列匹配的记录，然后对这些记录使用聚合函数。
+`merge_window`对应DolphinDB中的window join，它是asof join的扩展。leftBound参数和rightBound参数用于指定窗口的边界w1和w2，对左表中最后一个连接列对应的时间为t的记录，在右表中选择(t+w1)到(t+w2)的时间并且其他连接列匹配的记录，然后对这些记录使用聚合函数。
 
-window join和prevailing window join的唯一区别是，如果右表中没有与窗口左边界时间（即t+w1）匹配的值，prevailing window join会选择(t+w1)之前的最近时间。如果要使用prevailing window join，把**prevailing**参数设置为True。
+window join和prevailing window join的唯一区别是，如果右表中没有与窗口左边界时间（即t+w1）匹配的值，prevailing window join会选择(t+w1)之前的最近时间。如果要使用prevailing window join，需将prevailing参数设置为True。
 
 ```
 print(trades.merge_window(quotes, -5000000000, 0, aggFunctions=["avg(Bid_Price)","avg(Offer_Price)"], on=["Symbol","Time"]).where("Time>=15:59:59").top(10).toDF())
@@ -987,9 +1019,9 @@ print(s.loadTable(tableName="tradingCost").toDF())
 1     FB  1.077876
 ```
 
-#### 5.7 executeAs
+#### 5.7 `executeAs`
 
-**executeAs**可以把结果保存为DolphinDB中的表对象。
+`executeAs`可以把结果保存为DolphinDB中的表对象。
 
 ```
 trade = s.loadTable(dbPath=WORK_DIR+"/valuedb", tableName="trade")
@@ -1003,7 +1035,7 @@ t1=s.loadTable(tableName="AMZN")
 
 #### 6 回归运算
 
-**ols**用于计算最小二乘回归系数。返回的是字典。
+`ols`用于计算最小二乘回归系数。返回的结果是一个字典。
 
 ```
 trade = s.loadTable(tableName="trade",dbPath=WORK_DIR + "/valuedb", memoryMode=True)
@@ -1041,7 +1073,7 @@ print(z["Coefficient"].beta[1])
 0.6053065019659698
 ```
 
-下面的例子在分区数据库中执行回归运算。请注意，在DolphinDB中，两个整数整除的运算符为“/”，恰好是python的转移字符，因此在**select**中使用VOL\SHROUT。
+下面的例子在分区数据库中执行回归运算。请注意，在DolphinDB中，两个整数整除的运算符为“/”，恰好是python的转移字符，因此在`select`中使用VOL\SHROUT。
 
 ```
 result = s.loadTable(tableName="US",dbPath="dfs://US").select("select VOL\\SHROUT as turnover, abs(RET) as absRet, (ASK-BID)/(BID+ASK)*2 as spread, log(SHROUT*(BID+ASK)/2) as logMV").where("VOL>0").ols("turnover", ["absRet","logMV", "spread"], True)
@@ -1053,9 +1085,9 @@ print(result["ANOVA"])
 2       Total  46701486  1.421674e+12           NaN          NaN           NaN
 ```
 
-#### 7 **run**
+#### 7 `run`
 
-**run**可用于执行任何DolphinDB脚本。如果脚本在DolphinDB中返回对象，**run**会把DolphinDB对象转换成Python中的对象。
+`run`可用于执行任何DolphinDB脚本。如果脚本在DolphinDB中返回对象，`run`会把DolphinDB对象转换成Python中的对象。
 
 ```
 # Load table
@@ -1070,7 +1102,7 @@ print(t)
 
 #### 8.1 动量交易策略
 
-下面的例子是使用动量交易策略进行回测。最常用的动量因素是过去一年扣除最近一个月的收益率。动量策略通常是一个月调整一次并且持有期也是一个月。本文的例子中，每天调整1/21的投资组合，并持有新的投资组合21天。为了简单起见，我们不考虑交易成本。
+下面的例子是使用动量交易策略进行回测。最常用的动量因素是过去一年扣除最近一个月的收益率。动量策略通常是一个月调整一次并且持有期也是一个月。本文的例子中，每天调整1/5的投资组合，并持有新的投资组合5天。为了简单起见，不考虑交易成本。
 
 **Create server session**
 
@@ -1080,7 +1112,7 @@ s=ddb.session()
 s.connect("localhost",8921, "admin", "123456")
 ```
 
-步骤1：加载股票交易数据，对数据进行清洗和过滤，然后为每只股票构建过去一年扣除最近一个月收益率的动量信号。注意，必须使用**executeAs**把中间结果保存到DolphinDB服务器上。数据集“US”包含了美国股票1990到2016年的交易数据。
+步骤1：加载股票交易数据，对数据进行清洗和过滤，然后为每只股票构建过去一年扣除最近一个月收益率的动量信号。注意，必须使用`executeAs`把中间结果保存到DolphinDB服务器上。数据集“US”包含了美国股票1990到2016年的交易数据。
 
 ```
 US = s.loadTable(dbPath="dfs://US", tableName="US")
@@ -1117,13 +1149,13 @@ def formPortfolio(startDate, endDate, tradables, holdingDays, groups, WtScheme):
 tradables=genTradeTables(priceData.tableName())
 startDate="1996.01.01"
 endDate="2017.01.01"
-holdingDays=21
+holdingDays=5
 groups=10
 ports=formPortfolio(startDate=startDate,endDate=endDate,tradables=tradables,holdingDays=holdingDays,groups=groups,WtScheme=2)
 dailyRtn=priceData.select("date, PERMNO, RET as dailyRet").where("date between "+startDate+":"+endDate).executeAs("dailyRtn")
 ```
 
-步骤3：计算投资组合中每只股票接下来21天的利润或损失。在投资组合形成后的21天关停投资组合。
+步骤3：计算投资组合中每只股票接下来5天的利润或损失。在投资组合形成后的5天后关停投资组合。
 
 ```
 def calcStockPnL(ports, dailyRtn, holdingDays, endDate):
@@ -1151,26 +1183,12 @@ stockPnL = calcStockPnL(ports=ports, dailyRtn=dailyRtn, holdingDays=holdingDays,
 ```
 portPnl = stockPnL.select("pnl").groupby("date").sum().sort(bys=["date"]).executeAs("portPnl")
 
-
 print(portPnl.toDF())
-
-      date   sum_pnl
-0     1996.01.03 -0.001723
-1     1996.01.04 -0.002033
-2     1996.01.05 -0.000283
-3     1996.01.08  0.000076
-4     1996.01.09 -0.007517
-5     1996.01.10  0.000964
-...
-5283  2016.12.27  0.005143
-5284  2016.12.28 -0.001795
-5285  2016.12.29  0.006746
-5286  2016.12.30 -0.009754
 ```
 
 #### 8.2 时间序列操作
 
-下面的例子实现了WorldQuant 101 Alphas中的98号因子。
+下面的例子计算"101 Formulaic Alphas" by Kakushadze (2015)中的98号因子。
 
 ```
 def alpha98(t):
