@@ -22,15 +22,13 @@ DolphinDB集群包括三种类型节点：数据节点（data node），代理�
 
 #### 3. DolphinDB集群初始配置
 
-启动一个集群，必须配置控制节点和代理节点。数据节点可以在集群启动后通过网络界面来配置，也可以在初始阶段配置。
-
-
+启动一个集群之前，必须配置控制节点和代理节点。数据节点可以在集群启动后通过网络界面来配置，也可以在初始阶段配置。
 
 #### 3.1.  配置控制节点
 
-在配置集群的时候请核对授权文件规定的节点个数以及每个节点最多内核。如果配置超出授权文件规定，集群将无法正常启动。这些异常信息都会记录在log文件中。
+在配置集群时请核对授权文件规定的节点个数以及每个节点最多内核。如果配置超出授权文件规定，集群将无法正常启动。这些异常信息都会记录在log文件中。
 
-进入server子目录。在server目录下，以Linux为例，创建config, data, log子目录。 这些子目录是为了方便用户理解本教程，但是不是必须的。
+进入server子目录。以Linux系统为例，在server目录下创建config, data及log子目录。 这些子目录是为了方便用户理解本教程，但是不是必须的。
 
 ```
 cd /DolphinDB/server/
@@ -59,14 +57,14 @@ dfsReplicaReliabilityLevel=0
 
 | 参数配置        | 解释          |
 |:------------- |:-------------|
-|localSite=localhost:8920:ctl8920 |节点局域网信息,格式为 IP地址:端口号:节点别名，所有字段都是必选项。|
+|localSite=localhost:8920:ctl8920 |节点局域网信息,格式为 IP地址:端口号:节点别名，所有字段均为必选项。|
 |localExecutors=3  |                 本地执行者的数量。默认值是CPU的内核数量 - 1。|
-|maxConnections=128         |        最大向内连接数。|
-|maxMemSize=16    |                 最大内存（GB）。|
+|maxConnections=128         |        最大向内连接数|
+|maxMemSize=16    |                 最大内存（GB）|
 |webWorkerNum=4  |                   处理http请求的工作池的大小。默认值是1。|
 |workerNum=4          |              常规交互式作业的工作池大小。默认值是CPU的内核数量。|
 |dfsReplicationFactor=1     |        每个表分区或文件块的副本数量。默认值是2。|
-|dfsReplicaReliabilityLevel=0 |      多个副本是否可以保存在同一台物理服务器上。 0：是; 1：不。默认值是0。|
+|dfsReplicaReliabilityLevel=0 |      多个副本是否可以保存在同一台物理服务器上。 0：可以; 1：不可以。默认值是0。|
 
 
 #### 3.1.2 配置集群成员参数文件
@@ -109,7 +107,7 @@ controllerSite=localhost:8920:ctl8920
 
 #### 3.3.1 启动代理节点
 
-在可执行文件所在目录(server目录)运行以下命令行。注意到agent.log存放在log子目录下，如果出现agent无法正常启动的情况，可以根据此log file来诊断错误原因。
+在可执行文件所在目录(server目录)运行以下命令行。请注意agent.log存放在log子目录下。如果出现agent无法正常启动的情况，可以查看此log file来诊断错误原因。
 
 
 #### Linux后台模式启动
@@ -119,7 +117,7 @@ nohup ./dolphindb -console 0 -mode agent -home data -config config/agent.cfg -lo
 ```
 建议通过Linux命令`nohup`（头） 和 `&`（尾）启动为后台运行模式，这样即使终端失去连接，DolphinDB也会持续运行。 
 
-“-console”默认是为 1，如果要设置为后台运行，必须要设置为0（"-console 0")，否则系统运行一段时间后会自动退出。。
+“-console”默认是为 1，如果要设置为后台运行，必须要设置为0（"-console 0")，否则系统运行一段时间后会自动退出。
 
 “-mode”表示节点性质，“-home”指定数据以及元数据存储路径，“-config”指定配置文件路径，“-logFile”指定log文件路径。
 
@@ -137,7 +135,7 @@ dolphindb.exe -mode agent -home data -config config/agent.cfg -logFile log/agent
 
 #### 3.3.2 启动控制节点
 
-在可执行文件所在目录(server目录)运行以下命令行。注意到controller.log存放在log子目录下，如果出现agent无法正常启动的情况，可以根据此log文件来诊断错误原因。
+在可执行文件所在目录(server目录)运行以下命令行。请注意controller.log存放在log子目录下，如果出现agent无法正常启动的情况，可以查看此log文件来诊断错误原因。
 
 #### Linux
 
@@ -158,13 +156,13 @@ dolphindb.exe -mode controller -home data -config config/controller.cfg -cluster
 
 #### 3.3.3 如何关闭代理节点和控制节点
 
-如果是启动为前端交互模式，可以在控制台中输入"quit"退出
+如果是启动为前端交互模式，可以在控制台中输入"quit"退出。
 
 ```
 quit
 ```
 
-如果是启动为后台交互模式，需要用Linux系统`kill`命令。假设运行命令的Linux系统用户名为 "ec2-user"
+如果是启动为后台交互模式，需要用Linux系统`kill`命令。假设运行命令的Linux系统用户名为 "ec2-user"。
 ```
 ps aux | grep dolphindb  | grep -v grep | grep ec2-user|  awk '{print $2}' | xargs kill -TERM
 ```
@@ -189,11 +187,11 @@ DolphinDB提供了良好的安全机制。只有系统管理员才有权限做�
 默认密码       : 123456
 ```
 
-点击登录链接
+点击登录链接：
 
 ![](images/login_logo.JPG)
 
-输入管理员用户名和密码
+输入管理员用户名和密码：
 
 ![](images/login.JPG)
 
@@ -201,7 +199,7 @@ DolphinDB提供了良好的安全机制。只有系统管理员才有权限做�
 
 #### 3.3.6 启动数据节点
 
-选择所有数据节点，点击执行图标，并确定。节点启动可能要耗时30秒到一分钟。点击刷新图标来查看状态。若看到State栏全部为绿色对勾，则整个集群已经成功启动。
+选择所有数据节点，点击执行图标并确定。节点启动可能要耗时30秒到一分钟。点击刷新图标来查看状态。若看到State栏全部为绿色对勾，则整个集群已经成功启动。
 
 ![](images/cluster_web_start_node.JPG)
 
@@ -209,7 +207,7 @@ DolphinDB提供了良好的安全机制。只有系统管理员才有权限做�
 
 如果出现长时间无法正常启动，请查看log目录下该节点的logFile. 如果节点名字是DFS_NODE1，那对应的logFile应该在 log/DFS_NODE1.log。
 
-log文件中有可能出现错误信息"Failed to bind the socket on XXXX"。这里的XXXX是待启动的节点端口号。这可能是因为此端口号被其它程序占用，这种情况下将其他程序关闭再重新启动节点即可。也可能是因为刚刚关闭了使用此端口的数据节点，Linux kernel还没有释放此端口号。这种情况下稍等30秒，再启动节点即可。
+log文件中有可能出现错误信息"Failed to bind the socket on XXXX"，这里的XXXX是待启动的节点端口号。这可能是因为此端口号被其它程序占用，这种情况下将其他程序关闭再重新启动节点即可。也可能是因为刚刚关闭了使用此端口的数据节点，Linux kernel还没有释放此端口号。这种情况下稍等30秒，再启动节点即可。
 
 也可在控制节点执行以下代码来启动数据节点：
 ```
@@ -245,7 +243,7 @@ startDataNode(["DFS_NODE1", "DFS_NODE2","DFS_NODE3","DFS_NODE4"])
 
 中文
 
-http://www.dolphindb.com/cn/help/ClusterSetup.html
+http://www.dolphindb.com/cn/help/index.html?ClusterSetup.html
 
 英文
 
