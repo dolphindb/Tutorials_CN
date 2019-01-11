@@ -40,23 +40,23 @@ nohup ./dolphindb -console 0 &
 
 Linux:
 ```
-./dolphindb -localhost:8900:local8900
+./dolphindb -localSite localhost:8900:local8900
 ```
 
 Windows:
 ```
-dolphindb.exe -localhost:8900:local8900
+dolphindb.exe -localSite localhost:8900:local8900
 ```
 
 软件授权书dolphindb.lic指定DolphinDB可用的最大内存，用户也可以根据实际情况来调低此上限。这个设置在启动dolphindb时可通过参数maxMemSize来调整，以GB为单位。
 
 Linux:
 ```
-./dolphindb -localHost:8900:local8900 -maxMemSize 32
+./dolphindb -localSite localHost:8900:local8900 -maxMemSize 32
 ```
 Windows:
 ```
-dolphindb.exe -localHost:8900:local8900 -maxMemSize 32
+dolphindb.exe -localSite localHost:8900:local8900 -maxMemSize 32
 ```
 
 
