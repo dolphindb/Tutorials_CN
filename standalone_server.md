@@ -20,6 +20,11 @@
 
 进入server目录 /DolphinDB/server/, 运行dolphindb。
 
+在运行dolphindb可执行文件前，需要修改文件权限：
+
+```
+chmod 777 dolphindb
+```
 
 在Linux环境中可执行以下指令：
 ```
