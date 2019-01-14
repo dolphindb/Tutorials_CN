@@ -83,7 +83,7 @@ t1=s.loadText(WORK_DIR+"/t1.tsv", '\t')
 
 #### 2.2.1 创建分区数据库
 
-创建了分区数据库后，不能改变它的分区方案。为了保证使用的不是已经存在的数据库，需要先检查数据库valuedb是否存在。如果存在，将其删除。
+创建了分区数据库后，一般不能改变分区方案。唯一的例外是值分区（或者复合分区中的值分区）创建后，可以添加分区。为了保证使用的不是已经存在的数据库，需要先检查数据库valuedb是否存在。如果存在，将其删除。
 
 ```
 if s.existsDatabase(WORK_DIR+"/valuedb"):
@@ -210,14 +210,21 @@ from dolphindb.type_util import *
 |NANOTIME|NanoTime.from_time(time(13,30,10,706))|13:30:10.000706000|
 |NANOTIMESTAMP|NanoTimestamp.from_datetime(datetime(2012,12,24,13,30,10,80706))|2012.12.24 13:30:10.080706000|
 
-Python中的np.NaN是特殊的float数据类型，上传时，DolphinDB也会把它们识别为float。如果需要上传结果为DolphinDB类型的NULL，必须使用Python API提供的NULL值，保证数据上传后仍然为相应类型的NULL。下面列举了如何在Python中创建DolphinDB类型的NULL：
+
+#### 2.4.2 缺失值处理
+
+Python中的np.NaN是特殊的float数据类型，上传时，DolphinDB也会把它们识别为float。Python API提供了ddb.overwriteType方法，可以在上传Dataframe前指定一个或多个列在DolphinDB中的数据类型。该方法的语法如下：ddb.overwriteType(dataframe, dict)。其中dataframe是Python中的Dataframe对象；dict是Python的字典对象，key表示dataframe中某列的名称，value表示DolphinDB的数据类型。其中value只能取以下值：ddb.DT_BOOL、ddb.DT_INT、ddb.DT_LONG、ddb.DT_DOUBLE。
+
+例如，dataframe t中包含id、isBuyer、price列，其中isBuyer列中可能包含NULL值，上传前需要指定该列在DolphinDB中为BOOL类型。
+
+```
+ddb.overwriteTypes(t,{'isBuyer':ddb.DT_BOOL})
+```
+
+对于时序类型，Python API提供了<temporal data type>.null()方法来构造DolphinDB相应类型的NULL值：
 
 |类型|对应的NULL|
 |-------|--------|
-|BOOL|boolNan|
-|CHAR|byteBan|
-|SHORT|shortNan|
-|INT|intNan|
 |DATE|Date.null()|
 |MONTH|Month.null()|
 |TIME|Time.null()|
@@ -227,8 +234,9 @@ Python中的np.NaN是特殊的float数据类型，上传时，DolphinDB也会把
 |NANOTIME|NanoTime.null()|
 |NANOTIMESTAMP|NanoTimestamp.null()|
 
-注意，上传字典或Dataframe时，同一列中不能同时包含Python的原生类型和DolphinDB Python API提供的类型。
-例如：'date':[date(2012,12,30),Date.from_date(date(2012,12,31)),Date.null()]，date列同时包含了Python的datetime64类型和DolphinDB Python API提供的DATE类型，会导致上传失败。
+注意，上传字典或Dataframe时，同一列中不能同时包含Python的原生类型和DolphinDB Python API提供的类型。例如：'date':[date(2012,12,30),Date.from_date(date(2012,12,31)),Date.null()]，date列同时包含了Python的datetime64类型和DolphinDB Python API提供的DATE类型，会导致上传失败。
+
+更多关于缺失值的例子请查看2.4.5中上传包含一个空值的数据表。
 
 如果需要在python2.7中使用中文，在文件开头指定编码为UTF-8.
 
@@ -236,7 +244,7 @@ Python中的np.NaN是特殊的float数据类型，上传时，DolphinDB也会把
 # -*- coding: utf-8 -*-
 ```
 
-#### 2.4.2 使用`upload`函数上传
+#### 2.4.3 使用`upload`函数上传
 
 `upload`可以把Python对象上传到DolphinDB服务器。`upload`函数的输入是Python的字典对象，它的key对应的是DolphinDB中的变量名，value对应的是Python对象。
 
@@ -267,7 +275,7 @@ print(s.run("t1.value.avg()"))
 5.44
 ```
 
-#### 2.4.3 使用`table`函数上传
+#### 2.4.4 使用`table`函数上传
 
 可在Python中使用`table`函数创建DolphinDB表对象。`table`函数的输入可以是字典、Dataframe或DolphinDB中的表名。
 
@@ -288,15 +296,18 @@ print(s.loadTable("test").toDF())
 3   3      A    26.0
 ```
 
-#### 2.4.4 上传一个包含空值的数据表
+#### 2.4.5 上传一个包含空值的数据表
 
 有时需要使用Python API来向DolphinDB服务器的分区表中追加数据。以下用例使用Python中的字典来保存一个数据表，并通过`table`函数将数据上传到DolphinDB，追加到一个数据表中。
 
 DolphinDB服务器端脚本（创建数据表）：
 
 ```
+if(existsDatabase("dfs://testPython")){
+	dropDatabase("dfs://testPython")
+	}
 db = database("dfs://testPython", VALUE, 1..100)
-t1 = table(10000:0,`id`cbool`cchar`cshort`cint`clong`cdate`cmonth`ctime`cminute`csecond`cdatetime`ctimestamp`cnanotime`cnanotimestamp`cfloat`cdouble`csymbol`cstring,[BOOL,CHAR,SHORT,INT,LONG,DATE,MONTH,TIME,MINUTE,SECOND,DATETIME,TIMESTAMP,NANOTIME,NANOTIMESTAMP,FLOAT,DOUBLE,SYMBOL,STRING])
+t1 = table(10000:0,`id`cbool`cchar`cshort`cint`clong`cdate`cmonth`ctime`cminute`csecond`cdatetime`ctimestamp`cnanotime`cnanotimestamp`cfloat`cdouble`csymbol`cstring,[INT,BOOL,CHAR,SHORT,INT,LONG,DATE,MONTH,TIME,MINUTE,SECOND,DATETIME,TIMESTAMP,NANOTIME,NANOTIMESTAMP,FLOAT,DOUBLE,SYMBOL,STRING])
 insert into t1 values (0,true,'a',122h,21,22l,2012.06.12,2012.06M,13:10:10.008,13:30m,13:30:10,2012.06.13 13:30:10,2012.06.13 13:30:10.008,13:30:10.008007006,2012.06.13 13:30:10.008007006,2.1f,2.1,"","")
 db.createPartitionedTable(t1, `t1, `id)
 ```
@@ -304,10 +315,12 @@ db.createPartitionedTable(t1, `t1, `id)
 Python脚本 （拼接数据表并上传追加）：
 
 ```
-tbl = {'cbool': [True, False, boolNan],
-            'cchar': [1, 2, byteNan],
-            'cshort': [12, 13, shortNan],
-            'cint': [0, 1, intNan],
+from dolphindb.type_util import * 
+data = {'cid':[1,2,3],
+       'cbool': [True, False, np.nan],
+            'cchar': [1, 2, 3],
+            'cshort': [12, 13, np.nan],
+            'cint': [0, 1, np.nan],
             'clong': [0, 1, 2],
             'cdate': [Date.from_date(date(2012, 12, 24)), Date.from_date(date(2012, 12, 25)), Date.null()],
             'cmonth': [Month.from_date(date(2012, 12, 12)), Month.from_date(date(2016, 12, 12)), Month.null()],
@@ -323,22 +336,25 @@ tbl = {'cbool': [True, False, boolNan],
             'cnanotimestamp': [NanoTimestamp.from_datetime(datetime(2012, 12, 24, 13, 30, 10, 80706)),
                                NanoTimestamp.from_datetime(datetime(2012, 12, 24, 13, 30, 10, 128076)),
                                NanoTimestamp.null()],
-            'cfloat': [2.1, 2.658956, floatNan],
-            'cdouble': [0., 47.456213, doubleNan],
+            'cfloat': [2.1, 2.658956, np.NaN],
+            'cdouble': [0., 47.456213, np.NaN],
             'csymbol': ['A', 'B', ''],
             'cstring': ['abc', 'def', '']}
-    
- tmp=s.table(data=tbl)
- t1=s.loadTable(dbPath="dfs://testPython", tableName="t1")
- t1.append(tmp)
- print(t1.rows)
+from pandas import Series,DataFrame
+tmp=DataFrame(data)
+ddb.overwriteTypes(tmp,{'cbool':ddb.DT_BOOL,'cchar':ddb.DT_INT,'cshort':ddb.DT_INT,'cint':ddb.DT_INT,'clong':ddb.DT_LONG,'cfloat':ddb.DT_DOUBLE,'cdouble':ddb.DT_DOUBLE,'csymbol':ddb.DT_STRING,'cstring':ddb.DT_STRING})
+at=s.table(data=tmp)
+t1=s.loadTable(dbPath="dfs://testPython", tableName="t1")
+t1.append(at)
+print(t1.rows)
+
 ```
 
-原来数据表中有一条数据，追加之后有4条数据。
+原来数据表中没有数据，追加之后有3条数据。
 
 ```
 #output
-4
+3
 ```
 
 #### 3 从DolphinDB数据库中加载数据
@@ -412,10 +428,10 @@ print(trade.rows)
 
 下表展示了从DolphinDB数据库中通过`toDF`函数下载数据到Python时，数据类型的转换。需要指出的是：
 - DolphinDB CHAR类型会被转换成Python int64类型。对此结果，用户可以使用Python的`chr`函数使之转换为字符。
-- 由于Python pandas中所有有关时间的数据类型均为datetime64，DolphinDB中的所有时间类型数据均会被转换为datetime64类型。MONTH类型，如2012.06M，会被转换为2012-06-01。
-- TIME、MINUTE、SECOND、NANOTIME类型不包含日期信息，转换时，会自动添加1970-01-01，例如13:30m会被转换为1970-01-01 13:30:00。
+- 由于Python pandas中所有有关时间的数据类型均为datetime64，DolphinDB中的所有时间类型数据[均会被转换为datetime64类型](https://github.com/pandas-dev/pandas/issues/6741#issuecomment-39026803)。MONTH类型，如2012.06M，会被转换为2012-06-01。
+- TIME, MINUTE, SECOND与NANOTIME类型不包含日期信息，转换时会自动添加1970-01-01，例如13:30m会被转换为1970-01-01 13:30:00。
 
-|DolphinDB类型|Python类型|DolphinDB数据|Pythton数据|
+|DolphinDB类型|Python类型|DolphinDB数据|Python数据|
 |-------------|----------|-------------|-----------|
 |BOOL|bool|[true,00b]|[True, nan]|
 |CHAR|int64|[12c,00c]|[12, nan]|
@@ -433,8 +449,20 @@ print(trade.rows)
 |SECOND|datetime64|[13:30:10,second()]|[1970-01-01 13:30:10, NaT]|
 |DATETIME|datetime64|[2012.06.13 13:30:10,datetime()]|[2012-06-13 13:30:10,NaT]|
 |TIMESTAMP|datetime64|[2012.06.13 13:30:10.008,timestamp()]|[2012-06-13 13:30:10.008,NaT]|
-|NANOTIME|datetime64||[13:30:10.008007006, nanotime()]|[1970-01-01 13:30:10.008007006,NaT]|
+|NANOTIME|datetime64|[13:30:10.008007006, nanotime()]|[1970-01-01 13:30:10.008007006,NaT]|
 |NANOTIMESTAMP|datetime64|[2012.06.13 13:30:10.008007006,nanotimestamp()]|[2012-06-13 13:30:10.008007006,NaT]|
+
+#### 3.4 缺失值处理
+
+从DolphinDB下载数据到Python，并使用toDF()方法把DolphinDB数据转换为Python的Dataframe，DolphinDB中的逻辑型、数值型和时序类型的NULL值默认情况下是NaN、NaT，字符串的NULL值为空字符串。Python API提供了s.setNullMap(ddb.nullMapTemplate_allZero())方法，下载数据时，可以把DolphinDB中BOOL类型的NULL值设置为False，数值型的NULL值设置为0或0.0，字符串的NULL值设置为空字符串。
+
+例如，从DolphinDB中下载2.4.5中上传的数据：
+
+```
+t=s.loadTable(dbPath='dfs://testPython',tableName="t1")
+s.setNullMap(ddb.nullMapTemplate_allZero())
+t.toDF()
+```
 
 
 
