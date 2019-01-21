@@ -65,7 +65,7 @@ addColumn(streamTb,`temperature`humidity,[DOUBLE,DOUBLE])
 
 ## 3.给流聚合引擎增加计算指标
 
-用户在定义流聚合引擎时，需要使用元代码（meta code）来指定计算指标。随着需求的变化，计算指标往往也会做出响应的改变。DolphinDB提供了**extendMetrics**函数来增加流聚合引擎的计算指标。
+用户在定义流聚合引擎时，需要使用元代码（meta code）来指定计算指标。随着需求的变化，计算指标往往也会做出相应的改变。DolphinDB提供了**extendMetrics**函数来增加流聚合引擎的计算指标。
 
 ### 语法
 
