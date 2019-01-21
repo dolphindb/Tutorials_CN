@@ -13,3 +13,5 @@
 #### [流数据教程](https://github.com/dolphindb/Tutorials_CN/blob/master/streaming_tutorial.md)
 #### [流数据聚合引擎](https://github.com/dolphindb/Tutorials_CN/blob/master/stream_aggregator.md)
 #### [DolphinDB在工业物联网的应用](https://github.com/dolphindb/Tutorials_CN/blob/master/iot_demo.md)
+#### [动态增加字段和计算指标](https://github.com/dolphindb/Tutorials_CN/blob/master/add_column.md)
+
