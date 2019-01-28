@@ -131,7 +131,7 @@ pt.append!(t)
 pt=loadTable(db,`pt)
 select count(x) from pt;
 ```
-在DFS分布式文件系统中只需把数据库路径名改为db=database("dfs://valuedb", VALUE, 2000.01M..2016.12M)。
+在DFS分布式文件系统中创建VALUE类型的分区数据库，只需把数据库路径名改为db=database("dfs://valuedb", VALUE, 2000.01M..2016.12M)。
 
 上面的例子定义了一个具有204个分区的数据库db。每个分区是2000年1月到2016年12月之间的一个月(如下图）。在数据库db中，表t被保存为分区表pt，分区列为month。
 
@@ -160,7 +160,7 @@ select count(x) from pt;
 
 ![](images/database/list.png)
 
-在DFS分布式文件系统中只需把路径名改为db=database("dfs://listdb", LIST, [`IBM`ORCL`MSFT, `GOOG`FB])。
+在DFS分布式文件系统中创建LIST类型的分区数据库，只需把路径名改为db=database("dfs://listdb", LIST, [`IBM`ORCL`MSFT, `GOOG`FB])。
 
 #### 3.6 组合(COMPO)分区
 
@@ -193,7 +193,7 @@ select count(x) from pt;
 
 ![](images/database/hier2.png)
 
-在DFS分布式文件系统中只需把数据库路径名改为db = database("dfs://compoDB", COMPO, [dbDate, dbID])。
+在DFS分布式文件系统中创建COMPO类型的分区数据库，只需把数据库路径名改为db = database("dfs://compoDB", COMPO, [dbDate, dbID])。
 
 若组合分区有一列为值分区，创建后可使用`addValuePartitions`函数来追加分区。细节参见用户手册。
 
