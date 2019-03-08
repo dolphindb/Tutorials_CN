@@ -1,0 +1,5 @@
+localSite,mode
+localhost:8910:agent,agent
+localhost:8080:local8080,datanode
+localhost:8081:local8081,datanode
+localhost:8082:local8082,datanode

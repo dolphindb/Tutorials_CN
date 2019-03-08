@@ -1,0 +1,16 @@
+pidfilepath = /media/xllu/aa/localhost_shard_jiqun/conf/conf_m/conf_m.pid
+dbpath = /media/xllu/aa/localhost_shard_jiqun/conf/conf_m/conf_m_data
+logpath = /media/xllu/aa/localhost_shard_jiqun/conf/conf_m/conf_m.log
+directoryperdb=true 
+logappend = true
+bind_ip = localhost
+port = 20000
+#以后台方式启动
+fork = true
+#declare this is a config db of a cluster;
+configsvr = true
+replSet=conrep
+noprealloc=true
+#设置最大连接数
+maxConns=128
+wiredTIgerCacheSizeGB=2

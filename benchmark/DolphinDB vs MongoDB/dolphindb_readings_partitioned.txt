@@ -1,0 +1,36 @@
+login("admin","123456")
+//导入csv文件为内存表
+fp_info = '/media/xllu/aa/device/devices_info.csv'
+fp_readings = '/media/xllu/aa/device/devices_readings.csv'
+
+dp_readings = "dfs://db_range_dfs"
+//dp_readings = "/home/xllu/database/db_range"
+// 创建两张表的 schema
+colnames_info 	= `device_id`api_version`manufacturer`model`os_name
+colnames_readings = `time`device_id`battery_level`battery_status`battery_temperature`bssid`cpu_avg_1min`cpu_avg_5min`cpu_avg_15min`mem_free`mem_used`rssi`ssid
+
+types_info = `SYMBOL`INT`STRING`STRING`STRING
+types_readings = `DATETIME`SYMBOL`INT`STRING`DOUBLE`STRING`DOUBLE`DOUBLE`DOUBLE`DOUBLE`DOUBLE`DOUBLE`SYMBOL
+
+schema_info 	= table(colnames_info, types_info)
+schema_readings = table(colnames_readings, types_readings)
+
+time_range=2016.11.15T00:00:00 + 86400 * 0..4
+id_range=('demo'+lpad((0..10*300)$STRING,6,"0"))$SYMBOL
+
+time_schema=database('',RANGE,time_range)
+id_schema=database('',RANGE,id_range)
+// 创建分区数据库并定义分区方式
+if(existsDatabase(dp_readings)){
+	dropDatabase(dp_readings)
+}
+db = database(dp_readings , COMPO, [time_schema,id_schema])
+
+// 从 CSV 导入 readings 表的数据到 readings 数据库并完成数据分区操作
+timer loadTextEx(db, `readings_pt, `time`device_id, fp_readings, , schema_readings)
+//38s
+// 从 CSV 导入 device_info 表的数据到 device_info 内存表
+device_info = loadText(fp_info, , schema_info)
+
+// 加载 readings 表（不包括表连接）
+readings = loadTable(db, `readings_pt)

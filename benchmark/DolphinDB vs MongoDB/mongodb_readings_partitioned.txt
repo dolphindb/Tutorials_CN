@@ -1,0 +1,11 @@
+use config
+db.chunks.find()
+db.settings.save({"_id":"chunksize","value":1024}) 
+use admin
+sh.enableSharding("device_pt")
+Use device_pt
+db.device_readings.createIndex({time:1,device_id:1}) 
+//为节约导入时间，我们先导入数据，在mongoimport文件目录下输入以下脚本
+./mongoimport -h localhost:40000 -d db_nopt -c device_readings --file /media/xllu/aa/device/device_readings_mongo.csv --type csv --columnsHaveTypes --fields "time.date(2006-01-02T15:04:05),device_id.string(),battery_level.int32(),battery_status.string(),battery_temperature.double(),bssid.string(),cpu_avg_1min.double(),cpu_avg_5min.double(),cpu_avg_15min.double(),mem_free.double(),mem_used.double(),rssi.double(),ssid.string()" --parseGrace skipRow --numInsertionWorkers 12
+//回到shell界面，输入以下脚本完成分区
+sh.shardCollection("device_pt.device_readings",{"time":1,"device_id":1})

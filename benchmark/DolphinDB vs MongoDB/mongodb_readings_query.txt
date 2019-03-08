@@ -1,0 +1,50 @@
+#1. 点查询：按时间查询
+db.device_readings.explain("executionStats").find(
+{time:{"$eq":ISODate("2016-11-15 07:00:00.000Z")}},{})
+
+#2. 点查询：根据设备ID查询
+db.device_readings.explain("executionStats").find(
+{device_id:{"$eq":"demo000101"}},{}).count()
+
+#3. 范围查询：单分区维度：查询某时间段的所有记录
+db.device_readings.explain("executionStats").find(
+{time:{"$gte":ISODate("2016-11-16 21:00:00.000Z"),"$lte":ISODate("2016-11-17 21:30:00.000Z")}},{})
+
+#4. 范围查询.多分区维度：查询某时间段内某些设备的所有记录
+db.device_readings.explain("executionStats").find(
+{time:{"$gte":ISODate("2016-11-16 09:30:00.000Z"),"$lte":ISODate("2016-11-17 09:30:00.000Z")},
+device_id:{"$in":["demo000001","demo000010","demo000100","demo001000"]}},{})
+
+#5. 范围查询.多分区维度：查询某时间段内某些设备的特定记录
+db.device_readings.explain("executionStats").find(
+{time:{"$gte":ISODate("2016-11-15 20:00:00.000Z"),"$lte":ISODate("2016-11-16 22:30:00.000Z")},
+device_id:{"$in":["demo000002","demo000020","demo000200","demo002000"]},battery_level:{"$lte":50},battery_status:"discharging"},{}) 
+
+#6. 精度查询：查询各设备每小时的最大内存使用
+db.device_readings.explain("executionStats").aggregate([{$group:{_id:{hour_new:{$hour:"$time"}},max_mem:{$max:"$mem_used"}}}])
+
+#7. 聚合查询.单维度分区max：计算各设备电池最大电量
+db.device_readings.explain("executionStats").aggregate([{$group:{_id:{device_id:"$device_id",hour_new:{$hour:"$time"}},max_temperature:{$max:"$battery_temperature"}}}])
+
+#8. 聚合查询.多维度分区avg：计算各时间段内设备电池平均温度
+db.device_readings.explain("executionStats").aggregate([{$group:{_id:{device_id:"$device_id",},
+avg_temperature:{$avg:"$battery_temperature"}}}])
+
+#9. 关联查询.多维过滤：查询某时间段内某些设备的特定信息
+db.device_readings.explain("executionStats").aggregate([{$lookup:{from:"device_info",localField:"device_id", foreignField:"device_id",as:"device_result"}},
+{$match:{time:{"$gte":ISODate("2016-11-15 09:00:00.000Z"),"$lte":ISODate("2016-11-15 12:00:00.000Z")},device_id:{"$eq":"demo000100"},
+battery_status:"discharging"}}])
+
+#10. 关联查询.聚合查询：查询某段时间某些设备每小时的平均电池温度，按平均温度和设备排序
+db.device_readings.explain("executionStats").aggregate([{$lookup:{from:"device_info",localField:"device_id",foreignField:"device_id",as:"device_result"}},{$match:{device_id:{"$gte":"demo000100","$lte":"demo000150"},time:{"$gte":ISODate("2016-11-15 12:00:00.000Z"),"$lte":ISODate("2016-11-16 12:00:00.000Z")},cpu_avg_15min:{"$gte":5}}},
+{$group:{_id:{hour_new:{$hour:"$time"},device_id:"$device_id"},avg_battery_temperature:{$avg:"$battery_temperature"},std_cpu_avg_15min:{$stdDevSamp:"$cpu_avg_15min"}}},{$sort:{"avg_battery_temperature":-1,"device_id":1}}])
+
+#11. 经典查询：计算某时间段内高负载高电量设备的内存大小
+db.device_readings.explain("executionStats").aggregate([{$match:{time:{"$lte":ISODate("2016-11-18 21:00:00.000Z")},battery_temperature:{"$gte":90},cpu_avg_1min:{"$gte":90}}},{$group:{_id:{time:"$time",device_id:"$device_id"},max_mem_free:{$max:"$mem_free"}}}]) 
+
+#12. 经典查询：统计连接不同网络的设备的平均电量和最大、最小电量，并按平均电量降序排列
+db.device_readings.explain("executionStats").aggregate([{$group:{_id:{ssid:"$ssid"},std_battery_level:{$stdDevSamp:"$battery_level"},avg_battery_level:{$avg:"$battery_level"}}},
+{$sort:{"avg_battery_level":-1}}])
+
+#13. 关联查询：计算某个时间段内某些设备的总负载，并将时段按总负载降序排列
+db.device_readings.explain("executionStats").aggregate([{$match:{time:{"$gte":ISODate("2016-11-15 12:00:00.000Z"),"$lte":ISODate("2016-11-16 12:00:00.000Z")},      device_id:{"$in":["demo000001","demo000010","demo000100","demo001000"]}}},{$group:{_id:{hour_new:{$hour:"$time"}},sum_15min:{$sum:"$cpu_avg_15min"}}},{$sort:{"sum_15min":-1}}]) 

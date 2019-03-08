@@ -1,0 +1,1 @@
+nohup ./mongos --configdb conrep/localhost: 20000,localhost:30001,localhost:30002 --bind_ip localhost --port 40000 --logpath /media/xllu/aa/localhost_shard_jiqun/mongos/mongos40000.log --logappend --setParameter ShardingTaskExecutorPoolHostTimeoutMS=30000000 --setParameter taskExecutorPoolSize=6 --setParameter ShardingTaskExecutorPoolMaxConnecting=12 &

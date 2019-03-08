@@ -1,0 +1,36 @@
+#1. 点查询：按日期和股票代码查询
+db.taq_pt_col.explain("executionStats").find({symbol:{"$eq":"IBM"},date:{"$eq":ISODate("2007-08-07T00:00:00.000Z")}})
+
+#2. 范围查询：查询某段时间内某些股票的所有信息
+db.taq_pt_col.explain("executionStats").find({symbol:{"$in":["IBM","MSFT","GOOG","YHOO"]},date:{"$gte":ISODate("2007-08-07T00:00:00.000Z"),"$lte":ISODate("2007-08-08T00:00:00.000Z")},time:{"$gte":ISODate("0000-01-01T09:30:00.000Z"),"$lte":ISODate("0000-01-01T09:40:00.000Z")},bid:{"$gt":20}},{symbol:1,time:1,bid:1,ofr:1})
+
+#3. 范围查询：top 1000+排序，按股票代码,日期过滤，按ofr降序排序
+db.taq_pt_col.explain("executionStats").aggregate([{$match:{symbol:{"$in":["IBM","MSFT","GOOG","YHOO"]},date:{"$eq":ISODate("2007-08-07T00:00:00.000Z")},time:{"$gte":ISODate("0000-01-01T07:36:37.000Z")}}},{$sort:{ofr:-1}},{$limit:1000}])
+
+#4. 聚合查询.单分区维度：查询某天某个股票每分钟的最大ofr和最小的bid
+db.taq_pt_col.explain("executionStats").aggregate([{$project:{symbol:1,date:1,bid:1,ofr:1,time:1,ofr_bid_dif:{$subtract:["$ofr","$bid"]}}},{$match:{date:{"$eq":ISODate("2007-08-10T00:00:00.000Z")},
+symbol:{"$eq":"IBM"},ofr_bid_dif:{"gt":0}}},{$group:
+{_id:{minute_new:{$minute:"$time"}},max_bid:{$max:"$bid"},min_ofr:{$min:"$ofr"}}}])  
+
+#5. 聚合查询.多分区维度：查询某天某一些股票的bid标准差，按股票和分钟排序
+db.taq_pt_col.explain("executionStats").aggregate([
+{$match:{date:{"$eq":ISODate("2007-08-07T00:00:00.000Z")},time:{"$gte":ISODate("0000-01-01T09:00:00.000Z"),"$lte":ISODate("0000-01-01T21:00:00.000Z")},symbol:{"$in":["IBM","MSFT","GOOG","YHOO"]},bid:{"gt":20},ofr:{"gt":20}}},{$group:{_id:{symbol:"$symbol",minute_new:{$minute:"$time"}},std_bid:{$stdDevSamp:"$bid"},sum_bidsiz:{$sum:"$bidsiz"}}},{$sort:{symbol:1,minute_new:1}}])
+
+#6. 经典查询：按股票代码，日期，时间，报价范围过滤，查询某些字段
+db.taq_pt_col.explain("executionStats").find(
+{symbol:{"$in":["IBM","MSFT","GOOG","YHOO"]},date:{"$eq":ISODate("2007-08-08T00:00:00.000Z")},
+time:{"$gte":ISODate("0000-01-01T09:30:00.000Z"),"$lte":ISODate("0000-01-01T14:30:00.000Z")},bid:{"$gt":0},ofr:{"$gt":10}},{"symbol":1,"time":1,"bid":1,"ofr":1})
+
+#7. 经典查询：按日期，时间范围，bid范围，股票过滤，查询每个股票每分钟的bid标准差和平均值
+db.taq_pt_col.explain("executionStats").aggregate([{$match:{date:{"$eq":ISODate("2007-08-09T00:00:00.000Z")},time:{"$gte":ISODate("0000-01-01T10:30:00.000Z"),"$lte":ISODate("0000-01-01T16:00:00.000Z")},symbol:{"$in":["IBM","MSFT","GOOG","YHOO"]},bid:{"gt":1}}},{$group:{_id:{symbol:"$symbol",minute_new:{$minute:"$time"}},std_bid:{$stdDevSamp:"$bid"},avg_bid:{$avg:"$bid"}}}]) 
+
+#8. 经典查询：根据股票代码和日期过滤，统计买入和卖出的和的均值
+db.taq_pt_col.explain("executionStats").aggregate([{$project:{symbol:1,date:1,bid:1,ofr:1,time:1,ofr_bid_dif:{$subtract:["$ofr","$bid"]}}},{$match:{date:{"$eq":ISODate("2007-08-07T00:00:00.000Z")},
+time:{"$gte":ISODate("0000-01-01T07:30:00.000Z"),"$lte":ISODate("0000-01-01T10:00:00.000Z")},symbol:{"$in":["GOOG","SBW","MSFT","USBE","YHOO"]}}},{$group:{_id:{symbol:"$symbol"},max_price:{$max:"$ofr_bid_dif"}}},{$sort:{max_price:-1}}])  
+
+#9. 经典查询：按日期，时间，股票过滤，查询每天每分钟的均价
+db.taq_pt_col.explain("executionStats").aggregate([{$match:{symbol:{"$eq":"IBM"},date:{"$gte":ISODate("2007-08-07T00:00:00.000Z"),"$lte":ISODate("2007-08-08T00:00:00.000Z")},time:{"$gte":ISODate("0000-01-01T09:30:00.000Z"),"$lte":ISODate("0000-01-01T16:00:00.000Z")}}},{$group:{_id:{date_new:{$dayOfMonth:"$time"},minute_new:{$minute:"$time"}},avg_bid:{$avg:"$bid"},avg_ofr:{$avg:"$ofr"}}}]) 
+
+#10. 经典查询：按股票，时间，日期过滤，查询每只股票，每天的均价
+db.taq_pt_col.explain("executionStats").aggregate([
+{$project:{symbol:1,date:1,time:1,ofr_bid_sum:{$add:["$ofr","$bid"]}}},{$match:{date:{"$gte":ISODate("2007-08-08T00:00:00.000Z"),"$lte":ISODate("2007-08-09T00:00:00.000Z")},time:{"$gte":ISODate("0000-01-01T12:00:00.000Z"),"$lte":ISODate("0000-01-01T17:30:00.000Z")},symbol:{"$in":["IPB","SBW","IBM","USBE","YHOO"]}}},{$group:{_id:{symbol:"$symbol",date_new:{$dayOfMonth:"$time"}},avg_price:{$avg:"$ofr_bid_sum"}}}])

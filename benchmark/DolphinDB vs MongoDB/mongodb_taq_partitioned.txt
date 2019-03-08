@@ -1,0 +1,25 @@
+use config
+db.chunks.find()
+db.settings.save({"_id":"chunksize","value":1024}) 
+use admin
+sh.enableSharding("taq_pt_db")
+Use device_pt
+db.device_readings.createIndex({date:1,symbol:1}) 
+/*为节约导入时间，我们将数据分为16个小数据表进行分别导入，在shell中输入以下bash脚本*/
+#!/bin/bash
+for f in /media/xllu/aa/TAQ/mongo_split/*.csv ; do
+        /usr/bin/mongoimport \
+        -h localhost \
+        --port 40000 \
+        -d taq_pt_db \
+        -c taq_pt_col \
+        --type csv \
+        --columnsHaveTypes \
+ --fields "symbol.string(),date.date(20060102),time.date(15:04:05),bid.double(),ofr.double(),bidsiz.int32(),ofrsiz.int32(),mode.int32(),ex.string(),mmid.string()" \
+        --parseGrace skipRow \
+        --numInsertionWorkers 12 \
+        --file $f
+    echo "文件 $f 导入完成"这个
+done
+//回到shell界面，输入以下脚本完成分区
+sh.shardCollection("device_pt.device_readings",{"time":1,"device_id":1})

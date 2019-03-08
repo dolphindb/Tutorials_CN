@@ -1,0 +1,41 @@
+login("admin","123456")
+FP_TAQ = '/media/xllu/aa/TAQ/original/'device_
+FP_SAMPLE_TB = FP_TAQ + 'TAQ20070807.csv'
+orig_tb_schema = extractTextSchema(FP_SAMPLE_TB)
+// 查看 orig_tb_schema
+// 将列名调整为小写避免与 DolphinDB 内置的 SYMBOL, DATE, TIME 等保留关键字产生冲突
+cols = lower(orig_tb_schema.name)
+schema = table(cols, orig_tb_schema.type)
+timer sample_tb = loadText(FP_SAMPLE_TB, , schema) 
+sample_freq_tb = select count(*) from sample_tb group by symbol
+mmid_tb = select count(*) from sample_tb group by mmid
+// 8369 rows, [symbol, count], 分到 100 个 buckets
+BIN_NUM = 100
+buckets = cutPoints(sample_freq_tb.symbol, BIN_NUM, sample_freq_tb.count)
+// [A, ABL, ACU, ..., ZZZ], 101 个边界
+buckets[BIN_NUM] = `ZZZZZZ		// 调整最右边界
+DATE_RANGE = 2007.08.05..2007.08.12
+// 创建数据库分区方案
+date_schema   = database('', VALUE, DATE_RANGE)
+symbol_schema = database('', RANGE, buckets)
+//FP_DB = FP_TAQ + 'db/'
+//db = database(FP_DB, COMPO, [date_schema, symbol_schema])
+db_path="dfs://db_compound_dfs"
+if(existsDatabase(db_path)){
+	dropDatabase(db_path)
+}
+db = database(db_path, COMPO, [date_schema, symbol_schema])
+fps = FP_TAQ + (exec filename from files(FP_TAQ) order by filename)
+// 导入到分布式数据库中
+timer {getJobStat()
+
+	for (fp in fps) {
+		job_id_tmp = fp.strReplace(".csv", "")
+		job_id_tmp1=split(job_id_tmp,"/")
+		job_id=job_id_tmp1[6]
+		job_name = job_id
+		submitJob(job_id, job_name, loadTextEx{db, `taq, `date`symbol, fp})
+		print now() + ": 已导入 " + fp
+	}
+	getRecentJobs(size(fps))
+}

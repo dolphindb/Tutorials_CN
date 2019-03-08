@@ -1,0 +1,17 @@
+## 配置文件内容
+pidfilepath = /media/xllu/aa/localhost_shard_jiqun/shard1/shard1_m/shard1_m.pid
+dbpath = /media/xllu/aa/localhost_shard_jiqun/shard1/shard1_m/shard1_m_data
+logpath = /media/xllu/aa/localhost_shard_jiqun/shard1/shard1_m/shard1_m.log
+directoryperdb=true 
+logappend = true
+bind_ip = localhost
+port = 20001
+fork = true
+#declare this is a shard db of a cluster;
+shardsvr = true
+#副本集名称
+replSet=shardrep1
+noprealloc=true
+#设置最大连接数
+maxConns=128
+wiredTIgerCacheSizeGB=4
