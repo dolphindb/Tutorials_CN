@@ -4,7 +4,7 @@
 
 #### 1. 命令式编程(Imperative Programming)
 
-DolphinDB与主流的脚本语言（Python和JavaScript等）和编译型强类型语言（C++，C和Java）一样，支持命令式编程，也就是通过执行一条一条的语句，实现最终的目标。DolphinDB目前支持18种语句（详细参考[用户手册第五章](http://www.dolphindb.com/cn/help/index.html?5.html)），包括最常用的赋值语句，分支语句if..else，以及循环语句for和do..while等。
+DolphinDB与主流的脚本语言（Python和JavaScript等）和编译型强类型语言（C++，C和Java）一样，支持命令式编程，也就是通过执行一条一条的语句，实现最终的目标。DolphinDB目前支持18种语句（详细参考[用户手册第五章](https://www.dolphindb.cn/cn/help/Chapter5ProgrammingStatements.html)），包括最常用的赋值语句，分支语句if..else，以及循环语句for和do..while等。
 
 DolphinDB支持对单变量和多变量进行赋值。
 ```
@@ -98,7 +98,7 @@ Time elapsed: 12.968 ms
 
 #### 3. 函数化编程(Functional Programming)
 
-DolphinDB支持函数式编程的大部分功能，包括（1）纯函数（pure function），（2）自定义函数（user-defined function，或简称udf），（3）lambda函数，（4）高阶函数（higher order function），（5）部分应用（partial application），和（6）闭包（closure）。详细请参考[用户手册第七章](http://www.dolphindb.com/cn/help/index.html?7.html)。
+DolphinDB支持函数式编程的大部分功能，包括（1）纯函数（pure function），（2）自定义函数（user-defined function，或简称udf），（3）lambda函数，（4）高阶函数（higher order function），（5）部分应用（partial application），和（6）闭包（closure）。详细请参考[用户手册第七章](https://www.dolphindb.cn/cn/help/Chapter7FunctionalProgramming.html)。
 
 #### 3.1 自定义函数和lambda函数（User Defined Function & Lambda Function）
 DolphinDB中可以创建自定义函数，函数可以有名称或者没有名称（通常是lambda函数）。创建的函数符合纯函数的要求，也就是说只有函数的输入参数可以影响函数的输出结果。DolphinDB与Python不同，函数体内只能引用函数参数和函数内的局部变量，不能使用函数体外定义的变量。从软件工程的角度看，这牺牲了一部分语法糖的灵活性，但对提高软件质量大有裨益。
@@ -287,7 +287,7 @@ DolphinDB的数据库采用列式数据存储，计算的时候又采用向量�
 * DolphinDB支持对时间序列数据的序列关系进行建模，包括领先（lead），滞后（lag），滑动窗口（sliding window），累积窗口（cumulative window）等。更重要的是在这类建模中用到的常用指标和函数，DolphinDB都做了优化，性能优于其它系统1~2个数量级。
 * DolphinDB提供了专门为时间序列设计的高效而常用的表联结方式：asof join和window join。
 
-我们以一个简单的例子来解释window join。譬如要统计一组人员在某些时间点前三个月的平均工资。我们可以简单的用window join（`wj`）来实现。window join函数的具体解释请参考[用户手册](http://www.dolphindb.com/cn/help/index.html?windowjoin.html)
+我们以一个简单的例子来解释window join。譬如要统计一组人员在某些时间点前三个月的平均工资。我们可以简单的用window join（`wj`）来实现。window join函数的具体解释请参考[用户手册](https://www.dolphindb.cn/cn/help/windowjoin.html)
 ```
 p = table(1 2 3 as id, 2018.06M 2018.07M 2018.07M as month)
 s = table(1 2 1 2 1 2 as id, 2018.04M + 0 0 1 1 2 2 as month, 4500 5000 6000 5000 6000 4500 as wage)
@@ -335,7 +335,7 @@ select sum(abs(price - mid)*qty)/sum(price*qty) as cost from pwj(trades, quotes,
 * 如5.4节所示，DolphinDB中的SQL与分布式计算框架紧密集成，实现库内计算（in-database analytics）变得更加便捷和高效。
 * DolphinDB支持组合字段（composite column），可将复杂分析函数的多个返回值输出到数据表的一行。
 
-如果要在SQL语句中使用组合字段，函数的输出结果必须是简单的键值对（key-value pair)或者数组。如果不是这两种类型，可以用自定义函数进行转换。组合字段的详细用法请参考[用户手册](http://www.dolphindb.com/cn/help/index.html?groupby.html)。
+如果要在SQL语句中使用组合字段，函数的输出结果必须是简单的键值对（key-value pair)或者数组。如果不是这两种类型，可以用自定义函数进行转换。组合字段的详细用法请参考[用户手册](https://www.dolphindb.cn/cn/help/groupby.html)。
 ```
 factor1=3.2 1.2 5.9 6.9 11.1 9.6 1.4 7.3 2.0 0.1 6.1 2.9 6.3 8.4 5.6
 factor2=1.7 1.3 4.2 6.8 9.2 1.3 1.4 7.8 7.9 9.9 9.3 4.6 7.8 2.4 8.7

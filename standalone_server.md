@@ -34,6 +34,7 @@ chmod 777 dolphindb
 ```
 nohup ./dolphindb -console 0 &
 ```
+
 建议通过Linux命令nohup（头）和 &（尾）启动为后台运行模式，这样即使终端失去连接，DolphinDB也会持续运行。 
 
 “-console”默认是为 1，如果要设置为后台运行，必须要设置为0（"-console 0")，否则系统运行一段时间后会自动退出。
@@ -57,11 +58,11 @@ dolphindb.exe -localSite localhost:8900:local8900
 
 Linux:
 ```
-./dolphindb -localSite localHost:8900:local8900 -maxMemSize 32
+./dolphindb -localSite localhost:8900:local8900 -maxMemSize 32
 ```
 Windows:
 ```
-dolphindb.exe -localSite localHost:8900:local8900 -maxMemSize 32
+dolphindb.exe -localSite localhost:8900:local8900 -maxMemSize 32
 ```
 
 
@@ -84,7 +85,7 @@ table(1..5 as id, 6..10 as v)
 #### 5. 更多详细信息，请参阅DolphinDB帮助文档
 中文
 
-http://dolphindb.com/cn/help/
+https://www.dolphindb.cn/cn/help/index.html
 
 英文
 

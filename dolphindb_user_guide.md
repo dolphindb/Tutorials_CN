@@ -6,7 +6,7 @@ DolphinDB系统包括：服务器程序包、图形用户界面GUI、网络集�
 
 #### 1、下载地址: 
 
-http://www.dolphindb.com/cn/downloads.html
+https://www.dolphindb.cn/alone/alone.php?id=10
 
 #### 2、海豚大数据社区试用版（必须）
 
@@ -20,7 +20,7 @@ GUI提供了DolphinDB的集成开发环境。支持关键字着色，自动提�
 
 #### 4、Python/Java/C# API（可选）
 
-DolphinDB提供Java，Python和C#的开发接口。安装步骤及使用请参考用户手册http://dolphindb.com/cn/help/12API.html
+DolphinDB提供Java，Python和C#的开发接口。安装步骤及使用请参考用户手册https://www.dolphindb.cn/cn/help/Chapter12ProgrammingAPIs.html
 
 ### 二、配置集群
 

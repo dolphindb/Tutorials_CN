@@ -361,7 +361,7 @@ DolphinDB集群可以部署在局域网内，也可以部署在私有云或公�
 
 中文
 
-http://www.dolphindb.com/cn/help/ClusterSetup.html
+https://www.dolphindb.cn/cn/help/ClusterSetup.html
 
 英文
 

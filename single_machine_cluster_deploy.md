@@ -243,7 +243,7 @@ startDataNode(["DFS_NODE1", "DFS_NODE2","DFS_NODE3","DFS_NODE4"])
 
 中文
 
-http://www.dolphindb.com/cn/help/index.html?ClusterSetup.html
+https://www.dolphindb.cn/cn/help/ClusterSetup.html
 
 英文
 
