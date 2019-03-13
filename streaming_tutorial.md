@@ -394,6 +394,7 @@ actions|订阅的action。若有多个action，此处用逗号分割
 
 比如存流数据发布表名称为`pubTable1`，发布了100条记录。 有一个订阅从offset=0开始，action名称为"
 act_getdata"。那么当订阅完成之后，用getStreamingStat().pubTables 查看内容为：
+
 ![image](https://github.com/dolphindb/Tutorials_CN/blob/master/images/streaming/pubtables1.png?raw=true)
 
 ### 5 流数据性能调优
