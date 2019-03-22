@@ -1,0 +1,2 @@
+geometricMean,libPluginGeometricMean.so
+geometricMean,geometricMean,operator,1,1,1
