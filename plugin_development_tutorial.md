@@ -1,16 +1,18 @@
+# DolphinDB插件开发教程
+
 DolphinDB支持动态加载外部插件，以扩展系统功能。插件用C\+\+编写，需要编译成".so"或".dll"共享库文件。插件开发和使用的整体流程请参考DolphinDB Plugin的[GitHub页面](https://github.com/dolphindb/DolphinDBPlugin)。本文着重介绍开发插件的方法和注意事项，并详细介绍以下几个具体场景的插件开发流程：
 
-- [如何开发支持时间序列数据处理的插件函数](#如何开发支持时间序列数据处理的插件函数)
-- [如何开发用于处理分布式SQL的聚合函数](#如何开发用于处理分布式sql的聚合函数)
-- [如何开发支持新的分布式算法的插件函数](#如何开发支持新的分布式算法的插件函数)
-- [如何开发支持流数据处理的插件函数](#如何开发支持流数据处理的插件函数)
-- [如何开发支持外部数据源的插件函数](#如何开发支持外部数据源的插件函数)
+- [如何开发支持时间序列数据处理的插件函数](#2-如何开发支持时间序列数据处理的插件函数)
+- [如何开发用于处理分布式SQL的聚合函数](#3-如何开发用于处理分布式sql的聚合函数)
+- [如何开发支持新的分布式算法的插件函数](#4-如何开发支持新的分布式算法的插件函数)
+- [如何开发支持流数据处理的插件函数](#5-如何开发支持流数据处理的插件函数)
+- [如何开发支持外部数据源的插件函数](#6-如何开发支持外部数据源的插件函数)
 
-# 如何开发插件
+# 1 如何开发插件
 
-## 基本概念
+## 1.1 基本概念
 
-DolphinDB的插件实现了能在脚本中调用的函数。一个插件函数可能是运算符函数（Operator function），也可能是系统函数（System function），它们的区别在于，前者接受的参数个数小于等于2，而后者的函数可以接受任意个参数，并支持会话的访问操作。
+DolphinDB的插件实现了能在脚本中调用的函数。一个插件函数可能是运算符函数（Operator function），也可能是系统函数（System function），它们的区别在于，前者接受的参数个数小于等于2，而后者可以接受任意个参数，并支持会话的访问操作。
 
 开发一个运算符函数，需要编写一个原型为`ConstantSP (const ConstantSP& a, const ConstantSP& b)`的C\+\+函数。当函数参数个数为2时，`a`和`b`分别为插件函数的第一和第二个参数；当参数个数为1时，`b`是一个占位符，没有实际用途；当没有参数时，`a`和`b`均为占位符。
 
@@ -18,7 +20,7 @@ DolphinDB的插件实现了能在脚本中调用的函数。一个插件函数�
 
 函数原型中的`ConstantSP`可以表示绝大多数DolphinDB对象（标量、向量、矩阵、表，等等）。其他常用的派生自它的变量类型有`VectorSP`（向量）、`TableSP`（表）等。
 
-## 创建变量
+## 1.2 创建变量
 
 创建标量，可以直接用`new`语句创建头文件`ScalarImp.h`中声明的类型对象，并将它赋值给一个`ConstantSP`。`ConstantSP`是一个经过封装的智能指针，会在变量的引用计数为0时自动释放内存，因此，用户不需要手动`delete`已经创建的变量：
 
@@ -43,11 +45,13 @@ t->get(0)->setInt(4);                            // 相当于t[0] = 4
 ConstantSP seq = Util::createIndexVector(5, 10); // 相当于5..14
 int seq0 = seq->getInt(0);                       // 相当于seq[0]
 
-MatrixSP mat = Util::createDoubleMatrix(5, 10);  // 创建一个10行5列的double类型矩阵
+ConstantSP mat = Util::createDoubleMatrix(5, 10);// 创建一个10行5列的double类型矩阵
 mat->setColumn(3, seq);                          // 相当于mat[3] = seq
 ```
 
-## 异常处理和参数校验
+## 1.3 异常处理和参数校验
+
+### 1.3.1 异常处理
 
 插件开发时的异常抛出和处理，和一般C\+\+开发中一样，都通过`throw`关键字抛出异常，`try`语句块处理异常。DolphinDB在头文件`Exceptions.h`中声明了异常类型。
 
@@ -69,7 +73,7 @@ mat->setColumn(3, seq);                          // 相当于mat[3] = seq
 
 更多参数校验函数一般在头文件`CoreConcept.h`的`Constant`类方法中。
 
-### 参数校验的范例
+### 1.3.2 参数校验的范例
 
 本节将开发一个插件函数用于求非负整数的阶乘，返回一个long类型变量。
 
@@ -95,7 +99,7 @@ ConstantSP factorial(const ConstantSP &n, const ConstantSP &placeholder) {
 }
 ```
 
-## 调用DolphinDB内置函数
+## 1.4 调用DolphinDB内置函数
 
 有时会需要调用DolphinDB的内置函数对数据进行处理。有些类已经定义了一些常用的内置函数作为方法：
 
@@ -110,12 +114,12 @@ v->sort(false);                // 相当于sort(v, false)
 
 ```
 ConstantSP v = Util::createIndexVector(1, 100);
-v->setTemporary(false);    // v的值可能在内置函数调用时被修改。如果不希望它被修改，应先调用setTemporary(false)
+v->setTemporary(false);                                   // v的值可能在内置函数调用时被修改。如果不希望它被修改，应先调用setTemporary(false)
 FunctionDefSP cumsum = heap->currentSession()->getFunctionDef("cumsum");
 ConstantSP result = cumsum->call(heap, v, new Void());    // 相当于cumsum(v)，这里的new Void()是一个占位符，没有实际用途
 ```
 
-# 如何开发支持时间序列数据处理的插件函数
+# 2 如何开发支持时间序列数据处理的插件函数
 
 DolphinDB的特色之一在于它对时间序列有良好支持。
 
@@ -160,7 +164,7 @@ double buf[Util::BUF_SIZE];
 INDEX start = 0;
 while (start < size) {
     int len = std::min(Util::BUF_SIZE, size - start);
-    const double *p = x->getDoubleConst(start, len, buf);
+    const double *p = X->getDoubleConst(start, len, buf);
     for (int i = 0; i < len; i++) {
         double val = p[i];
         // ...
@@ -169,7 +173,7 @@ while (start < size) {
 }
 ```
 
-在本例中，`msum`将计算`X`中长度为`windowSize`的窗口中所有数据的和。可以用一个临时变量`tmpSum`记录当前窗口的和，每当窗口移动时，只要给`tmpSum`增加新窗口尾部的值，减去旧窗口头部的值，就能计算得到当前窗口中数据的和。为了将计算值写入`result`，可以循环用`result->getDoubleBuffer`获取一个可读写的缓冲区，对这个缓冲区的修改会直接修改`result`中的值。这样做的效率比循环调用`result->setDouble`要高。
+在本例中，`msum`将计算`X`中长度为`windowSize`的窗口中所有数据的和。可以用一个临时变量`tmpSum`记录当前窗口的和，每当窗口移动时，只要给`tmpSum`增加新窗口尾部的值，减去旧窗口头部的值，就能计算得到当前窗口中数据的和。为了将计算值写入`result`，可以循环用`result->getDoubleBuffer`获取一个可读写的缓冲区，写完后使用`result->setDouble`函数将缓冲区写回数组。`setDouble`函数会检查给定的缓冲区地址和变量底层储存的地址是否一致，如果一致就不会发生数据拷贝。在多数情况下，用`getDoubleBuffer`获得的缓冲区就是变量实际的存储区域，这样能减少数据拷贝，提高性能。
 
 需要注意的是，DolphinDB用`double`类型的最小值（已经定义为宏`DBL_NMIN`）表示`double`类型的`NULL`值，要专门判断。
 
@@ -196,6 +200,7 @@ ConstantSP msum(const ConstantSP &X, const ConstantSP &window) {
                 tmpSum += p[i];
             r[i] = DBL_NMIN;
         }
+        result->setDouble(start, len, r);
         start += len;
     }
 
@@ -213,6 +218,7 @@ ConstantSP msum(const ConstantSP &X, const ConstantSP &window) {
                 tmpSum -= q[i];
             r[i] = tmpSum;
         }
+        result->setDouble(start, len, r);
         start += len;
     }
 
@@ -220,29 +226,15 @@ ConstantSP msum(const ConstantSP &X, const ConstantSP &window) {
 }
 ```
 
-但这样设计有一个潜在的问题。在DolphinDB中，[Big array](https://www.dolphindb.com/help/BigArray.html)中的元素不是完全连续的，而是分段存储的。如果`getDoubleBuffer`要取的元素刚好跨越了分段，就不会返回所需结果，这时候对返回的缓冲区进行修改，是没有效果的。但是，如果能保证每次尝试获得的缓冲区刚好是`[Util::BUF_SIZE * i, Util::BUF_SIZE * (i + 1))`（`i`为非负整数，区间包括下界，不包括上界）的一个子集，就不会发生跨越分段的意外状况。因此，在上述代码的第二个循环一开始时，需要用一些技巧，保证取得的缓冲区不会跨越分段：
-
-```
-// ...
-
-result->setDouble(windowSize - 1, tmpSum);
-
-while (start < size) {
-    int bufSize = std::min(Util::BUF_SIZE - start % Util::BUF_SIZE, Util::BUF_SIZE);
-    int len = std::min(bufSize, size - start);
-    // ...
-}
-
-return result;
-```
-
-# 如何开发用于处理分布式SQL的聚合函数
+# 3 如何开发用于处理分布式SQL的聚合函数
 
 在DolphinDB中，SQL的聚合函数通常接受一个或多个向量作为参数，最终返回一个标量。在开发聚合函数的插件时，需要了解如何访问向量中的元素。
 
 DolphinDB中的向量有两种存储方式。一种是常规数组，数据在内存中连续存储；另一种是[大数组](https://www.dolphindb.com/help/index.html?BigArray.html)，其中的数据分块存储。
 
 本章将以编写一个求[几何平均数](https://en.wikipedia.org/wiki/Geometric_mean)的函数为例，介绍如何开发聚合函数，重点关注数组中元素的访问。
+
+## 3.1 聚合函数范例
 
 几何平均数`geometricMean`函数接受一个向量作为参数。为了防止溢出，一般采用其对数形式计算，即
 
@@ -251,10 +243,12 @@ geometricMean([x1, x2, ..., xn])
     = exp((log(x1) + log(x2) + log(x3) + ... + log(xn))/n)
 ```
 
+为了实现这个函数的分布式版本，可以先开发聚合函数插件`logSum`，用以计算某个分区上的数据的对数和，然后用`defg`关键字定义一个Reduce函数，用`mapr`关键字定义一个MapReduce函数。
+
 在DolphinDB插件开发中，对数组的操作通常要考虑它是常规数组还是大数组。可以用`isFastMode`函数判断：
 
 ```
-ConstantSP geometricMean(const ConstantSP &x, const ConstantSP &placeholder) {
+ConstantSP logSum(const ConstantSP &x, const ConstantSP &placeholder) {
     if (((VectorSP) x)->isFastMode()) {
         // ...
     }
@@ -276,8 +270,7 @@ if (((VectorSP) x)->isFastMode()) {
         if (data[i] != DBL_NMIN)    // is not NULL
             logSum += std::log(data[i]);
     }
-    double mean = std::exp(logSum / size);
-    return new Double(mean);
+    return new Double(logSum);
 }
 ```
 
@@ -303,16 +296,57 @@ else {
         start += blockSize;
         segmentId++;
     }
-    double mean = std::exp(logSum / size);
-    return new Double(mean);
+    return new Double(logSum);
 }
+```
+
+在实际开发中，数组的底层存储不一定是`double`类型。用户需要考虑具体类型。本例采用了泛型编程统一处理不同类型，具体代码参见附件。
+
+## 3.2 在DolphinDB中调用函数
+
+通常需要实现一个聚合函数的非分布式版本和分布式版本，系统会基于哪个版本更高效来选择调用这个版本。
+
+在DolphinDB中定义非分布式的geometricMean函数：
+
+```
+def geometricMean(x) {
+	return exp(logSum::logSum(x) \ count(x))
+}
+```
+
+然后通过定义Map和Reduce函数，最终用`mapr`定义分布式的版本：
+
+```
+def geometricMeanMap(x) {
+	return logSum::logSum(x)
+}
+
+defg geometricMeanReduce(myLogSum, myCount) {
+    return exp(sum(myLogSum) \ sum(myCount))
+}
+
+mapr geometricMean(x) { geometricMeanMap(x), count(x) -> geometricMeanReduce }
 ```
 
 这样就实现了`geometricMean`函数。
 
-在实际开发中，数组的底层存储不一定是`double`类型。用户需要考虑具体类型。本例采用了泛型编程统一处理不同类型，具体代码参见附件。
+如果是在单机环境中执行这个函数，只需要在执行的节点上加载插件。如果有数据位于远程节点，需要在每一个远程节点加载插件。可以手动在每个节点执行`loadPlugin`函数，也可以用以下脚本快速在每个节点上加载插件：
 
-## 随机访问大数组
+```
+each(rpc{, loadPlugin, pathToPlugin}, getDataNodes())
+```
+
+通过以下脚本创建一个分区表，验证函数：
+
+```
+db = database("", VALUE, 1 2 3 4)
+t = table(take(1..4, 100) as id, rand(1.0, 100) as val)
+t0 = db.createPartitionedTable(t, `tb, `id)
+t0.append!(t)
+select geometricMean(val) from t0 group by id
+```
+
+## 3.3 随机访问大数组
 
 可以对大数组进行随机访问，但要经过下标计算。用`getSegmentSizeInBit`函数获得块大小的二进制位数，通过位运算获得块的偏移量和块内偏移量：
 
@@ -327,9 +361,15 @@ double result = segments[index >> segmentSizeInBit][index & segmentMask];
 //                       ^ 块的偏移量                ^ 块内偏移量
 ```
 
-# 如何开发支持新的分布式算法的插件函数
+## 3.4 应该选择哪种方式访问向量
+
+上一章[如何开发支持时间序列数据处理的插件函数](#如何开发支持时间序列数据处理的插件函数)介绍了通过`getDoubleConst`, `getIntConst`等一族方法获得只读缓冲区，以及通过`getDoubleBuffer`, `getIntBuffer`等一族方法获得可读写缓冲区，这两种访问向量的方法。本章介绍了通过`getDataArray`和`getDataSegment`方法直接访问向量的底层存储。在实际开发中，前一种方法更通用，一般应该选择前一种方法。但在某些特别的场合（例如明确知道数据存储在大数组中，且知道数据的类型），可以采用第二种方法。
+
+# 4 如何开发支持新的分布式算法的插件函数
 
 在DolphinDB中，Map-Reduce是执行分布式算法的通用计算框架。DolphinDB提供了[mr](https://www.dolphindb.com/help/mr.html)函数和[imr](https://www.dolphindb.com/help/imr.html)函数，使用户能通过脚本实现分布式算法。而在编写分布式算法的插件时，使用的同样是这两个函数。本章主要介绍如何用C++语言编写自定义的map, reduce等函数，并调用mr和imr两个函数，最终实现分布式计算。
+
+## 4.1 分布式算法范例
 
 本章将以`mr`为例，实现一个函数，求分布式表中相应列名的所有列平均值，介绍编写DolphinDB
 分布式算法插件的整体流程，及需要注意的技术细节。
@@ -408,7 +448,7 @@ ConstantSP columnAvg(Heap *heap, vector<ConstantSP> &args) {
 }
 ```
 
-## 在DolphinDB中调用函数
+## 4.2 在DolphinDB中调用函数
 
 如果是在单机环境中执行这个函数，只需要在执行的节点上加载插件。但如果有数据位于远程节点，需要在每一个远程节点加载插件。可以手动在每个节点执行`loadPlugin`函数，也可以用以下脚本快速在每个节点上加载插件：
 
@@ -428,7 +468,7 @@ ds = sqlDS(<select * from t>)
 columnAvg::columnAvg(ds, `v1`v2)
 ```
 
-# 如何开发支持流数据处理的插件函数
+# 5 如何开发支持流数据处理的插件函数
 
 在DolphinDB中，流数据订阅端可以通过一个handler函数处理收到的数据。订阅数据可以是一个数据表，或一个元组，由`subsrciebeTable`函数的`msgAsTable`参数决定。通常可以用handler函数对流数据进行过滤、插入另一张表等操作。
 
@@ -478,11 +518,11 @@ t0.append!(table(1..100 as id, take(`a`b`c`d, 100) as symbol, now() + 1..100 as 
 select * from t1
 ```
 
-# 如何开发支持外部数据源的插件函数
+# 6 如何开发支持外部数据源的插件函数
 
 在为第三方数据设计可扩展的接口插件时，有几个需要关注的问题：
 
-1. 数据源（Data source）。数据源是一个特殊的数据对象，包含了数据实体的元描述，执行一个数据源能获得数据实体，可能是表、矩阵、向量等等。用户可以提供数据源调用`olsEx`, `randomForestClassifier`等分布式计算函数，也可以调用`mr`, `imr`或`ComputingModel.h`中定义的更底层的计算模型做并行计算。DolphinDB的内置函数`sqlDS`就通过SQL表达式获取数据源。在设计第三方数据接口时，通常需要实现一个获取数据源的函数，它将大的文件分成若干个部分，每部分都表示数据的一个子集，最后返回一个数据源的元组。数据源一般用一个Code object表示，是一个函数调用，它的参数时元数据，返回一个表。
+1. 数据源（Data source）。数据源是一个特殊的数据对象，包含了数据实体的元描述，执行一个数据源能获得数据实体，可能是表、矩阵、向量等等。用户可以提供数据源调用`olsEx`, `randomForestClassifier`等分布式计算函数，也可以调用`mr`, `imr`或`ComputingModel.h`中定义的更底层的计算模型做并行计算。DolphinDB的内置函数`sqlDS`就通过SQL表达式获取数据源。在设计第三方数据接口时，通常需要实现一个获取数据源的函数，它将大的文件分成若干个部分，每部分都表示数据的一个子集，最后返回一个数据源的元组。数据源一般用一个Code object表示，是一个函数调用，它的参数是元数据，返回一个表。
 
 2. 结构（Schema）。表的结构描述了表的列数，每一列的列名和数据类型。第三方接口通常需要实现一个函数，快速获得数据的表结构，以便用户在这个结构的基础上调整列名和列的数据类型。
 
@@ -494,7 +534,7 @@ select * from t1
 
 本章将介绍通常需要实现的几个函数，为设计第三方数据接口提供一个简单的范例。
 
-## 数据格式描述
+## 6.1 数据格式描述
 
 假定本例中的数据储存在[平面文件数据库](https://en.wikipedia.org/wiki/Flat-file_database)，以二进制格式按行存储，数据从文件头部直接开始存储。每行有四列，分别为id（按有符号64位长整型格式存储，8字节），symbol（按C字符串格式存储，8字节），date（按BCD码格式存储，8字节），value（按IEEE 754标准的双精度浮点数格式存储，8字节），每行共32字节。以下是一行的例子：
 
@@ -511,7 +551,7 @@ id   |  symbol  |  date  |  value
 0x 40 24 33 33 33 33 33 33
 ```
 
-## `extractMyDataSchema`函数
+## 6.2 `extractMyDataSchema`函数
 
 这个函数提取数据文件的表结构。在本例中，表结构是确定的，不需要实际读取文件。该函数提供了一个如何生成表结构的范例。它通过`Util::createTable`函数创建一张结构表：
 
@@ -533,7 +573,7 @@ ConstantSP extractMyDataSchema(const ConstantSP &placeholderA, const ConstantSP 
 
 在实际开发中，可能需要以读取文件头等方式获得表结构。如何读文件将在后面介绍。
 
-## `loadMyData`函数
+## 6.3 `loadMyData`函数
 
 `loadMyData`函数读取文件，并输出一张DolphinDB表。给定一个文件的路径，可以通过`Util::createBlockFileInputStream`创建一个输入流，此后，可对这个流调用`readBytes`函数读取给定长度的字节，`readBool`读取下一个`bool`值，`readInt`读取下一个`int`值，等等。本例给`loadMyData`函数设计的语法为：`loadMyData(path, [start], [length])`。除了接受文件路径`path`，还接受两个`int`类型的参数`start`和`length`，分别表示开始读取的行数和需要读取的总行数。`createBlockFileInputStream`函数可以通过参数决定开始读取的字节数和需要读取的总字节数：
 
@@ -581,7 +621,7 @@ return Util::createTable(colNames, cols);
 
 本节的完整代码请参考附件中的代码。在实际开发中，加载数据的函数可能还会接受表结构参数`schema`，按实际需要改变读取的数据类型。
 
-## `loadMyDataEx`函数
+## 6.4 `loadMyDataEx`函数
 
 `loadMyData`函数总是将数据加载到内存，当数据文件非常庞大时，工作机的内存很容易成为瓶颈。所以设计`loadMyDataEx`函数解决这个问题。它通过边导入边保存的方式，把静态的二进制文件以较为平缓的数据流的方式保存为DolphinDB的分布式表，而不是采用全部导入内存再存为分区表的方式，从而降低内存的使用需求。
 
@@ -618,7 +658,7 @@ for (int i = 0; i < partitionNum; i++) {
     if (i == partitionNum - 1)
         partitionLength = length - partitionLength * i;
     vector<ConstantSP> partitionArgs = {path, new Int(partitionStart), new Int(partitionLength)};
-    ObjectSP call = Util::createRegularFunctionCall(func, partitionArgs);    // 将会调用loadMyData(path, taskStart, taskLength)
+    ObjectSP call = Util::createRegularFunctionCall(func, partitionArgs);    // 将会调用loadMyData(path, partitionStart, partitionLength)
     tasks.push_back(new DistributedCall(call, true));
     partitionStart += partitionLength;
 }
@@ -632,7 +672,7 @@ executor.execute(heap, tasks);
 
 本节的完整代码请参考附件中的代码。用Pipeline框架实现数据的分块导入，只是一种思路。在具体开发时，可以采用`ComputingModel.h`中声明的`StaticStageExecutor`，也可以使用`Concurrent.h`中声明的线程模型`Thread`。实现方法有很多种，需要根据实际场景选择。
 
-## `myDataDS`函数
+## 6.5 `myDataDS`函数
 
 `myDataDS`函数返回一个数据源的元组。每个数据源都是一个表示函数调用的Code object，可以通过`Util::createRegularFunctionCall`生成。执行这个对象可以取得对应的数据。以下是基于`loadMyData`函数产生数据源的一个例子：
 
@@ -657,7 +697,7 @@ ConstantSP myDataDS(Heap *heap, vector<ConstantSP> &args) {
         if (i == partitionNum - 1)
             partitionLength = length - partitionLength * i;
         vector<ConstantSP> partitionArgs = {path, new Int(partitionStart), new Int(partitionLength)};
-        ObjectSP code = Util::createRegularFunctionCall(func, partitionArgs);    // 将会调用loadMyData(path, taskStart, taskLength)
+        ObjectSP code = Util::createRegularFunctionCall(func, partitionArgs);    // 将会调用loadMyData(path, partitionStart, partitionLength)
         dataSources->set(i, new DataSource(code));
     }
     return dataSources;
