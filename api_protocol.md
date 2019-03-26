@@ -60,7 +60,7 @@ DolphinDB API分为三个交互阶段
 
 会话编号(session ID)代表着终端与DolphinDB建立的一次TCP连接。 终端通过`connect`连接成功后DolphinDB会返回一个新的session ID，在此之后所有的报文交互都基于此session ID进行，直到此连接被终端主动关闭。
 
-如果请求报文的session ID为0，或者服务器找不到指定色session id，服务器会创建并返回一个新的session id。
+如果请求报文的session ID为0，或者服务器找不到指定的session id，服务器会创建并返回一个新的session id。
 
 session ID是一个随机的长整型。
 
