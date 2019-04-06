@@ -220,7 +220,7 @@ ps aux | grep dolphindb  | grep -v grep | grep ec2-user|  awk '{print $2}' | xar
 启动控制节点和代理节点之后，可以通过DolphinDB提供的集群管理界面来开启或关闭数据节点。在浏览器的地址栏中输入(目前支持Chrome与Firefox)：
 
 ```
- localhost:8990 
+ 10.1.1.7:8990 
 ```
 (8990为控制节点的端口号)
 
@@ -262,6 +262,19 @@ log文件中有可能出现错误信息"Failed to bind the socket on XXXX"。这
 ```
 startDataNode(["P1-NODE1", "P2-NODE1","P3-NODE1","P5-NODE1"])
 ```
+
+#### 3.3.7 **节点启动失败可能原因分析**
+
+如果节点长时间无法启动，可能有以下原因：
+
+1. **端口号被占用**。查看log文件，如果log文件中出现错误信息"Failed to bind the socket on XXXX"，这里的XXXX是待启动的节点端口号。这可能是该端口号已经被其他程序占用，这种情况下将其他程序关闭或者重新给DolphinDB节点分配端口号在重新启动节点即可，也有可能是刚刚关闭了该节点，Linux kernel还没有释放此端口号。这种情况下稍等30秒，再启动节点即可。
+
+2. **防火墙未开放端口**。防火墙会对一些端口进行限制，如果使用到这些端口，需要在防火墙中开放这些端口。
+
+3. **配置文件中的IP地址、端口号或节点别名没有书写正确。**
+
+4. 如果集群是部署在**云端**或**k8s**环境，需要在`agent.cfg`和`cluster.cfg`文件中加上配置项`lanCluster=0`。
+
 
 #### 4. 基于Web的集群管理
 
@@ -361,7 +374,7 @@ DolphinDB集群可以部署在局域网内，也可以部署在私有云或公�
 
 中文
 
-http://www.dolphindb.com/cn/help/ClusterSetup.html
+https://www.dolphindb.cn/cn/help/ClusterSetup.html
 
 英文
 

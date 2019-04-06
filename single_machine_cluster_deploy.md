@@ -42,7 +42,7 @@ mkdir /DolphinDB/server/log
 在config目录下，创建controller.cfg文件，可填写以下集群管理的常用参数。用户可根据实际需要调整参数。controller.cfg文件中只有localSite参数是必需的，其它参数都是可选参数。
 
 ```
-localSite=localhost:8920:ctl8920
+localSite=192.168.1.103:8920:ctl8920
 localExecutors=3
 maxConnections=128
 maxMemSize=16
@@ -57,7 +57,7 @@ dfsReplicaReliabilityLevel=0
 
 | 参数配置        | 解释          |
 |:------------- |:-------------|
-|localSite=localhost:8920:ctl8920 |节点局域网信息,格式为 IP地址:端口号:节点别名，所有字段均为必选项。|
+|localSite=192.168.1.103:8920:ctl8920 |节点局域网信息,格式为 IP地址:端口号:节点别名，所有字段均为必选项。|
 |localExecutors=3  |                 本地执行者的数量。默认值是CPU的内核数量 - 1。|
 |maxConnections=128         |        最大向内连接数|
 |maxMemSize=16    |                 最大内存（GB）|
@@ -73,11 +73,11 @@ dfsReplicaReliabilityLevel=0
 
 ```
 localSite,mode
-localhost:8910:agent,agent
-localhost:8921:DFS_NODE1,datanode
-localhost:8922:DFS_NODE2,datanode
-localhost:8923:DFS_NODE3,datanode
-localhost:8924:DFS_NODE4,datanode
+192.168.1.103:8910:agent,agent
+192.168.1.103:8921:DFS_NODE1,datanode
+192.168.1.103:8922:DFS_NODE2,datanode
+192.168.1.103:8923:DFS_NODE3,datanode
+192.168.1.103:8924:DFS_NODE4,datanode
 ```
 #### 3.1.3 配置数据节点参数文件
 在config目录下，创建cluster.cfg文件，可填写如下内容。用户可根据实际需要调整参数。cluster.cfg的配置适用于集群中所有数据节点。
@@ -98,8 +98,8 @@ webWorkerNum=2
 workerNum=3
 localExecutors=2
 maxMemSize=4
-localSite=localhost:8910:agent
-controllerSite=localhost:8920:ctl8920
+localSite=192.168.1.103:8910:agent
+controllerSite=192.168.1.103:8920:ctl8920
 ```
 在controller.cfg中的参数localSite应当与所有代理节点的配置文件agent.cfg中的参数controllerSite一致, 因为代理节点使用agent.cfg中的参数controllerSite来寻找controller。若controller.cfg中的参数localSite有变化，即使只是node alias有改变，所有代理节点的配置文件agent.cfg中的参数controllerSite都应当做相应的改变。
 
@@ -172,7 +172,7 @@ ps aux | grep dolphindb  | grep -v grep | grep ec2-user|  awk '{print $2}' | xar
 启动控制节点和代理节点之后，可以通过DolphinDB提供的集群管理界面来开启或关闭数据节点。在浏览器的地址栏中输入(目前支持浏览器为Chrome与Firefox)：
 
 ```
- localhost:8920 
+ 192.168.1.103:8920 
 ```
 (8920为控制节点的端口号)
 
@@ -214,6 +214,19 @@ log文件中有可能出现错误信息"Failed to bind the socket on XXXX"，这
 startDataNode(["DFS_NODE1", "DFS_NODE2","DFS_NODE3","DFS_NODE4"])
 ```
 
+#### 3.3.7 **节点启动失败可能原因分析**
+
+如果节点长时间无法启动，可能有以下原因：
+
+1. **端口号被占用**。查看log文件，如果log文件中出现错误信息"Failed to bind the socket on XXXX"，这里的XXXX是待启动的节点端口号。这可能是该端口号已经被其他程序占用，这种情况下将其他程序关闭或者重新给DolphinDB节点分配端口号在重新启动节点即可，也有可能是刚刚关闭了该节点，Linux kernel还没有释放此端口号。这种情况下稍等30秒，再启动节点即可。
+
+2. **防火墙未开放端口**。防火墙会对一些端口进行限制，如果使用到这些端口，需要在防火墙中开放这些端口。
+
+3. **配置文件中的IP地址、端口号或节点别名没有书写正确。**
+
+4. 如果集群是部署在**云端**或**k8s**环境，需要在`agent.cfg`和`cluster.cfg`文件中加上配置项`lanCluster=0`。
+
+
 #### 4. 基于Web的集群管理
 
 经过上述步骤，我们已经成功部署DolphinDB集群。在实际使用中我们经常会需要改变集群配置。DolphinDB的网络界面提供更改集群配置的所有功能。
@@ -243,7 +256,7 @@ startDataNode(["DFS_NODE1", "DFS_NODE2","DFS_NODE3","DFS_NODE4"])
 
 中文
 
-http://www.dolphindb.com/cn/help/index.html?ClusterSetup.html
+https://www.dolphindb.cn/cn/help/ClusterSetup.html
 
 英文
 

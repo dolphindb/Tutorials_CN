@@ -26,9 +26,9 @@ DolphinDB提供了多种灵活的数据导入方法，来帮助用户方便的�
 #### 2. 通过文本文件导入
 
 通过文件进行数据中转是比较通用化的一种数据迁移方式，方式简单易操作。DolphinDB提供了以下三个函数来载入文本文件：
-- [`loadText`](http://www.dolphindb.com/cn/help/index.html?loadText.html): 将文本文件以 DolphinDB 数据表的形式读取到内存中。
-- [`ploadText`](https://www.dolphindb.com/help/index.html?ploadText.html): 将数据文件作为分区表并行加载到内存中。与`loadText`函数相比，速度更快。
-- [`loadTextEx`](https://www.dolphindb.com/help/index.html?loadTextEx.html): 把数据文件转换为DolphinDB数据库中的分布式表，然后将表的元数据加载到内存中。
+- [`loadText`](https://www.dolphindb.cn/cn/help/loadText.html): 将文本文件以 DolphinDB 数据表的形式读取到内存中。
+- [`ploadText`](https://www.dolphindb.cn/cn/help/ploadText.html): 将数据文件作为分区表并行加载到内存中。与`loadText`函数相比，速度更快。
+- [`loadTextEx`](https://www.dolphindb.cn/cn/help/loadTextEx.html): 把数据文件转换为DolphinDB数据库中的分布式表，然后将表的元数据加载到内存中。
 
 下面通过将 [candle_201801.csv](https://github.com/dolphindb/Tutorials_CN/blob/master/data/candle_201801.csv) 导入DolphinDB来演示`loadText`和`loadTextEx`的用法。
 
@@ -54,7 +54,7 @@ nameCol = `symbol`exchange`cycle`tradingDay`date`time`open`high`low`close`volume
 typeCol = `SYMBOL`SYMBOL`INT`DATE`DATE`INT`DOUBLE`DOUBLE`DOUBLE`DOUBLE`INT`DOUBLE`LONG
 schemaTb = table(nameCol as name,typeCol as type);
 ```
-当表字段非常多的时候，写这样一个脚本费时费力，为了简化操作，DolphinDB提供了[`extractTextSchema`](https://www.dolphindb.com/cn/help/index.html?extractTextSchema.html) 函数，可从文本文件中提取表的结构生成数据类型表。只需修改少数指定字段的数据类型，就可得到理想的数据类型表。
+当表字段非常多的时候，写这样一个脚本费时费力，为了简化操作，DolphinDB提供了[`extractTextSchema`](https://www.dolphindb.cn/cn/help/extractTextSchema.html) 函数，可从文本文件中提取表的结构生成数据类型表。只需修改少数指定字段的数据类型，就可得到理想的数据类型表。
 
 整合上述方法，可使用如下脚本以导入数据：
 ```
@@ -92,7 +92,7 @@ Time elapsed: 10685.838 ms
 
 #### 2.3. `loadTextEx`
 
-`loadText`函数总是把所有数据导入内存。当数据文件体积非常庞大时，服务器的内存很容易成为制约因素。DolphinDB提供的[`loadTextEx`](http://www.dolphindb.com/cn/help/index.html?loadTextEx.html)函数可以较好的解决这个问题。它将一个大的文本文件分割成很多个小块，逐步加载到分布式数据表中。
+`loadText`函数总是把所有数据导入内存。当数据文件体积非常庞大时，服务器的内存很容易成为制约因素。DolphinDB提供的[`loadTextEx`](https://www.dolphindb.cn/cn/help/loadTextEx.html)函数可以较好的解决这个问题。它将一个大的文本文件分割成很多个小块，逐步加载到分布式数据表中。
 
 首先创建分布式数据库：
 ```
@@ -127,7 +127,7 @@ DolphinDB通过[HDF5插件](https://github.com/dolphindb/DolphinDBPlugin/blob/ma
 
 - hdf5::extractHdf5Schema - 从h5文件中提取表结构
 
-下载[HDF5插件](http://www.dolphindb.com/downloads/HDF5_V0.7.zip)，再将插件部署到节点的plugins目录下。使用以下脚本加载插件：
+下载[HDF5插件](https://www.dolphindb.cn/alone/alone.php?id=10)，再将插件部署到节点的plugins目录下。使用以下脚本加载插件：
 ```
 loadPlugin("plugins/hdf5/PluginHdf5.txt")
 ```
@@ -286,7 +286,7 @@ def loadCsvFromYearPath(path, dbPath, tableName){
 	}
 }
 ```
-然后通过[`rpc`](https://www.dolphindb.com/help/rpc.html)函数结合[`submitJob`](https://www.dolphindb.com/help/submitJob.html)函数把该函数提交到各节点去执行：
+然后通过[`rpc`](https://www.dolphindb.cn/cn/help/rpc.html)函数结合[`submitJob`](https://www.dolphindb.cn/cn/help/submitJob.html)函数把该函数提交到各节点去执行：
 ```
 nodesAlias="NODE" + string(1..4)
 years= files(rootDir)[`filename]

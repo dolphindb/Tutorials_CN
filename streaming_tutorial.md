@@ -70,7 +70,7 @@ share streamTable(10000:0,`timestamp`temperature, [TIMESTAMP,DOUBLE]) as pubTabl
 
 #### 2.2 流数据订阅
 
-订阅数据通过 [`subscribeTable`](https://www.dolphindb.com/cn/help/subscribeTable.html)函数来实现。
+订阅数据通过 [`subscribeTable`](https://www.dolphindb.cn/cn/help/subscribeTable.html)函数来实现。
 ```
 subscribeTable([server], tableName, [actionName], [offset=-1], handler, [msgAsTable=false], [batchSize=0], [throttle=1], [hash=-1])
 ```
@@ -105,7 +105,7 @@ share streamTable(10000:0,`ts`temp, [TIMESTAMP,DOUBLE]) as subTable
 topic1 = subscribeTable(, "pubTable", "actionName_realtimeAnalytics", 0, subTable, true)
 topic2 = subscribeTable(, "pubTable", "actionName_saveToDataWarehouse", 0, subTable, true)
 ```
-`subscribeTable`函数的返回值是订阅主题，它是订阅表所在节点的别名、流数据表名称和订阅任务名称（如果指定了actionName）的组合，使用下划线分隔。如果订阅主题已经存在，函数将会抛出异常。若当前节点别名为NODE1，上述例子返回的两个topic内容如下:
+`subscribeTable`函数的返回值是订阅主题，它是订阅表所在节点的别名、流数据表名称和订阅任务名称（如果指定了actionName）的组合，使用"/"分隔。如果订阅主题已经存在，函数将会抛出异常。若当前节点别名为NODE1，上述例子返回的两个topic内容如下:
 
 topic1:
 ```
@@ -116,7 +116,7 @@ topic2:
 NODE1/pubTable/actionName_saveToDataWarehouse
 ```
 - offset：订阅任务开始后的第一条消息所在的位置。消息是指流数据表中的行。如果没有指定，或为负数，或超过了流数据表的记录行数，订阅将会从流数据表的当前行开始。offset的值永远与流数据表创建时的第一行对应，如果某些行因为内存限制被删除，在决定订阅开始的位置时，这些行仍然考虑在内。
-下面的示例说明offset的作用，向pubTable写入100行数据，建立三个订阅，分别从102，-1，50行开始订阅：
+下面的示例说明offset的作用，向pubTable写入100行数据，建立三个订阅：
 ```
 share streamTable(10000:0,`timestamp`temperature, [TIMESTAMP,DOUBLE]) as pubTable
 share streamTable(10000:0,`ts`temp, [TIMESTAMP,DOUBLE]) as subTable1
@@ -129,7 +129,7 @@ topic1 = subscribeTable(, "pubTable", "actionName1", 102,subTable1, true)
 topic1 = subscribeTable(, "pubTable", "actionName2", -1, subTable2, true)
 topic1 = subscribeTable(, "pubTable", "actionName3", 50,subTable3, true)
 ```
-从结果可以看到，subTable1与subTable2都没有数据，而subTable3有50条数据。这说明只有当offset在从0到数据集记录数之间才能正常起作用，否则订阅会从当前行开始，只有当新数据进入发布表时才能订阅到数据。
+从结果可以看到，subTable1与subTable2都没有数据，而subTable3有50条数据。当`offset`为负或者超过数据集记录数时，订阅会从当前行开始，只有当新数据进入发布表时才能订阅到数据。
 
 - handler：一元函数或表。它用于处理订阅数据。若它是函数，其唯一的参数是订阅到的数据。订阅数据可以是一个数据表或元组，订阅数据表的每个列是元组的一个元素。我们经常需要把订阅数据插入到数据表。为了方便使用，handler也可以是一个数据表，并且订阅数据可以直接插入到该表中。 下面的示例展示handler的两种用途，subTable1直接把订阅数据写入目标table，subTable2通过自定义函数myHandler将数据进行过滤后写入。
 ```
@@ -225,7 +225,7 @@ undef("pubStreamTable", SHARED)
 ```
 persisitenceDir = /data/streamCache
 ```
-在脚本中执行[`enableTablePersistence`](https://www.dolphindb.com/cn/help/enableTablePersistence.html)命令设置针对某一个流数据表启用持久化。下面的示例针对pubTable表启用持久化，其中asyn = true, compress = true, cacheSize=1000000，即当流数据表达到100万行数据时启用持久化，将其中50%的数据采用异步方式压缩保存到磁盘。
+在脚本中执行[`enableTablePersistence`](https://www.dolphindb.cn/cn/help/enableTablePersistence.html)命令设置针对某一个流数据表启用持久化。下面的示例针对pubTable表启用持久化，其中asyn = true, compress = true, cacheSize=1000000，即当流数据表达到100万行数据时启用持久化，将其中50%的数据采用异步方式压缩保存到磁盘。
 ```
 enableTablePersistence(pubTable, true, true, 1000000)
 ```
@@ -237,7 +237,7 @@ enableTablePersistence(pubTable, true, true, 1000000)
 ```
 clearTablePersistence(pubTable)
 ```
-当整个流数据写入结束时，可以使用[`disableTablePersistence`](https://www.dolphindb.com/cn/help/disableTablePersistence.html)命令关闭持久化。
+当整个流数据写入结束时，可以使用[`disableTablePersistence`](https://www.dolphindb.cn/cn/help/disableTablePersistence.html)命令关闭持久化。
 ```
 disableTablePersistence(pubTable)
 ```
@@ -316,7 +316,7 @@ publisher|发布节点别名
 cumMsgCount|累计接收消息数
 cumMsgLatency|累计接收消息的平均延迟时间(毫秒)。延迟时间指的是消息从进入发布队列到进入订阅队列的耗时。
 lastMsgLatency|最后一次接收数据延迟时间(毫秒)
-lastUpdate|最后一次接收数据时间
+lastUpdate|最后一次接收数据时刻
 
 在GUI中运行getStreamingStat().subConns查看表内容：
 
@@ -381,6 +381,21 @@ topics|已订阅主题。若多个，彼此通过逗号分隔。
 当有流数据进入时，可以通过这个表观察到已处理数据量等信息：
 
 ![image](https://github.com/dolphindb/Tutorials_CN/blob/master/images/streaming/subworker_msg.png?raw=true)
+
+#### 4.5 pubTables表
+pubTables表监控流数据表被订阅情况，每条记录代表流数据表一个订阅连接。
+
+列名称|说明
+---|---
+tableName|发布表名称
+subscriber|订阅方的host和port
+msgOffset|订阅线程当前订阅消息的offset
+actions|订阅的action。若有多个action，此处用逗号分割
+
+比如存流数据发布表名称为`pubTable1`，发布了100条记录。 有一个订阅从offset=0开始，action名称为"
+act_getdata"。那么当订阅完成之后，用getStreamingStat().pubTables 查看内容为：
+
+![image](https://github.com/dolphindb/Tutorials_CN/blob/master/images/streaming/pubtables1.png?raw=true)
 
 ### 5 流数据性能调优
 

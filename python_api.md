@@ -24,6 +24,8 @@ Python API中的方法分为两类。第一类方法不触发脚本的执行，�
 
 ### 1 连接DolphinDB
 
+#### 1.1 会话
+
 Python通过会话与DolphinDB进行交互。在下面的例子中，首先在Python中创建一个会话，然后使用指定的域名或IP地址和端口号把该会话连接到DolphinDB服务器。在执行以下Python脚本前，需要先启动DolphinDB服务器。
 
 ```
@@ -38,7 +40,20 @@ s.connect("localhost",8848)
 s.connect("localhost",8848, YOUR_USER_NAME, YOUR_PASS_WORD)
 ```
 
-DolphinDB默认的管理员用户名为“admin”，密码为“123456”。
+DolphinDB默认的管理员用户名为“admin”，密码为“123456”，并且默认会在连接时对YOUR_USER_NAME和YOUR_PASS_WORD进行加密传输。
+
+#### 1.2 初始脚本
+
+在API使用期间若出现由于网络波动或其他原因导致的暂时连接中断，API会进行重新连接并执行之前未成功运行的脚本。
+
+重新连接会获得一个新的会话。可使用如下脚本设置在重连成功时首先执行的脚本。系统会在此之后执行断开连接前一次会话未成功运行的脚本。
+
+```
+import dolphindb ad ddb
+s = ddb.session()
+s.setInitScript("initTable = streamTable(10000:0, `id`val, [INT,LONG])")
+currentInitScript = s.getInitScript()
+```
 
 ### 2 把数据导入到DolphinDB服务器
 
@@ -261,6 +276,8 @@ print(a_new)
 [1,2,3,4,5,6]
 
 ```
+
+注意，Python中像a=[1,2,3.0]这种类型的内置list，上传到DolphinDB后，会被识别为any vector。这种情况下，建议使用np.array代替内置list,即a=np.array([1,2,3.0],dtype=np.double)，这样a会被识别为double类型的向量。
 
 #### 上传pandas DataFrame
 
