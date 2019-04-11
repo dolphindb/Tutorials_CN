@@ -64,7 +64,7 @@ regularArrayMemoryLimit=64
 
 	另外建议根据闪存大小修改maxLogSize（当日志文件达到指定大小（单位为MB）时，系统会将日志文件存档。默认值是1024，最小值是100），例如修改为100MB：
 ```
-maxLogSize=1
+maxLogSize=100
 
 ```
 
