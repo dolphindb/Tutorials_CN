@@ -1,5 +1,6 @@
 ## DolphinDB 教程
 
+#### [DolphinDB安装使用指南](https://github.com/dolphindb/Tutorials_CN/blob/master/dolphindb_user_guide.md)
 #### [单节点部署](https://github.com/dolphindb/Tutorials_CN/blob/master/standalone_server.md)
 #### [单节点部署(嵌入式ARM版本)](https://github.com/dolphindb/Tutorials_CN/blob/master/ARM_standalone_deploy.md)
 #### [单服务器集群部署](https://github.com/dolphindb/Tutorials_CN/blob/master/single_machine_cluster_deploy.md)
