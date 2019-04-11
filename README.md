@@ -1,6 +1,7 @@
 ## DolphinDB 教程
 
 #### [单节点部署](https://github.com/dolphindb/Tutorials_CN/blob/master/standalone_server.md)
+#### [单节点部署(嵌入式ARM版本)](https://github.com/dolphindb/Tutorials_CN/blob/master/ARM_standalone_server.md)
 #### [单服务器集群部署](https://github.com/dolphindb/Tutorials_CN/blob/master/single_machine_cluster_deploy.md)
 #### [多服务器集群部署](https://github.com/dolphindb/Tutorials_CN/blob/master/multi_machine_cluster_deploy.md)
 #### [数据节点和存储空间扩展](https://github.com/dolphindb/Tutorials_CN/blob/master/cluster_scaleout.md)
