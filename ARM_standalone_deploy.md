@@ -14,7 +14,7 @@ Flash：       8GB以上
              ARMV8  CORTEXA53  CORTEXA57  CORTEXA72  CORTEXA73  
              FALKOR  THUNDERX  THUNDERX2T99  TSV110 
 
-DolphinDB ARM版使用的交叉编译器32位系统为arm-linux-gnueabihf4.9，64位系统为aarch64-linux-gnu_4.9.3。若用户在实际板子上运行时出现问题，请反馈给我们。
+DolphinDB ARM版使用的交叉编译器32位系统为arm-linux-gnueabihf4.9，64位系统为aarch64-linux-gnu_4.9.3。若用户在实际板子上运行时出现问题，请反馈给我们（support@dolphindb.com）。
 
 
 #### 1. 安装系统
