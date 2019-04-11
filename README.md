@@ -1,5 +1,6 @@
 # DolphinDB 教程
 
+- [DolphinDB安装使用指南](dolphindb_user_guide.md)
 - [单节点部署](standalone_server.md)
 - [单服务器集群部署](single_machine_cluster_deploy.md)
 - [多服务器集群部署](multi_machine_cluster_deploy.md)
@@ -17,4 +18,3 @@
 - [流数据聚合引擎](stream_aggregator.md)
 - [DolphinDB在工业物联网的应用](iot_demo.md)
 - [动态增加字段和计算指标](add_column.md)
-
