@@ -1,0 +1,241 @@
+REPL
+// ----------------- 路径配置
+FP_TAQ = '/data/TAQ/'
+FP_SAMPLE_TB = FP_TAQ + 'csv/TAQ20070801.csv'
+FP_DB = FP_TAQ + 'db/'
+
+
+
+// ----------------- 创建 schema
+orig_tb_schema = extractTextSchema(FP_SAMPLE_TB)
+// 查看 orig_tb_schema
+
+// 将列名调整为小写避免与 DolphinDB 内置的 SYMBOL, DATE, TIME 等保留关键字产生冲突
+cols = lower(orig_tb_schema.name)
+schema = table(cols, orig_tb_schema.type)
+
+// 加载 sample table, 用第一个 CSV 中的股票代码频率作为分区范围的依据
+sample_tb = ploadText(FP_SAMPLE_TB, , schema)
+// 用时 40s
+
+sample_freq_tb = select count(*) from sample_tb group by symbol
+
+sample_tb = NULL
+
+// 8369 rows, [symbol, count], 分到 100 个 buckets
+BIN_NUM = 100
+
+buckets = cutPoints(sample_freq_tb.symbol, BIN_NUM, sample_freq_tb.count)
+// [A, ABL, ACU, ..., ZZZ], 101 个边界
+buckets[BIN_NUM] = `ZZZZZZ		// 调整最右边界
+
+
+
+// ----------------- 创建数据库分区
+DATE_RANGE = 2007.01.01..2008.01.01
+
+date_schema   = database('', VALUE, DATE_RANGE)
+symbol_schema = database('', RANGE, buckets)
+
+db = database(FP_DB, COMPO, [date_schema, symbol_schema])
+
+
+
+
+// --------------------- 导入数据
+FP_CSV = FP_TAQ + 'csv/'
+fps = FP_CSV + (exec filename from files(FP_CSV) order by filename)
+
+// pt = loadTextEx(db, `taq, `date`symbol, fps[0], ,schema)
+
+// 顺序读取 23 个文件
+timer {
+	for (fp in fps) {
+		loadTextEx(db, `taq, `date`symbol, fp, ,schema)
+		print now() + ": 已导入 " + fp
+	}
+}
+// 用时 37m 58s
+
+close(db)
+
+
+
+// --------------------- 加载数据库
+db = database(FP_DB)
+taq = db.loadTable(`taq)
+
+
+
+// --------------------- 将股票代码和 mmid 的所有取值导出，以此创建 TimescaleDB 的 enum type 的可能取值
+select count(*) from taq
+
+symbols_tb =
+	select count(*)
+	from taq
+	group by symbol
+
+
+saveText(symbols_tb.symbol, FP_TAQ + 'symbols.txt')
+
+
+mmids_tb =
+	select count(*)
+	from taq
+	group by mmid
+// FLOW, EDGX, EDGA, NASD  ->  作为 TimescaleDB 的 Mmid enum type 的可能值
+
+
+
+
+// ---------------- 查询性能测试
+
+// 查询总记录数
+timer
+select count(*) from taq
+where date <= 2007.08.07
+
+
+
+// 1. 点查询：按股票代码、时间查询
+timer
+select *
+from taq
+where
+	symbol = 'IBM', 
+	date == 2007.08.07
+
+
+
+
+// 2. 范围查询：查询某时间段内的某些股票的所有记录
+timer
+select symbol, time, bid, ofr 
+from taq 
+where 
+	symbol in ('IBM', 'MSFT', 'GOOG', 'YHOO'),
+	date between 2007.08.03 : 2007.08.07,
+	time between 09:30:00 : 09:40:00,
+	bid > 20
+
+
+
+// 3. top 1000 + 排序: 按 [股票代码、日期] 过滤，按 [卖出与买入价格差] 降序 排序
+timer 
+select top 1000 *
+from taq 
+where
+	symbol in ('IBM', 'MSFT', 'GOOG', 'YHOO'),
+	date == 2007.08.07,
+	time >= 07:36:37,
+	ofr > bid
+order by (ofr - bid) desc
+
+
+
+// 4. 聚合查询.单分区维度
+timer 
+select 
+	max(bid) as max_bid,
+	min(ofr) as min_ofr
+from taq
+where 
+	date == 2007.08.02,
+	symbol == 'IBM',
+	ofr > bid
+group by minute(time)
+
+
+
+// 5. 聚合查询.多分区维度 + 排序
+timer
+select 
+	std(bid) 	as std_bid,
+	sum(bidsiz) as sum_bidsiz 
+from taq 
+where 
+	date == 2007.08.07,
+	time between 09:00:00 : 21:00:00,
+	symbol in `IBM`MSFT`GOOG`YHOO,
+	bid >= 20,
+	ofr > 20
+group by symbol, minute(time) 
+order by symbol asc, minute_time asc
+
+
+
+
+// 6. 经典查询：按 [多个股票代码、日期，时间范围、报价范围] 过滤，查询 [股票代码、时间、买入价、卖出价]
+timer
+select symbol, time, bid, ofr
+from taq
+where
+	symbol in ('IBM', 'MSFT', 'GOOG', 'YHOO'), 
+	date = 2007.08.03, 
+	time between 09:30:00 : 14:30:00, 
+	bid > 0, 
+	ofr > bid
+
+
+
+
+// 7. 经典查询：按 [日期、时间范围、卖出买入价格条件、股票代码] 过滤，查询 (各个股票 每分钟) [平均变化幅度]
+timer
+select avg( (ofr - bid) / (ofr + bid) ) * 2 as spread 
+from taq 
+where 
+	date = 2007.08.01,
+	time between 09:30:00 : 16:00:00,
+	bid > 0,
+	ofr > bid
+group by symbol, minute(time) as minute
+
+
+
+// 8. 经典查询：计算 某天 (每个股票 每分钟) 最大卖出与最小买入价之差
+timer
+select max(ofr) - min(bid) as gap 
+from taq 
+where 
+	date = 2007.08.03, 
+	bid > 0, 
+	ofr > bid
+group by symbol, minute(time) as minute
+
+
+
+// 9. 经典查询：按 [股票代码、日期段、时间段] 过滤, 查询 (每天，时间段内每分钟) 均价
+timer
+select avg(ofr + bid) / 2.0 as avg_price
+from taq 
+where 
+	symbol = 'IBM', 
+	date between 2007.08.01 : 2007.08.07,
+	time between 09:30:00 : 16:00:00
+group by date, minute(time) as minute
+
+
+
+// 10. 经典查询：按 [日期段、时间段] 过滤, 查询 (每股票，每天) 均价
+timer
+select avg(ofr + bid) / 2.0 as avg_price
+from taq 
+where
+	date between 2007.08.05 : 2007.08.07,
+	time between 09:30:00 : 16:00:00
+group by symbol, date
+
+
+
+// 11. 经典查询：计算 某个日期段 有成交记录的 (每天, 每股票) 加权均价，并按 (日期，股票代码) 排序
+timer
+select wavg(bid, bidsiz) as vwab 
+from taq
+where date between 2007.08.05 : 2007.08.06
+group by date, symbol
+	having sum(bidsiz) > 0
+order by date desc, symbol
+
+
+
+
