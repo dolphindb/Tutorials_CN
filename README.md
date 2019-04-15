@@ -1,6 +1,8 @@
 ## DolphinDB 教程
 
+#### [DolphinDB安装使用指南](https://github.com/dolphindb/Tutorials_CN/blob/master/dolphindb_user_guide.md)
 #### [单节点部署](https://github.com/dolphindb/Tutorials_CN/blob/master/standalone_server.md)
+#### [单节点部署(嵌入式ARM版本)](https://github.com/dolphindb/Tutorials_CN/blob/master/ARM_standalone_deploy.md)
 #### [单服务器集群部署](https://github.com/dolphindb/Tutorials_CN/blob/master/single_machine_cluster_deploy.md)
 #### [多服务器集群部署](https://github.com/dolphindb/Tutorials_CN/blob/master/multi_machine_cluster_deploy.md)
 #### [数据节点和存储空间扩展](https://github.com/dolphindb/Tutorials_CN/blob/master/cluster_scaleout.md)
@@ -17,4 +19,3 @@
 #### [流数据聚合引擎](https://github.com/dolphindb/Tutorials_CN/blob/master/stream_aggregator.md)
 #### [DolphinDB在工业物联网的应用](https://github.com/dolphindb/Tutorials_CN/blob/master/iot_demo.md)
 #### [动态增加字段和计算指标](https://github.com/dolphindb/Tutorials_CN/blob/master/add_column.md)
-
