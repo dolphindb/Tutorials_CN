@@ -2,6 +2,8 @@ cmake_minimum_required(VERSION 3.0)
 
 project(PluginLoadMyData)
 
+add_definitions(-D_GLIBCXX_USE_CXX11_ABI=0)
+
 LINK_DIRECTORIES("../libs")
 INCLUDE_DIRECTORIES("../include")
 if(WIN32)

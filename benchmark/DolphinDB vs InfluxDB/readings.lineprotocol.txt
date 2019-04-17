@@ -1,0 +1,27 @@
+# DDL
+CREATE DATABASE test
+CREATE RETENTION POLICY one_day ON test DURATION INF REPLICATION 1 SHARD DURATION 1d DEFAULT
+
+# DML
+# CONTEXT-DATABASE:test
+# CONTEXT-RETENTION-POLICY:one_day
+readings,device_id=demo000000,battery_status=discharging,bssid=A0:B1:C5:D2:E0:F3,ssid=stealth-net battery_level=96,battery_temperature=91.7,cpu_avg_1min=5.26,cpu_avg_5min=6.172,cpu_avg_15min=6.51066666666667,mem_free=650609585,mem_used=349390415,rssi=-42 1479211200
+readings,device_id=demo000001,battery_status=discharging,bssid=A0:B1:C5:D2:E0:F3,ssid=stealth-net battery_level=36,battery_temperature=87.9,cpu_avg_1min=7.23,cpu_avg_5min=6.886,cpu_avg_15min=7.01533333333333,mem_free=530709408,mem_used=469290592,rssi=-62 1479211200
+readings,device_id=demo000002,battery_status=discharging,bssid=A0:B1:C5:D2:E0:F3,ssid=stealth-net battery_level=94,battery_temperature=88.3,cpu_avg_1min=5.17,cpu_avg_5min=7.034,cpu_avg_15min=7.53133333333333,mem_free=469434537,mem_used=530565463,rssi=-59 1479211200
+readings,device_id=demo000003,battery_status=discharging,bssid=A0:B1:C5:D2:E0:F3,ssid=stealth-net battery_level=30,battery_temperature=92,cpu_avg_1min=6.48,cpu_avg_5min=8.416,cpu_avg_15min=8.92533333333333,mem_free=470670134,mem_used=529329866,rssi=-49 1479211200
+readings,device_id=demo000004,battery_status=discharging,bssid=01:02:03:04:05:06,ssid=demo-net battery_level=88,battery_temperature=89,cpu_avg_1min=20.44,cpu_avg_5min=10.968,cpu_avg_15min=9.576,mem_free=470145855,mem_used=529854145,rssi=-48 1479211200
+readings,device_id=demo000005,battery_status=discharging,bssid=01:02:03:04:05:06,ssid=demo-net battery_level=91,battery_temperature=92.7,cpu_avg_1min=8.98,cpu_avg_5min=8.596,cpu_avg_15min=8.71866666666667,mem_free=420020456,mem_used=579979544,rssi=-56 1479211200
+readings,device_id=demo000006,battery_status=discharging,bssid=22:32:A2:B3:05:98,ssid=demo-5ghz battery_level=46,battery_temperature=93,cpu_avg_1min=29.27,cpu_avg_5min=10.574,cpu_avg_15min=7.64466666666667,mem_free=579480118,mem_used=420519882,rssi=-61 1479211200
+readings,device_id=demo000007,battery_status=discharging,bssid=01:02:03:04:05:06,ssid=demo-net battery_level=34,battery_temperature=91.3,cpu_avg_1min=25.88,cpu_avg_5min=9.816,cpu_avg_15min=7.32533333333333,mem_free=449941315,mem_used=550058685,rssi=-61 1479211200
+readings,device_id=demo000008,battery_status=discharging,bssid=A0:B1:C5:D2:E0:F3,ssid=stealth-net battery_level=41,battery_temperature=89.8,cpu_avg_1min=30.03,cpu_avg_5min=11.126,cpu_avg_15min=8.162,mem_free=460768013,mem_used=539231987,rssi=-54 1479211200
+readings,device_id=demo000009,battery_status=discharging,bssid=A0:B1:C5:D2:E0:F3,ssid=stealth-net battery_level=99,battery_temperature=88.5,cpu_avg_1min=34.74,cpu_avg_5min=11.508,cpu_avg_15min=7.82266666666667,mem_free=429419192,mem_used=570580808,rssi=-51 1479211200
+readings,device_id=demo000010,battery_status=discharging,bssid=22:32:A2:B3:05:98,ssid=demo-5ghz battery_level=47,battery_temperature=89.1,cpu_avg_1min=6.55,cpu_avg_5min=6.75,cpu_avg_15min=6.97,mem_free=670268240,mem_used=329731760,rssi=-48 1479211200
+readings,device_id=demo000011,battery_status=discharging,bssid=01:02:03:04:05:06,ssid=demo-net battery_level=97,battery_temperature=91.5,cpu_avg_1min=27.47,cpu_avg_5min=9.574,cpu_avg_15min=6.778,mem_free=699451778,mem_used=300548222,rssi=-59 1479211200
+readings,device_id=demo000012,battery_status=discharging,bssid=22:32:A2:B3:05:98,ssid=demo-5ghz battery_level=87,battery_temperature=89.4,cpu_avg_1min=33.9,cpu_avg_5min=13.26,cpu_avg_15min=10.0066666666667,mem_free=669831516,mem_used=330168484,rssi=-65 1479211200
+readings,device_id=demo000013,battery_status=discharging,bssid=22:32:A2:B3:05:98,ssid=demo-5ghz battery_level=36,battery_temperature=91.1,cpu_avg_1min=4.11,cpu_avg_5min=5.862,cpu_avg_15min=6.34066666666667,mem_free=419244196,mem_used=580755804,rssi=-54 1479211200
+readings,device_id=demo000014,battery_status=discharging,bssid=01:02:03:04:05:06,ssid=demo-net battery_level=34,battery_temperature=90.6,cpu_avg_1min=4.56,cpu_avg_5min=6.992,cpu_avg_15min=7.584,mem_free=599480631,mem_used=400519369,rssi=-43 1479211200
+readings,device_id=demo000015,battery_status=discharging,bssid=01:02:03:04:05:06,ssid=demo-net battery_level=38,battery_temperature=87.8,cpu_avg_1min=29.51,cpu_avg_5min=12.702,cpu_avg_15min=10.0873333333333,mem_free=650690016,mem_used=349309984,rssi=-51 1479211200
+readings,device_id=demo000016,battery_status=discharging,bssid=A0:B1:C5:D2:E0:F3,ssid=stealth-net battery_level=53,battery_temperature=92.9,cpu_avg_1min=4.99,cpu_avg_5min=5.078,cpu_avg_15min=5.27933333333333,mem_free=579023757,mem_used=420976243,rssi=-54 1479211200
+readings,device_id=demo000017,battery_status=discharging,bssid=A0:B1:C5:D2:E0:F3,ssid=stealth-net battery_level=66,battery_temperature=87.4,cpu_avg_1min=23.01,cpu_avg_5min=9.722,cpu_avg_15min=7.694,mem_free=689457803,mem_used=310542197,rssi=-57 1479211200
+readings,device_id=demo000018,battery_status=discharging,bssid=22:32:A2:B3:05:98,ssid=demo-5ghz battery_level=81,battery_temperature=90.9,cpu_avg_1min=8.59,cpu_avg_5min=5.798,cpu_avg_15min=5.51933333333333,mem_free=449526435,mem_used=550473565,rssi=-48 1479211200
+readings,device_id=demo000019,battery_status=discharging,bssid=01:02:03:04:05:06,ssid=demo-net battery_level=72,battery_temperature=92.8,cpu_avg_1min=6.62,cpu_avg_5min=6.764,cpu_avg_15min=6.97466666666667,mem_free=469387324,mem_used=530612676,rssi=-48 1479211200

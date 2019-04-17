@@ -645,7 +645,7 @@ else {    // 表不存在，创建表
 }
 ```
 
-读取数据并添加到表中的代码实现采用了[Pipeline框架](https://www.dolphindb.com/help/pipeline.html)。它的初始任务是一系列具有不同`start`参数的`loadMyData`函数调用，pipeline的`follower`函数是一个部分应用`append!{result}`，相当于把整个读取数据的任务分成若干份执行，调用`loadMyData`分块读取后，将相应的数据通过`append!`插入表中。核心部分的代码如下：
+读取数据并添加到表中的代码实现采用了[Pipeline框架](https://www.dolphindb.cn/cn/help/pipeline.html)。它的初始任务是一系列具有不同`start`参数的`loadMyData`函数调用，pipeline的`follower`函数是一个部分应用`append!{result}`，相当于把整个读取数据的任务分成若干份执行，调用`loadMyData`分块读取后，将相应的数据通过`append!`插入表中。核心部分的代码如下：
 
 ```
 int sizePerPartition = 16 * 1024 * 1024;
@@ -704,4 +704,4 @@ ConstantSP myDataDS(Heap *heap, vector<ConstantSP> &args) {
 }
 ```
 
-附件：[插件的完整代码](https://2xdb.net/dolphindb/tutorials_cn/tree/master/plugin)
+附件：[插件的完整代码](https://github.com/dolphindb/Tutorials_CN/tree/master/plugin)

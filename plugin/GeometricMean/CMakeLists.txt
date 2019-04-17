@@ -1,6 +1,8 @@
 cmake_minimum_required(VERSION 3.0)
 
-project(PluginGeometricMean)
+project(PluginLogSum)
+
+add_definitions(-D_GLIBCXX_USE_CXX11_ABI=0)
 
 LINK_DIRECTORIES("../libs")
 INCLUDE_DIRECTORIES("../include")
@@ -12,7 +14,7 @@ endif()
 
 add_compile_options( "-std=c++11" "-fPIC" "-Wall" "-Werror")
 
-add_library(PluginGeometricMean SHARED
-    "./src/GeometricMean.cpp"
+add_library(PluginLogSum SHARED
+    "./src/LogSum.cpp"
 )
-target_link_libraries(PluginGeometricMean DolphinDB)
+target_link_libraries(PluginLogSum DolphinDB)
