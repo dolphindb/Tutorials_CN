@@ -1,6 +1,6 @@
 ####  用 docker 部署 DolphinDB分布式集群
 
-Docker是一个开源的引擎，可以轻松的为任何应用创建一个轻量级的、可移植的、自给自足的容器。DolphinDB提供了基于docker的分布式集群部署包，可以让 用户方便快捷的部署DolphinDB分布式集群。
+Docker是一个开源的引擎，可以轻松的为任何应用创建一个轻量级的、可移植的、自给自足的容器。DolphinDB提供了基于docker的分布式集群部署包，可以让用户方便快捷的部署DolphinDB分布式集群。
 
 本文的目标是通过4个centos容器搭建一个5节点的多机集群，最终搭建好的集群情况如下
 
@@ -10,8 +10,8 @@ controller => agent1 => 2 datanodes
            => agent3 => 1 datanode
 ```
 
-部署分布式集群时，需要分别配置控制器节点(controller), 代理节点(agent), 和数据节点(datanode)的网络IP和端口。在本文提供的部署包里，
-通过docker容器间构建虚拟子网，为4个容器分别指定了从`10.5.0.2`到`10.5.0.5` 4个固定ip地址， 包含这些信息的配置文件已内置到部署包中，用户无需再手工一一指定。
+部署分布式集群时，需要分别配置控制器节点(controller)，代理节点(agent)， 和数据节点(datanode)的网络IP和端口。在本文提供的部署包里，
+通过docker容器间构建虚拟子网，为4个容器分别指定了从`10.5.0.2`到`10.5.0.5` 4个固定ip地址， 包含这些信息的配置文件已内置到部署包中，用户无需再手工一一配置。
 内置的网络IP及端口分配情况如下
 
 controller的配置文件
@@ -59,7 +59,7 @@ $ docker-compose --version
 
 #### 一、 下载并编译 dolphindb docker集群部署包
 
-  在github可以下载dolphindb docker 部署包 https://github.com/dolphindb/Tutorials_CN/blob/master/docker/DolphinDB-Docker-Compose.zip
+  在github可以[下载dolphindb docker部署包](https://github.com/dolphindb/Tutorials_CN/blob/master/docker/DolphinDB-Docker-Compose.zip)
 * 编译dophindb server 镜像文件
 
 通过下述步骤我们可以得到一个包含最新 dolphindb server 的镜像文件。
