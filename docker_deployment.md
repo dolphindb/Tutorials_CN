@@ -1,4 +1,4 @@
-####  用 docker 部署 DolphinDB分布式集群
+##  基于Docker的DolphinDB集群部署教程
 
 Docker是一个开源的引擎，可以轻松的为任何应用创建一个轻量级的、可移植的、自给自足的容器。DolphinDB提供了基于docker的分布式集群部署包，可以让用户方便快捷的部署DolphinDB分布式集群。
 
@@ -57,7 +57,7 @@ $ docker-compose --version
 
 准备好环境之后，下面我们可以开始部署分布式集群。
 
-#### 一、 下载并编译 dolphindb docker集群部署包
+#### 1. 下载并编译 dolphindb docker集群部署包
 
   在github可以[下载dolphindb docker部署包](https://github.com/dolphindb/Tutorials_CN/blob/master/docker/DolphinDB-Docker-Compose.zip)
 * 编译dophindb server 镜像文件
