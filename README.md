@@ -5,6 +5,7 @@
 #### [单节点部署(嵌入式ARM版本)](https://github.com/dolphindb/Tutorials_CN/blob/master/ARM_standalone_deploy.md)
 #### [单服务器集群部署](https://github.com/dolphindb/Tutorials_CN/blob/master/single_machine_cluster_deploy.md)
 #### [多服务器集群部署](https://github.com/dolphindb/Tutorials_CN/blob/master/multi_machine_cluster_deploy.md)
+#### [基于Docker的集群部署教程](https://github.com/dolphindb/Tutorials_CN/blob/master/docker_deployment.md)
 #### [数据节点和存储空间扩展](https://github.com/dolphindb/Tutorials_CN/blob/master/cluster_scaleout.md)
 #### [分区数据库设计和操作](https://github.com/dolphindb/Tutorials_CN/blob/master/database.md)
 #### [数据导入教程](https://github.com/dolphindb/Tutorials_CN/blob/master/import_data.md)
