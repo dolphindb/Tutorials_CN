@@ -34,11 +34,11 @@ explain analyze select * from taq where symbol = 'IBM' and '2007-08-06' <= time 
 
 
 -- 2. 范围查询：查询某时间段内的某些股票的所有记录
-explain analyze select symbol, time, bid, ofr from taq where (symbol = 'IBM' or symbol = 'MSFT' or symbol = 'GOOG' or symbol = 'YHOO') and (('2007-08-03 01:30:00' <= time and time < '2007-08-03 01:30:59') or ('2007-08-04 01:30:00' <= time and time < '2007-08-04 01:30:59') or ('2007-08-05 01:30:00' <= time and time < '2007-08-05 01:30:59') or ('2007-08-06 01:30:00' <= time and time < '2007-08-06 01:30:59') or ('2007-08-07 01:30:00' <= time and time < '2007-08-07 01:30:59')) and bid > 0 and ofr > bid
+explain analyze select symbol, time, bid, ofr from taq where (symbol = 'IBM' or symbol = 'MSFT' or symbol = 'GOOG' or symbol = 'YHOO') and (('2007-08-03 09:30:00' <= time and time < '2007-08-03 09:40:00') or ('2007-08-04 09:30:00' <= time and time < '2007-08-04 09:40:00') or ('2007-08-05 09:30:00' <= time and time < '2007-08-05 09:40:00') or ('2007-08-06 09:30:00' <= time and time < '2007-08-06 09:40:00') or ('2007-08-07 09:30:00' <= time and time < '2007-08-07 09:40:00')) and bid > 0 and ofr > bid
 ---------------
 
 
-explain analyze select symbol, time, bid, ofr from taq where (symbol = 'IBM' or symbol = 'MSFT' or symbol = 'GOOG' or symbol = 'YHOO') and (('2007-08-03 01:30:00' <= time and time < '2007-08-03 01:30:59') or ('2007-08-04 01:30:00' <= time and time < '2007-08-04 01:30:59'))
+explain analyze select symbol, time, bid, ofr from taq where (symbol = 'IBM' or symbol = 'MSFT' or symbol = 'GOOG' or symbol = 'YHOO') and (('2007-08-03 09:30:00' <= time and time < '2007-08-03 09:40:00') or ('2007-08-04 09:30:00' <= time and time < '2007-08-04 09:40:00'))
 -- 结果为空
 
 
@@ -74,7 +74,7 @@ explain analyze select symbol, time, bid, ofr from taq where (symbol = 'IBM' or 
 
 
 -- 7. 经典查询：按 [日期、时间范围、卖出买入价格条件、股票代码] 过滤，查询 (各个股票 每分钟) [平均变化幅度]
-explain analyze select first(symbol), mean(tmp_spread) * 2 as spread from (select symbol, (ofr - bid) / (ofr + bid) as tmp_spread from taq where '2007-07-31 09:30:00' <= time and time < '2007-08-01 16:00:00' and bid > 0 and ofr > bid) where '2007-07-31 09:30:00' <= time and time < '2007-08-01 16:00:00' group by symbol, time(1m)
+explain analyze select first(symbol), mean(tmp_spread) * 2 as spread from (select symbol, (ofr - bid) / (ofr + bid) as tmp_spread from taq where '2007-08-01 09:30:00' <= time and time < '2007-08-01 16:00:00' and bid > 0 and ofr > bid) where '2007-08-01 09:30:00' <= time and time < '2007-08-01 16:00:00' group by symbol, time(1m)
 ---------------
 .
 └── select
