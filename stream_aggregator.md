@@ -1,40 +1,34 @@
 ## DolphinDB流数据聚合引擎
 
-&emsp;&emsp;流数据是指随时间延续而增长的动态数据集合。金融机构的交易数据、物联网的传感器数据和互联网的运营数据都属于流数据的范畴。流数据的特性决定了它的数据集一直是动态变化的。传统的面向静态数据表的计算引擎无法胜任流数据领域的分析和计算任务，所以流数据场景需要一套针对性的计算引擎。
+流数据是指随时间延续而增长的动态数据集合。金融机构的交易数据、物联网的传感器数据和互联网的运营数据都属于流数据的范畴。流数据的特性决定了它的数据集一直是动态变化的。传统的面向静态数据表的计算引擎无法胜任流数据领域的分析和计算任务，所以流数据场景需要一套针对性的计算引擎。
 
 ### 1.聚合引擎应用框架
 
-&emsp;&emsp;DolphinDB提供了灵活的面向流数据的聚合引擎，与流数据订阅功能配合使用。下例中，通过 `createStreamAggregator` 函数创建流数据聚合引擎，并通过 `subscribeTable` 函数订阅流数据，每次有新数据流入就会按指定规则触发 `append!{tradesAggregator}`，将流数据持续输入聚合引擎（指定的数据表中）。
+DolphinDB提供了灵活的面向流数据的聚合引擎，与流数据订阅功能配合使用。下例中，通过 `createTimeSeriesAggregator` 函数创建流数据聚合引擎，并通过 `subscribeTable` 函数订阅流数据，每次有新数据流入就会按指定规则触发 `append!{tradesAggregator}`，将流数据持续输入聚合引擎（指定的数据表中）。
 
 ```
-tradesAggregator = createStreamAggregator("streamAggr1",5, 5, <[sum(qty)]>, trades, outputTable, `time)
+tradesAggregator = createTimeSeriesAggregator("streamAggr1",5, 5, <[sum(qty)]>, trades, outputTable, `time)
 subscribeTable(, "trades", "tradesAggregator", 0, append!{tradesAggregator}, true)    
 ```
 这里对聚合引擎涉及到的一些概念做简要介绍：
 
 - 流数据表：DolphinDB为流式数据提供的一种特定的表对象，提供流式数据的发布功能。通过`subscribeTable`函数，其他的节点或应用可以订阅和消费流数据。
 
-- 聚合引擎数据源：为聚合引擎提供"原料"的通道。`createStreamAggregator`函数返回一个抽象表，向这个抽象表写入数据，就意味着数据进入聚合引擎进行计算。
+- 聚合引擎数据源：为聚合引擎提供"原料"的通道。`createTimeSeriesAggregator`函数返回一个抽象表，向这个抽象表写入数据，就意味着数据进入聚合引擎进行计算。
 
-- 聚合表达式 ：以元代码的格式提供一组处理流数据的聚合函数，类似格式：<[sum(qty)]>`,`<[sum(qty),max(qty),avg(price)]>。聚合引擎支持使用系统内所有的聚合函数，也支持使用表达式来满足更复杂的场景，比如 <[avg(price1)-avg(price2)]>,<[std(price1-price2)]>这样的组合表达式。
+- 聚合表达式 ：以元代码的格式提供一组处理流数据的聚合函数，例如<[sum(qty)]>或<[sum(qty),max(qty),avg(price)]>。聚合引擎支持使用系统内所有的聚合函数，也支持使用表达式来满足更复杂的场景，比如 <[avg(price1)-avg(price2)]>,<[std(price1-price2)]>这样的组合表达式。
 
-- 数据窗口(windowSize)：指定每次计算时截取的流数据窗口长度。
-
-- 计算周期(step): 指定进行计算的间隔。
+- 数据窗口：每次计算时截取的流数据窗口长度。
 
 ### 2.数据窗口  
 
-&emsp;&emsp;每次对流数据进行聚合计算，必须选择一个窗口截取其中的数据。窗口长度由参数windowSize设定。
+流数据聚合计算是每隔一段时间，在固定长度的移动窗口中进行。窗口长度由参数windowSize设定；计算的时间间隔由参数step设定。
 
-&emsp;&emsp;针对持续变化的流数据的计算是间隔一定时间重复进行的，参数step设定计算的时间间隔。
+参数windowSize和step的单位由参数useSystemTime设定。流数据聚合计算场景有两种时间概念，一是数据的生成时间，通常以时间戳的格式记录于数据中，它可能采用天，分钟，秒，毫秒，纳秒等不同的精度；二是数据进入聚合引擎的时间，我们也称为系统时间，这个时间是由聚合引擎给数据打上的时间戳，为聚合引擎所在服务器的系统时间，精度为毫秒。当参数useSystemTime=true时，windowSize和step的单位为系统时间（毫秒）精度，否则以数据生成时间精度为单位。参数useSystemTime的default值为false。
 
-&emsp;&emsp;参数windowSize和step的单位由参数useSystemTime设定。流数据聚合计算场景有两种时间概念，一是数据的生成时间，通常以时间戳的格式记录于数据中，它可能采用天，分钟，秒，毫秒，纳秒等不同的精度；二是数据进入聚合引擎的时间，我们也称为系统时间，这个时间是由聚合引擎给数据打上的时间戳，为聚合引擎所在服务器的系统时间，精度为毫秒。当参数useSystemTime=true时，windowSize和step的单位为系统时间（毫秒）精度，否则以数据生成时间精度为单位。
+在有多组数据的情况下，若每组都根据各自第一条数据进入系统的时间来构造数据窗口的边界，则一般无法将各组的计算结果在相同数据窗口中进行对比。考虑到这一点，系统按照参数step值确定一个整型的规整尺度alignmentSize，以对各组第一个数据窗口的边界值进行规整处理。
 
-&emsp;&emsp;若有多组数据，且每组都根据各自第一条数据进入系统的时间来构造数据窗口的边界，则无法将各组在相同数据窗口中进行对比。因此，系统按照参数step值对各组第一个数据窗口的边界值进行规整处理，具体规整公式与时间精度规则如下：
-
-根据参数step的值， 系统会确定一个整型的规整尺度alignmentSize。
-
-当数据时间精度为秒时，如DATETIME、SECOND类型，alignmentSize取值规则如下表：
+当数据时间精度为秒时，如DATETIME或SECOND类型，alignmentSize取值规则如下表：
 
 step | alignmentSize
 ---|---
@@ -46,7 +40,7 @@ step | alignmentSize
 21~30|30
 31~60|60
 
-当数据时间精度为毫秒时，如TIMESTAMP、TIME类型，alignmentSize取值规则如下表：
+当数据时间精度为毫秒时，如TIMESTAMP或TIME类型，alignmentSize取值规则如下表：
 
 step | alignmentSize
 ---|---
@@ -64,11 +58,11 @@ step | alignmentSize
 
 假设第一条数据时间的最小精度值为x，那么第一个数据窗口的左边界最小精度经过规整后为x/alignmentSize\*alignmentSize，其中`/`代表相除后取整。举例来说，若第一条数据时间为 2018.10.08T01:01:01.365，则x=365。若step=100，根据上表，alignmentSize=100，可得出规整后的第一个数据窗口左边界最小精度为365\100*100=300，因此规整后的第一个数据窗口范围为2018.10.08T01:01:01.300至 2018.10.08T01:01:01.400。
 
-下面我们通过一个例子来详细说明系统是如何进行流数据计算的。输入流数据表包含time和qty两列，time精度为毫秒，根据设定的窗口对流数据进行持续`sum(qty)`计算。本示例的流数据表中使用的时间精度为毫秒，为了方便观察，模拟输入的数据流频率也设为每毫秒一条数据的频率。以下代码建立流数据表trades，设定聚合计算参数，并定义函数`writeData`向流数据表trades中写入模拟数据。 
+下面我们通过一个例子来详细说明系统是如何进行流数据计算的。以下代码建立流数据表trades，设定聚合计算规则，并定义函数`writeData`向流数据表中写入模拟数据。 流数据表包含time和qty两列，根据设定的窗口对流数据进行持续sum(qty)计算。time精度为毫秒，为了方便观察，模拟输入的数据流频率也设为每毫秒一条数据的频率。
 ```
 share streamTable(1000:0, `time`qty, [TIMESTAMP, INT]) as trades
 outputTable = table(10000:0, `time`sumQty, [TIMESTAMP, INT])
-tradesAggregator = createStreamAggregator("streamAggr1", 5, 5, <[sum(qty)]>, trades, outputTable, `time)
+tradesAggregator = createTimeSeriesAggregator("streamAggr1", 5, 5, <[sum(qty)]>, trades, outputTable, `time)
 subscribeTable(, "trades", "tradesAggregator", 0, append!{tradesAggregator}, true)    
 
 def writeData(n){
@@ -80,11 +74,11 @@ def writeData(n){
 
 第一次操作：向流数据表trades中写入5条数据。
 
-
 ```
 writeData(5)
+select * from trades
 ```
-select * from trades 查看流数据表，表里已有5条数据：
+查看流数据表，表里已有5条数据：
 
 time	                |qty
 ---|---
@@ -94,26 +88,26 @@ time	                |qty
 2018.10.08T01:01:01.005	| 1
 2018.10.08T01:01:01.006	| 1
 
-
-select * from outputTable 查看输出表，可见已经发生了一次计算：
+```
+select * from outputTable 
+```
+查看输出表，可见已经发生了一次计算：
 
 time|	sumQty
 ---|---
-2018.10.08T01:01:01.000 |3
+2018.10.08T01:01:01.005 |3
 
 可以看出，系统对首行数据的时间2018.10.08T01:01:01.002做了规整操作。第一次计算的窗口起始时间是2018.10.08T01:01:01.000。
 
-*输出表的第一列必须是时间类型，用于存放计算发生的时间戳，这个列的数据类型要和dummyTable的时间列类型一致。
-如果keyColumn参数不为空，那么输出表的第二列必须是分组列。
-从第三列开始，按照顺序保存聚合计算的结果。最终的表结构是时间列，分组列(可选)，聚合结果列1，聚合结果列2... 这样的格式。*
+输出表的第一列必须是时间类型，用于存放计算发生的时间戳，这个列的数据类型要和流数据表中的时间列类型一致。如果keyColumn参数不为空，那么输出表的第二列必须是分组列。从第三列开始，按照顺序保存聚合计算的结果。最终的表结构是时间列，分组列(可选)，聚合结果列1，聚合结果列2... 这样的格式。
 
 
-第二次操作：清空数据表，设置 windowSize=6，step=3，模拟写入10条数据：
+第二次操作：清空流数据表，设置 windowSize=6，step=3，模拟写入10条数据：
 
 ```
 share streamTable(1000:0, `time`qty, [TIMESTAMP, INT]) as trades
 outputTable = table(10000:0, `time`sumQty, [TIMESTAMP, INT])
-tradesAggregator = createStreamAggregator("streamAggr1", 6, 3, <[sum(qty)]>, trades, outputTable, `time)
+tradesAggregator = createTimeSeriesAggregator("streamAggr1", 6, 3, <[sum(qty)]>, trades, outputTable, `time)
 subscribeTable(, "trades", "tradesAggregator", 0, append!{tradesAggregator}, true)    
 
 def writeData(n){
@@ -143,15 +137,15 @@ time	|qty
 
 time|sumQty
 ---|---
-2018.10.08T01:01:00.997	|1
-2018.10.08T01:01:01.000	|4
-2018.10.08T01:01:01.003	|6
+2018.10.08T01:01:01.003	|1
+2018.10.08T01:01:01.006	|4
+2018.10.08T01:01:01.009	|6
 
 可以看到已经成功触发了三次计算。
 
 从这个结果也可以发现聚合引擎窗口计算的规则：窗口起始时间是以第一条数据时间规整后为准，窗口是以windowSize为大小，step为步长移动的。
 
-下面根据三次计算的过程来解释聚合引擎是如何进行窗口数据的确定的。为方便阅读，对时间的描述中省略相同的`2018.10.08T01:01:01`部分，只列出毫秒部分。窗口的起始是基于第一行数据的时间002进行对齐，对齐后窗口起始边界为000，根据`windowSize=6`这一条件, 第一个窗口边界是从000到002(小于000的部分被忽略)，所以第一次计算窗口中只包含了002一条记录，计算`sum(qty)`的结果是1；第二次计算发生在005，根据`windowSize=6`，那么实际窗口大小是从000到005，包含了从002到005四个数据，计算结果为4；以此类推，第三次的计算窗口是从003到008,实际包含了6个数据，计算结果为6。
+下面我们来详细解释聚合引擎的计算过程。为方便阅读，对时间的描述中省略相同的2018.10.08T01:01:01部分，只列出毫秒部分。第一个窗口基于第一行数据的时间002进行对齐，对齐后窗口起始边界为000，第一个窗口边界是从000到002，只包含002一条记录，计算sum(qty)的结果是1；第二次计算发生在005，窗口是从000到005，包含了四条数据，计算结果为4；第三次的计算窗口是从003到008, 包含6条数据，计算结果为6。
 
 ### 3.聚合表达式
 
@@ -160,28 +154,28 @@ time|sumQty
 - 纵向聚合计算(按时间序列聚合)
 
 ```
-tradesAggregator = createStreamAggregator("streamAggr1", 6, 3, <sum(ofr)>, trades, outputTable, `time)
+tradesAggregator = createTimeSeriesAggregator("streamAggr1", 6, 3, <sum(ofr)>, trades, outputTable, `time)
 ```
 
 - 横向聚合计算(按维度聚合)
 ```
-tradesAggregator = createStreamAggregator("streamAggr1", 6, 3, <max(ofr)-min(ofr)>, trades, outputTable, `time)
+tradesAggregator = createTimeSeriesAggregator("streamAggr1", 6, 3, <max(ofr)-min(ofr)>, trades, outputTable, `time)
 
-tradesAggregator = createStreamAggregator("streamAggr1", 6, 3, <max(ofr-bid)>, trades, outputTable, `time)
+tradesAggregator = createTimeSeriesAggregator("streamAggr1", 6, 3, <max(ofr-bid)>, trades, outputTable, `time)
 ```
 
 - 输出多个聚合结果
 ```
-tradesAggregator = createStreamAggregator("streamAggr1", 6, 3, <[max((ofr-bid)/(ofr+bid)*2), min((ofr-bid)/(ofr+bid)*2)]>, trades, outputTable, `time)
+tradesAggregator = createTimeSeriesAggregator("streamAggr1", 6, 3, <[max((ofr-bid)/(ofr+bid)*2), min((ofr-bid)/(ofr+bid)*2)]>, trades, outputTable, `time)
 ```
 
 - 多参数聚合函数的调用
 
 有些聚合函数会使用多个参数，例如`corr`，`percentile`等函数。
 ```
-tradesAggregator = createStreamAggregator("streamAggr1", 6, 3, <corr(ofr,bid)>, trades, outputTable, `time)
+tradesAggregator = createTimeSeriesAggregator("streamAggr1", 6, 3, <corr(ofr,bid)>, trades, outputTable, `time)
 
-tradesAggregator = createStreamAggregator("streamAggr1", 6, 3, <percentile(ofr-bid,99)/sum(ofr)>, trades, outputTable, `time)
+tradesAggregator = createTimeSeriesAggregator("streamAggr1", 6, 3, <percentile(ofr-bid,99)/sum(ofr)>, trades, outputTable, `time)
 ```
 
 - 调用自定义函数
@@ -190,18 +184,16 @@ tradesAggregator = createStreamAggregator("streamAggr1", 6, 3, <percentile(ofr-b
 def spread(x,y){
 	return abs(x-y)/(x+y)*2
 }
-tradesAggregator = createStreamAggregator("streamAggr1", 6, 3, <spread(ofr, bid)>, trades, outputTable, `time)
+tradesAggregator = createTimeSeriesAggregator("streamAggr1", 6, 3, <spread(ofr, bid)>, trades, outputTable, `time)
 ```
-注意：不支持聚合函数嵌套调用，比如若要在流数据引擎中计算sum(spread(ofr,bid))，系统会给出异常提示：Nested aggregated function is not allowed。
+注意：不支持流数据聚合函数嵌套调用，例如若要在流数据引擎中计算sum(spread(ofr,bid))，系统会给出异常提示：Nested aggregated function is not allowed。
 
 
 ### 4. 流数据源
 
-DolphinDB的聚合引擎使用流数据表来作为输入数据源，流数据表提供流式数据的发布功能，通过`subscribeTable`函数可以订阅流数据并触发数据处理流程，而聚合引擎就是处理数据的方式之一。
+共享的流数据表可以作为流数据源。 通过`subscribeTable`函数不仅仅可以订阅数据源，而且可以过滤数据做。
 
-流数据表作为聚合引擎的数据源，它并不仅仅是简单的将原始数据灌入聚合引擎，通过`subscribeTable`函数，可以在数据进入聚合引擎之前对数据做初步清洗，下面的例子展示如何对流数据做初步过滤。
-
-传感器采集电压和电流数据并实时上传作为流数据源，但是其中电压voltage<=0.02或电流electric==NULL的数据需要在进入聚合引擎之前过滤掉。
+比如下面是过滤电压数据的例子：传感器采集电压和电流数据并实时上传作为流数据源，但是其中电压voltage<=0.02或电流electric==NULL的数据需要在进入聚合引擎之前过滤掉。
 
 ```
 share streamTable(1000:0, `time`voltage`electric, [TIMESTAMP, DOUBLE, INT]) as trades
@@ -216,18 +208,18 @@ def writeData(blockNumber){
 //自定义数据处理过程，msg即实时流入的数据
 def dataPreHandle(aggrTable, msg){
     //过滤 voltage<=0.02 或 electric==NULL的无效数据
-	t = select * from msg where voltage >0.02,not electric == NULL
+	t = select * from msg where voltage >0.02, not electric == NULL
 	if(size(t)>0){
 		insert into aggrTable values(t.time,t.voltage,t.electric)		
 	}
 }
-tradesAggregator = createStreamAggregator("streamAggr1", 6, 3, <[avg(electric)]>, trades, outputTable, `time , false, , 2000)
+tradesAggregator = createTimeSeriesAggregator("streamAggr1", 6, 3, <[avg(electric)]>, trades, outputTable, `time , false, , 2000)
 //订阅数据源时使用自定义的数据处理函数
 subscribeTable(, "trades", "tradesAggregator", 0, dataPreHandle{tradesAggregator}, true)
 
 writeData(10)
 ```
-从流数据源中可以看到有两个voltage<=0.02和三个electric==NULL的数据：
+流数据表：
 ```
 select * from trades
 ```
@@ -245,22 +237,22 @@ time	|voltage	|electric
 2018.10.08T01:01:01.010	|0.09	|2
 2018.10.08T01:01:01.011	|0.1	|1
 
-观察聚合计算结果
+聚合计算结果：
 ```
 select * from outputTable
 ```
 time	|avgElectric
 ---|---
-2018.10.08T01:01:01.000	|1.5
-2018.10.08T01:01:01.003	|1.5
+2018.10.08T01:01:01.006	|1.5
+2018.10.08T01:01:01.009	|1.5
 
-从结果可以看到，voltage<=0.02 or electric==NULL的数据已经被过滤了，所以第一个计算窗口没有数据，所以也没有聚合结果。
+从结果可以看到，voltage<=0.02或electric=NULL的数据已经被过滤了，所以第一个计算窗口没有数据，所以也没有聚合结果。
 
 ### 5. 聚合引擎输出
 
-聚合结果可以输出到新建或已存在的内存表，也可以输出到流数据表。内存表对数据操作上较为灵活，可以进行更新或删除操作；输出到流数据表的数据无法再做变动，但是可以通过流数据表将聚合结果再次发布。下面的例子展示如何将聚合结果表作为另一个聚合引擎的数据源。
+聚合结果可以输出到新建或已存在的内存表，也可以输出到流数据表。内存表对数据操作上较为灵活，可以进行更新或删除操作；输出到流数据表的数据无法再做变动，但是可以通过流数据表将聚合结果再次发布, 也就是说，将聚合结果表作为另一个聚合引擎的数据源。
 
-本例从一个初始的流数据表trades里，通过聚合引擎tradesAggregator进行移动均值计算，并将结果输出到流数据表aggrOutput，再通过订阅aggrOutput表并关联聚合引擎SecondAggregator对计算结果求移动峰值。
+下例中，聚合引擎tradesAggregator订阅流数据表trades，进行移动均值计算，并将结果输出到流数据表aggrOutput。聚合引擎SecondAggregator订阅aggrOutput表并对移动均值计算结果求移动峰值。
 ```
 share streamTable(1000:0, `time`voltage`electric, [TIMESTAMP, DOUBLE, INT]) as trades
 //将输出表定义为流数据表，可以再次订阅
@@ -274,56 +266,46 @@ def writeData(blockNumber){
         insert into trades values(timev, vt, bidv);
 }
 
-tradesAggregator = createStreamAggregator("streamAggr1", 6, 3, <[avg(electric)]>, trades, outputTable, `time , false, , 2000)
+tradesAggregator = createTimeSeriesAggregator("streamAggr1", 6, 3, <[avg(electric)]>, trades, outputTable, `time , false, , 2000)
 subscribeTable(, "trades", "tradesAggregator", 0, append!{tradesAggregator}, true)
 
 //对聚合结果进行订阅做二次聚合计算
 outputTable2 =table(10000:0, `time`maxAggrElec, [TIMESTAMP, DOUBLE])
-SecondAggregator = createStreamAggregator("streamAggr2", 6, 3, <[max(avgElectric)]>, aggrOutput, outputTable2, `time , false, , 2000)
+SecondAggregator = createTimeSeriesAggregator("streamAggr2", 6, 3, <[max(avgElectric)]>, aggrOutput, outputTable2, `time , false, , 2000)
 subscribeTable(, "aggrOutput", "SecondAggregator", 0, append!{SecondAggregator}, true)
 
 writeData(10)
 ```
-观察聚合计算结果
+聚合计算结果:
 ```
 select * from outputTable2
 ```
 time	|maxAggrElec
 ---|---
-2018.10.08T01:01:00.992	|1
-2018.10.08T01:01:00.995	|1.5
+2018.10.08T01:01:01.006	|1
+2018.10.08T01:01:01.009	|1.5
 
-### 6. `createStreamAggregator`函数介绍及语法
+### 6. `createTimeSeriesAggregator`函数
 
-`createStreamAggregator` 函数关联了流数据聚合应用的3个主要信息：
-
-- 输入数据源
-
-    输入数据源指定一个流数据表，应用时通过订阅的方式把数据源和聚合引擎联系起来。
-    
-- 聚合表达式
-
-    定义聚合计算的逻辑。聚合引擎根据聚合表达式对流数据做计算，并将结果输出。
-    
-- 输出目的地
-
-    聚合结果可以输出到新建或已存在的内存表，也可以输出到流数据表。内存表对数据操作上较为灵活，可以做更新删除操作；而输出到流数据表的数据无法再做变动，但是可通过流数据表将聚合结果再次发布。
+`createTimeSeriesAggregator` 函数关联了流数据聚合应用的3个主要信息：输入数据源, 聚合表达式以及输出目的地。
 
 函数提供多个可选参数以满足不同的使用场景。
 
 #### 6.1 语法
 
-createStreamAggregator(name, windowSize, step, metrics, dummyTable, outputTable, timeColumn, [useSystemTime, keyColumn, garbageSize])
+createStreamAggregator(name, windowSize, step, metrics, dummyTable, outputTable, timeColumn, [useSystemTime=false], [keyColumn], [garbageSize])
 
-#### 6.2 返回对象
+#### 6.2 用途
 
 返回一个抽象的表对象，作为聚合引擎的入口，向这个表写入数据，意味着数据进入聚合引擎进行计算。
 
 #### 6.3 参数
+
 - name
+
 类型: 字符串
 
-说明: 聚合引擎的名称。在一个数据节点上， `name` 是聚合引擎的唯一标识。
+说明: 聚合引擎的名称。在一个数据节点上， name是聚合引擎的唯一标识。
 
 - useSystemTime
 
@@ -359,7 +341,7 @@ windowSize的单位取决于useSystemTime参数。当useSystemTime=true时，win
 
 说明：必选参数。这是聚合引擎的核心参数，它以元代码的格式表示聚合函数。它可以是系统内所有的聚合函数，比如<[sum(qty),avg(price)]>，可以对聚合结果使用表达式来满足更复杂的场景，比如<[avg(price1)-avg(price2)]>，也可以对计算列使用聚合函数，如<[std(price1-price2)]>这样的写法。
 
-由于原始的聚合函数是对每个窗口内的全部数据进行计算，为了提升流数据聚合的性能，DolphinDB进行了针对性的优化，函数在计算时充分利用上一个窗口的计算结果，最大程度降低了重复计算，可显著提高运行速度。下表列出了当前已优化的聚合函数清单：
+为了提升流数据聚合的性能，DolphinDB进行了针对性的优化，函数在计算时充分利用上一个窗口的计算结果，最大程度降低了重复计算，可显著提高运行速度。下表列出了当前已优化的聚合函数清单：
 
 函数名 | 函数说明 
 ---|---
@@ -370,7 +352,7 @@ last|最后一个元素
 max|最大值
 med|中位数
 min|最小值
-percentile|根据给定的百分比，为向量返回一个标量
+percentile|给定的百分比对应的值
 std|标准差
 sum|求和
 sum2|平方和
@@ -400,7 +382,7 @@ wsum|加权和
 
 类型：字符串
 
-说明：必选参数。指定流数据表时间列的名称。根据timeColumn参数，聚合引擎从流数据表中取得对应列的时间数据。
+说明：必选参数。指定流数据表时间列的名称。
 
 - keyColumn
 
@@ -422,12 +404,12 @@ wsum|加权和
 
 #####  6.4.1. dummyTable示例
 
-本例展示dummyTable的作用。增加一个结构完全与trades相同的modelTable对象，将modelTable作为dummyTable参数，而实际的数据仍然写入trades。
+本例展示dummyTable的作用。系统利用dummyTable的schema来决定信息每一列的数据类型。dummyTable有无数据对结果没有任何影响。
 ```
 share streamTable(1000:0, `time`qty, [TIMESTAMP, INT]) as trades
 modelTable = table(1000:0, `time`qty, [TIMESTAMP, INT])
 outputTable = table(10000:0, `time`sumQty, [TIMESTAMP, INT])
-tradesAggregator = createStreamAggregator("streamAggr1", 5, 5, <[sum(qty)]>, modelTable, outputTable, `time)
+tradesAggregator = createTimeSeriesAggregator("streamAggr1", 5, 5, <[sum(qty)]>, modelTable, outputTable, `time)
 subscribeTable(, "trades", "tradesAggregator", 0, append!{tradesAggregator}, true)    
 
 def writeData(n){
@@ -438,7 +420,6 @@ def writeData(n){
 
 writeData(6)
 ```
-最后仍然输出了结果，说明聚合引擎的dummyTable参数只是一个样本表，它是否包含数据对结果并没有影响。
 
 ##### 6.4.2. 分组聚合示例
 
@@ -446,7 +427,7 @@ writeData(6)
 ```
 share streamTable(1000:0, `time`sym`qty, [TIMESTAMP, SYMBOL, INT]) as trades
 outputTable = table(10000:0, `time`sym`sumQty, [TIMESTAMP, SYMBOL, INT])
-tradesAggregator = createStreamAggregator("streamAggr1", 3, 3, <[sum(qty)]>, trades, outputTable, `time, false,`sym, 50)
+tradesAggregator = createTimeSeriesAggregator("streamAggr1", 3, 3, <[sum(qty)]>, trades, outputTable, `time, false,`sym, 50)
 subscribeTable(, "trades", "tradesAggregator", 0, append!{tradesAggregator}, true)    
 
 def writeData(n){
@@ -458,7 +439,7 @@ def writeData(n){
 
 writeData(6)
 ```
-为了观察方便，对执行结果的sym列排序输出：
+为了观察方便，对"trades"表的sym列排序输出：
 
 ```
 select * from trades order by sym
@@ -478,40 +459,28 @@ select * from outputTable
 ```
 time	|sym|	sumQty
 ---|---|---
-2018.10.08T01:01:01.000	|A|	1
 2018.10.08T01:01:01.003	|A|	1
-2018.10.08T01:01:01.003	|B|	2
+2018.10.08T01:01:01.006	|A|	1
+2018.10.08T01:01:01.006	|B|	2
 
-各组时间规整后统一从000时间点开始，根据windowSize=3, step=3, 每个组的窗口会按照000-003-006划分，计算触发在003,006两个时间点。需要注意的是窗口内若没有任何数据，系统不会计算也不会产生结果，所以B组第一个窗口没有结果输出。
+各组时间规整后统一从000时间点开始，根据windowSize=3以及step=3，每个组的窗口会按照000-003-006划分，计算触发在003,006两个时间点。窗口内若没有任何数据，系统不会计算也不会产生结果，所以B组第一个窗口没有结果输出。
 
 ### 7. 聚合引擎管理函数
 
-系统提供聚合引擎的管理函数，方便查询和管理系统中已经存在的集合引擎
+系统提供聚合引擎的管理函数，方便查询和管理系统中已经存在的集合引擎。
 
 - [getAggregatorStat](https://www.dolphindb.cn/cn/help/getAggregatorStat.html)
 
-    参数说明： 无参数。
-
-    返回类型： Table
-    
     说明： 获取已定义的聚合引擎清单。
     
 - [getAggregator](https://www.dolphindb.cn/cn/help/getAggregator.html)
 
-    参数说明： Name， 字符串类型。
-
-    返回类型： 聚合引擎对象。
-    
-    说明： 根据名称获取聚合引擎对象。
+    说明： 获取聚合引擎的句柄。
 
 - [removeAggregator](https://www.dolphindb.cn/cn/help/removeAggregator.html)
 
-    参数说明： Name， 字符串类型。
-
-    返回类型： 无。
-    
-    说明： 根据名称移除聚合引擎对象。
+    说明： 移除聚合引擎对象。
 
 ### 8. 总结
 
-DolphinDB提供了轻量且使用方便的流数据聚合引擎，它通过与流数据表合作来完成流数据的实时计算任务，可支持纵向聚合和横向聚合以及组合计算，支持自定义函数计算，分组聚合，无效数据预清洗，多级计算等功能，满足流数据实时计算各方面需求。
+DolphinDB提供了轻量且使用方便的流数据聚合引擎，它通过与流数据表一同使用来完成流数据的实时计算任务，可支持纵向聚合和横向聚合以及组合计算，支持自定义函数计算，分组聚合，数据清洗，多级计算等功能，满足流数据实时计算各方面需求。

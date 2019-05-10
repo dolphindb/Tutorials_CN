@@ -1,10 +1,8 @@
-## DolphinDB动态增加字段和计算指标教程
-
 工业物联网采集的数据和金融交易数据具有相同的特点：频率高、维度多、数据一旦生成就不会改变、数据量庞大，并且工业物联网数据采集的维度和实时计算的指标会随着业务扩展和设备增加而不断增加，金融领域的数据分析和监控需要不断增加风控监测指标。因此，工业物联网和金融领域的数据平台必须能够满足动态增加字段和计算指标的需求。
 
 DolphinDB为工业物联网和金融提供了一站式解决方案。数据处理流程如下图所示：
 
-![数据处理流程](https://raw.githubusercontent.com/dolphindb/Tutorials_CN/master/images/stream_cn.png)
+![Image text](../images/stream_cn.png)
 
 工业物联网采集的数据和金融交易的实时数据首先会以流数据的形式注入到DolphinDB的流数据表中，数据节点通过订阅流数据表，可以把实时流数据持久化到分布式数据库中，供将来深度数据分析使用；同时，流聚合引擎通过订阅流数据表，对流数据进行实时聚合运算，计算结果用于工业物联网的监控和预警以及互联网金融的风控监测。
 
@@ -65,19 +63,19 @@ addColumn(streamTb,`temperature`humidity,[DOUBLE,DOUBLE])
 
 ## 3.给流聚合引擎增加计算指标
 
-用户在定义流聚合引擎时，需要使用元代码（meta code）来指定计算指标。随着需求的变化，计算指标往往也会做出相应的改变。DolphinDB提供了**extendMetrics**函数来增加流聚合引擎的计算指标。
+用户在定义流聚合引擎时，需要使用元代码（meta code）来指定计算指标。随着需求的变化，计算指标往往也会做出响应的改变。DolphinDB提供了**addMetrics**函数来增加流聚合引擎的计算指标。
 
 ### 语法
 
-extendMetrics(StreamAggregator, extraMetrics, extraOutputScheme)
+addMetrics(StreamAggregator, newMetrics, newMetricsSchema)
 
 ### 参数
 
-* StreamAggregator是**createStreamAggregator**函数返回的抽象表。
+* StreamAggregator是**createTimeSeriesAggregator**函数返回的抽象表。
 
-* extraMetrics是元代码，用于表示增加的计算指标。
+* newMetrics是元代码，用于表示增加的计算指标。
 
-* extraOutputScheme是表对象，用于指定新增的计算指标在输出表中的列名和数据类型。
+* newMetricsSchema是表对象，用于指定新增的计算指标在输出表中的列名和数据类型。
 
 ### 例子
 
@@ -88,7 +86,7 @@ extendMetrics(StreamAggregator, extraMetrics, extraOutputScheme)
 streamTb=streamTable(1000:0,`time`equipmentId`voltage`eletricity,[TIMESTAMP,SYMBOL,INT,DOUBLE])
 share streamTb as sharedStreamTb
 outTb=table(1000:0,`time`equipmentId`avgvoltage`avgeletricity,[TIMESTAMP,SYMBOL,INT,DOUBLE])
-aggregator = createStreamAggregator(100, 50, <[avg(voltage),avg(eletricity)]>, sharedStreamTb, outTb, `time , false,`equipmentId , 2000)
+aggregator = createTimeSeriesAggregator(100, 50, <[avg(voltage),avg(eletricity)]>, sharedStreamTb, outTb, `time , false,`equipmentId , 2000)
 subscribeTable(, "sharedStreamTb", "aggregator", 0, append!{aggregator},true)
 
 //往流数据表中插入数据
@@ -129,8 +127,8 @@ select * from outTb
 给流聚合引擎增加两个新的计算指标，每隔50毫秒取最后一个电压和电流值。没有新数据流入聚合引擎时，输出表中新增加的计算指标的值为空。
 
 ```
-extraScheme=table(1:0,`lastvoltage`lasteletricity,[INT,DOUBLE])
-extendMetrics(aggregator,<[last(voltage), last(eletricity)]>,extraScheme)
+newMetricsSchema=table(1:0,`lastvoltage`lasteletricity,[INT,DOUBLE])
+addMetrics(aggregator,<[last(voltage), last(eletricity)]>,newMetricsSchema)
 
 //查看数据表
 
@@ -165,5 +163,4 @@ select * from outTb
 ## 4.总结
 
 在流数据处理流程中，如果需要增加字段，必须按照以下顺序：订阅者—分布式表、发布者—流数据表、订阅者—流聚合引擎。如果不按照以上顺序增加字段，那么数据结构不一致会导致流数据无法持久化到分布式表。
-
 
