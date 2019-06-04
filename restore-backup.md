@@ -1,119 +1,128 @@
-# DolphinDB流数备份恢复教程
+# DolphinDB数据备份恢复教程
 
-备份时以表的分区为单位，每个单位生成一个二进制文件，包含元数据、schema、以及表内容。
+DolphinDB数据备份时以表的分区为单位，每个单位生成一个二进制文件，包含元数据、schema、以及表内容。恢复时也是如此，需要指定恢复哪些分区。
 
-恢复时也是如此，需要指定恢复哪些分区。
+DolphinDB提供了一系列函数，用于数据备份与恢复。
 
-## backup(backupDir, sqlObj, [force=false])
+## 1. 备份
 
-用来对某张表的某些分区进行备份
+`backup`函数对某张表的某些分区进行备份，返回一个整数，表示备份成功的分区数量。执行后将在`backupDir`目录`backupDir/dbName/tableName`下存储元数据`meta.bin`和数据文件`<chunkID>.bin`。
 
-- `backupDir`: string, 备份的根目录
-- `sqlObj`: metacode, 用于选取想要备份的表，以及备份的分区范围，如`<select * from tbl where date = 2019.01.01>`
-- `force`: bool, 是否强制备份。如果为否，只有当前元数据和已有备份中只有不一致时才会备份。
+backup(backupDir, sqlObj, [force=false])
 
-返回Int，表示备份了几个chunk。
-执行后将在`backupDir`目录`backupDir/dbName/tableName`下存储元数据`meta.bin`和数据文件`<chunkID>.bin`。
+- `backupDir`: 字符串, 表示备份的根目录。
+- `sqlObj`: SQL元数据, 表示要备份的数据，如`<select * from tbl where date = 2019.01.01>`。
+- `force`: 布尔值, 是否强制备份。默认值为false，表示只有当前元数据和已有备份中不一致时才会备份。
 
-## restore(backupDir, dbURL, tableName, partitionStr, [force=false], [outputTable])
+## 2. 恢复
 
-用来恢复某张表的某些分区
+`restore`函数用于恢复某张表的某些分区，返回一个字符串向量，表示恢复成功的分区路径。
 
-- `backupDir`: string, 备份的根目录
-- `dbURL`: string, dfs数据库路径，如`dfs://demo`
-- `tableName`: string, 表示要恢复的表的名称
-- `partitionStr`:string, 表示想要恢复的分区的范围，这个字符串将与备份过的分区的路径进行匹配。如`%2019%GOOG%`，参考`like`函数，表示所有路径中包含2019和GOOG的备份都要恢复。
-- `force`: bool， 表示是否强制恢复。
-- `outputTable`: table object，一张外部表。如果指定，将会把所有有关的Tablet中的数据保存到`outputTable`，而原来数据库中的表保持不变。
+restore(backupDir, dbPath, tableName, partitionStr, [force=false], [outputTable])
 
-## listBackupTablet(backupDir, dbURL, tableName)
-用来查看某个库下，某张表的所有备份信息
+- `backupDir`: 字符串, 表示备份的根目录。
+- `dbPath`: 字符串, 分布式数据库的路径，如`dfs://demo`。
+- `tableName`: 字符串, 表示要恢复的表的名称。
+- `partitionStr`:字符串, 表示想要恢复的分区的路径。分区路径可以包含通配符，`%`表示恢复已备份的所有分区，`%2019%GOOG%`表示所有路径中包含2019和GOOG的备份都要恢复。
+- `force`: 布尔值，表示是否强制恢复。默认是为false，只有当前元数据与备份数据不一致时，才会恢复。
+- `outputTable`: 分布式表，该表的结构必须与要恢复的表结构一致。如果没有指定outputTable，恢复后的数据会存放到原表；如果指定了outputTable，恢复后的数据会存放到该表中，而原数据表保持不变。
 
-- `backupDir`: string, 备份的根目录
-- `dbURL`: string, dfs数据库路径，如`dfs://demo`
-- `tableName`: string, 表示要查看的表的名称
+## 3. 备份与恢复管理
 
-## getBackupTabletMeta(backupDir, dfsPath, tableName)
+### 3.1 getBackupList
 
-用来查看某张表，某个分区下的备份的信息，包含schema，cid，path等信息
+`getBackupList`函数用来查看某个分布式表的所有备份信息，返回的是一张表，每个分区对应一行记录。
 
-- `backupDir`: string, 备份的根目录
-- `dfsPath`: string, 形如`"dfs://db1x/1/20190101/GOOG"`，包含库名信息，以及分区信息。表示想要查看的表，所在的库，以及想要查看的分区。可以通过`listBackupTablet`获得
-- `tableName`: string, 表示要查看的表的名称
+getBackupList(backupDir, dbURL, tableName)
 
-## loadBackupTablet(backupDir, dfsPath, tableName)
+- `backupDir`: 字符串, 表示备份的根目录。
+- `dbURL`: 字符串, 分布式数据库路径，如`dfs://demo`。
+- `tableName`: 字符串, 表示要查看的表的名称。
 
-用来查看某张表，某个分区下的备份的表的实际数据
+### 3.2 getBackupMeta
 
-- `backupDir`: string, 备份的根目录
-- `dfsPath`: string, 形如`"dfs://db1x/1/20190101/GOOG"`，包含库名信息，以及分区信息。表示想要查看的表，所在的库，以及想要查看的分区。
-- `tableName`: string, 表示要查看的表的名称
+`getBackupMeta`函数用来查看某张表，某个分区的备份的信息，返回的结果是一个字典，包含schema，cid，path等信息。
 
-## 示例
+getBackupMeta(backupDir, dfsPath, tableName)
+
+- `backupDir`: 字符串, 表示备份的根目录。
+- `dfsPath`: 字符串，表示分区的完整路径，例如`"dfs://db1/1/20190101/GOOG"`，包含库名信息，以及分区信息。
+- `tableName`: 字符串, 表示要查看的表的名称
+
+### 3.3 loadBackup
+
+`loadBackup`函数用于加载指定分布式表中某个分区的备份数据。
+
+loadBackup(backupDir, dfsPath, tableName)
+
+- `backupDir`: 字符串, 表示备份的根目录。
+- `dfsPath`: 字符串, 表示分区的完整路径，例如`"dfs://db1/1/20190101/GOOG"`，包含库名信息，以及分区信息。
+- `tableName`: 字符串, 表示要查看的表的名称
+
+## 4. 示例
+
+下面的例子创建了一个组合分区的数据库dfs://compoDB。
 
 ```
-login(`admin,`123456)
+n=1000000
+ID=rand(100, n)
+dates=2017.08.07..2017.08.11
+date=rand(dates, n)
+x=rand(10.0, n)
+t=table(ID, date, x);
 
-def benchmark(dbName, tableName, nid, metricNum,nappend, batchsize) {
-	ids= 1..nid
-	days = 2019.01.01..2019.01.30
-	foo = 1..10
-	sym = `GOOG`IBM`AAPL
-
-	colNames = [`foo,`date,`id,`sym]
-	colTypes= [INT,DATE,INT,SYMBOL]
-	for(i in 1..metricNum) {
-		colNames.append!("p" + string(i))
-		colTypes.append!(LONG)
-	}
-	db0=database("",VALUE,foo)
-	db1=database("",VALUE,days)
-	db2=database("",VALUE,sym)
-	db = NULL
-	//if(existsDatabase(dbName)) {
-	//	dropDatabase(dbName)
-	//}
-	db=database(dbName,COMPO,[db0,db1,db2])
-	t = table(1:0,colNames,colTypes)
-	//createPartitionedTable(db,t,tableName,`id`date`sym)
-
-	n = batchsize
-	basicTable = table(n:n,colNames,colTypes)
-	basicTable[`foo] = 1
-	basicTable[`id] = 1
-	basicTable[`date] = take(days, n)
-	basicTable[`sym]=take(sym, n)
-	for(i in 4..(colNames.size()-1)) {
-		basicTable[colNames[i]] = i * i
-	}
-
-	tbl_ = database(dbName).loadTable(tableName)
-	t0 = now()
-
-	for(i in 1..nappend) {
-    tbl_.append!(basicTable)
-		//tx2 = now()
-		//print(string(i) + " " + string(tx2 - tx1))
-	}
-	t1 = now()
-	return (t1-t0, tbl_)
-}
-dbURL = "dfs://db1x"
-tableName = "t"
-dir = "/home/wenxing/backup/"
-
-days = 2019.01.01..2019.01.30
-benchmark(dbURL, tableName, 20,300,1,100000)
-
-t = database(dbURL).loadTable(tableName)
-exec count(*) from t
-backup(dir, <select * from t>)
-
-restore(dir, dbURL, tableName, "%", false)
-
-dropPartition(database(dbURL), "/1/20190101/GOOG")
-
-listBackupTablet(dir, dbURL, tableName)
-getBackupTabletMeta(dir, "dfs://db1x/1/20190101/GOOG", tableName)
-loadBackupTablet(dir, "dfs://db1x/1/20190101/GOOG", tableName)
+dbDate = database(, VALUE, 2017.08.07..2017.08.11)
+dbID=database(, RANGE, 0 50 100);
+db = database("dfs://compoDB", COMPO, [dbDate, dbID]);
+pt = db.createPartitionedTable(t, `pt, `date`ID)
+pt.append!(t);
 ```
+
+备份表pt的所有数据。
+
+```
+backup("/home/DolphinDB/backup",<select * from loadTable("dfs://compoDB","pt")>,true);
+```
+
+SQL元代码中可以添加where条件。例如，备份date>2017.08.10的数据。
+
+```
+backup("/home/DolphinDB/backup",<select * from loadTable("dfs://compoDB","pt") where date>2017.08.10>,true);
+```
+
+查看表pt的备份信息。
+
+```
+getBackupList("/home/DolphinDB/backup","dfs://compoDB","pt");
+```
+
+查看20120810/0_50分区的备份信息。
+
+```
+getBackupMeta("/home/DolphinDB/backup","dfs://compoDB/20170810/0_50","pt");
+```
+
+查看20120810/0_50分区的备份数据。
+
+```
+loadBackup("/home/DolphinDB/backup","dfs://compoDB/20170810/0_50","pt");
+```
+
+把所有数据恢复到原表。
+
+```
+restore("/home/DolphinDB/backup","dfs://compoDB","pt","%",true);
+```
+
+在数据库dfs://compoDB中创建一个与pt结构相同的表temp。
+
+```
+temp=db.createPartitionedTable(t, `pt, `date`ID);
+```
+
+把pt中2017.08.10的数据恢复到temp中。
+
+```
+restore("/home/DolphinDB/backup","dfs://compoDB","pt","%20170810%",true,temp);
+```
+
