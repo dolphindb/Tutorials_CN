@@ -49,7 +49,7 @@ DolphinDB流数据模块采用发布-订阅-消费的模式。流数据首先注
 对于发布节点需要的配置项：
 ```
 maxPubConnections：发布信息节点最多可连接几个节点。若maxPubConnections>0，则该节点可作为发布节点。默认值为0。
-persisitenceDir：保存共享的流数据表的文件夹路径。若需要保存流数据表，必须指定该参数。
+persistenceDir：保存共享的流数据表的文件夹路径。若需要保存流数据表，必须指定该参数。
 persistenceWorkerNum：负责以异步模式保存流数据表的工作线程数。默认值为0。
 maxPersistenceQueueDepth：以异步模式保存流数据表时消息队列的最大深度（记录数）。默认值为10,000,000。
 maxMsgNumPerBlock：发布消息时，每个消息块中最多可容纳多少条记录。默认值为1024。
@@ -77,7 +77,7 @@ share streamTable(10000:0,`timestamp`temperature, [TIMESTAMP,DOUBLE]) as pubTabl
 
 订阅数据通过 [`subscribeTable`](https://www.dolphindb.cn/cn/help/subscribeTable.html)函数来实现。
 ```
-subscribeTable([server], tableName, [actionName], [offset=-1], handler, [msgAsTable=false], [batchSize=0], [throttle=1], [hash=-1], [reconnect=false], [filter])
+subscribeTable([server], tableName, [actionName], [offset=-1], handler, [msgAsTable=false], [batchSize=0], [throttle=1], [hash=-1], [reconnect=false], [filter], [persistOffset=false])
 ```
 参数说明：
 - 只有tableName和handler两个参数是必需的。其他所有参数都是可选参数。
@@ -120,7 +120,7 @@ topic2:
 ```
 NODE1/pubTable/actionName_saveToDataWarehouse
 ```
-- offset：订阅任务开始后的第一条消息所在的位置。消息是指流数据表中的行。如果没有指定，或为负数，或超过了流数据表的记录行数，订阅将会从流数据表的当前行开始。offset的值永远与流数据表创建时的第一行对应，如果某些行因为内存限制被删除，在决定订阅开始的位置时，这些行仍然考虑在内。
+- offset：订阅任务开始后的第一条消息所在的位置。消息是指流数据表中的行。如果没有指定，或为-1，或超过了流数据表的记录行数，订阅将会从流数据表的当前行开始。如果offset=-2，系统会自动获取持久化到磁盘上的offset，并从该位置开始订阅。offset的值永远与流数据表创建时的第一行对应，如果某些行因为内存限制被删除，在决定订阅开始的位置时，这些行仍然考虑在内。
 下面的示例说明offset的作用，向pubTable写入100行数据，建立三个订阅：
 ```
 share streamTable(10000:0,`timestamp`temperature, [TIMESTAMP,DOUBLE]) as pubTable
@@ -206,7 +206,57 @@ batchSize用于数据缓冲。当流数据的写入频率非常高，以致数�
 
 - filter是一个向量。该参数需要配合`setStreamTableFilterColumn`函数一起使用。使用`setStreamTableFilterColumn`指定流数据表的过滤列，流数据表过滤列在filter中的数据才会发布到订阅端，不在filter中的数据不会发布。filter不支持过滤BOOL类型数据。
 
-#### 2.3 取消订阅
+- persistOffset是一个布尔值，表示是否持久化保存本次订阅已经处理的数据的偏移量，默认值为false。持久化保存的偏移量用于重订阅，可通过`getTopicProcessedOffset`函数获取。
+
+例如，订阅时把persistOffset设置为true。
+
+```
+share streamTable(1000:0, `time`sym`qty, [TIMESTAMP, SYMBOL, INT]) as trades
+trades_slave = streamTable(1000:0, `time`sym`qty, [TIMESTAMP, SYMBOL, INT])
+topic=subscribeTable(, "trades", "trades_slave", 0, append!{trades_slave}, true,0,1,-1,false,,true)
+
+def writeData(n){
+    timev = 2018.10.08T01:01:01.001 + timestamp(1..n)
+    symv =take(`A`B, n)
+    qtyv = take(1, n)
+    insert into trades values(timev, symv, qtyv)
+}
+
+writeData(6);
+
+select * from trades_slave
+time                    sym qty
+----------------------- --- ---
+2018.10.08T01:01:01.002 A   1  
+2018.10.08T01:01:01.003 B   1  
+2018.10.08T01:01:01.004 A   1  
+2018.10.08T01:01:01.005 B   1  
+2018.10.08T01:01:01.006 A   1  
+2018.10.08T01:01:01.007 B   1  
+
+getTopicProcessedOffset(topic);
+5
+```
+
+#### 2.3 断线重连
+
+DolphinDB的流数据订阅提供了自动重连的功能，当reconnect设为true时，订阅端会记录流数据的offset，连接中断时订阅端会从offset开始重新订阅。但是，自动重连机制具有一定的局限性。如果订阅端崩溃或者发布端没有对流数据持久化，订阅端无法自动重连。因此，如果要启用自动重连，发布端必须对流数据持久化。启用持久化请参考2.6节。
+
+#### 2.4 发布端数据过滤
+
+发布端可以过滤数据，只发布符合条件的数据。使用`setStreamTableFilterColumn`指定流数据表的过滤列，流数据表过滤列在filter中的数据才会发布到订阅端，不在filter中的数据不会发布。目前仅支持对一个列进行过滤。例如，发布端上的流数据表trades只发布symbol为IBM或GOOG的数据：
+
+```
+share streamTable(10000:0,`time`symbol`price, [TIMESTAMP,SYMBOL,INT]) as trades
+setStreamTableFilterColumn(trades, `symbol)
+trades_slave=table(10000:0,`time`symbol`price, [TIMESTAMP,SYMBOL,INT])
+
+filter=symbol(`IBM`GOOG)
+
+subscribeTable(, `trades,`trades_slave,,append!{trades_slave},true,,,,,filter)
+```
+
+#### 2.5 取消订阅
 
 每一次订阅都由一个订阅主题topic作为唯一标识。如果订阅时topic已存在，那么会订阅失败。这时需要通过`unsubscribeTable`命令取消订阅才能再次订阅。取消订阅示例如下：
 
@@ -222,11 +272,13 @@ unsubscribeTable("NODE_1","pubTable","actionName1")
 ```
 undef("pubStreamTable", SHARED)
 ```
-#### 2.4 流数据持久化
 
-默认情况下，流数据表把所有数据保存在内存中。基于以下两点考量，可将流数据持久化到磁盘。
+#### 2.6 流数据持久化
+
+默认情况下，流数据表把所有数据保存在内存中。基于以下三点考量，可将流数据持久化到磁盘。
 1. 避免内存不足。
-2. 流数据的备份和回复。当节点出现异常重启时，持久化的数据会在重启时自动载入到流数据表。
+2. 流数据的备份和恢复。当节点出现异常重启时，持久化的数据会在重启时自动载入到流数据表。
+3. 持久化的一个重要目的是可以从任意位置开始重新订阅数据。
 
 我们可事先设定一个界限值。若流数据表的行数达到设定的界限值，前面一半的记录行会从内存转移到磁盘。持久化的数据支持重订阅，当订阅指定数据下标时，下标的计算包含持久化的数据。
 
@@ -251,13 +303,43 @@ clearTablePersistence(pubTable)
 disableTablePersistence(pubTable)
 ```
 
-### 3 Java API
+使用`getPersistenceMeta`函数获取流数据表的持久化细节情况:
+```
+getPersistenceMeta(pubTable)
+```
+输出的结果是一个字典
+```javascript
+//内存中保留数据记录数
+sizeInMemory->0
+//启用异步持久化
+asynWrite->true
+//流数据表总记录数
+totalSize->0
+//启用压缩存储
+compress->true
+//当前内存中数据相对总记录数的偏移量，在持久化运行过程中遵循公式 memoryOffset = totalSize - sizeInMemory
+memoryOffset->0
+//已经持久化到磁盘的数据记录数
+sizeOnDisk->0
+//持久化路径
+persistenceDir->/hdd/persistencePath/pubTable
+//hashValue是对本表做持久化的工作线程标识，当配置项persistenceWorkerNum>1时，hashValue可能不为0
+hashValue->0
+```
 
-流数据的消费者可能是DolphinDB本身的聚合引擎，也可能是第三方的消息队列或者第三方程序。DolphinDB提供了streaming API供第三方程序来订阅流数据。当有新数据进入时，API的订阅者能够及时的接收到通知，这使得DolphinDB的流数据框架可与第三方的应用进行深入的整合。目前DolphinDB提供Java流数据API，后续会逐步支持C++、C#等流数据API。
+### 3 数据回放
 
-Java API处理数据的方式有两种：轮询方式(Polling)和事件方式(EventHandler)。
+DolphinDB提供了replay函数，可以将历史数据按照时间顺序“实时”导入流数据表中。具体教程请参考[流数据回放教程](https://2xdb.net/dolphindb/tutorials_cn/blob/master/%E6%95%B0%E6%8D%AE%E5%9B%9E%E6%94%BE%E6%95%99%E7%A8%8B.md)。
 
-- 轮询方式示例代码：
+### 4 流数据API
+
+流数据的消费者可能是DolphinDB本身的聚合引擎，也可能是第三方的消息队列或者第三方程序。DolphinDB提供了streaming API供第三方程序来订阅流数据。当有新数据进入时，API的订阅者能够及时的接收到通知，这使得DolphinDB的流数据框架可与第三方的应用进行深入的整合。
+
+#### 4.1 Java API
+
+Java API处理流数据的方式有两种：轮询方式(Polling)和事件方式(EventHandler)。
+
+1. 轮询方式示例代码：
 ```
 PollingClient client = new PollingClient(subscribePort);
 TopicPoller poller1 = client.subscribe(serverIP, serverPort, tableName, offset);
@@ -273,7 +355,7 @@ while (true) {
 
 Java API使用预先设定的MessageHandler获取及处理新数据。首先需要调用者定义数据处理器Handler，Handler需要实现com.xxdb.streaming.client.MessageHandler接口。
 
-- 事件方式示例代码:
+2. 事件方式示例代码:
 ```
 public class MyHandler implements MessageHandler {
        public void doEvent(IMessage msg) {
@@ -290,12 +372,262 @@ client.subscribe(serverIP, serverPort, tableName, new MyHandler(), offsetInt);
 ```
 当每次流数据表有新数据发布时，Java API会调用MyHandler方法，并将新数据通过msg参数传入。
 
+3. 断线重连
 
-### 4 状态监控
+`reconnect`参数是一个布尔值，表示订阅意外中断后，是否会自动重新订阅。默认值为`false`。
+
+以下例子在订阅时，设置`reconnect`为`true`：
+
+```
+PollingClient client = new PollingClient(subscribePort);
+TopicPoller poller1 = client.subscribe(serverIP, serverPort, tableName, offset, true);
+```
+
+4. 启用filter
+
+`filter`参数是一个向量。该参数需要发布端配合`setStreamTableFilterColumn`函数一起使用。使用`setStreamTableFilterColumn`指定流数据表的过滤列，流数据表过滤列在`filter`中的数据才会发布到订阅端，不在`filter`中的数据不会发布。
+
+以下例子将一个包含元素1和2的整数类型向量作为`subscribe`的`filter`参数：
+
+```
+BasicIntVector filter = new BasicIntVector(2);
+filter.setInt(0, 1);
+filter.setInt(1, 2);
+
+PollingClient client = new PollingClient(subscribePort);
+TopicPoller poller1 = client.subscribe(serverIP, serverPort, tableName, actionName, offset, filter);
+```
+
+#### 4.2 C++ API
+
+C++ API处理流数据的方式有三种：ThreadedClient, ThreadPooledClient和PollingClient。
+
+#### 4.2.1 ThreadedClient
+
+每次流数据表发布数据时，单个线程去获取和处理数据。
+
+1. 定义线程客户端
+
+```
+ThreadedClient::ThreadClient(int listeningPort);
+```
+
+- `listeningPort`是客户端节点的订阅端口号。
+
+2. 调用订阅函数
+
+```
+ThreadSP ThreadedClient::subscribe(string host, int port, MessageHandler handler, string tableName, string actionName = DEFAULT_ACTION_NAME, int64_t offset = -1);
+```
+
+- `host`是发布端节点的主机名。
+
+- `port`是发布端节点的端口号。
+
+- `handler`是用户自定义的回调函数，用于处理每次流入的数据。流入的数据都有标志：`void(Message)`,`Message`是一行。
+
+- `tableName`是字符串，表示发布端上共享流数据表的名称。
+
+- `actionName`是字符串，表示订阅任务的名称。它可以包含字母、数字和下划线。
+
+- `offset`是整数，表示订阅任务开始后的第一条消息所在的位置。消息是流数据表中的行。如果没有指定offset，或它为负数或超过了流数据表的记录行数，订阅将会从流数据表的当前行开始。offset与流数据表创建时的第一行对应。如果某些行因为内存限制被删除，在决定订阅开始的位置时，这些行仍然考虑在内。
+
+- `resub`是布尔值，表示订阅中断后，是否会自动重订阅。
+
+- `filter`是一个向量，表示过滤条件。流数据表过滤列在filter中的数据才会发布到订阅端，不在filter中的数据不会发布。
+
+该函数会返回指向循环调用handler的线程的指针。
+
+示例：
+
+```
+auto t = client.subscribe(host, port, [](Message msg) {
+    // user-defined routine
+    }, tableName);
+t->join();
+```
+
+3. 取消订阅
+
+```
+void ThreadClient::unsubscribe(string host, int port, string tableName, string actionName = DEFAULT_ACTION_NAME);
+```
+
+- `host`是发布端节点的主机名。
+
+- `port`是发布端节点的端口号。
+
+- `tableName`是字符串，表示发布端上共享流数据表的名称。
+
+- `actionName`是字符串，表示订阅任务的名称。它可以包含字母、数字和下划线。
+
+该函数用于停止向发布者订阅数据。
+
+#### 4.2.2 ThreadPooledClient
+
+每次流数据表发布数据时，多个线程同时去获取和处理数据。
+
+1. 定义多线程客户端
+
+```
+ThreadPooledClient::ThreadPooledClient(int listeningPort, int threadCount);
+```
+- `listeningPort`是客户端节点的订阅端口号。
+
+- `threadCount`是线程池的大小。
+
+2. 调用订阅函数
+
+```
+vector\<ThreadSP\> ThreadPooledClient::subscribe(string host, int port, MessageHandler handler, string tableName, string actionName = DEFAULT_ACTION_NAME, int64_t offset = -1);
+```
+
+参数同单线程的订阅函数。
+
+返回一个指针向量，每个指针指向循环调用handler的线程。
+
+示例：
+
+```
+auto vec = client.subscribe(host, port, [](Message msg) {
+    // user-defined routine
+    }, tableName);
+for(auto& t : vec) {
+    t->join();
+}
+```
+
+3. 取消订阅
+
+```
+void ThreadPooledClient::unsubscribe(string host, int port, string tableName, string actionName = DEFAULT_ACTION_NAME);
+```
+参数用单线程的取消订阅函数。
+
+#### 4.2.3 PollingClient
+
+订阅数据时，会返回一个消息队列。用户可以通过轮询的方式来获取和处理数据。
+
+1. 定义客户端
+
+```
+PollingClient::PollingClient(int listeningPort);
+```
+
+- `listeningPort`是客户端节点的订阅端口号。
+
+2. 订阅
+
+```
+MessageQueueSP PollingClient::subscribe(string host, int port, string tableName, string actionName = DEFAULT_ACTION_NAME, int64_t offset = -1);
+```
+
+参数用单线程的订阅函数。
+
+该函数返回指向消息队列的指针。
+
+示例：
+
+```
+auto queue = client.subscribe(host, port, handler, tableName);
+Message msg;
+while(true) {
+    if(queue->poll(msg, 1000)) {
+        if(msg.isNull()) break;
+        // handle msg
+    }
+}
+```
+
+3. 取消订阅
+
+```
+void PollingClient::unsubscribe(string host, int port, string tableName, string actionName = DEFAULT_ACTION_NAME);
+```
+
+参数同单线程的取消订阅函数。
+
+注意，对于这种订阅模式，取消订阅时，会返回一个空指针，用户需要自行处理。
+
+#### 4.3 C# API
+
+通过C# API可以订阅DolphinDB客户端的流数据。当流数据到达客户端时，C# API有两种处理数据的方式：
+
+1. 客户端应用定期检查是否有新数据。当客户端发现有新数据，会获取并消费流数据。
+
+```
+PollingClient client = new PollingClient(subscribePort);
+TopicPoller poller1 = client.subscribe(serverIP, serverPort, tableName, offset);
+
+while (true) {
+   ArrayList<IMessage> msgs = poller1.poll(1000);
+
+   if (msgs.size() > 0) {
+       BasicInt value = msgs.get(0).getValue<BasicInt>(2);  //  Take the second field in the first row of the table
+   }
+}
+```
+
+2. 通过预先定义的MessageHandler直接消费新数据。
+
+首先需要定义继承dolphindb.streaming.MessageHandler接口的handler。
+
+```
+public class MyHandler implements MessageHandler {
+       public void doEvent(IMessage msg) {
+               BasicInt qty = msg.getValue<BasicInt>(2);
+               //..Processing data
+       }
+}
+```
+
+启用订阅时，handler作为subscribe函数的参数。
+
+```
+ThreadedClient client = new ThreadedClient(subscribePort);
+
+client.subscribe(serverIP, serverPort, tableName, new MyHandler(), offsetInt);
+```
+
+handler模式客户端(多线程)(ThreadPollingClient)
+
+```
+ThreadPooledClient client = new ThreadPooledClient(subscribePort);
+
+client.subscribe(serverIP, serverPort, tableName, new MyHandler(), offsetInt);
+```
+
+3. 断线重连
+
+`reconnect`参数是一个布尔值，表示订阅意外中断后，是否会自动重新订阅。默认值为`false`。
+
+以下例子在订阅时，设置`reconnect`为`true`：
+
+```
+PollingClient client = new PollingClient(subscribePort);
+TopicPoller poller1 = client.subscribe(serverIP, serverPort, tableName, offset, true);
+```
+
+4. 启用filter
+
+`filter`参数是一个向量。该参数需要发布端配合`setStreamTableFilterColumn`函数一起使用。使用`setStreamTableFilterColumn`指定流数据表的过滤列，流数据表过滤列在`filter`中的数据才会发布到订阅端，不在`filter`中的数据不会发布。
+
+以下例子将一个包含元素1和2的整数类型向量作为`subscribe`的`filter`参数：
+
+```
+BasicIntVector filter = new BasicIntVector(2);
+filter.setInt(0, 1);
+filter.setInt(1, 2);
+
+PollingClient client = new PollingClient(subscribePort);
+TopicPoller poller1 = client.subscribe(serverIP, serverPort, tableName, actionName, offset, filter);
+```
+
+### 5 状态监控
 
 当通过订阅方式对流数据进行实时处理时，所有的计算都在后台进行，用户无法直观的看到运行的情况。DolphinDB提供`getStreamingStat`函数，可以全方位监控流数据处理过程。`getStreamingStat`函数返回的是一个dictionary，其中包含了pubConns, subConns, persistWorkers, subWorkers四个表。
 
-#### 4.1 pubConns表
+#### 5.1 pubConns表
 
 pubConns表监控本地发布节点和它的所有订阅节点之间的连接状态。每一行表示本地发布节点的一个订阅节点。它包含以下列：
 
@@ -313,7 +645,7 @@ tables|该节点上的所有共享的流数据表。若多表，彼此通过逗�
 pubConns表会列出该节点所有的订阅节点信息，发布队列情况，以及流数据表名称。
 
 
-#### 4.2 subConns表
+#### 5.2 subConns表
 
 subConns表监控本地订阅节点与其订阅的发布节点之间的连接状态。每个订阅的发布节点为表中一行。
 
@@ -331,7 +663,7 @@ lastUpdate|最后一次接收数据时刻
 
 这张表列出所有本节点订阅的所有发布节点的连接状态和有关接收消息的统计信息。
 
-#### 4.3 persistWorkers表
+#### 5.3 persistWorkers表
 
 persistWorkers表监控流数据表持久化工作线程，每个工作线程为一行。
 
@@ -354,7 +686,7 @@ tables|持久化表名。若多表，彼此通过逗号分隔。
 
 从图上可以直观的看出，persistenceWorkerNum参数>1可并行处理持久化数据表的任务。
 
-#### 4.4 subWorkers表
+#### 5.4 subWorkers表
 
 subWorkers表监控流数据订阅工作线程，每条记录代表一个订阅工作线程。
 
@@ -389,7 +721,7 @@ topics|已订阅主题。若多个，彼此通过逗号分隔。
 
 ![image](https://github.com/dolphindb/Tutorials_CN/blob/master/images/streaming/subworker_msg.png?raw=true)
 
-#### 4.5 pubTables表
+#### 5.5 pubTables表
 pubTables表监控流数据表被订阅情况，每条记录代表流数据表一个订阅连接。
 
 列名称|说明
@@ -404,7 +736,7 @@ act_getdata"。那么当订阅完成之后，用getStreamingStat().pubTables 查
 
 ![image](https://github.com/dolphindb/Tutorials_CN/blob/master/images/streaming/pubtables1.png?raw=true)
 
-### 5 性能调优
+### 6 性能调优
 
 当数据流量极大而系统来不及处理时，系统监控中会看到订阅端subWorkers表的queueDepth数值极高，此时系统会按照从订阅端队列-发布端队列-数据注入端逐级反馈数据压力。当订阅端队列深度达到上限时开始阻止发布端数据进入，此时发布端的队列开始累积。当发布端的队列深度达到上限时，系统会阻止流数据注入端写入数据。
 
@@ -423,7 +755,7 @@ act_getdata"。那么当订阅完成之后，用getStreamingStat().pubTables 查
 - 若输入流数据的流量波动较大，高峰期导致消费队列积压至队列峰值(默认1000万)，那么可以修改配置项maxPubQueueDepthPerSite和maxSubQueueDepth以增加发布端和订阅端的最大队列深度，提高系统数据流大幅波动的能力。鉴于队列深度增加时内存消耗会增加，应估算并监控内存使用量以合理配置内存。
 
 
-### 6 可视化
+### 7 可视化
 
 流数据可视化可分为两种类型：
 - 实时值监控：定时刷新流数据在滑动窗口的聚合计算值，通常用于指标的监控和预警。
