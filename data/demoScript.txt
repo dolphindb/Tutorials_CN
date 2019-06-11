@@ -9,15 +9,14 @@ yearDirs = files(rootDir)[`filename]
 for(yearDir in yearDirs){
 	path = rootDir + "/" + yearDir
 	s = files(path)[`filename].upper().strReplace(".CSV","")
-	products.append!(s)
 }
 symbols = symbols.distinct().sort!().append!("999999");
-symRanges = symbols.cutPoints(1)
+symRanges = symbols.cutPoints(100)
 
 dbDate=database("", RANGE, yearRange)
 dbID=database("", RANGE, symRanges)
-
 db = database(dbPath, COMPO, [dbDate, dbID])
+
 pt=db.createPartitionedTable(table(1000000:0, `symbol`exchange`cycle`tradingDay`date`time`open`high`low`close`volume`turnover`unixTime, [SYMBOL,SYMBOL,INT,DATE,DATE,TIME,DOUBLE,DOUBLE,DOUBLE,DOUBLE,LONG,DOUBLE,LONG]), tableName, `tradingDay`symbol)
 
 def loadCsvFromYearPath(path, dbPath, tableName){
