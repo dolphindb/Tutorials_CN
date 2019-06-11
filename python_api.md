@@ -29,7 +29,7 @@ Python API中的方法分为两类。第一类方法不触发脚本的执行，�
 Python通过会话与DolphinDB进行交互。在下面的例子中，首先在Python中创建一个会话，然后使用指定的域名或IP地址和端口号把该会话连接到DolphinDB服务器。在执行以下Python脚本前，需要先启动DolphinDB服务器。
 
 ```
-import dolphindb ad ddb
+import dolphindb as ddb
 s = ddb.session()
 s.connect("localhost",8848)
 ```
@@ -49,7 +49,7 @@ DolphinDB默认的管理员用户名为“admin”，密码为“123456”，并
 重新连接会获得一个新的会话。可使用如下脚本设置在重连成功时首先执行的脚本。系统会在此之后执行断开连接前一次会话未成功运行的脚本。
 
 ```
-import dolphindb ad ddb
+import dolphindb as ddb
 s = ddb.session()
 s.setInitScript("initTable = streamTable(10000:0, `id`val, [INT,LONG])")
 currentInitScript = s.getInitScript()
