@@ -321,10 +321,14 @@ compress->true
 memoryOffset->0
 //已经持久化到磁盘的数据记录数
 sizeOnDisk->0
+//日志文件的保留时间，默认值是1440分钟，即一天。
+retentionMinutes->1440
 //持久化路径
 persistenceDir->/hdd/persistencePath/pubTable
 //hashValue是对本表做持久化的工作线程标识，当配置项persistenceWorkerNum>1时，hashValue可能不为0
 hashValue->0
+//当前磁盘上数据相对总记录数的偏移量
+diskOffset->0
 ```
 
 ### 3 数据回放
@@ -398,11 +402,84 @@ PollingClient client = new PollingClient(subscribePort);
 TopicPoller poller1 = client.subscribe(serverIP, serverPort, tableName, actionName, offset, filter);
 ```
 
-#### 4.2 C++ API
+#### 4.2 Python API
+
+Python API提供了流数据接口。注意，只有[python3_api_experimental](https://github.com/dolphindb/python3_api_experimental)才支持流数据处理。
+
+1. 指定客户端的订阅端口号
+
+```
+import dolphindb as ddb
+conn = ddb.session()
+conn.enableStreaming(8000)
+```
+
+2. 调用订阅函数
+
+使用Python API提供的subscribe函数来订阅DolphinDB中的流数据表，语法如下：
+
+```
+conn.subscribe(host, port, handler, tableName, actionName="", offset=-1, resub=False, filter=None)
+```
+
+- `host`是发布端节点的主机名。
+- `port`是发布端节点的端口号。
+- `handler`是用户自定义的回调函数，用于处理每次流入的数据。
+- `tableName`是发布表的名称。
+- `actionName`是订阅任务的名称。
+- `offset`是整数，表示订阅任务开始后的第一条消息所在的位置。消息是流数据表中的行。如果没有指定offset，或它为负数或超过了流数据表的记录行数，订阅将会从流数据表的当前行开始。offset与流数据表创建时的第一行对应。如果某些行因为内存限制被删除，在决定订阅开始的位置时，这些行仍然考虑在内。
+- `resub`是布尔值，表示订阅中断后，是否会自动重订阅。
+- `filter`是一个向量，表示过滤条件。流数据表过滤列在filter中的数据才会发布到订阅端，不在filter中的数据不会发布。
+
+
+示例：
+
+在DolphinDB中创建共享的流数据表，并插入一些随机数据：
+
+```
+share streamTable(1:0,`id`price`qty,[INT,DOUBLE,INT]) as trades
+trades.append!(table(1..10 as id,rand(10.0,10) as price,rand(10,10) as qty))
+```
+
+在Python中订阅trades表：
+```
+def printMsg(msg):
+    print(msg)
+
+conn.subscribe("192.168.1.103", 8941, printMsg, "trades", "sub_trades", 0)
+
+[1, 0.47664969926699996, 8]
+[2, 5.543625105638057, 4]
+[3, 8.10016839299351, 4]
+[4, 5.821204076055437, 9]
+[5, 9.768875930458307, 0]
+[6, 3.7460641632787883, 7]
+[7, 2.4479272053577006, 6]
+[8, 9.394394161645323, 5]
+[9, 5.966209815815091, 6]
+[10, 0.03534660907462239, 2]
+
+```
+
+3. 取消订阅
+
+使用conn.unsubscribe取消订阅，语法如下：
+
+```
+conn.unsubscribe(host,port,tableName,actionName="")
+```
+
+例如，取消示例中的订阅：
+
+```
+conn.unsubscribe(192.168.1.103", 8941,"sub_trades")
+```
+
+#### 4.3 C++ API
 
 C++ API处理流数据的方式有三种：ThreadedClient, ThreadPooledClient和PollingClient。
 
-#### 4.2.1 ThreadedClient
+#### 4.3.1 ThreadedClient
 
 每次流数据表发布数据时，单个线程去获取和处理数据。
 
@@ -463,7 +540,7 @@ void ThreadClient::unsubscribe(string host, int port, string tableName, string a
 
 该函数用于停止向发布者订阅数据。
 
-#### 4.2.2 ThreadPooledClient
+#### 4.3.2 ThreadPooledClient
 
 每次流数据表发布数据时，多个线程同时去获取和处理数据。
 
@@ -504,7 +581,7 @@ void ThreadPooledClient::unsubscribe(string host, int port, string tableName, st
 ```
 参数用单线程的取消订阅函数。
 
-#### 4.2.3 PollingClient
+#### 4.3.3 PollingClient
 
 订阅数据时，会返回一个消息队列。用户可以通过轮询的方式来获取和处理数据。
 
@@ -549,7 +626,7 @@ void PollingClient::unsubscribe(string host, int port, string tableName, string 
 
 注意，对于这种订阅模式，取消订阅时，会返回一个空指针，用户需要自行处理。
 
-#### 4.3 C# API
+#### 4.4 C# API
 
 通过C# API可以订阅DolphinDB客户端的流数据。当流数据到达客户端时，C# API有两种处理数据的方式：
 
