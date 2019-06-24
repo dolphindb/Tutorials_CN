@@ -97,7 +97,7 @@ dfsReplicaReliabilityLevel=0
 localSite,mode
 10.1.1.1:8960:P1-agent,agent
 10.1.1.1:8961:P1-NODE1,datanode
-10.1.1.3:8960,P2-agent,agent
+10.1.1.3:8960:P2-agent,agent
 10.1.1.3:8961:P2-NODE1,datanode
 10.1.1.5:8960:P3-agent,agent
 10.1.1.5:8961:P3-NODE1,datanode
