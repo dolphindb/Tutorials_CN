@@ -10,6 +10,7 @@
 #### [分区数据库设计和操作](https://github.com/dolphindb/Tutorials_CN/blob/master/database.md)
 #### [数据导入教程](https://github.com/dolphindb/Tutorials_CN/blob/master/import_data.md)
 #### [内存分区表加载和操作](https://github.com/dolphindb/Tutorials_CN/blob/master/partitioned_in_memory_table.md)
+#### [数据备份恢复教程](https://github.com/dolphindb/Tutorials_CN/blob/master/restore-backup.md)
 #### [权限管理和安全](https://github.com/dolphindb/Tutorials_CN/blob/master/ACL_and_Security.md)
 #### [作业管理](https://github.com/dolphindb/Tutorials_CN/blob/master/job_management_tutorial.md)
 #### [脚本语言的混合范式编程](https://github.com/dolphindb/Tutorials_CN/blob/master/hybrid_programming_paradigms.md)
@@ -22,4 +23,3 @@
 #### [DolphinDB在工业物联网的应用](https://github.com/dolphindb/Tutorials_CN/blob/master/iot_demo.md)
 #### [redash连接DolphinDB数据源的教程](https://github.com/dolphindb/Tutorials_CN/blob/master/data_interface_for_redash.md)
 #### [动态增加字段和计算指标](https://github.com/dolphindb/Tutorials_CN/blob/master/add_column.md)
-#### [数据备份恢复教程](https://github.com/dolphindb/Tutorials_CN/blob/master/restore-backup.md)
