@@ -22,3 +22,4 @@
 #### [DolphinDB在工业物联网的应用](https://github.com/dolphindb/Tutorials_CN/blob/master/iot_demo.md)
 #### [redash连接DolphinDB数据源的教程](https://github.com/dolphindb/Tutorials_CN/blob/master/data_interface_for_redash.md)
 #### [动态增加字段和计算指标](https://github.com/dolphindb/Tutorials_CN/blob/master/add_column.md)
+#### [数据备份恢复教程](https://github.com/dolphindb/Tutorials_CN/blob/master/restore-backup.md)
