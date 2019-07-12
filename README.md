@@ -24,3 +24,6 @@
 #### [redash连接DolphinDB数据源的教程](https://github.com/dolphindb/Tutorials_CN/blob/master/data_interface_for_redash.md)
 #### [DolphinDB整合前端chart组件展示数据教程](https://github.com/dolphindb/Tutorials_CN/blob/master/web_chart_integration.md)
 #### [动态增加字段和计算指标](https://github.com/dolphindb/Tutorials_CN/blob/master/add_column.md)
+#### [DolphinDB Visual Studio Code 插件](https://github.com/dolphindb/Tutorials_CN/blob/master/vscode_extension.md)
+
+
