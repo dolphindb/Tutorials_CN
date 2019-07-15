@@ -88,7 +88,28 @@ table(1..5 as id, 6..10 as v)
 
 ![运行结果](images/single_web.JPG)
 
-## 5. 更多详细信息，请参阅DolphinDB帮助文档
+## 5. 修改配置
+
+修改单节点的配置参数有以下两种方式：
+
+- 修改配置文件`dolphindb.cfg`。
+- 在命令行中启动节点时指定配置参数。例如，启动节点时指定端口号为8900，最大内存为4GB：
+
+Linux:
+
+```sh
+./dolphindb -localSite localhost:8900:local8900 -maxMemSize 4
+```
+
+Windows:
+
+```sh
+dolphindb.exe -localSite localhost:8900:local8900 -maxMemSize 4
+```
+
+更多DolphinDB配置参数请查看[集群配置](https://www.dolphindb.cn/cn/help/ClusterSetup.html)
+
+## 6. 更多详细信息，请参阅DolphinDB帮助文档
 
 - [中文](https://www.dolphindb.cn/cn/help/index.html)
 - [英文](http://dolphindb.com/help/)
