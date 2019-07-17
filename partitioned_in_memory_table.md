@@ -1,10 +1,10 @@
 # 内存分区数据表使用指南
 
-在DolphinDB中，复合分区以外的所有数据库分区方式都适用于内存数据表。使用分区内存表进行运算能充分发挥多核CPU并行计算的优势。
+在DolphinDB中，组合分区以外的所有数据库分区方式都适用于内存数据表。使用分区内存表进行运算能充分发挥多核CPU并行计算的优势。
 
 ## 1. 加载数据到内存分区表
 
-DolphinDB提供了多种方法将一个数据集加载到内存分区表。我们首先生成一个数据集，用于后续例子。
+DolphinDB提供了多种方法将一个数据集加载到内存分区表。首先生成一个数据集，用于后续例子。
 
 ```
 n=30000000
@@ -22,7 +22,7 @@ trades.saveText(workDir + "/trades.txt");
 trades = ploadText(workDir + "/trades.txt");
 ```
 
-### 1.2 使用`loadTextEx`函数将文本文件导入为指定分区格式表
+### 1.2 使用`loadTextEx`函数将文本文件导入为指定分区方式的表
 
 这种方法适合下列情况：
 
@@ -44,7 +44,7 @@ trades.sortBy!(<qty1 * price1>, false);
 
 请注意，对内存分区表使用函数`sortBy!`时，是在每个分区内部进行排序，并不是对全表进行排序。
 
-以下对每一个sym的记录进行分组计算的SQL语句在未分区内存表、1.1中的顺序分区内存表以及本节中的按sym值分区内存表中的执行时间记录在下表中。可以看到，当分组列和分区列相同时，分组计算性能最优。
+我们分别对未分区内存表、1.1中的顺序分区内存表以及本节中的VALUE分区内存表，进行相同的分组聚合运算。SQL语句如下：
 
 ```
 timer(10) select std(qty1) from trades group by sym;
@@ -52,20 +52,22 @@ timer(10) select std(qty1) from trades group by sym;
 
 这里的 "timer(10)" 指的是此语句被连续执行10次的总耗时。
 
+结果如下表所致。可以看到，当分组列和分区列相同时，分组计算性能最优。
+
 | 数据表        | 产生时所用函数  | 计算耗时  |
 |:-------------|:------------|:-------|
 | 未分区内存表    | `loadText` | 3.69 秒 |
 | 顺序分区内存表 | `ploadText` | 2.51 秒 |
 | 以sym值分区的内存表 | `loadTextEx` |  0.17 秒 |
 
-### 1.3 使用`loadTable`函数导入磁盘分区表全部或部分分区
+### 1.3 使用`loadTable`函数导入磁盘分区表的全部或部分分区
 
 这种方法适合下列情况：
 
 * 文本文件比服务器可用内存更大，并且每次只需要用到其中的一部分数据。
 * 需要重复使用数据。加载一个数据库表比导入一个文本文件要快得多。
 
-使用`loadTestEx`在磁盘上建立一个分区表：（亦可使用`createPartitionedTable`和`append!`函数）
+使用`loadTextEx`在磁盘上建立一个分区表：（亦可使用`createPartitionedTable`和`append!`函数）
 ```
 db = database(workDir+"/tradeDB", RANGE, ["A","G","M","S","ZZZZ"])
 db.loadTextEx(`trades, `sym, workDir + "/trades.txt");
@@ -78,7 +80,7 @@ db = database(workDir+"/tradeDB")
 trades=loadTable(db, `trades, ["A", "M"], 1);
 ```
 
-请注意，这里需要将函数`loadTable`的可选参数memoryNode设为1，否则将只会加载表的元数据。
+请注意，这里需要将函数`loadTable`的可选参数memoryMode设为1，否则将只会加载表的元数据。
 
 ### 1.4 使用`loadTableBySQL`函数导入磁盘分区表指定的行/列
 
@@ -139,7 +141,7 @@ trades.update!(`logPrice1`newQty1, <[log(price1), double(qty1)]>);
 trades[`logPrice1`newQty1] = <[log(price1), double(qty1)]>;
 ```
 
-### 2.2 更新已存在列
+### 2.2 更新已存在的列
 
 1. SQL `update`语句
 
