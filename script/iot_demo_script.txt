@@ -1,8 +1,8 @@
 login("admin","123456")
 //-===================start 
-share streamTable(1000000:0,`hardwareId`ts`temp1`temp2`temp3,[INT,TIMESTAMP,DOUBLE,DOUBLE,DOUBLE]) as sensorInfoTable
-enableTablePersistence(sensorTemp, true, false, 1000000)
 
+share streamTable(1000000:0,`hardwareId`ts`temp1`temp2`temp3,[INT,TIMESTAMP,DOUBLE,DOUBLE,DOUBLE]) as sensorTemp
+enableTablePersistence(sensorTemp, true, false, 1000000)
 def writeData(){
 	hardwareNumber = 1000
 	for (i in 0:10000) {
@@ -12,9 +12,9 @@ def writeData(){
 	}
 }
 
-share streamTable(1000000:0, `time`hardwareId`tempavg1`tempavg2`tempavg3, [TIMESTAMP,INT,DOUBLE,DOUBLE,DOUBLE]) as sensorTempAvg
-metrics = createStreamAggregator(60000,2000,<[avg(temp1),avg(temp2),avg(temp3)]>,sensorTemp,sensorTempAvg,`ts,`hardwareId,2000) 
-subscribeTable(, "sensorTemp", "metric_engine", -1, append!{metrics},true)
+sensorTempAvg=table(1000000:0, `time`hardwareId`tempavg1`tempavg2`tempavg3, [TIMESTAMP,INT,DOUBLE,DOUBLE,DOUBLE])
+demoAgg = createTimeSeriesAggregator("demoAgg", 60000, 2000, <[avg(temp1),avg(temp2),avg(temp3)]>, sensorTemp, sensorTempAvg, `ts ,, `hardwareId, 2000) 
+subscribeTable(, "sensorTemp", "demoAgg", -1, append!{demoAgg},true)
 
 if(exists("dfs://iotDemoDB")){
 	dropDatabase("dfs://iotDemoDB")
@@ -29,6 +29,8 @@ subscribeTable(, "sensorTemp", "save_to_db", -1, append!{dfsTable}, true, 100000
 jobId = submitJob("simulateData", "simulate sensor data", writeData)
 //===========clear
 getJobReturn(jobId,true)
+
 clearTablePersistence(sensorTemp)
-unsubscribeTable(,"sensorTemp", "metric_engine")
+unsubscribeTable(,"sensorTemp", "demoAgg")
 unsubscribeTable(,"sensorTemp", "save_to_db")
+removeAggregator("demoAgg")
