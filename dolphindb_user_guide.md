@@ -14,12 +14,12 @@ https://www.dolphindb.cn/downloads.html
 
 #### 3、图形用户界面GUI（推荐）
 
-GUI是DolphinDB的集成开发环境。支持关键字着色，自动提示，数据可视化，数据浏览等功能。GUI使用环境需要Java 8及以上版本。
+GUI是DolphinDB的集成开发环境。支持内置函数、语法高亮、自动提示、数据可视化与数据浏览等功能，推荐在数据开发或数据分析场景下使用。GUI使用环境需要Java 8及以上版本。
 请从官网下载页面的`其它资源下载`列表第一个链接获取GUI的安装包。
 * Windows下启动：双击gui.bat
 * Linux下启动：sh gui.sh
 
-DolphinDB也支持使用 vscode 来编辑脚本, 安装和使用插件请参考[教程](vscode_extension.md)
+DolphinDB也支持使用 vscode 来编辑脚本, 安装和使用插件请参考教程 https://github.com/dolphindb/Tutorials_CN/blob/master/vscode_extension.md
 
 #### 4、Python/Java/C# API（可选）
 
