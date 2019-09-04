@@ -2,67 +2,9 @@
 
 开发大数据应用，不仅需要一个能支撑海量数据的分布式数据库，一个能高效利用多核多节点的分布式计算框架，更需要一门能与分布式数据库和分布式计算有机融合，高性能易扩展，表达能力强，满足快速开发和建模需要的编程语言。DolphinDB从流行的SQL和Python语言汲取了灵感，设计了大数据处理脚本语言。本教程讲解如何通过混合范式编程，快速开发大数据分析的应用。从中你也可以了解DolpinDB的编程语言（以下简称DolphinDB）如何与数据库和分布式计算融合。
 
-## 1. 命令式编程(Imperative Programming)
+## 1. 向量化编程(Vector Programming)
 
-DolphinDB与主流的脚本语言（Python和JavaScript等）和编译型强类型语言（C++，C和Java）一样，支持命令式编程，即一步一步告诉计算机先做什么再做什么。DolphinDB目前支持18种语句（详细参考[用户手册第五章](https://www.dolphindb.cn/cn/help/Chapter5ProgrammingStatements.html)），包括最常用的赋值语句，分支语句if..else，以及循环语句for和do..while等。
-
-DolphinDB支持对单变量和多变量进行赋值。
-
-```
-x = 1 2 3
-y = 4 5
-y += 2
-x, y = y, x //swap the value of x and y
-x, y =1 2 3, 4 5
-```
-
-DolphinDB目前支持的循环语句包括`for`语句和`do..while`语句。for语句的循环体可以包括数据对（pair）（左闭右开区间）、数组（vector）、矩阵（matrix）和表（table）。
-
-1到100累加求和：
-
-```
-s = 0
-for(x in 1:101) s += x
-print s
-```
-
-数组中的元素求和：
-
-```
-s = 0;
-for(x in 1 3 5 9 15) s += x
-print s
-```
-
-打印矩阵每一列的均值：
-
-```
-m = matrix(1 2 3, 4 5 6, 7 8 9)
-for(c in m) print c.avg()
-```
-
-计算数据表中每一个行两列之乘积：
-
-```
-t= table(["TV set", "Phone", "PC"] as productId, 1200 600 800 as price, 10 20 7 as qty)
-for(row in t) print row.productId + ": " + row.price * row.qty
-```
-
-DolphinDB的分支语句`if..else`与其它语言一致。
-```
-if(condition){
-    <true statements>
-}
-else{
-     <false statements>
-}
-```
-
-对处理海量数据时，不推荐利用控制语句（for语句，if..else语句）对数据逐行处理。这些控制语句一般用于上层模块的处理和调度，比较底层的数据处理模块建议使用向量编程，函数编程，SQL编程等方式来处理。
-
-## 2. 向量化编程(Vector Programming)
-
-向量化编程是DolphinDB中最基本的编程范式。DolphinDB中绝大部分函数支持向量作为函数的输入参数。函数的返回值一般为两种，一种是标量（scalar），这类函数称为聚合函数（aggregated function）。另一种返回与输入向量等长的向量，称之为向量函数。
+向量化编程是DolphinDB中最基本的编程范式。DolphinDB中绝大部分函数支持向量作为函数的输入参数。函数的返回值一般为两种，一种是标量（scalar），这类函数称为聚合函数（aggregate function）。另一种返回与输入向量等长的向量，称之为向量函数。
 
 向量化操作有三个主要优点：
 - 代码简洁
@@ -113,130 +55,11 @@ Time elapsed: 12.968 ms
 
 其次，向量化计算通常要将整个向量全部加载到一段连续内存中，Matlab和R都有这样的要求。有时候因为内存碎片原因，无法找到大段的连续内存。DolphinDB针对内存碎片，特别引入了`big array`，可以将物理上不连续的内存块组成一个逻辑上连续的向量。系统是否采用big array是动态决定的，对用户透明。通常，对big array进行扫描，性能损耗对于连续内存而言，在1%~5%之间；对big array进行随机访问，性能损耗在20%~30%左右。在此方面，DolphinDB是以可以接受的少量性能损失来换取系统的更高可用性。
 
-## 3. 函数化编程(Functional Programming)
-
-DolphinDB支持函数式编程的大部分功能，包括
-- 纯函数（pure function）
-- 自定义函数（user-defined function，或简称udf）
-- lambda函数
-- 高阶函数（higher order function）
-- 部分应用（partial application）
-- 闭包（closure
-
-详细请参考[用户手册第七章](https://www.dolphindb.cn/cn/help/Chapter7FunctionalProgramming.html)。
-
-### 3.1 自定义函数和lambda函数（User Defined Function & Lambda Function）
-
-DolphinDB中可以创建自定义函数，函数可以有名称或者没有名称（通常是lambda函数）。创建的函数符合纯函数的要求，也就是说只有函数的输入参数可以影响函数的输出结果。DolphinDB与Python不同，函数体内只能引用函数参数和函数内的局部变量，不能使用函数体外定义的变量。从软件工程的角度看，这牺牲了一部分语法糖的灵活性，但对提高软件质量大有裨益。
-
-```
-def getWeekDays(dates){
-    return dates[def(x):weekday(x) between 1:5]
-}
-
-getWeekDays(2018.07.01 2018.08.01 2018.09.01 2018.10.01)
-
-[2018.08.01, 2018.10.01] 
-```
-上面的例子中，我们定义了一个函数`getWeekDays`，该函数接受一组日期，返回其在周一和周五之间的日期。函数的实现采用了向量的过滤功能，也就是接受一个布尔型单目函数用于数据的过滤。我们定义了一个lambda函数用于数据过滤。
-
-### 3.2 高阶函数（Higher Order Function）
-
-高阶函数是指可以接受另一个函数作为参数的函数。在DolphinDB中，高阶函数主要用作数据处理的模板函数，通常第一个参数是另外一个函数，用于具体的数据处理。譬如说，A对象有m个元素，B对象有n个元素，一种常见的处理模式是，A中的任意一个元素和B中的任意一个元素两两计算，最后产生一个m*n的矩阵。DolphinDB将这种数据处理模式抽象成一个高阶函数`cross`。DolphinDB提供了很多类似的模板函数，包括`all`，`any`，`each`，`loop`，`eachLeft`，`eachRight`，`eachPre`，`eachPost`，`accumulate`，`reduce`，`groupby`，`contextby`，`pivot`，`cross`，`moving`，`rolling`等。
-
-下面的一个例子我们使用三个高阶函数，只用三行代码，根据股票日内tick级别的交易数据，计算出每两只股票之间的相关性。
-
-模拟生成10000000个数据点（股票代码，交易时间和价格）：
-
-```
-n=10000000
-syms = rand(`FB`GOOG`MSFT`AMZN`IBM, n)
-time = 09:30:00.000 + rand(21600000, n)
-price = 500.0 + rand(500.0, n)
-```
-
-利用`pivot`函数生成股价透视矩阵，每列为一支股票，每行为一分钟：
-
-```
-priceMatrix = pivot(avg, price, time.minute(), syms)
-```
-
-`each`和`ratios`函数配合使用，对股价矩阵每列进行操作，将股价转为收益率：
-
-```
-retMatrix = each(ratios, priceMatrix) - 1
-```
-
-`cross`和`corr`函数配合使用，计算每两支股票收益率的相关性：
-
-```
-corrMatrix = cross(corr, retMatrix, retMatrix)
-```
-
-结果为：
-```
-     AMZN      FB        GOOG      IBM       MSFT
-     --------- --------- --------- --------- ---------
-AMZN|1         0.015181  -0.056245 0.005822  0.084104
-FB  |0.015181  1         -0.028113 0.034159  -0.117279
-GOOG|-0.056245 -0.028113 1         -0.039278 -0.025165
-IBM |0.005822  0.034159  -0.039278 1         -0.049922
-MSFT|0.084104  -0.117279 -0.025165 -0.049922 1
-```
-
-### 3.3 部分应用（Partial Application）
-
-部分应用指当一个函数的一部分或全部参数给定后生成一个新的函数。在DolphinDB中，函数调用使用圆括号()，部分应用使用{}。3.2节中的例子用到的`ratios`函数的具体实现就是高阶函数`eachPre`的一个部分应用 eachPre{ratio}。
-
-以下两行代码同构：
-
-```
-retMatrix = each(ratios, priceMatrix) - 1
-retMatrix = each(eachPre{ratio}, priceMatrix) - 1
-```
-
-部分应用经常用于高阶函数。使用高阶函数时，通常对某些参数有特定要求，通过部分应用，可以确保所有参数符合要求。例如，计算一个向量a与一个矩阵m中的每一列的相关性，可以将函数`corr`与高阶函数`each`配合使用。但是若直接将向量与矩阵在`each`中列为`corr`的参数，系统将会试图计算向量的某个元素与矩阵的某个列的相关性，导致产生错误。这时，可利用部分应用把函数`corr`与向量a组成一个新的函数`corr{a}`，再与高阶函数`each`配合使用于矩阵的每一列，如下例所示。我们也可以利用for语句来解决这个问题，但代码冗长且增加耗时。
-
-```
-a = 12 14 18
-m = matrix(5 6 7, 1 3 2, 8 7 11)
-```
-
-使用each和部分应用计算向量a与矩阵中的每一列的相关性：
-
-```
-each(corr{a}, m)
-```
-
-使用for语句解决上述问题：
-
-```
-cols = m.columns()
-c = array(DOUBLE, cols)
-for(i in 0:cols)
-    c[i] = corr(a, m[i])
-```
-
-部分应用的另一个妙用是使函数保持状态。通常我们希望函数是无状态的，即函数的输出结果完全是由输入参数决定的。但有时候我们希望函数是有“状态”的。譬如说，在流计算中，用户通常需要给定一个消息处理函数（message handler），接受一条新的信息后返回一个结果。如果我们希望消息处理函数返回的是迄今为止所有接收到的数据的平均数，可以通过部分应用来解决。
-
-```
-def cumavg(mutable stat, newNum){
-    stat[0] = (stat[0] * stat[1] + newNum)/(stat[1] + 1)
-    stat[1] += 1
-    return stat[0]
-}
-
-msgHandler = cumavg{0.0 0.0}
-each(msgHandler, 1 2 3 4 5)
-
-[1,1.5,2,2.5,3]
-```
-
-## 4. SQL编程 (SQL Programming)
+## 2. SQL编程 (SQL Programming)
 
 SQL是一个面向问题的语言。用户只需要给出问题的描述，由SQL引擎给出结果。通常SQL引擎属于数据库的一部分，其它系统通过JDBC，ODBC或Native API 与数据库交流。DolphinDB脚本语言的SQL语句不仅支持SQL的标准功能，而且为大数据的分析，尤其是时间序列大数据的分析做了很多扩展，可极大简化代码，方便用户使用。
 
-### 4.1 SQL与编程语言的融合
+### 2.1 SQL与编程语言的融合
 
 在DolphinDB中，脚本语言与SQL语言是无缝融合在一起的。这种融合主要体现在几个方面：
 - SQL语句是DolphinDB语言的一个子集，一种表达式。SQL语句可以直接赋给一个变量或作为一个函数的参数。
@@ -301,7 +124,7 @@ exec first(wage) from emp_wage pivot by month, id;
 2018.08M|6000 6500 5000 5500 6000 6500 5000 5500 6000 6500
 ```
 
-### 4.2 对面板数据（Panel Data）的友好支持
+### 2.2 对面板数据（Panel Data）的友好支持
 
 SQL的group by子句将数据分成多组，每组产生一个值，也就是一行。因此使用group by子句后，行数一般会大大减少。在对面板数据进行分组后，每一组数据通常是时间序列数据，譬如按股票分组，每一个组内的数据是一个股票的价格序列。处理面板数据时，有时候希望保持每一个组的数据行数，也就是为组内的每一行数据生成一个值。例如，根据一个股票的价格序列生成回报序列，或者根据价格序列生成一个移动平均价格序列。其它数据库系统（例如SQL Server，PostGreSQL），用window function来解决这个问题。DolpinDB引入了context by子句来处理面板数据。context by与window function相比，除了语法更简洁，设计更系统（与group by和pivot by一起组成对分组数据处理的三个子句）外，表达能力上也更强大，具体表现在下面三个方面
 ：
@@ -339,7 +162,7 @@ def alpha98(stock){
 }
 ```
 
-### 4.3 对时间序列数据的友好支持
+### 2.3 对时间序列数据的友好支持
 
 DolphinDB的数据库采用列式数据存储，计算的时候又采用向量化的编程，对时间序列数据天然友好。
 
@@ -397,7 +220,7 @@ select sum(abs(price - (bid+ask)/2.0)*qty)/sum(price*qty) as cost from aj(trades
 select sum(abs(price - mid)*qty)/sum(price*qty) as cost from pwj(trades, quotes, -10:0, <avg((bid + ask)/2.0) as mid>,`date`sym`time) where date between dateRange group by sym;
 ```
 
-### 4.4 SQL的其它扩展
+### 2.4 SQL的其它扩展
 
 为满足大数据分析的要求，DolphinDB对SQL还做了很多其他扩展。这儿我们例举一些常用功能。
 - 用户自定义的函数无需编译、打包和部署，即可在本节点或分布式环境的SQL中使用此函数。
@@ -438,6 +261,183 @@ id alpha     beta1     beta2     R2
 1  1.063991  -0.258685 0.732795  0.946056
 2  6.886877  -0.148325 0.303584  0.992413
 3  11.833867 0.272352  -0.065526 0.144837
+```
+
+## 3. 命令式编程(Imperative Programming)
+
+DolphinDB与主流的脚本语言（Python和JavaScript等）和编译型强类型语言（C++，C和Java）一样，支持命令式编程，即一步一步告诉计算机先做什么再做什么。DolphinDB目前支持18种语句（详细参考[用户手册第五章](https://www.dolphindb.cn/cn/help/Chapter5ProgrammingStatements.html)），包括最常用的赋值语句，分支语句if..else，以及循环语句for和do..while等。
+
+DolphinDB支持对单变量和多变量进行赋值。
+
+```
+x = 1 2 3
+y = 4 5
+y += 2
+x, y = y, x //swap the value of x and y
+x, y =1 2 3, 4 5
+```
+
+DolphinDB目前支持的循环语句包括`for`语句和`do..while`语句。for语句的循环体可以包括数据对（pair）（左闭右开区间）、数组（vector）、矩阵（matrix）和表（table）。
+
+1到100累加求和：
+
+```
+s = 0
+for(x in 1:101) s += x
+print s
+```
+
+数组中的元素求和：
+
+```
+s = 0;
+for(x in 1 3 5 9 15) s += x
+print s
+```
+
+打印矩阵每一列的均值：
+
+```
+m = matrix(1 2 3, 4 5 6, 7 8 9)
+for(c in m) print c.avg()
+```
+
+计算数据表中每一个行两列之乘积：
+
+```
+t= table(["TV set", "Phone", "PC"] as productId, 1200 600 800 as price, 10 20 7 as qty)
+for(row in t) print row.productId + ": " + row.price * row.qty
+```
+
+DolphinDB的分支语句`if..else`与其它语言一致。
+```
+if(condition){
+    <true statements>
+}
+else{
+     <false statements>
+}
+```
+
+对处理海量数据时，不推荐利用控制语句（for语句，if..else语句）对数据逐行处理。这些控制语句一般用于上层模块的处理和调度，比较底层的数据处理模块建议使用向量编程，函数编程，SQL编程等方式来处理。
+
+## 4. 函数化编程(Functional Programming)
+
+DolphinDB支持函数式编程的大部分功能，包括
+- 纯函数（pure function）
+- 自定义函数（user-defined function，或简称udf）
+- lambda函数
+- 高阶函数（higher order function）
+- 部分应用（partial application）
+- 闭包（closure
+
+详细请参考[用户手册第七章](https://www.dolphindb.cn/cn/help/Chapter7FunctionalProgramming.html)。
+
+### 4.1 自定义函数和lambda函数（User Defined Function & Lambda Function）
+
+DolphinDB中可以创建自定义函数，函数可以有名称或者没有名称（通常是lambda函数）。创建的函数符合纯函数的要求，也就是说只有函数的输入参数可以影响函数的输出结果。DolphinDB与Python不同，函数体内只能引用函数参数和函数内的局部变量，不能使用函数体外定义的变量。从软件工程的角度看，这牺牲了一部分语法糖的灵活性，但对提高软件质量大有裨益。
+
+```
+def getWeekDays(dates){
+    return dates[def(x):weekday(x) between 1:5]
+}
+
+getWeekDays(2018.07.01 2018.08.01 2018.09.01 2018.10.01)
+
+[2018.08.01, 2018.10.01] 
+```
+上面的例子中，我们定义了一个函数`getWeekDays`，该函数接受一组日期，返回其在周一和周五之间的日期。函数的实现采用了向量的过滤功能，也就是接受一个布尔型单目函数用于数据的过滤。我们定义了一个lambda函数用于数据过滤。
+
+### 4.2 高阶函数（Higher Order Function）
+
+高阶函数是指可以接受另一个函数作为参数的函数。在DolphinDB中，高阶函数主要用作数据处理的模板函数，通常第一个参数是另外一个函数，用于具体的数据处理。譬如说，A对象有m个元素，B对象有n个元素，一种常见的处理模式是，A中的任意一个元素和B中的任意一个元素两两计算，最后产生一个m*n的矩阵。DolphinDB将这种数据处理模式抽象成一个高阶函数`cross`。DolphinDB提供了很多类似的模板函数，包括`all`，`any`，`each`，`loop`，`eachLeft`，`eachRight`，`eachPre`，`eachPost`，`accumulate`，`reduce`，`groupby`，`contextby`，`pivot`，`cross`，`moving`，`rolling`等。
+
+下面的一个例子我们使用三个高阶函数，只用三行代码，根据股票日内tick级别的交易数据，计算出每两只股票之间的相关性。
+
+模拟生成10000000个数据点（股票代码，交易时间和价格）：
+
+```
+n=10000000
+syms = rand(`FB`GOOG`MSFT`AMZN`IBM, n)
+time = 09:30:00.000 + rand(21600000, n)
+price = 500.0 + rand(500.0, n)
+```
+
+利用`pivot`函数生成股价透视矩阵，每列为一支股票，每行为一分钟：
+
+```
+priceMatrix = pivot(avg, price, time.minute(), syms)
+```
+
+`each`和`ratios`函数配合使用，对股价矩阵每列进行操作，将股价转为收益率：
+
+```
+retMatrix = each(ratios, priceMatrix) - 1
+```
+
+`cross`和`corr`函数配合使用，计算每两支股票收益率的相关性：
+
+```
+corrMatrix = cross(corr, retMatrix, retMatrix)
+```
+
+结果为：
+```
+     AMZN      FB        GOOG      IBM       MSFT
+     --------- --------- --------- --------- ---------
+AMZN|1         0.015181  -0.056245 0.005822  0.084104
+FB  |0.015181  1         -0.028113 0.034159  -0.117279
+GOOG|-0.056245 -0.028113 1         -0.039278 -0.025165
+IBM |0.005822  0.034159  -0.039278 1         -0.049922
+MSFT|0.084104  -0.117279 -0.025165 -0.049922 1
+```
+
+### 4.3 部分应用（Partial Application）
+
+部分应用指当一个函数的一部分或全部参数给定后生成一个新的函数。在DolphinDB中，函数调用使用圆括号()，部分应用使用{}。3.2节中的例子用到的`ratios`函数的具体实现就是高阶函数`eachPre`的一个部分应用 eachPre{ratio}。
+
+以下两行代码同构：
+
+```
+retMatrix = each(ratios, priceMatrix) - 1
+retMatrix = each(eachPre{ratio}, priceMatrix) - 1
+```
+
+部分应用经常用于高阶函数。使用高阶函数时，通常对某些参数有特定要求，通过部分应用，可以确保所有参数符合要求。例如，计算一个向量a与一个矩阵m中的每一列的相关性，可以将函数`corr`与高阶函数`each`配合使用。但是若直接将向量与矩阵在`each`中列为`corr`的参数，系统将会试图计算向量的某个元素与矩阵的某个列的相关性，导致产生错误。这时，可利用部分应用把函数`corr`与向量a组成一个新的函数`corr{a}`，再与高阶函数`each`配合使用于矩阵的每一列，如下例所示。我们也可以利用for语句来解决这个问题，但代码冗长且增加耗时。
+
+```
+a = 12 14 18
+m = matrix(5 6 7, 1 3 2, 8 7 11)
+```
+
+使用each和部分应用计算向量a与矩阵中的每一列的相关性：
+
+```
+each(corr{a}, m)
+```
+
+使用for语句解决上述问题：
+
+```
+cols = m.columns()
+c = array(DOUBLE, cols)
+for(i in 0:cols)
+    c[i] = corr(a, m[i])
+```
+
+部分应用的另一个妙用是使函数保持状态。通常我们希望函数是无状态的，即函数的输出结果完全是由输入参数决定的。但有时候我们希望函数是有“状态”的。譬如说，在流计算中，用户通常需要给定一个消息处理函数（message handler），接受一条新的信息后返回一个结果。如果我们希望消息处理函数返回的是迄今为止所有接收到的数据的平均数，可以通过部分应用来解决。
+
+```
+def cumavg(mutable stat, newNum){
+    stat[0] = (stat[0] * stat[1] + newNum)/(stat[1] + 1)
+    stat[1] += 1
+    return stat[0]
+}
+
+msgHandler = cumavg{0.0 0.0}
+each(msgHandler, 1 2 3 4 5)
+
+[1,1.5,2,2.5,3]
 ```
 
 ## 5. 远程过程调用编程 (RPC Programming)
