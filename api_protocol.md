@@ -132,7 +132,7 @@ function指令用来向DolphinDB发送函数调用请求，DolphinDB会执行指
 
 长度(Byte) | 报文 | 说明 | 样本
 ---|---|---|---
-3| SESSIONID | 长度不固定，到空格为止   | API
+不固定| SESSIONID | 长度不固定，到空格为止   | API
 1| 空格| char(0x20) |
 1|大小端 | 1-小端，0-大端 | 1
 1| 换行符(LF) | char(0x10) |
