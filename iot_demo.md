@@ -32,7 +32,7 @@ DolphinDB作为一个高性能的分布式时序数据库，为工业物联网�
 	
 针对上述的案例，我们首先要启用DolphinDB的分布式数据库，创建一个命名为iotDemoDB的分布式数据库用于保存采集的实时数据。数据库按日期和设备两个维度进行数据分区。日期采用值分区，设备采用范围分区。日后清理过期数据，只要简单的删除旧的日期分区就可完成。
 
-启用流数据发布和订阅功能。订阅高频数据流做实时计算。createStreamingAggregator函数能创建一个指标聚合引擎，用于实时计算。我们在案例里指定计算窗口大小是1分钟，每2秒钟运算一次过往1分钟的温度均值，然后将运算结果保存到低频数据表中，供前端轮询。
+启用流数据发布和订阅功能。订阅高频数据流做实时计算。createTimeSeriesAggregator函数能创建一个指标聚合引擎，用于实时计算。我们在案例里指定计算窗口大小是1分钟，每2秒钟运算一次过往1分钟的温度均值，然后将运算结果保存到低频数据表中，供前端轮询。
 
 部署前端Grafana平台展示运算结果的趋势图，设置每1秒钟轮询一次DolphinDB Server，并刷新展示界面。
 
@@ -79,14 +79,14 @@ dfsTable = db.createPartitionedTable(sensorTemp,"sensorTemp",`ts`hardwareId)
 subscribeTable(, "sensorTemp", "save_to_db", -1, append!{dfsTable}, true, 1000000, 10)
 ```
 
-在对流数据做分布式保存数据库的同时，系统使用createStreamAggregator函数创建一个指标聚合引擎， 用于实时计算。函数第一个参数指定了窗口大小为60秒，第二个参数指定每2秒钟做一次求均值运算，第三个参数是运算的元代码，可以由用户自己指定计算函数，任何系统支持的或用户自定义的聚合函数这里都能支持，通过指定分组字段hardwareId，函数会将流数据按设备分成1000个队列进行均值运算，每个设备都会按各自的窗口计算得到对应的平均温度。最后通过subscribeTable订阅流数据，在有新数据进来时触发实时计算，并将运算结果保存到一个新的数据流表sensorTempAvg中。
+在对流数据做分布式保存数据库的同时，系统使用createTimeSeriesAggregator函数创建一个指标聚合引擎， 用于实时计算。函数第一个参数表示时间序列聚合引擎的名称，是时间序列聚合引擎的唯一标识。第二个参数指定了窗口大小为60秒，第三个参数指定每2秒钟做一次求均值运算，第四个参数是运算的元代码，可以由用户自己指定计算函数，任何系统支持的或用户自定义的聚合函数这里都能支持，通过指定分组字段hardwareId，函数会将流数据按设备分成1000个队列进行均值运算，每个设备都会按各自的窗口计算得到对应的平均温度。最后通过subscribeTable订阅流数据，在有新数据进来时触发实时计算，并将运算结果保存到一个新的数据流表sensorTempAvg中。
 
-createStreamAggregator 参数说明：窗口时间，运算间隔时间，聚合运算元代码，原始数据输入表，运算结果输出表，时序字段，分组字段，触发GC记录数阈值。
+createTimeSeriesAggregator 参数说明：时间序列聚合引擎的名称，窗口时间，运算间隔时间，聚合运算元代码，原始数据输入表，运算结果输出表，时序字段，分组字段，触发GC记录数阈值。
 
 ```
 share streamTable(1000000:0, `time`hardwareId`tempavg1`tempavg2`tempavg3, [TIMESTAMP,INT,DOUBLE,DOUBLE,DOUBLE]) as sensorTempAvg
-metrics = createStreamAggregator(60000,2000,<[avg(temp1),avg(temp2),avg(temp3)]>,sensorTemp,sensorTempAvg,`ts,`hardwareId,2000)
-subscribeTable(, "sensorTemp", "metric_engine", -1, append!{metrics},true)
+demoAgg = createTimeSeriesAggregator("demoAgg", 60000, 2000, <[avg(temp1),avg(temp2),avg(temp3)]>, sensorTemp, sensorTempAvg, `ts ,, `hardwareId, 2000) 
+subscribeTable(, "sensorTemp", "demoAgg", -1, append!{demoAgg},true)
 ```
 
 在DolphinDB Server端在对高频数据流做保存、分析的时候，Grafana前端程序每秒钟会轮询实时运算的结果，并刷新平均温度的趋势图。DolphinDB提供了Grafana_DolphinDB的datasource插件，关于Grafana的安装以及DolphinDB的插件配置请参考[Grafana配置教程](https://www.github.com/dolphindb/grafana-datasource/blob/master/README_CN.md)

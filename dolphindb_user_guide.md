@@ -6,7 +6,7 @@ DolphinDB系统包括：服务器程序包、图形用户界面GUI、网络集�
 
 #### 1、下载地址: 
 
-https://www.dolphindb.cn/alone/alone.php?id=10
+https://www.dolphindb.cn/downloads.html
 
 #### 2、海豚大数据社区试用版（必须）
 
@@ -14,13 +14,16 @@ https://www.dolphindb.cn/alone/alone.php?id=10
 
 #### 3、图形用户界面GUI（推荐）
 
-GUI提供了DolphinDB的集成开发环境。支持关键字着色，自动提示，数据可视化，数据浏览等功能。GUI使用环境需要Java 8及以上版本。
+GUI是DolphinDB的集成开发环境。支持内置函数、语法高亮、自动提示、数据可视化与数据浏览等功能，推荐在数据开发或数据分析场景下使用。GUI使用环境需要Java 8及以上版本。
+请从官网下载页面的`其它资源下载`列表第一个链接获取GUI的安装包。
 * Windows下启动：双击gui.bat
 * Linux下启动：sh gui.sh
 
+DolphinDB也支持使用 vscode 来编辑脚本, 安装和使用插件请参考教程 https://github.com/dolphindb/Tutorials_CN/blob/master/vscode_extension.md
+
 #### 4、Python/Java/C# API（可选）
 
-DolphinDB提供Java，Python和C#的开发接口。安装步骤及使用请参考用户手册https://www.dolphindb.cn/cn/help/Chapter12ProgrammingAPIs.html
+DolphinDB提供Java，Python和C#的开发接口。安装步骤及使用请参考用户手册 https://www.dolphindb.cn/cn/help/Chapter12ProgrammingAPIs.html
 
 ### 二、配置集群
 
