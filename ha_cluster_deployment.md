@@ -182,15 +182,52 @@ boolean success = conn.connect("10.1.1.1", 8911,"admin","123456","",true);
 
 ## 5.动态增加数据节点
 
-如果数据节点宕机造成计算资源和存储空间不足，用户可以使用`addNode`命令在线增加数据节点，无需重启集群。例如，在P1上增加新的数据节点datanode3，端口号为8913。
+用户可以使用`addNode`命令在线增加数据节点，无需重启集群。
+
+下例中说明如何在新的服务器P4（内网IP为10.1.1.7）上增加新的数据节点datanode3，端口号为8911。
+
+在新的物理服务器上增加数据节点，需要先部署一个代理节点，用于启动该服务器上的数据节点。P4的代理节点的端口为8901，别名为agent2。
+
+在P4上下载DolphinDB程序包，解压到指定目录，例如/DolphinDB。
+
+进入到/DolphinDB/server目录，创建config目录。
+
+在config目录下创建agent.cfg文件，填写如下内容：
 
 ```
-addNode("10.1.1.1",8913,"datanode3")
+localSite=10.1.1.7:8901:agent2
+controllerSite=10.1.1.1:8900:controller1
+sites=10.1.1.7:8901:agent2:agent,10.1.1.1:8900:controller1:controller,10.1.1.3:8900:controller2:controller,10.1.1.5:8900:controller3:controller
+```
+
+在config目录下创建cluster.nodes文件，填写如下内容：
+
+```
+localSite,mode
+10.1.1.1:8900:controller1,controller
+10.1.1.2:8900:controller2,controller
+10.1.1.3:8900:controller3,controller
+10.1.1.1:8901:agent1,agent
+10.1.1.7:8901:agent2,agent
+10.1.1.1:8911:datanode1,datanode
+10.1.1.1:8912:datanode2,datanode
+```
+
+把P1, P2和P3上的cluster.nodes修改为与P4的cluster.nodes相同。
+
+执行以下Linux命令启动P4上的代理节点：
+
+```bash
+nohup ./dolphindb -console 0 -mode agent -home data -config config/agent.cfg -logFile log/agent.log &
+```
+
+在任意一个数据节点上执行以下命令：
+
+```
+addNode("10.1.1.7",8911,"datanode3")
 ```
 
 执行上面的脚本后，刷新Web集群管理界面，可以发现新增加的数据节点已经存在，但它处于关闭状态，需要手动启动新增的数据节点。
-
-如果在新的物理服务器上增加数据节点，需要先部署一个代理节点，用于启动这台服务器上的数据节点。
 
 ## 6. 总结
 
