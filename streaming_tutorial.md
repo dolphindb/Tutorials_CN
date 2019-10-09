@@ -727,7 +727,7 @@ subWorkers表监控流数据订阅工作线程，每条记录代表一个订阅�
 workerId|工作线程编号
 queueDepthLimit|订阅消息队列最大限制
 queueDepth|订阅消息队列深度
-processedMsgCount|已进入handler的消息数量
+processedMsgCount|handler已处理的消息数量
 failedMsgCount|handler处理异常的消息数量
 lastErrMsg|上次handler处理异常的信息
 topics|已订阅主题。若多个，彼此通过逗号分隔。
