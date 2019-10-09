@@ -160,7 +160,7 @@ nohup ./dolphindb -console 0 -mode agent -home data -config config/agent.cfg -lo
 
 ## 4. 客户端高可用
 
-使用API与DolphinDB server的数据节点进行交互时，如果连接的数据节点宕机，API会尝试重连，若重连失败会自动切换到其他可用的数据节点。这对用户是透明的。目前只有Java和Python API支持高可用。
+使用API与DolphinDB server的数据节点进行交互时，如果连接的数据节点宕机，API会尝试重连，若重连失败会自动切换到其他可用的数据节点。这对用户是透明的。目前Java、C#、C++和Python API支持高可用.
 
 API的connect方法如下：
 
@@ -168,9 +168,9 @@ API的connect方法如下：
 connect(host,port,username,password,startup,highAvailability)
 ```
 
-使用connect方法连接数据节点时，只需要指定highAvailability为true。
+使用connect方法连接数据节点时，只需要指定highAvailability参数为true。
 
-例如，设置Java API高可用。
+以下例子设置Java API高可用：
 
 ```java
 import com.xxdb;
