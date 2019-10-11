@@ -66,7 +66,7 @@ nohup ./dolphindb -console 0 &
 dolphindb.exe -localSite localhost:8900:local8900
 ```
 
-软件授权书dolphindb.lic指定DolphinDB可用的最大内存，用户也可以根据实际情况来调整该值。最大内存限制由配置参数maxMemSize（单位是GB）指定，我们可以在启动DolphinDB时指定该参数：
+软件授权书dolphindb.lic指定DolphinDB可用的最大内存，用户也可以根据实际情况来调低该值。最大内存限制由配置参数maxMemSize（单位是GB）指定，我们可以在启动DolphinDB时指定该参数：
 
 - Linux:
 
@@ -109,7 +109,7 @@ select top 100 * from pt
 
 DolphinDB面对的是海量数据的场景，因此数据库表是需要分区的。关于分区请参考[DolphinDB分区教程](https://github.com/dolphindb/Tutorials_CN/blob/master/database.md)。
 
-和传统的数据库不同，DolphinDB是集数据库、编程语言和分布式计算于一体的系统。数据库和表在DolphinDB并不存在独立的保留空间，每次访问数据库表时都需要通过`loadTable`函数将数据库表赋值到一个变量中。变量的名称可以和数据库表的名称不同。例如
+和传统的数据库不同，DolphinDB是集数据库、编程语言和分布式计算于一体的系统。数据表只是多种数据结构中的一种，必须显式的加载某个数据对象后才可以引用。例如：
 
 ```
 tmp=loadTable("dfs://valuedb","pt")
@@ -126,7 +126,8 @@ select top 100 * from tmp
 
 修改单节点的配置参数有以下两种方式：
 
-- 修改配置文件`dolphindb.cfg`。
+- 修改配置文件dolphindb.cfg。
+
 - 在命令行中启动节点时指定配置参数。例如，启动节点时指定端口号为8900，最大内存为4GB：
 
 Linux:
