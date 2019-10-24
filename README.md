@@ -17,6 +17,7 @@
 - 编程语言
     - [脚本语言的混合范式编程](https://github.com/dolphindb/Tutorials_CN/blob/master/hybrid_programming_paradigms.md)
     - [内存分区表加载和操作](https://github.com/dolphindb/Tutorials_CN/blob/master/partitioned_in_memory_table.md)
+    - [通用计算教程](https://github.com/dolphindb/Tutorials_CN/blob/master/general_computing.md)
 - 流计算
     - [流数据教程](https://github.com/dolphindb/Tutorials_CN/blob/master/streaming_tutorial.md)
     - [流数据聚合引擎](https://github.com/dolphindb/Tutorials_CN/blob/master/stream_aggregator.md)
