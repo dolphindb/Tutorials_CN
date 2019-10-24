@@ -35,6 +35,7 @@
     - [redash连接DolphinDB数据源的教程](https://github.com/dolphindb/Tutorials_CN/blob/master/data_interface_for_redash.md)
     - [DolphinDB整合前端chart组件展示数据教程](https://github.com/dolphindb/Tutorials_CN/blob/master/web_chart_integration.md)
     - [API协议](https://github.com/dolphindb/Tutorials_CN/blob/master/api_protocol.md)
+    - [API性能基准测试报告](https://github.com/dolphindb/Tutorials_CN/blob/master/api_performance.md)
 - 插件
     - [ODBC](https://github.com/dolphindb/DolphinDBPlugin/blob/master/odbc/README.md)
     - [MySQL](https://github.com/dolphindb/DolphinDBPlugin/blob/master/mysql/README_CN.md)
