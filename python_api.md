@@ -110,7 +110,7 @@ if s.existsDatabase(WORK_DIR+"/valuedb"):
 ```py
 # 'db' indicates the database handle name on the DolphinDB server.
 s.database('db', partitionType=ddb.VALUE, partitions=["AMZN","NFLX","NVDA"], dbPath=WORK_DIR+"/valuedb")
-# this is equivalent to executing 'db=database(=WORK_DIR+"/valuedb", VALUE, ["AMZN","NFLX", "NVDA"])' on DolphinDB server.
+# this is equivalent to executing 'db=database(WORK_DIR+"/valuedb", VALUE, ["AMZN","NFLX", "NVDA"])' on DolphinDB server.
 ```
 
 在DFS（分布式文件系统）创建分区数据库，只需把数据库的路径改成以`dfs://`开头。下面的例子需要在集群中执行。请参考教程[多服务器集群部署](https://github.com/dolphindb/Tutorials_CN/blob/master/multi_machine_cluster_deploy.md)配置集群。
@@ -273,7 +273,7 @@ ddb.overwriteTypes(t,{'isBuyer':ddb.DT_BOOL})
 ```py
 a = [1,2,3,4,5,6]
 s.upload({'a':a})
-a_new = s.run("a"))
+a_new = s.run("a")
 print(a_new)
 
 #output
