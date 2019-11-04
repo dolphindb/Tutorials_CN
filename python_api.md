@@ -368,6 +368,7 @@ import dolphindb.settings as keys
 if s.existsDatabase(WORK_DIR+"/valuedb"):
     s.dropDatabase(WORK_DIR+"/valuedb")
 s.database('db', partitionType=keys.VALUE, partitions=["AMZN","NFLX", "NVDA"], dbPath=WORK_DIR+"/valuedb")
+
 trade = s.loadTextEx("db",  tableName='trade',partitionColumns=["TICKER"], filePath=WORK_DIR + "/example.csv")
 print(trade.toDF())
 
@@ -668,7 +669,7 @@ s.run("tableInsert{tdglobal}",tb)
 import pandas as pd
 tb=pd.DataFrame(createDemoDict())
 s.upload({'tb':tb})
-s.run("tableInsert(tglobal,(select id, date(date), ticker, price from tb))")
+s.run("tableInsert(tglobal,(select id, date(date) as date, ticker, price from tb))")
 ```
 
 把数据保存到内存表，还可以使用`append!`函数，它可以把一张表追加到另一张表。但是，一般不建议通过`append!`函数保存数据，因为`append!`函数会返回一个表的schema，增加通信量。
@@ -696,7 +697,7 @@ s.run("append!{tdglobal}",tb)
 import pandas as pd
 tb=pd.DataFrame(createDemoDict())
 s.upload({'tb':tb})
-s.run("append!(tglobal, (select id, date(date), ticker, price from tb))")
+s.run("append!(tglobal, (select id, date(date) as date, ticker, price from tb))")
 ```
 
 #### 7.2 追加数据到本地磁盘表
@@ -975,7 +976,44 @@ print(trade.select("distinct TICKER").toDF())
 
 #### 8.3.2 数据表添加数据
 
-请参考[第7节](#7-追加数据到dolphindb数据表)。
+我们可以通过`append`方法追加数据。
+
+下面的例子把数据追加到磁盘上的分区表。如果需要使用追加数据后的表，需要重新把它加载到内存中。
+
+```py
+trade = s.loadTable(tableName="trade",dbPath=WORK_DIR+"/valuedb")
+print(trade.rows)
+
+# output
+13136
+
+# take the top 10 rows of table "trade" on the DolphinDB server
+t = trade.top(10).executeAs("top10")
+
+trade.append(t)
+
+# table "trade" needs to be reloaded in order to see the appended records
+trade = s.loadTable(tableName="trade",dbPath=WORK_DIR+"/valuedb")
+print (trade.rows)
+
+# output
+13146
+```
+
+下面的例子把数据追加到内存表中。
+
+```py
+trade=s.loadText(WORK_DIR+"/example.csv")
+t = trade.top(10).executeAs("top10")
+t1=trade.append(t)
+
+print(t1.rows)
+
+# output
+13146
+```
+
+关于追加表的具体介绍请参考[第7节](#7-追加数据到dolphindb数据表)。
 
 #### 8.3.3 更新表
 
@@ -1286,7 +1324,7 @@ print(df)
 
 ```Python
 trade = s.loadTable(dbPath=WORK_DIR+"/valuedb", tableName="trade")
-t1 = s.table(data={'TICKER': ['AMZN', 'AMZN', 'AMZN'], 'date': ['2015.12.31', '2015.12.30', '2015.12.29'], 'open': [695, 685, 674]})
+t1 = s.table(data={'TICKER': ['AMZN', 'AMZN', 'AMZN'], 'date': np.array(['2015-12-31', '2015-12-30', '2015-12-29'], dtype='datetime64[D]'), 'open': [695, 685, 674]})
 print(trade.merge(t1,on=["TICKER","date"]).toDF())
 
 # output
@@ -1371,39 +1409,40 @@ quotes = s.loadTextEx("db",  tableName='quotes',partitionColumns=["Symbol"], fil
 print(trades.top(5).toDF())
 
 # output
-                 Time Symbol  Trade_Volume  Trade_Price
-0  09:30:00.087488712   AAPL        370466      117.100
-1  09:30:00.087681843   AAPL        370466      117.100
-2  09:30:00.103645440   AAPL           100      117.100
-3  09:30:00.213850801   AAPL            20      117.100
-4  09:30:00.264854448   AAPL            17      117.095
+                        Time  Exchange  Symbol  Trade_Volume  Trade_Price
+0 1970-01-01 08:00:00.022239        75    AAPL           300        27.00
+1 1970-01-01 08:00:00.022287        75    AAPL           500        27.25
+2 1970-01-01 08:00:00.022317        75    AAPL           335        27.26
+3 1970-01-01 08:00:00.022341        75    AAPL           100        27.27
+4 1970-01-01 08:00:00.022368        75    AAPL            31        27.40
 
 print(quotes.where("second(Time)>=09:29:59").top(5).toDF())
 
 # output
-                 Time Symbol  Bid_Price  Bid_Size  Offer_Price  Offer_Size
-0  09:29:59.300399073   AAPL     117.07         1       117.09           1
-1  09:29:59.300954263   AAPL     117.07         1       117.09           1
-2  09:29:59.301594217   AAPL     117.05         1       117.19          10
-3  09:30:00.499924044   AAPL     117.09        46       117.10           3
-4  09:30:00.500005573   AAPL     116.86        53       117.37          64
+                         Time  Exchange  Symbol  Bid_Price  Bid_Size  Offer_Price  Offer_Size
+0  1970-01-01 09:30:00.005868        90    AAPL      26.89         1        27.10           6
+1  1970-01-01 09:30:00.011058        90    AAPL      26.89        11        27.10           6
+2  1970-01-01 09:30:00.031523        90    AAPL      26.89        13        27.10           6
+3  1970-01-01 09:30:00.284623        80    AAPL      26.89         8        26.98           8
+4  1970-01-01 09:30:00.454066        80    AAPL      26.89         8        26.98           1
 
 print(trades.merge_asof(quotes,on=["Symbol","Time"]).select(["Symbol","Time","Trade_Volume","Trade_Price","Bid_Price", "Bid_Size","Offer_Price", "Offer_Size"]).top(5).toDF())
 
 # output
-  Symbol                Time  Trade_Volume  Trade_Price  Bid_Price  Bid_Size  \
-0   AAPL  09:30:00.087488712        370466      117.100     117.05         1   
-1   AAPL  09:30:00.087681843        370466      117.100     117.05         1   
-2   AAPL  09:30:00.103645440           100      117.100     117.05         1   
-3   AAPL  09:30:00.213850801            20      117.100     117.05         1   
-4   AAPL  09:30:00.264854448            17      117.095     117.05         1   
+  Symbol                        Time          Trade_Volume  Trade_Price  Bid_Price  Bid_Size  \
+0   AAPL  1970-01-01 08:00:00.022239                   300        27.00       26.9         1   
+1   AAPL  1970-01-01 08:00:00.022287                   500        27.25       26.9         1   
+2   AAPL  1970-01-01 08:00:00.022317                   335        27.26       26.9         1   
+3   AAPL  1970-01-01 08:00:00.022341                   100        27.27       26.9         1   
+4   AAPL  1970-01-01 08:00:00.022368                    31        27.40       26.9         1   
 
    Offer_Price  Offer_Size  
-0       117.19          10  
-1       117.19          10  
-2       117.19          10  
-3       117.19          10  
-4       117.19          10  
+0       27.49           10  
+1       27.49           10  
+2       27.49           10  
+3       27.49           10  
+4       27.49           10  
+[5 rows x 8 columns]
 ```
 
 使用asof join计算交易成本：
@@ -1412,9 +1451,9 @@ print(trades.merge_asof(quotes,on=["Symbol","Time"]).select(["Symbol","Time","Tr
 print(trades.merge_asof(quotes, on=["Symbol","Time"]).select("sum(Trade_Volume*abs(Trade_Price-(Bid_Price+Offer_Price)/2))/sum(Trade_Volume*Trade_Price)*10000 as cost").groupby("Symbol").toDF())
 
 # output
-  Symbol      cost
-0   AAPL  0.899823
-1     FB  2.722923
+  Symbol       cost
+0   AAPL   6.486813
+1     FB  35.751041
 ```
 
 #### 9.6.3 `merge_window`
@@ -1424,34 +1463,34 @@ print(trades.merge_asof(quotes, on=["Symbol","Time"]).select("sum(Trade_Volume*a
 window join和prevailing window join的唯一区别是，如果右表中没有与窗口左边界时间（即t+w1）匹配的值，prevailing window join会选择(t+w1)之前的最近时间。如果要使用prevailing window join，需将prevailing参数设置为True。
 
 ```Python
-print(trades.merge_window(quotes, -5000000000, 0, aggFunctions=["avg(Bid_Price)","avg(Offer_Price)"], on=["Symbol","Time"]).where("Time>=15:59:59").top(10).toDF())
+print(trades.merge_window(quotes, -5000000000, 0, aggFunctions=["avg(Bid_Price)","avg(Offer_Price)"], on=["Symbol","Time"]).where("Time>=07:59:59").top(10).toDF())
 
 # output
-                 Time Symbol  Trade_Volume  Trade_Price  avg_Bid_Price  \
-0  15:59:59.003095025   AAPL           250      117.620     117.603714   
-1  15:59:59.003748103   AAPL           100      117.620     117.603714   
-2  15:59:59.011092788   AAPL            95      117.620     117.603714   
-3  15:59:59.011336471   AAPL           200      117.620     117.603714   
-4  15:59:59.022841207   AAPL           144      117.610     117.603689   
-5  15:59:59.028169703   AAPL           130      117.615     117.603544   
-6  15:59:59.035357411   AAPL          1101      117.610     117.603544   
-7  15:59:59.035360176   AAPL           799      117.610     117.603544   
-8  15:59:59.035602676   AAPL           130      117.610     117.603544   
-9  15:59:59.036929307   AAPL          2201      117.610     117.603544   
+                        Time  Exchange Symbol  Trade_Volume \
+0 1970-01-01 08:00:00.022239        75   AAPL           300
+1 1970-01-01 08:00:00.022287        75   AAPL           500
+2 1970-01-01 08:00:00.022317        75   AAPL           335
+3 1970-01-01 08:00:00.022341        75   AAPL           100
+4 1970-01-01 08:00:00.022368        75   AAPL            31
+5 1970-01-01 08:00:02.668076        68   AAPL          2434
+6 1970-01-01 08:02:20.116025        68   AAPL            66
+7 1970-01-01 08:06:31.149930        75   AAPL           100
+8 1970-01-01 08:06:32.826399        75   AAPL           100
+9 1970-01-01 08:06:33.168833        75   AAPL            74
 
-   avg_Offer_Price  
-0       117.626816  
-1       117.626816  
-2       117.626816  
-3       117.626816  
-4       117.626803  
-5       117.626962  
-6       117.626962  
-7       117.626962  
-8       117.626962  
-9       117.626962  
+   avg_Bid_Price  avg_Offer_Price
+0          26.90            27.49
+1          26.90            27.49
+2          26.90            27.49
+3          26.90            27.49
+4          26.90            27.49
+5          26.75            27.36
+6            NaN              NaN
+7            NaN              NaN
+8            NaN              NaN
+9            NaN              NaN
 
-...
+[10 rows x 6 columns]
 ```
 
 使用window join计算交易成本：
@@ -1462,9 +1501,9 @@ trades.merge_window(quotes,-1000000000, 0, aggFunctions="[wavg(Offer_Price, Offe
 print(s.loadTable(tableName="tradingCost").toDF())
 
 # output
-  Symbol      cost
-0   AAPL  0.953315
-1     FB  1.077876
+  Symbol       cost
+0   AAPL   6.367864
+1     FB  35.751041
 ```
 
 #### 9.7 `executeAs`
@@ -1519,7 +1558,7 @@ print(z["Coefficient"])
 print(z["Coefficient"].beta[1])
 
 # output
-0.6053065019659698
+0.6053065014691369
 ```
 
 下面的例子在分区数据库中执行回归运算。请注意，在DolphinDB中，两个整数整除的运算符为“/”，恰好是Python的转移字符，因此在`select`中使用VOL\SHROUT。
@@ -1849,8 +1888,8 @@ dff = pd.DataFrame({'Code': np.repeat(['a', 'b', 'c', 'd', 'e', 'QWW', 'FEA', 'F
 
 ```Python
 s.upload({'dfd': dfd, 'dff': dff})
-inserts = """tableInsert(mem_stream_d,select Code,date(Date),DiffAskVol,DiffAskVolSum,DiffBidVol,DiffBidVolSum,FirstDerivedAskPrice,FirstDerivedAskVolume,FirstDerivedBidPrice,FirstDerivedBidVolume from dfd);
-tableInsert(mem_stream_f,select Code,date(Date),DiffAskVol,DiffAskVolSum,DiffBidVol,DiffBidVolSum,FirstDerivedAskPrice,FirstDerivedAskVolume,FirstDerivedBidPrice,FirstDerivedBidVolume from dff)"""
+inserts = """tableInsert(mem_stream_d,select Code,date(Date) as Date,DiffAskVol,DiffAskVolSum,DiffBidVol,DiffBidVolSum,FirstDerivedAskPrice,FirstDerivedAskVolume,FirstDerivedBidPrice,FirstDerivedBidVolume from dfd);
+tableInsert(mem_stream_f,select Code,date(Date) as Date,DiffAskVol,DiffAskVolSum,DiffBidVol,DiffBidVolSum,FirstDerivedAskPrice,FirstDerivedAskVolume,FirstDerivedBidPrice,FirstDerivedBidVolume from dff)"""
 s.run(inserts)
 s.run("select count(*) from loadTable('{dbPath}', `{tbName})".format(dbPath=dbDir,tbName=tableName))
 
