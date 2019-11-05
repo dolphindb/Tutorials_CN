@@ -8,7 +8,6 @@
     - [多服务器集群部署](https://github.com/dolphindb/Tutorials_CN/blob/master/multi_machine_cluster_deploy.md)
     - [基于Docker的集群部署教程](https://github.com/dolphindb/Tutorials_CN/blob/master/docker_deployment.md)
     - [DolphinDB高可用集群部署教程](https://github.com/dolphindb/Tutorials_CN/blob/master/ha_cluster_deployment.md)
-    
 - 数据库
     - [分区数据库设计和操作](https://github.com/dolphindb/Tutorials_CN/blob/master/database.md)
     - [数据导入教程](https://github.com/dolphindb/Tutorials_CN/blob/master/import_data.md)
@@ -17,7 +16,6 @@
 - 编程语言
     - [脚本语言的混合范式编程](https://github.com/dolphindb/Tutorials_CN/blob/master/hybrid_programming_paradigms.md)
     - [内存分区表加载和操作](https://github.com/dolphindb/Tutorials_CN/blob/master/partitioned_in_memory_table.md)
-    - [通用计算教程](https://github.com/dolphindb/Tutorials_CN/blob/master/general_computing.md)
 - 流计算
     - [流数据教程](https://github.com/dolphindb/Tutorials_CN/blob/master/streaming_tutorial.md)
     - [流数据聚合引擎](https://github.com/dolphindb/Tutorials_CN/blob/master/stream_aggregator.md)
@@ -26,16 +24,17 @@
     - [权限管理和安全](https://github.com/dolphindb/Tutorials_CN/blob/master/ACL_and_Security.md)
     - [作业管理](https://github.com/dolphindb/Tutorials_CN/blob/master/job_management_tutorial.md)
 - API
-    - [Python API使用教程](https://github.com/dolphindb/Tutorials_CN/blob/master/python_api.md)
+    - [Python API使用教程](https://github.com/dolphindb/python3_api_experimental/blob/master/README.md)
     - [Java API使用教程](https://github.com/dolphindb/api-java/blob/master/README_CN.md)
     - [C# API使用教程](https://github.com/dolphindb/api-csharp/blob/master/README_CN.md)
     - [C++ API使用教程](https://github.com/dolphindb/api-cplusplus/blob/master/README_CN.md)
+    - [Go API使用教程](https://github.com/dolphindb/api-go/blob/master/README.md)
     - [R API使用教程](https://github.com/dolphindb/api-r/blob/master/README_CN.md)
     - [Json API使用教程](https://github.com/dolphindb/api-json/blob/master/README_CN.md)
     - [redash连接DolphinDB数据源的教程](https://github.com/dolphindb/Tutorials_CN/blob/master/data_interface_for_redash.md)
     - [DolphinDB整合前端chart组件展示数据教程](https://github.com/dolphindb/Tutorials_CN/blob/master/web_chart_integration.md)
+    - [Grafana连接DolphinDB数据源](https://github.com/dolphindb/grafana-datasource/blob/master/README_CN.md)
     - [API协议](https://github.com/dolphindb/Tutorials_CN/blob/master/api_protocol.md)
-    - [API性能基准测试报告](https://github.com/dolphindb/Tutorials_CN/blob/master/api_performance.md)
 - 插件
     - [ODBC](https://github.com/dolphindb/DolphinDBPlugin/blob/master/odbc/README.md)
     - [MySQL](https://github.com/dolphindb/DolphinDBPlugin/blob/master/mysql/README_CN.md)
@@ -51,6 +50,7 @@
     - [插件开发教程](https://github.com/dolphindb/Tutorials_CN/blob/master/plugin_development_tutorial.md)
 - 应用场景示例
     - [DolphinDB在工业物联网的应用](https://github.com/dolphindb/Tutorials_CN/blob/master/iot_demo.md)
+    - [加密货币逐笔交易数据回放](https://github.com/dolphindb/applications/blob/master/cryptocurr_replay/README.md)
 
 
 
