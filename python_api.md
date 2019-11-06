@@ -1796,10 +1796,10 @@ import numpy as np
 s = ddb.session()
 s.connect(host, port, "admin", "123456")
 
-dbDir="dfs://ticks"
-tableName='tick'
+dbDir = "dfs://ticks"
+tableName = 'tick'
 
-script="""
+script = """
 login('admin','123456')
 
 // 定义表结构
@@ -1819,7 +1819,7 @@ dfsTB=db.createPartitionedTable(table(n:0, colNames, colTypes),`{tbName},`Date)
 下面，我们将定义两个流数据表`mem_stream_d`和`mem_stream_f`，客户端往流数据表写入数据，由服务端订阅数据。
 
 ```Python
-script+="""
+script += """
 // 定义mem_tb_d表,并开启流数据持久化，将共享表命名为mem_stream_d
 mem_tb_d=streamTable(n:0, colNames, colTypes)
 enableTableShareAndPersistence(mem_tb_d,'mem_stream_d',false,true,n)
@@ -1833,7 +1833,7 @@ enableTableShareAndPersistence(mem_tb_f,'mem_stream_f',false,true,n)
 **请注意**，由于表的分区字段是按照日期进行分区，而客户端往`mem_stream_d`和`mem_stream_f`表中写的数据会有日期上的重叠， 若直接由分布式表`tick`同时订阅这两个表的数据，就会造成这两个表同时往同一个日期分区写数据，最终会写入失败。因此，我们需要定义另一个流表`ticks_stream`来订阅`mem_stream_d`和`mem_stream_f`表的数据，再让分布式表`tick`单独订阅这一个流表，这样就形成了一个二级订阅模式。
 
 ```Python
-script+="""
+script += """
 // 定义ftb表,并开启流数据持久化，将共享表命名为ticks_stream
 ftb=streamTable(n:0, colNames, colTypes)
 enableTableShareAndPersistence(ftb,'ticks_stream',false,true,n)
@@ -1902,15 +1902,16 @@ s.run("select count(*) from loadTable('{dbPath}', `{tbName})".format(dbPath=dbDi
 
 ```Python
 clear="""
-def clears(tbObj,tbName,action)
+def clears(tbName,action)
 {
 	unsubscribeTable(, tbName, action)
+	clearTablePersistence(objByName(tbName))
 	undef(tbName,SHARED)
-	clearTablePersistence(tbObj)
 }
-clears(ftb, `ticks_stream, `action_to_dfsTB)
-clears(mem_tb_d,`mem_stream_d,`action_to_ticksStream_tde)
-clears(mem_tb_f,`mem_stream_f,`action_to_ticksStream_tfe)
+clears(`ticks_stream, `action_to_dfsTB)
+clears(`mem_stream_d,`action_to_ticksStream_tde)
+clears(`mem_stream_f,`action_to_ticksStream_tfe)
 """
 s.run(clear)
+
 ```
