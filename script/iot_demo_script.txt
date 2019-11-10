@@ -12,7 +12,7 @@ def writeData(){
 	}
 }
 
-sensorTempAvg=table(1000000:0, `time`hardwareId`tempavg1`tempavg2`tempavg3, [TIMESTAMP,INT,DOUBLE,DOUBLE,DOUBLE])
+share streamTable(1000000:0, `time`hardwareId`tempavg1`tempavg2`tempavg3, [TIMESTAMP,INT,DOUBLE,DOUBLE,DOUBLE]) as sensorTempAvg
 demoAgg = createTimeSeriesAggregator("demoAgg", 60000, 2000, <[avg(temp1),avg(temp2),avg(temp3)]>, sensorTemp, sensorTempAvg, `ts ,, `hardwareId, 2000) 
 subscribeTable(, "sensorTemp", "demoAgg", -1, append!{demoAgg},true)
 
