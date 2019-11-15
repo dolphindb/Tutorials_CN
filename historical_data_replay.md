@@ -4,13 +4,11 @@
 
 DolphinDB的流数据处理框架采用发布-订阅-消费的模式。数据生产者将实时数据继续地以流的形式发布给所有数据订阅者。订阅者收到消息以后，可使用自定义函数或者DolhpinDB内置的[聚合引擎](https://github.com/dolphindb/Tutorials_CN/blob/master/stream_aggregator.md)来处理消息。DolhpinDB流数据接口支持多种语言的API，包括C++, C#, Java, 和Python等。用户可以使用这些API来编写更加复杂的处理逻辑，更好地与实际生产环境相结合。详细情况请参考[DolphinDB流数据教程](https://github.com/dolphindb/Tutorials_CN/blob/master/streaming_tutorial.md)。
 
-
 本文介绍`replay`和`replayDS`函数，然后使用金融数据展示数据回放的全过程。
-
 
 ## 1. 函数介绍
 
-### replay
+### `replay`
 
 ```
 replay(inputTables, outputTables, [dateColumn], [timeColumn], [replayRate], [parallelLevel=1])
@@ -19,23 +17,22 @@ replay(inputTables, outputTables, [dateColumn], [timeColumn], [replayRate], [par
 `replay`函数的作用是将若干表或数据源同时回放到相应的输出表中。用户需要指定输入的数据表或数据源、输出表、日期列、时间列、回放速度以及并行度。
 
 - inputTables: 单个表或包含若干表或数据源（见`replayDS`介绍）的元组。
-- outputTables: 单个表或包含若干个表的元组，这些表通常为流数据表。输入表和输出表的个数一致，且一一对应，每对输入|输出表的schema相同。
-- dateColumn, timeColumn: string, 表示输入表的日期和时间列，若不指定则默认第一列为日期列。若输入表中时间列同时包含日期和时间，需要将dateColumn和timeColumn设为同一列。回放时，系统将根据dateColumn和timeColumn的设定，决定回放的最小时间精度。在此时间精度下，同一时刻的数据将在相同批次输出。比如一张表同时有日期列和时间列，但是`replay`函数只设置了dateColumn，那么同一天的所有数据会在一个批次输出。
-- replayRate: int, 表示每秒钟回放的数据条数。由于回放时同一个时刻数据在同一批次输出，因此当replayRate小于一个批次的行数时，实际输出的速率会大于replayRate。
-- parallelLevel: int, 表示读取数据的并行度。当源数据大小超过内存大小的时候，需要使用`replayDS`函数将源数据划分为若干个小的数据源，依次从磁盘中读取数据并回放。指定多个读取数据的线程数可提升数据读取速度。
+- outputTables: 可以是单个表或包含若干个表的元组，表示共享的流数据表对象，也可以是字符或字符串，表示共享流数据表的名称。输入表和输出表的个数一致，且一一对应，每对输入|输出表的schema相同。
+- dateColumn, timeColumn: string, 表示输入表的日期和时间列，若均不指定则默认第一列为dateColumn。若有dateColumn，则该列必须为分区列之一；若无dateColumn，则必须指定timeColumn，且其必须为分区列之一。若输入表中时间列同时包含日期和时间，需要将dateColumn和timeColumn设为同一列。回放时，系统将根据dateColumn和timeColumn的设定，决定回放的最小时间精度。在此时间精度下，同一时刻的数据将在相同批次输出。举例来说，若timeColumn最小时间精度为秒，则每一秒的数据在统一批次输出；若只设置了dateColumn，那么同一天的所有数据会在一个批次输出。
+- replayRate: int, 表示每秒钟回放的数据条数。若未指定，以最大速度回放。由于回放时同一个时刻数据在同一批次输出，因此当replayRate小于一个批次的行数时，实际输出的速率会大于replayRate。
+- parallelLevel: int, 表示读取数据的并行度。当源数据单个分区相对内存较大，或者超过内存时，需要使用`replayDS`函数将源数据划分为若干个小的数据源，依次从磁盘中读取数据并回放。参数parallelLevel指定同时读取这些经过划分之后的小数据源的线程数，可提升数据读取速度。
 
-### replayDS
+### `replayDS`
 
 ```
 replayDS(sqlObj, [dateColumn], [timeColumn], [timeRepartitionSchema])
 ```
-
 `replayDS`函数可以将输入的SQL查询转化为数据源，结合`replay`函数使用。其作用是根据输入表的分区以及timeRepartitionSchema，将原始的SQL查询按照时间顺序拆分成若干小的SQL查询。
 
 - sqlObj: SQL元代码，表示回放的数据，如<select * from sourceTable>。
 - dateColumn: string, 表示日期列。若不指定，默认第一列为日期列。`replayDS`函数默认日期列是数据源的一个分区列，并根据分区信息将原始SQL查询拆分为多个查询。
 - timeColumn: string, 表示时间列，配合timeRepartitionSchema使用。
-- timeRepartitionSchema: 时间类型向量，如08:00:00 .. 18:00:00。若同时指定了timeColumn, 则对SQL查询在时间维度上进一步拆分。
+- timeRepartitionSchema: TIME或NANOTIME类型向量，如08:00:00 .. 18:00:00。对sqlObj在每一个dateColumn分区中，在timeColumn维度上进一步拆分。
 
 ### 单个内存表回放
 
@@ -46,13 +43,13 @@ replay(inputTable, outputTable, `date, `time, 10)
 
 ### 使用data source的单表回放
 
-当单表行数过多时，可以配合使用`replayDS`进行回放。首先使用`replayDS`生成data source，本例中指定了日期列和timeRepartitionColumn。回放调用与单个内存表回放相似，但是可以指定回放的并行度。`replay`内部实现使用了[pipeline](https://www.dolphindb.cn/cn/help/pipeline.html)框架，取数据和输出分开执行。当输入为data source时，多块数据可以并行读取，以避免输出线程等待的情况。此例中并行度设置为2，表示有两个线程同时执行取数据的操作。
+当单表行数过多时，可使用`replayDS`函数将源数据划分为若干个小的数据源，再使用`replay`函数从磁盘中读取数据并回放。`replay`内部实现使用了[pipeline](https://www.dolphindb.cn/cn/help/pipeline.html)框架，取数据和输出分开执行。当`replayDS`函数的输入为数据源时，多块数据可以并行读取，以避免输出线程等待的情况。此例中并行度设置为2，表示有两个线程同时执行取数据的操作。
 ```
 inputDS = replayDS(<select * from inputTable>, `date, `time, 08:00:00.000 + (1..10) * 3600000)
 replay(inputDS, outputTable, `date, `time, 1000, 2)
 ```
 
-### 使用data source的多表回放
+### 多表回放
 `replay`也支持多张表的同时回放，只需要将多张输入表以元组的方式传给`replay`,并且分别指定输出表即可。这里输出表和输入表应该一一对应，每一对都必须有相同的表结构。如果指定了日期列或时间列，那么所有表中都应当有存在相应的列。
 
 ```
@@ -64,13 +61,13 @@ replay([ds1, ds2, ds3], [out1, out2, out3], `date, `time, 1000, 2)
 
 ### 取消回放
 
-如果`replay`函数是通过`submitJob`调用，可以使用`getRecentJob`获取`jobId`，然后用`cancelJob`取消回放。
+如果`replay`函数是通过`submitJob`调用，可以使用`getRecentJobs`获取jobId，然后用`cancelJob`取消回放。
 ```
 getRecentJobs()
 cancelJob(jobid)
 ```
 
-如果是直接调用，可在另外一个GUI session中使用`getConsoleJobs`获取`jobId`，然后使用`cancelConsoleJob`取消回放任务。
+如果是直接调用，可在另外一个GUI session中使用`getConsoleJobs`获取jobId，然后使用`cancelConsoleJob`取消回放任务。
 ```
 getConsoleJobs()
 cancelConsoleJob(jobId)
@@ -86,9 +83,9 @@ cancelConsoleJob(jobId)
 
 ## 3. 金融示例
 
-### 回放美国股市一天的level1交易数据，并计算ETF价值
+### 回放level1报价数据并计算ETF内在价值
 
-本例中使用美国股市2007年8月17日的level1交易数据，利用replayDS进行数据回放，并通过DolphinDB内置的横截面聚合引擎计算ETF价值。数据存放在分布式数据库dfs://TAQ的quotes表，下面是quotes表的结构以及数据预览。
+本例中使用美国股市2007年8月17日的level1报价数据，执行`replayDS`函数进行数据回放，并通过DolphinDB内置的横截面聚合引擎计算ETF内在价值。数据存放在分布式数据库dfs://TAQ的quotes表，下面是quotes表的结构以及数据预览。
 
 ```
 > quotes = database("dfs://TAQ").loadTable("quotes");
@@ -123,21 +120,21 @@ cancelConsoleJob(jobId)
 | A      | 2007.08.17 | 08:00:00 | 31.9  | 40    | 3      | 2      | 12   | 84  |      |
 | A      | 2007.08.17 | 08:00:00 | 31.9  | 35.5  | 3      | 2      | 12   | 84  |      |
 
-（1）对要进行回放的数据进行划分。由于一天的数据共有336,305,414条，一次性导入内存再回放会有较长延迟，还有可能导致内存溢出，因此先使用replayDS函数并指定参数timeRepartitionSchema，将数据按照时间戳分为62个部分。
+(1) 对要进行回放的数据进行划分。由于数据共有331,204,031条，一次性导入内存再回放会有较长延迟，还有可能导致内存溢出，因此先使用replayDS函数并指定参数timeRepartitionSchema，将数据按照时间戳分为60个部分。
 
 ```
 sch = select name,typeString as type from quotes.schema().colDefs
-trs = cutPoints(09:30:00.001..18:00:00.001, 60)
+trs = cutPoints(09:30:00.000..16:00:00.000, 60)
 rds = replayDS(<select * from quotes>, `date, `time,  trs);
 ```
 
-（2）定义输出表outQuotes，一般为流数据表。
+(2) 定义输出表outQuotes，为流数据表。
 
 ```
 share streamTable(100:0, sch.name,sch.type) as outQuotes
 ```
 
-（3）定义股票权重字典weights以及聚合函数etfVal，用于计算ETF价值。在本例中，我们仅计算AAPL、IBM、MSFT、NTES、AMZN、GOOG这几只股票的ETF价值。
+(3) 定义ETF成分股票权重字典weights以及聚合函数etfVal，用于计算ETF内在价值。为简化起见，本例使用了一个虚构的由AAPL、IBM、MSFT、NTES、AMZN、GOOG这6只股票组成的的ETF。
 
 ```
 defg etfVal(weights,sym, price) {
@@ -152,7 +149,7 @@ weights[`AMZN] = 0.1
 weights[`GOOG] = 0.5
 ```
 
-（4）创建流聚合引擎，并订阅数据回放的输出表outQuotes。订阅outQuotes表时，我们指定了发布表的过滤条件，只有symbol为AAPL、IBM、MSFT、NTES、AMZN、GOOG的数据才会发布到横截面聚合引擎，减少不必要的网络开销和数据传输。
+(4) 创建流聚合引擎，并订阅数据回放的输出表outQuotes。订阅outQuotes表时，我们指定了发布表的过滤条件，只有symbol为AAPL、IBM、MSFT、NTES、AMZN、GOOG的数据才会发布到横截面聚合引擎，减少不必要的网络开销和数据传输。
 
 ```
 setStreamTableFilterColumn(outQuotes, `symbol)
@@ -161,53 +158,48 @@ tradesCrossAggregator=createCrossSectionalAggregator("etfvalue", <[etfVal{weight
 subscribeTable(,"outQuotes","tradesCrossAggregator",-1,append!{tradesCrossAggregator},true,,,,,`AAPL`IBM`MSFT`NTES`AMZN`GOOG) 
 ```
 
-（5）开始回放，设定每秒回放10万条数据，聚合引擎则会实时地对回放的数据进行消费。
+(5) 开始回放，设定每秒回放10万条数据，聚合引擎则会实时地对回放的数据进行消费。
 
 ```
 submitJob("replay_quotes", "replay_quotes_stream",  replay,  [rds],  [`outQuotes], `date, `time,100000,4)
 ```
 
-（6）查看不同时间点下我们选择的股票的ETF价值。
+(6) 查看ETF内在价值。
 
 ```
 //查看outputTable表内前15行的数据,其中第一列时间为聚合计算发生的时间
 >select top 15 * from outputTable;
-
-time                  　　etf
-2019.06.04T16:40:18.476   14.749
-2019.06.04T16:40:19.476	  14.749
-2019.06.04T16:40:20.477	  14.749
-2019.06.04T16:40:21.477	  22.059
-2019.06.04T16:40:22.477	  22.059
-2019.06.04T16:40:23.477	  34.049
-2019.06.04T16:40:24.477	  34.049
-2019.06.04T16:40:25.477	  284.214
-2019.06.04T16:40:26.477	  284.214
-2019.06.04T16:40:27.477	  285.68
-2019.06.04T16:40:28.477	  285.68
-2019.06.04T16:40:29.478	  285.51
-2019.06.04T16:40:30.478	  285.51
-2019.06.04T16:40:31.478	  285.51
-2019.06.04T16:40:32.478	  285.51
 ```
+
+| time                     | etf     | 
+| ------------------------ | ------- | 
+| 2019.06.04T16:40:18.476  | 14.749  |
+| 2019.06.04T16:40:19.476  | 14.749  |
+| 2019.06.04T16:40:20.477  | 14.749  |
+| 2019.06.04T16:40:21.477  | 22.059  |
+| 2019.06.04T16:40:22.477  | 22.059  |
+| 2019.06.04T16:40:23.477  | 34.049  |
+| 2019.06.04T16:40:24.477  | 34.049  |
+| 2019.06.04T16:40:25.477  | 284.214 |
+| 2019.06.04T16:40:26.477  | 284.214 |
+| 2019.06.04T16:40:27.477  | 285.68  |
+| 2019.06.04T16:40:28.477  | 285.68  |
+| 2019.06.04T16:40:29.478  | 285.51  |
+| 2019.06.04T16:40:30.478  | 285.51  |
+| 2019.06.04T16:40:31.478  | 285.51  |
+| 2019.06.04T16:40:32.478  | 285.51  |
 
 ## 4. 性能测试
 
-我们在服务器上对DolphinDB的数据回放功能进行了性能测试。服务器配置如下：
+我们在服务器上对 DolphinDB database 的数据回放功能进行了性能测试。服务器配置如下：
 
 主机：DELL PowerEdge R730xd
-
 CPU：Intel Xeon(R) CPU E5-2650 v4（24核 48线程 2.20GHz）
-
 内存：512 GB （32GB × 16, 2666 MHz）
-
 硬盘：17T HDD （1.7T × 10, 读取速度222 MB/s，写入速度210 MB/s）
-
 网络：万兆以太网
 
-
 测试脚本如下：
-
 ```
 sch = select name,typeString as type from  quotes.schema().colDefs
 trs = cutPoints(09:30:00.001..18:00:00.001,60)

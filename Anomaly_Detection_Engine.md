@@ -1,4 +1,3 @@
-
 物联网设备（如机床、锅炉、电梯、水表、气表等等）无时无刻不在产生海量的设备状态数据和业务消息数据，这些数据的在采集、计算、分析过程中又常常涉及异常数据的检测。
 
 针对异常数据检测的需求，DolphinDB提供基于流数据框架的异常检测引擎函数，用户只需指定异常指标，异常检测引擎就可以实时地进行异常数据检测。
@@ -16,7 +15,7 @@ subscribeTable(, "sensor", "sensorAnomalyDetection", 0, append!{engine}, true)
 
 这里对异常处理引擎涉及到的一些概念做简要介绍：
 
-- 流数据表：DolphinDB为流式数据提供的一种特定的表对象，提供流式数据的发布功能。通过`subscribeTable`函数，其他的节点或应用可以订阅和消费流数据。
+- 流数据表：DolphinDB database为流式数据提供的一种特定的表对象，提供流式数据的发布功能。通过`subscribeTable`函数，其他的节点或应用可以订阅和消费流数据。
 
 - 异常处理引擎数据源：为异常处理引擎提供"原料"的通道。`createAnomalyDetectionEngine`函数返回一个抽象表，向这个抽象表写入数据，就意味着数据进入异常处理引擎进行计算。
 
@@ -152,10 +151,10 @@ time                   |anomalyType|anomalyString
 
 ```
 getAggregatorStat().AnomalDetectionAggregator
+```
 name    |user  |status |lastErrMsg |numGroups |numRows |numMetrics |metrics             
 ------- |----- |------ |---------- |--------- |------- |---------- |--------------------
 engine1 |guest |OK     |           |0         |10      |3          |temp > 65, temp > percentile(temp, 75), abs((avg(temp) - prev(avg(temp))) / avg(temp)) > 0.01
-```
 
 ## 5. createAnomalyEngine函数介绍
 

@@ -1,6 +1,6 @@
 ### DolphinDB数据表详解
 
-DolphinDB按照存储介质的不同，支持三种类型的数据表，内存表(in-memory table)、磁盘表(disk table)和分布式表(DFS table)。磁盘表将数据表存储在本地磁盘上。分布式表将表存储在分布式文件系统上。按照分区与否，数据表又可以分成分区表(在系统中称为 partitioned table 或 segmented table) 和未分区表。下面我们将详细介绍这些表在创建，读写数据，是否支持事务，是否支持并发等方面的异同之处。
+DolphinDB database 按照存储介质的不同，支持三种类型的数据表，内存表(in-memory table)、磁盘表(disk table)和分布式表(DFS table)。磁盘表将数据表存储在本地磁盘上。分布式表将表存储在分布式文件系统上。按照分区与否，数据表又可以分成分区表(在系统中称为 partitioned table 或 segmented table) 和未分区表。下面我们将详细介绍这些表在创建，读写数据，是否支持事务，是否支持并发等方面的异同之处。
 
 ### 1. 三种数据表的不同之处
 

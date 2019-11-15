@@ -34,7 +34,7 @@ DolphinDB流数据模块采用发布-订阅-消费的模式。流数据首先注
 - 可由API订阅，例如第三方的Java应用程序可以通过Java API订阅流数据进行业务操作。
 
 #### 1.1 流数据表
-流数据表是用以存储流数据、支持同时读写的一种内存表。发布一条消息等价于向流数据表插入一条记录。可使用SQL语句对流数据表进行查询和分析。
+流数据表是一种特殊的内存表，用以存储及发布流数据。流数据表支持同时读写，只能添加记录，不可修改或删除记录。发布一条消息等价于向流数据表插入一条记录。可使用SQL语句对流数据表进行查询和分析。
 
 #### 1.2 发布和订阅
 采用经典的订阅发布模式。每当有新的流数据写入时，发布方会通知所有的订阅方处理新的流数据。数据节点使用`subscribeTable`函数来订阅流数据。
@@ -48,30 +48,36 @@ DolphinDB流数据模块采用发布-订阅-消费的模式。流数据首先注
 要开启支持流数据功能的模块，需要对数据节点增加配置项。
 
 对于发布节点需要的配置项：
-```
-maxPubConnections：发布信息节点最多可连接几个节点。若maxPubConnections>0，则该节点可作为发布节点。默认值为0。
-persistenceDir：保存共享的流数据表的文件夹路径。若需要保存流数据表，必须指定该参数。
-persistenceWorkerNum：负责以异步模式保存流数据表的工作线程数。默认值为0。
-maxPersistenceQueueDepth：以异步模式保存流数据表时消息队列的最大深度（记录数）。默认值为10,000,000。
-maxMsgNumPerBlock：发布消息时，每个消息块中最多可容纳多少条记录。默认值为1024。
-maxPubQueueDepthPerSite：发布节点消息队列的最大深度（记录数）。默认值为10,000,000。
-```
+
+- maxPubConnections: 发布节点可以连接的订阅节点数量上限。若maxPubConnections>0，则该节点可作为发布节点。默认值为0。
+- persistenceDir: 保存共享的流数据表的文件夹路径。若需要保存流数据表，必须指定该参数。
+- persistenceWorkerNum: 负责以异步模式保存流数据表的工作线程数。默认值为0。
+- maxPersistenceQueueDepth: 以异步模式保存流数据表时消息队列的最大深度（记录数）。默认值为10,000,000。
+- maxMsgNumPerBlock: 发布消息时，每个消息块中最多可容纳多少条记录。默认值为1024。
+- maxPubQueueDepthPerSite: 发布节点消息队列的最大深度（记录数）。默认值为10,000,000。
+
 
 对于订阅节点需要的配置项：
-```
-subPort：订阅线程监听的端口号。当节点作为订阅节点时，该参数必须指定。默认值为0。
-subExecutors：订阅节点中消息处理线程的数量。默认值为0，表示解析消息线程也处理消息。
-maxSubConnections：服务器能够接收的最大的订阅连接数。默认值是64。
-subExecutorPooling: 表示执行流计算的线程是否处于pooling模式的布尔值。默认值是false。
-maxSubQueueDepth：订阅节点消息队列的最大深度（记录数）。默认值为10,000,000。
-```
+
+- subPort: 订阅线程监听的端口号。当节点作为订阅节点时，该参数必须指定。默认值为0。
+- subExecutors: 订阅节点中消息处理线程的数量。默认值为0，表示解析消息线程也处理消息。
+- maxSubConnections: 该订阅节点可以连接的的发布节点数量上限。默认值为64。
+- subExecutorPooling: 表示执行流计算的线程是否处于pooling模式的布尔值。默认值是false。
+- maxSubQueueDepth: 订阅节点消息队列的最大深度（记录数）。默认值为10,000,000。
+
 #### 2.1 流数据发布
 
-使用`streamTable`函数定义一个流数据表，向其写入数据即意味着发布数据。由于流数据表需要被不同的会话访问，所以必须使用命令`share`，将流数据表进行共享。不被共享的流数据表无法发布数据。
+使用`streamTable`函数定义一个流数据表，向其写入数据即意味着发布数据。对每一个发布端，通常会有多个会话中的多个订阅端同时订阅，所以必须使用`share`命令将流数据表共享后才可发布流数据。不被共享的流数据表无法发布流数据。
 
 定义并共享流数据表pubTable：
 ```
 share streamTable(10000:0,`timestamp`temperature, [TIMESTAMP,DOUBLE]) as pubTable
+```
+
+`streamTable`函数创建的流数据表是可以包含重复值的。如果要创建包含主键的流数据表，可以使用`keyedStreamTable`函数。
+
+```
+share keyedStreamTable(`timestamp, 10000:0,`timestamp`temperature, [TIMESTAMP,DOUBLE]) as pubTable
 ```
 
 #### 2.2 流数据订阅
@@ -201,11 +207,11 @@ print size(subTable1)
 
 - throttle：一个整数，表示handler处理进来的消息之前等待的时间，以秒为单位。默认值为1。如果没有指定batchSize，throttle将不会起作用。
 
-batchSize用于数据缓冲。当流数据的写入频率非常高，以致数据消费能力跟不上数据进入的速度时，需要进行流量控制，否者订阅端缓冲区很快会堆积数据并耗光内存。可以根据订阅端的消费速度设定throttle参数，定时将数据导入订阅段，保障订阅端的缓冲区数据量稳定。
+batchSize用于数据缓冲。当流数据的写入频率非常高，以致数据消费能力跟不上数据写入的速度时，需要进行流量控制，否则订阅端缓冲区会堆积数据并很快耗光内存。可以根据订阅端的消费速度设定throttle参数，定时将数据导入订阅端，保障订阅端的缓冲区数据量稳定。
 
 - hash：一个非负整数，指定某个订阅线程处理进来的消息。如果没有指定该参数，系统会自动分配一个线程。当需要在两个或多个订阅的处理过程中保持消息数据的同步，可以将多个订阅的hash值设置成相同，这样就能使用同一个线程来同步处理多个数据源，不会出现数据处理有先后导致结果误差。
 
-- reconnect是一个布尔值。默认值为false，表示如果网络异常等问题导致订阅中断，订阅端不会自动重新订阅，如果设置为true，订阅端会在网络正常时，自动从中断位置重新订阅。如果发布端崩溃导致订阅中断，那么订阅端会在发布端重启后不断尝试重新订阅。若发布端对流数据表启用了持久化，那么发布端重启后会首先读取硬盘上的数据，直到发布端读取到订阅中断位置的数据，订阅端才能成功重新订阅。若发布端没有对流数据表启用持久化，那么将重新订阅失败。如果订阅端崩溃导致订阅中断，即使设置了reconnect=true，订阅端重启后也无法自动重新订阅。
+- reconnect是一个布尔值。默认值为false，表示如果网络异常等问题导致订阅中断，订阅端不会自动重新订阅，如果设置为true，订阅端会在网络正常时，自动从中断位置重新订阅。如果发布端关闭导致订阅中断，那么订阅端会在发布端重启后不断尝试重新订阅。若发布端对流数据表启用了持久化，那么发布端重启后会首先读取硬盘上的数据，直到发布端读取到订阅中断位置的数据，订阅端才能成功重新订阅。若发布端没有对流数据表启用持久化，那么将重新订阅失败。订阅端不保存订阅信息，如果订阅端关闭导致订阅中断，即使设置了reconnect=true，订阅端重启后也无法自动重新订阅。
 
 - filter是一个向量。该参数需要配合`setStreamTableFilterColumn`函数一起使用。使用`setStreamTableFilterColumn`指定流数据表的过滤列，流数据表过滤列在filter中的数据才会发布到订阅端，不在filter中的数据不会发布。filter不支持过滤BOOL类型数据。
 
@@ -243,7 +249,7 @@ getTopicProcessedOffset(topic);
 
 #### 2.3 断线重连
 
-DolphinDB的流数据订阅提供了自动重连的功能。如果要启用自动重连，发布端必须对流数据持久化。启用持久化请参考2.6节。当reconnect参数设为true时，订阅端会记录流数据的offset，连接中断时订阅端会从offset开始重新订阅。如果订阅端崩溃或者发布端没有对流数据持久化，订阅端无法自动重连。
+DolphinDB的流数据订阅提供了自动重连的功能。如果要启用自动重连，发布端必须对流数据持久化。启用持久化请参考2.6节。当reconnect参数设为true时，订阅端会记录流数据的offset，连接中断时订阅端会从offset开始重新订阅。如果订阅端关闭或者发布端没有对流数据持久化，订阅端无法自动重连。
 
 #### 2.4 发布端数据过滤
 
@@ -285,15 +291,19 @@ undef("pubStreamTable", SHARED)
 
 我们可事先设定一个界限值。若流数据表的行数达到设定的界限值，前面一半的记录行会从内存转移到磁盘。持久化的数据支持重订阅，当订阅指定数据下标时，下标的计算包含持久化的数据。
 
-要启动流数据持久化，首先要在发布节点的配置文件中添加持久化路径：
+要持久化流数据表，在发布节点首先需要设置持久化路径参数persistenceDir:
 ```
 persisitenceDir = /data/streamCache
 ```
-在脚本中执行[`enableTablePersistence`](https://www.dolphindb.cn/cn/help/enableTablePersistence.html)命令设置针对某一个流数据表启用持久化。下面的示例针对pubTable表启用持久化，其中asyn = true, compress = true, cacheSize=1000000，即当流数据表达到100万行数据时启用持久化，将其中50%的数据采用异步方式压缩保存到磁盘。
+然后执行[`enableTableShareAndPersistence`](https://www.dolphindb.cn/cn/help/enableTableShareAndPersistence.html)命令。下面的示例针对pubTable表启用持久化，其中asyn = true, compress = true, cacheSize=1000000，即当流数据表达到100万行数据时启用持久化，将其中50%的数据采用异步方式压缩保存到磁盘。
 ```
-enableTablePersistence(pubTable, true, true, 1000000)
+pudTable=streamTable(10000:0,`timestamp`temperature, [TIMESTAMP,DOUBLE])
+enableTablePersistence(`sharedPubTable, pubTable, true, true, 1000000)
 ```
-若执行`enableTablePersistence`时，磁盘上已经存在pubTable表的持久化数据，那么系统会加载最新的cacheSize=1000000行记录到内存中。
+
+`enableTableShareAndPersistence`函数会将pubTable共享为sharedPubTable，并把它持久化到磁盘上。
+
+若执行`enableTableShareAndPersistence`时，磁盘上已经存在pubTable表的持久化数据，那么系统会加载最新的cacheSize=1000000行记录到内存中。
 
 对于持久化是否启用异步，需要在持久化数据一致性和性能之间作权衡。当流数据的一致性要求极高时，可以使用同步方式，这样可以保证持久化完成以后，数据才会进入发布队列；若对实时性要求极高，不希望磁盘IO影响到流数据的实时性，那么可以启用异步方式。只有启用异步方式时，持久化工作线程数persistenceWorkerNum配置项才会起作用。当有多个发布表需要持久化，增加persistenceWorkerNum的配置值可以提升异步保存的效率。
 
@@ -470,7 +480,7 @@ conn.unsubscribe(host,port,tableName,actionName="")
 
 例如，取消示例中的订阅：
 ```
-conn.unsubscribe(192.168.1.103", 8941,"sub_trades")
+conn.unsubscribe("192.168.1.103", 8941,"trades","sub_trades")
 ```
 
 #### 4.3 C++ API
@@ -727,7 +737,7 @@ subWorkers表监控流数据订阅工作线程，每条记录代表一个订阅�
 workerId|工作线程编号
 queueDepthLimit|订阅消息队列最大限制
 queueDepth|订阅消息队列深度
-processedMsgCount|handler已处理的消息数量
+processedMsgCount|已进入handler的消息数量
 failedMsgCount|handler处理异常的消息数量
 lastErrMsg|上次handler处理异常的信息
 topics|已订阅主题。若多个，彼此通过逗号分隔。
@@ -795,4 +805,4 @@ act_getdata"。那么当订阅完成之后，用getStreamingStat().pubTables 查
 
 - 趋势监控：把新产生的数据附加到原有的数据上并以可视化图表的方式实时更新。
 
-很多数据可视化的平台都能支持流数据的实时监控，比如当前流行的开源数据可视化框架Grafana。DolphinDB已经实现了Grafana的服务端和客户端的接口，具体配置可以参考教程：https://github.com/dolphindb/grafana-datasource/blob/master/README_CN.md
+很多数据可视化的平台都能支持流数据的实时监控，比如当前流行的开源数据可视化框架Grafana。DolphinDB database 已经实现了Grafana的服务端和客户端的接口，具体配置可以参考教程：https://github.com/dolphindb/grafana-datasource/blob/master/README_CN.md

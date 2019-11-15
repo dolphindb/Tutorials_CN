@@ -49,7 +49,7 @@ https://github.com/dolphindb/Tutorials_CN/blob/master/multi_machine_cluster_depl
 
 2. 客户端GUI提供了方便开发DolphinDB脚本的图形界面。详见GUI帮助文档http://www.dolphindb.com/cn/gui_help/
 
-3. 在DolphinDB中创建分区数据库和表。DolphinDB支持顺序、值、列表、区间以及复合分区，可灵活应对各类企业实际业务场景。详见教程
+3. 在DolphinDB database中创建分区数据库和表。DolphinDB支持顺序、值、列表、区间以及复合分区，可灵活应对各类企业实际业务场景。详见教程
 
 https://github.com/dolphindb/Tutorials_CN/blob/master/database.md
 

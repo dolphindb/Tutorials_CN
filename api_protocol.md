@@ -1,14 +1,13 @@
 # DolphinDB API 交互协议
 
-DolphinDB API分为三个交互阶段
-
+DolphinDB API有以下三个交互阶段：
 * 连接
 * 客户端发送报文
 * 服务端返回报文
 
 ## 1. 连接
 
-连接阶段是客户端和服务端握手的阶段。客户端向服务器发送`connect`命令请求连接，服务端返回`OK`，并且分配新的SessionID给客户端。
+连接阶段是客户端和服务端握手的阶段。客户端向服务器发送`connect`命令请求连接，服务端返回'OK'，并且分配新的SessionID给客户端。
 
 > 客户端发送连接请求
 
@@ -53,7 +52,7 @@ DolphinDB API分为三个交互阶段
 
 ### 2.3. 会话
 
-会话编号(session ID)代表着终端与DolphinDB建立的一次TCP连接。 终端通过`connect`连接成功后DolphinDB会返回一个新的session ID，在此之后所有的报文交互都基于此session ID进行，直到此连接被终端主动关闭。
+会话编号(session ID)代表终端与DolphinDB建立的一次TCP连接。终端通过`connect`连接成功后DolphinDB会返回一个新的session ID，在此之后所有的报文交互都基于此session ID进行，直到此连接被终端主动关闭。
 
 如果请求报文的session ID为0，或者服务器找不到指定的session ID，服务器会创建并返回一个新的session ID。
 
@@ -68,11 +67,11 @@ API2| 调用返回结果的同时，持续返回执行中脚本输出的信息�
 
 ### 2.5. 指令类型
 
-DolphinDB支持 三种指令类型:
+DolphinDB database 支持以下三种指令类型:
 
-* `script`: 这种指令使用非常灵活，他以字符串形式发送脚本，服务器会返回脚本执行的结果。
-* `function`: 这种指令可以调用指定的函数，也可以是自定义函数。可以接收多个对象作为函数参数。
-* `variable`: 将客户端对象变量上传到服务器并指定其变量名。
+* script: 这种指令使用非常灵活，它以字符串形式发送脚本，服务器会返回脚本执行的结果。
+* function: 这种指令可以调用指定的函数，可以是内置函数或自定义函数。函数可以接受多个对象作为函数参数。
+* variable: 将客户端对象变量上传到服务器并指定其变量名。
 
 ### 2.5.1 script
 
@@ -82,7 +81,7 @@ script指令用来向DolphinDB发送脚本字符串，DolphinDB执行脚本并�
 
 长度(Byte) | 报文 | 说明 | 样本
 ---|---|---|---
-3 or 4| 请求类型 | API，API2 | API
+3 或 4| 请求类型 | API，API2 | API
 1| 空格| char(0x20) |
 不固定|SESSIONID | 长度不固定，到空格为止  | 2247761467
 1| 空格| char(0x20) |
@@ -90,7 +89,7 @@ script指令用来向DolphinDB发送脚本字符串，DolphinDB执行脚本并�
 1| 换行符 | char(0x10) |
 7| 指令 | script | "script"
 1| 换行符 | char(0x10) |
-不固定| 脚本内容 | 长度到下一个换行符为止| `select * from loadTable('dfs://db','tb1')` or `sum(1..100) + avg(1..100)`
+不固定| 脚本内容 | 长度到下一个换行符为止| select * from loadTable('dfs://db','tb1') 或 sum(1..100) + avg(1..100)
 
 > 响应报文格式
 
@@ -132,7 +131,7 @@ function指令用来向DolphinDB发送函数调用请求，DolphinDB会执行指
 
 长度(Byte) | 报文 | 说明 | 样本
 ---|---|---|---
-不固定| SESSIONID | 长度不固定，到空格为止   | API
+3| SESSIONID | 长度不固定，到空格为止   | API
 1| 空格| char(0x20) |
 1|大小端 | 1-小端，0-大端 | 1
 1| 换行符(LF) | char(0x10) |
@@ -165,7 +164,7 @@ variable指令用来向DolphinDB发送本地数据，DolphinDB会在Server端生
 
 占位(Byte) | 报文 | 说明 | 样本
 ---|---|---|---
-不固定| SESSIONID | 长度不定，到空格为止  | API
+3| SESSIONID | 长度不定，到空格为止  | API
 1| 空格| char(0x20) |
 1|大小端 | 1-小端，0-大端 | 1
 1| 换行符(LF) | char(0x10) |
@@ -190,7 +189,7 @@ variable指令用来向DolphinDB发送本地数据，DolphinDB会在Server端生
 |DataForm|1| 数据形式
 |DataType|1| 数据类型
 |Rows|4| 行数
-|Columns|4| 列数，Vector的column永远是1
+|Columns|4| 列数，向量的columns是1
 |Data|不固定| 数据
 
 * 数据对(DF_PAIR)
@@ -252,7 +251,7 @@ variable指令用来向DolphinDB发送本地数据，DolphinDB会在Server端生
 
 ### 3.2 数据类型
 
-API使用基本的数据类型包括Byte，Short，Int，Long，Float，Double，String这几种，所有的日期和时间类型内部都是用INT或者LONG来存储和传输数据。
+API使用基本的数据类型包括Byte，Short，Int，Long，Float，Double，String这几种，所有的日期和时间类型在系统内部都是用INT或者LONG来存储和传输数据。
 
 数据类型 | 长度 | 说明 | 样例
 ---|---|---|---

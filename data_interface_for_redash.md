@@ -1,5 +1,5 @@
 ### redash连接DolphinDB数据源的教程
-Redash 是一款开源的 BI 工具，提供了基于 web 的数据库查询和数据可视化功能。DolphinDB支持http协议的 `POST`和`GET`接口获取数据，所以可以使用redash中对应的`JSON`和`URL`两种数据源来连接DolphinDB。本文详细介绍在redash中配置数据源及查询DolphinDB中的数据的步骤。
+Redash 是一款开源的 BI 工具，提供了基于 web 的数据库查询和数据可视化功能。DolphinDB database 支持http协议的 `POST`和`GET`接口获取数据，所以可以使用redash中对应的`JSON`和`URL`两种数据源来连接DolphinDB。本文详细介绍在redash中配置数据源及查询DolphinDB中的数据的步骤。
 #### 1. 使用JSON数据源连接DolphinDB
 redash当前仅在线(SAAS)版本中支持JSON数据源，因此使用在线版本的用户，可以选择这种连接方案，这种方案需要DolphinDB也能够通过外网访问。
 要使用redash在线版本，需要先到[redash官方网站](https://redash.io)注册并登录。

@@ -187,7 +187,7 @@ ps aux | grep dolphindb  | grep -v grep | grep ec2-user|  awk '{print $2}' | xar
 
 #### 3.3.5 DolphinDB权限控制
 
-DolphinDB提供了良好的安全机制。只有系统管理员才有权限做集群部署。在初次使用DolphinDB网络集群管理器时，需要用以下默认的系统管理员账号登录。
+DolphinDB database 提供了良好的权限控制机制。只有系统管理员才有权限做集群部署。在初次使用DolphinDB网络集群管理器时，需要用以下默认的系统管理员账号登录。
 
 ```txt
 系统管理员帐号名: admin
@@ -232,7 +232,7 @@ startDataNode(["DFS_NODE1", "DFS_NODE2","DFS_NODE3","DFS_NODE4"])
 
 3. **配置文件中的IP地址、端口号或节点别名没有书写正确。**
 
-4. 如果集群是部署在**云端**或**k8s**环境，需要在`agent.cfg`和`cluster.cfg`文件中加上配置项`lanCluster=0`。
+4. 如果集群是部署在**云端**或**k8s**环境，需要在agent.cfg和cluster.cfg文件中加上配置项lanCluster=0。
 
 ## 4. 基于Web的集群管理
 

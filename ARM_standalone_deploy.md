@@ -27,7 +27,7 @@ DolphinDB ARM版使用的交叉编译器32位系统为arm-linux-gnueabihf4.9，6
 
 ## 2. 安装系统
 
-从DolphinDB网站下载DolphinDB嵌入式ARM版软件包，解压缩后即可运行。
+从DolphinDB网站下载DolphinDB database嵌入式ARM版软件包，解压缩后即可运行。
 
 例如解压到如下目录：
 

@@ -1,4 +1,4 @@
-## DolphinDB整合前端chart组件展示数据
+## 前端chart组件展示DolphinDB数据
 
 ### 1. 概述
 数据图表前端组件在物联网和实时监控的场景有非常广的应用，当前比较流行的有Echarts、HighCharts等组件。本文主要讲解如何利用DolphinDB的Web数据接口，结合JavaScript使用前端组件来展示DolphinDB中的数据。
@@ -207,4 +207,4 @@ conn.run("select avg(ec) as ec from iotTable group by second(time)", function(re
 ![image](https://github.com/dolphindb/Tutorials_CN/blob/master/images/echart/2.PNG?raw=true)
 
 ### 5. 总结
-从上述示例可以了解，通过DolphinDB的WebApi开发包，Echarts、HighCharts等组件与DolphinDB集成展示数据是非常方便的，其他前端chart组件与DolphinDB的集成，均可以参考本文方式实现。
+从上述示例可以了解，通过 DolphinDB database 的WebApi开发包，Echarts与HighCharts等组件与DolphinDB集成展示数据是非常方便的，其他前端chart组件与DolphinDB的集成，均可以参考本文方式实现。

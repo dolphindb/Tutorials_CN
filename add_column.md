@@ -1,16 +1,16 @@
 工业物联网采集的数据和金融交易数据具有相同的特点：频率高、维度多、数据一旦生成就不会改变、数据量庞大，并且工业物联网数据采集的维度和实时计算的指标会随着业务扩展和设备增加而不断增加，金融领域的数据分析和监控需要不断增加风控监测指标。因此，工业物联网和金融领域的数据平台必须能够满足动态增加字段和计算指标的需求。
 
-DolphinDB为工业物联网和金融提供了一站式解决方案。数据处理流程如下图所示：
+DolphinDB database 为工业物联网和金融提供了一站式解决方案。数据处理流程如下图所示：
 
-![Image text](https://github.com/dolphindb/Tutorials_CN/blob/master/images/stream_cn.png?raw=true)
+![Image text](../images/stream_cn.png)
 
 工业物联网采集的数据和金融交易的实时数据首先会以流数据的形式注入到DolphinDB的流数据表中，数据节点通过订阅流数据表，可以把实时流数据持久化到分布式数据库中，供将来深度数据分析使用；同时，流聚合引擎通过订阅流数据表，对流数据进行实时聚合运算，计算结果用于工业物联网的监控和预警以及互联网金融的风控监测。
 
-在这一数据处理流程中，涉及到了3种表：流数据表、分布式表（DFS table）、流聚合引擎的输入表和输出表。如果数据采集的维度增加，那么这3种表都要做相应的处理。
+在这一数据处理流程中，涉及到了3种表：分布式表（DFS table）、流数据表、流聚合引擎的输入表和输出表。如果数据采集的维度增加，那么这3种表都要做相应的处理。
 
 ## 1.给分布式表增加字段
 
-如果计划给流数据表新增加字段，而订阅者分布式表没有做相应的调整，那么流数据将无法写入分布式表，这是由于流数据表和分布式表结构不一致造成的。因此，如果需要给流数据表增加字段，必须首先要给订阅者分布式表增加字段。DolphinDB提供了**addColumn**函数，可以给分布式表增加字段。
+如果计划给流数据表新增加字段，而订阅者分布式表没有做相应的调整，那么流数据将无法写入分布式表，这是由于流数据表和分布式表结构不一致造成的。因此，如果需要给流数据表增加字段，必须首先要给订阅者分布式表增加字段。DolphinDB提供了`addColumn`函数为分布式表增加字段。
 
 ### 语法
 
@@ -18,11 +18,11 @@ addColumn(table, colNames, colTypes)
 
 ### 参数
 
-* table是分布式表或流数据表。
+* table 是分布式表或流数据表。
 
-* colNames是字符串标量或向量，表示要增加的字段名。
+* colNames 是字符串标量或向量，表示要增加的字段名。
 
-* colType是表示数据类型的标量或向量。
+* colType 是表示数据类型的标量或向量。
 
 ### 例子
 
@@ -36,7 +36,7 @@ db=database("dfs://iotDemo",RANGE,`A`F`M`T`Z)
 pt = db.createPartitionedTable(table(1000:0,`time`equipmentId`voltage`eletricity,[TIMESTAMP,SYMBOL,INT,DOUBLE]), `pt, `equipmentId)
 ```
 
-计划给流数据表streamTb新增两个字段，因此分布式表pt需要先增加两个字段。分布式表增加字段后，需要使用**loadTable**函数重新加载，才会生效。
+计划给流数据表streamTb新增两个字段，因此分布式表pt需要先增加两个字段。分布式表增加字段后，需要使用`loadTable`函数重新加载，才会生效。
 
 ```
 addColumn(pt,`temperature`humidity,[DOUBLE,DOUBLE])
@@ -45,7 +45,7 @@ pt=loadTable("dfs://iotDemo","pt")
 
 ## 2.给流数据表增加字段
 
-流数据表通常是由streamTable函数生成，用于传输流数据。工业物联网采集的数据和金融交易的实时数据往往会先注入流数据表。如果数据采集维度增加，那么作为信息发布者的流数据表需要调整结构。DolphinDB的**addColumn**函数除了可以给分布式表增加字段，还可以给流数据表的字段。
+流数据表通常是由`streamTable`函数生成，用于传输流数据。工业物联网采集的数据和金融交易的实时数据往往会先注入流数据表。如果数据采集维度增加，那么作为信息发布者的流数据表需要调整结构。DolphinDB的`addColumn`函数除了可以给分布式表增加字段，还可以给流数据表的字段。
 
 假设目前数据采集的维度只有两个：电压和电流。创建流数据表的代码如下：
 
@@ -63,7 +63,7 @@ addColumn(streamTb,`temperature`humidity,[DOUBLE,DOUBLE])
 
 ## 3.给流聚合引擎增加计算指标
 
-用户在定义流聚合引擎时，需要使用元代码（meta code）来指定计算指标。随着需求的变化，计算指标往往也会做出响应的改变。DolphinDB提供了**addMetrics**函数来增加流聚合引擎的计算指标。
+用户在定义流聚合引擎时，需要使用元代码（metacode）来指定计算指标。随着需求的变化，计算指标往往也会做出响应的改变。DolphinDB提供了`addMetrics`函数来增加流聚合引擎的计算指标。
 
 ### 语法
 
@@ -71,11 +71,11 @@ addMetrics(StreamAggregator, newMetrics, newMetricsSchema)
 
 ### 参数
 
-* StreamAggregator是**createTimeSeriesAggregator**函数返回的抽象表。
+* StreamAggregator 是`createTimeSeriesAggregator`函数返回的抽象表。
 
-* newMetrics是元代码，用于表示增加的计算指标。
+* newMetrics 是元代码，用于表示增加的计算指标。
 
-* newMetricsSchema是表对象，用于指定新增的计算指标在输出表中的列名和数据类型。
+* newMetricsSchema 是表对象，用于指定新增的计算指标在输出表中的列名和数据类型。
 
 ### 例子
 
