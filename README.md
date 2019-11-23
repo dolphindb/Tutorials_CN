@@ -14,9 +14,10 @@
     - [数据导入教程](https://github.com/dolphindb/Tutorials_CN/blob/master/import_data.md)
     - [数据备份恢复教程](https://github.com/dolphindb/Tutorials_CN/blob/master/restore-backup.md)
     - [动态增加字段和计算指标](https://github.com/dolphindb/Tutorials_CN/blob/master/add_column.md)
+    - [内存分区表加载和操作](https://github.com/dolphindb/Tutorials_CN/blob/master/partitioned_in_memory_table.md)
 - 编程语言
     - [脚本语言的混合范式编程](https://github.com/dolphindb/Tutorials_CN/blob/master/hybrid_programming_paradigms.md)
-    - [内存分区表加载和操作](https://github.com/dolphindb/Tutorials_CN/blob/master/partitioned_in_memory_table.md)
+    - [DolphinDB模块复用教程](https://github.com/dolphindb/Tutorials_CN/blob/master/module_tutorial.md)
 - 流计算
     - [流数据教程](https://github.com/dolphindb/Tutorials_CN/blob/master/streaming_tutorial.md)
     - [流数据聚合引擎](https://github.com/dolphindb/Tutorials_CN/blob/master/stream_aggregator.md)
