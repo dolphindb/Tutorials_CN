@@ -131,3 +131,5 @@ Modules [Module1] and [Module2] contain function [functionName]. Please use modu
 
 在开发阶段调试模块代码时，开发人员需要反复修改模块代码并刷新定义，此时可以重新打开模块文件并全选执行模块代码即可，这种方法仅对当前会话有效。
 
+#### 6.3 模块间互相调用
+模块之间可以单向引用，比如模块a 引用 b , b 引用 c。模块之间不支持交叉引用，比如模块a 引用 b， 模块b又引用a。
