@@ -84,7 +84,10 @@ def factorHandler(mutable dst, msg){
 }
 ```
 * 订阅高频数据，并实时计算因子。
+ 
+
 ```
+//msgAsTable参数为true，订阅收到的数据会以table方式传递给factorHandler，方便在factorHandler内部使用sql进行数据操作。
 subscribeTable(tableName=`tick, actionName=`createFactor, handler=factorHandler{objByName(`factor)}, msgAsTable=true)
 ```
 
