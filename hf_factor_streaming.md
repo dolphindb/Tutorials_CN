@@ -97,8 +97,66 @@ submitJob("gendata", "generate data", generateData, 5000000)
 ```
 
 #### 4.观察结果
+
 ```
 //观察最新计算的10条记录
 select top 10 * from objByName(`factor) order by time desc
 
+```
+#### 5.通过Api订阅和处理因子数据
+
+##### 5.1 Java Api订阅例子
+
+* 主程序代码
+
+```
+import com.xxdb.streaming.client.ThreadedClient;
+
+import java.io.IOException;
+
+public class main {
+    public static void main(String[] args) throws IOException {
+        ThreadedClient client = new ThreadedClient(20002);
+        FactorHandler handler = new FactorHandler();
+        client.subscribe("localhost", 8848, "factor", "consume_factor", handler,-1);
+    }
+}
+```
+
+* 订阅处理FactorHandler代码 
+```
+
+import com.xxdb.data.BasicDouble;
+import com.xxdb.data.BasicString;
+import com.xxdb.data.BasicTime;
+import com.xxdb.streaming.client.IMessage;
+import com.xxdb.streaming.client.MessageHandler;
+
+public class FactorHandler  implements MessageHandler {
+    @Override
+    public void doEvent(IMessage msg) {
+
+        BasicString symbol = msg.getValue("symbol");
+        BasicTime time = msg.getValue("time");
+        BasicDouble factor1 = msg.getValue("factor1");
+        BasicDouble factor2 = msg.getValue("factor2");
+        System.out.println(symbol.getString() + " | " + time.getString() + " | " + factor1.getString() + " | " + factor2.getString());
+    }
+}
+
+```
+
+##### 5.2 Python Api订阅例子
+
+* Python订阅代码
+```python
+import dolphindb as ddb
+import numpy as np
+s = ddb.session()
+s.enableStreaming(18819)
+
+def myHandler(lst):
+    print(lst)
+
+s.subscribe("localhost",8848,handler,"factor","sub_factor",-1,False,None)
 ```
