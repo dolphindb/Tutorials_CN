@@ -83,7 +83,7 @@ def factorHandler(mutable dst, msg){
 	dst.tableInsert(data)
 }
 ```
-* 订阅高频数据，并实时计算因子。
+* 订阅Level 2 行情数据数据，并实时计算因子。
  
 
 ```
