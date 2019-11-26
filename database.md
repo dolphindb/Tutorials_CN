@@ -433,7 +433,127 @@ args.add(quotes);
 conn.run("saveQuotes", args);
 ```
 
-#### 6.查询分区表注意事项
+#### 6.数据重分区和复制DFS表
+
+#### 6.1 数据重分区
+
+数据库的分区类型和分区方案一旦确定以后，就不能修改。如果要对数据重新分区，需要新建一个数据库，然后把原数据库中的数据导入到新数据库中。
+
+例如，假设有一个组合分区的数据库dfs://db1 ，第一层是按天分区，第二层根据股票代码范围划分为30个分区，创建数据库的代码如下：
+
+```
+login("admin","123456")
+t=table(1:0,`timestamp`sym`qty`price,[TIMESTAMP,SYMBOL,DOUBLE,DOUBLE])
+dates=2010.01.01..2020.12.31
+syms="A"+string(1..500)
+sym_ranges=cutPoints(syms,30)
+db1=database("",VALUE,dates)
+db2=database("",RANGE,sym_ranges)
+db=database("dfs://db1",COMPO,[db1,db2])
+db.createPartitionedTable(t,`tb1,`timestamp`sym)
+```
+
+现在要把以上数据库中的数据导入到新的数据库dfs://db2 中。新数据库是组合分区，第一层依然是按天分区，第二层按照股票代码范围划分为50个分区，创建数据库的代码如下：
+
+```
+login("admin","123456")
+t=table(1:0,`timestamp`sym`qty`price,[TIMESTAMP,SYMBOL,DOUBLE,DOUBLE])
+dates=2010.01.01..2020.12.31
+syms="A"+string(1..500)
+sym_ranges=cutPoints(syms,50)
+db1=database("",VALUE,dates)
+db2=database("",RANGE,sym_ranges)
+db=database("dfs://db2",COMPO,[db1,db2])
+db.createPartitionedTable(t,`tb2,`timestamp`sym)
+```
+
+* 如果总数据量很小，可以直接把所有数据加载到内存表中，再把内存表中的数据保存到新的数据库中。
+
+```
+allData=select * from loadTable("dfs://db1","tb1")
+tb2=loadTable("dfs://db2","tb2")
+tb2.append!(allData)
+```
+
+* 但通常分布式表的数据量非常大，无法全量加载到内存中，可以用[`repartitionDS`](http://www.dolphindb.cn/cn/help/repartitionDS.html)函数划分数据源，将数据划分为若干个内存能够容纳的小数据块，再通过map-reduce的方法将数据块分批加载到内存并保存到新的数据库中。这样做不仅可以解决内存不够的问题，而且通过并行加载提升性能。`repartitionDS`函数的语法如下：
+
+```
+repartitionDS(query, [column], [partitionType], [partitionScheme], [local=true])
+```
+
+下例按天将数据划分为多个小数据块，分批将数据写入新的数据库中：
+
+```
+def writeDataTo(dbPath, tbName, mutable tbdata){
+	loadTable(dbPath,tbName).append!(tbdata)
+}
+
+datasrc=repartitionDS(<select * from tb1>,`date,VALUE,dates,true)
+mr(ds=datasrc, mapFunc=writeDataTo{"dfs://db2","tb2"}, parallel=true)
+```
+
+上例中repartitionDS函数中local=true，表示会把重分区后的chunk数据都汇总到当前的协调节点，做进一步的map-reduce处理。如果当前节点的资源有限，可以将local设置为false。
+
+mr函数中parallel=true表示小数据块会并行加载到内存和写入到数据库，只有满足以下两个条件才能将parallel设置为true：（1）内存充足；（2）两个map子任务不会同时写入新数据库中的某个分区。否则要将parallel设置为false，local设置为true。假如新数据库dfs://db3 的第一层分区是按日期的范围进行分区，每个月一个分区：
+
+```
+login("admin","123456")
+t=table(1:0,`timestamp`sym`qty`price,[TIMESTAMP,SYMBOL,DOUBLE,DOUBLE])
+months=date(2010.01M..2021.01M)
+syms="A"+string(1..500)
+sym_ranges=cutPoints(syms,50)
+db1=database("",RANGE,months) //每个月一个分区
+db2=database("",RANGE,sym_ranges)
+db=database("dfs://db3",COMPO,[db1,db2])
+db.createPartitionedTable(t,`tb3,`timestamp`sym)
+```
+
+由于`repartitionDS`函数按天划分的多个小数据块对应新数据库中的同一个分区，而DolphinDB不允许同时对一个分区进行写入，因此要parallel设置为false。
+
+```
+def writeDataTo(dbPath, tbName, mutable tbdata){
+	loadTable(dbPath,tbName).append!(tbdata)
+}
+
+datasrc=repartitionDS(<select * from tb1>,`date,VALUE,dates)
+mr(ds=datasrc, mapFunc=writeDataTo{"dfs://db2","tb2"}, parallel=true)
+```
+
+`repartitionDS`目前支持VALUE和RANGE两种分区方法。上例中，如果内存充足，我们也可以按月划分数据：
+
+```
+months=date(2010.01M..2021.01M)
+datasrc=repartitionDS(<select * from tb1>,`date,RANGE,months) //按月划分
+mr(ds=datasrc, mapFunc=writeDataTo{"dfs://db2","tb2"}, parallel=true)
+```
+
+#### 6.2 复制DFS表
+
+如果只需复制DFS表，不改变数据的分区类型和分区方案，可以使用[`sqlDS`](http://www.dolphindb.cn/cn/help/sqlDS.html)函数划分数据源。例如，把6.1中表tb1的内容复制到同一个数据库的表tb1_bak中：
+
+```
+//创建tb1_bak
+db=database("dfs://db1")
+t=table(1:0,`timestamp`sym`qty`price,[TIMESTAMP,SYMBOL,DOUBLE,DOUBLE])
+db.createPartitionedTable(t,`tb1_bak,`timestamp`sym)
+
+//把表tb1的内容写入到表tb1_bak中
+def writeDataTo(dbPath, tbName, mutable tbdata){
+	loadTable(dbPath,tbName).append!(tbdata)
+}
+
+datasrc=sqlDS(<select * from tb1>)
+mr(ds=datasrc, mapFunc=writeDataTo{"dfs://db1","tb1_bak"}, parallel=true)
+```
+
+当然，repartitionDS的方法也适用于复制DFS表，但是使用sqlDS的性能更好。
+
+```
+datasrc=repartitionDS(<select * from tb1>,`date,VALUE)
+mr(ds=datasrc, mapFunc=writeDataTo{"dfs://db1","tb1_bak"}, parallel=true)
+```
+
+#### 7.查询分区表注意事项
 
 系统在执行分布式查询时，首先根据WHERE条件确定需要的分区，然后重写查询，把新的查询发送到相关分区所在的节点，最后整合这些分区的结果返回给用户。
 
