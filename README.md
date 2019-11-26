@@ -22,6 +22,7 @@
     - [流数据教程](https://github.com/dolphindb/Tutorials_CN/blob/master/streaming_tutorial.md)
     - [流数据聚合引擎](https://github.com/dolphindb/Tutorials_CN/blob/master/stream_aggregator.md)
     - [流数据回放教程](https://github.com/dolphindb/Tutorials_CN/blob/master/historical_data_replay.md)
+    - [流数据高频因子计算教程](https://github.com/dolphindb/Tutorials_CN/blob/master/hf_factor_streaming.md)
 - 系统管理
     - [权限管理和安全](https://github.com/dolphindb/Tutorials_CN/blob/master/ACL_and_Security.md)
     - [作业管理](https://github.com/dolphindb/Tutorials_CN/blob/master/job_management_tutorial.md)
