@@ -1,8 +1,20 @@
-### 实现步骤
+### 高频因子的实时计算
 
-#### 1. 模拟产生高频数据
+#### 1. 系统配置
 
-模拟产生100只股票的数据。symbol从1到100，总共100,000,000条记录，22列：symbol, time, ap1..ap5, bp1..bp5, av1..av5, bv1..bv5。 限制：ap1<ap2<ap3<ap4<ap5, bp1>bp2>bp3>bp4>bp5, 均为小数点后两位；av1-av5, bv1-bv5均为整数，无大小限制。 
+本次示例程序的服务器程序采用单机模式启动，启用流数据发布和订阅，配置文件的配置建议如下（默认配置文件为dolphindb.cfg）：
+```
+mode=single
+maxPubConnections=8
+persistenceDir=dbCache
+maxMemSize=24
+```
+
+单机模式启动后，默认端口为8848.
+
+#### 2. 模拟产生高频数据
+
+模拟产生100只股票的数据。symbol从1到100，总共100,000,000条记录，22列：symbol, time, ap1..ap5, bp1..bp5, av1..av5, bv1..bv5。 限制：ap1<ap2<ap3<ap4<ap5, bp1>bp2>bp3>bp4>bp5, 均为小数点后两位。 
 
 * 创建流数据表tick，以存放高频数据。
 ```
@@ -47,7 +59,7 @@ def generateData(times){
 }
 ```
 
-#### 2. DolphinDB订阅高频数据并实时计算2个因子
+#### 3. DolphinDB订阅高频数据并实时计算2个因子
 
 本例中，需要计算以下两个因子：
 ```
@@ -80,7 +92,7 @@ subscribeTable(tableName=`tick, actionName=`createFactor, handler=factorHandler{
 submitJob("gendata", "generate data", generateData, 5000000)
 ```
 
-#### 3.观察结果
+#### 4.观察结果
 ```
 //观察最新计算的10条记录
 select top 10 * from objByName(`factor) order by time desc
