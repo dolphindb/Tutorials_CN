@@ -6,6 +6,7 @@
 ```
 mode=single
 maxPubConnections=8
+subPort=20001
 persistenceDir=dbCache
 maxMemSize=24
 ```
@@ -18,10 +19,10 @@ maxMemSize=24
 
 * 创建流数据表tick，以存放高频数据。
 ```
-def createTable(){
+def createTickTable(){
 	share(streamTable(1000:0, `symbol`time`ap1`ap2`ap3`ap4`ap5`bp1`bp2`bp3`bp4`bp5`av1`av2`av3`av4`av5`bv1`bv2`bv3`bv4`bv5, [SYMBOL,TIME,DOUBLE,DOUBLE,DOUBLE,DOUBLE,DOUBLE,DOUBLE,DOUBLE,DOUBLE,DOUBLE,DOUBLE,DOUBLE,DOUBLE,DOUBLE,DOUBLE,DOUBLE,DOUBLE,DOUBLE,DOUBLE,DOUBLE,DOUBLE]), `tick)
 }
-createTable()
+createTickTable()
 ```
 
 * 定义generateData函数，在每个时间戳生成1-10笔随机数据，并写入tick表。此函数将在任务提交时执行。
@@ -96,4 +97,5 @@ submitJob("gendata", "generate data", generateData, 5000000)
 ```
 //观察最新计算的10条记录
 select top 10 * from objByName(`factor) order by time desc
+
 ```
