@@ -105,9 +105,9 @@ v->setData(0, 5, tmp.data());   // v = [11 22 33 44 55]
 
 // 获取buffer后批量更新
 int buf[1024];
-int* p = v->getIntBuffer(0, 5, buf);
+int* p = v->getIntBuffer(0, 1024, buf);
 // p[0] = ...
-v->setInt(0, 5, buf);
+v->setInt(0, 1024, p);
 ```
 
 为了解释上面三种数据更新方法，先介绍Vector的数据存储模式。
