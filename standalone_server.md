@@ -46,7 +46,7 @@ nohup ./dolphindb -console 0 &
 
 `-console`默认是为 1，如果要设置为后台运行，必须要设置为0（`-console 0`)，否则系统运行一段时间后会自动退出。
 
-如果用户在Linux前台运行DolphinDB，那么用户可以通过命令行来执行DolphinDB代码；如果在Linux后台运行DolphinDB，那么用户不能通过命令行来执行DolphinDB代码，可以通过[GUI](http://www.dolphindb.cn/cn/gui/GUIGetStarted.html)、[DolphinDB Notebook](http://www.dolphindb.cn/cn/gui/NotebookGetStarted.html)或[VS code](https://github.com/dolphindb/Tutorials_CN)等图形用户界面来执行代码。
+如果用户在Linux前台运行DolphinDB，那么用户可以通过命令行来执行DolphinDB代码；如果在Linux后台运行DolphinDB，那么用户不能通过命令行来执行DolphinDB代码，可以通过[GUI](http://www.dolphindb.cn/cn/gui/GUIGetStarted.html) 或[VS code插件](https://github.com/dolphindb/Tutorials_CN/blob/master/vscode_extension.md)等图形用户界面来执行代码。
 
 - Windows系统
 
@@ -80,13 +80,53 @@ dolphindb.exe -localSite localhost:8900:local8900
 dolphindb.exe -localSite localhost:8900:local8900 -maxMemSize 32
 ```
 
-## 3. 网络连接到DolphinDB Server
+## 3. DolphinDB GUI连接DolphinDB Server
 
-到浏览器中输入localhost:8848(或其它端口号)。目前支持Chrome与Firefox浏览器。
+下载DolphinDB GUI程序包，下载地址：[http://www.dolphindb.cn/downloads.html](http://www.dolphindb.cn/downloads.html)
 
-## 4. 通过网络界面运行DolphinDB脚本
+解压缩程序包，例如解压到如下目录：
 
-在DolphinDB notebook的编辑器窗口输入以下DolphinDB代码：
+```sh
+/DolphinDB_GUI
+```
+
+在本地文件夹下，
+
+Windows双击 gui.bat 启动DolphinDB GUI
+
+Linux在终端中执行以下指令：
+
+```sh
+sh gui.sh
+```
+
+如果DolphinDB GUI无法正常启动，可能有以下两个原因：
+
+(1)没有安装Java；
+
+(2)安装的Java版本不符合要求，DolphinDB GUI使用环境需要Java 8及以上版本。Java下载地址：https://www.oracle.com/technetwork/java/javase/downloads/index.html
+
+根据提示选择一个文件夹作为工作区
+
+点击上方菜单栏中的Server添加服务器，也可以编辑服务器，默认已添加的服务器端口号为：8848，可继续添加服务器
+
+![Sever](images/single_GUI_server.png)
+
+![AddSever](images/single_GUI_addserver.PNG)
+
+在工具栏的右侧是一个下拉窗口，可以切换服务器
+
+![SwitchSever](images/single_GUI_tool.png)
+
+## 4. 通过DolphinDB GUI运行DolphinDB脚本
+
+在DolphinDB GUI视窗左侧项目导航栏，右键单击workspace，选择New Project新建项目
+
+![新建项目](images/single_GUI_newproject.PNG)
+
+右键单击新建的项目，选择New Folder，在scripts目录下新建脚本文件，如：demo.txt
+
+在DolphinDB GUI的编辑器窗口输入以下DolphinDB代码：
 
 ```txt
 n=1000000
@@ -103,9 +143,11 @@ pt=loadTable("dfs://valuedb","pt")
 select top 100 * from pt
 ```
 
+点击菜单栏Run下的Execute运行脚本
+
 下图展示了运行结果
 
-![运行结果](images/single_notebook.jpg)
+![运行结果](images/single_GUI.PNG)
 
 DolphinDB database 针对的是海量数据的场景，因此数据库表通常是需要分区的。关于分区请参考[DolphinDB分区教程](https://github.com/dolphindb/Tutorials_CN/blob/master/database.md)。
 
@@ -120,7 +162,7 @@ select top 100 * from tmp
 
 > 注意：
 > 1. 从V0.98版本开始，DolphinDB单实例支持分布式数据库。
-> 2. 使用DolphinDB Notebook时，若10分钟内无命令执行，系统会自动关闭会话以释放DolphinDB系统资源。建议用户在DolphinDB GUI中编写代码与执行命令。DolphinDB GUI中的会话在用户关闭之前会一直存在。
+> 2. DolphinDB GUI中的会话在用户关闭之前会一直存在。
 
 ## 5. 修改配置
 
