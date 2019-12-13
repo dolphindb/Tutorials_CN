@@ -148,7 +148,7 @@ group by symbol, bar(cumvol, volThreshold) as volBar
 代码采用了嵌套查询的方法。子查询为每个股票生成累计的交易量cumvol，然后在主查询中根据累计的交易量用`bar`函数生成窗口。
 
 
-#### 1.5 使用MapReduce函数加速
+### 1.5 使用MapReduce函数加速
 
 若需从数据库中提取较大量级的历史数据，计算K线，然后存入数据库，可使用DolphinDB内置的Map-Reduce函数[`mr`](http://www.dolphindb.cn/cn/help/mr.html)进行数据的并行读取与计算。这种方法可以显著提高速度。
 
@@ -179,7 +179,7 @@ mr(ds, calcOHLC, +)
 ```
 在以上代码中，ds是函数`sqlDS`生成的一系列数据源，每个数据源代表从一个数据分区中提取的数据；自定义函数`calcOHLC`为Map-Reduce算法中的map函数，对每个数据源计算K线数据，并将结果写入数据库，返回写入数据库的K线数据的行数；"+"是Map-Reduce算法中的reduce函数，将所有map函数的结果，亦即写入数据库的K线数据的行数相加，返回写入数据库的K线数据总数。
 
-### 2. 实时K线计算
+## 2. 实时K线计算
 
 DolphinDB database 中计算实时K线的流程如下图所示：
 
@@ -202,7 +202,7 @@ datetime| symbol | open | close | high | low | volume |
 
 以下三小节介绍实时K线计算的三个步骤：
 
-#### 2.1 使用 Python 接收实时数据，并写入DolphinDB流数据表
+### 2.1 使用 Python 接收实时数据，并写入DolphinDB流数据表
 
 * DolphinDB 中建立流数据表
 
@@ -228,7 +228,7 @@ s.upload({"tmpData":csv_df})
 s.run("data = select Symbol, datetime(Datetime) as Datetime, Price, Volume from tmpData")
 s.run("tableInsert(Trade,data)")
 ```
-#### 2.2 实时计算K线
+### 2.2 实时计算K线
 
 本例中使用时序聚合引擎实时计算K线数据，并将计算结果输出到流数据表 OHLC 中。
 
@@ -255,7 +255,7 @@ tsAggrKline = createTimeSeriesAggregator(name="aggr_kline", windowSize=300, step
 subscribeTable(tableName="Trade", actionName="act_tsaggr", offset=0, handler=append!{tsAggrKline}, msgAsTable=true)
 ```
 
-#### 2.3 在Python中展示K线数据
+### 2.3 在Python中展示K线数据
 
 在本例中，聚合引擎的输出表也定义为流数据表，客户端可以通过Python API订阅输出表，并将计算结果展现到Python终端。
 
