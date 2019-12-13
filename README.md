@@ -56,5 +56,6 @@
     - [DolphinDB在工业物联网的应用](https://github.com/dolphindb/Tutorials_CN/blob/master/iot_demo.md)
     - [加密货币逐笔交易数据回放](https://github.com/dolphindb/applications/blob/master/cryptocurr_replay/README.md)
     - [流数据高频因子计算教程](https://github.com/dolphindb/Tutorials_CN/blob/master/hf_factor_streaming.md)
+    - [在DolphinDB中计算K线](https://github.com/dolphindb/Tutorials_CN/blob/master/OHLC.md) 
 
 
