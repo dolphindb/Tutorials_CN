@@ -262,15 +262,18 @@ subscribeTable(tableName="Trade", actionName="act_tsaggr", offset=0, handler=app
 以下代码使用Python API订阅实时聚合计算的输出结果表OHLC，并将结果通过print函数打印出来。
 
 ```python
+from threading import Event
 import dolphindb as ddb
 import pandas as pd
 import numpy as np
+s=ddb.session()
 #设定本地端口20001用于订阅流数据
 s.enableStreaming(20001)
 def handler(lst):         
     print(lst)
 # 订阅DolphinDB(本机8848端口)上的OHLC流数据表
 s.subscribe("127.0.0.1", 8848, handler, "OHLC")
+Event().wait() 
 ```
 
 也可通过[Grafana](https://github.com/dolphindb/grafana-datasource/blob/master/README_CN.md)等可视化系统来连接DolphinDB database，对输出表进行查询并将结果以图表方式展现。
