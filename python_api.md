@@ -1784,133 +1784,109 @@ Event().wait()                  # 加在最后一行
 
 ## 2 流数据订阅实例
 
-下面的例子中，我们在Python客户端订阅第三方数据到多个DataFrame中，通过DolphinDB的流数据订阅功能将多个表中的数据写入到分布式表中。
+下面的例子通过流数据订阅的方式计算实时K线。
 
-首先，我们创建数据库和表：
+DolphinDB database 中计算实时K线的流程如下图所示：
 
-```Python
+![avatar](images/K-line.png)
+
+实时数据供应商一般会提供基于Python、Java或其他常用语言的API的数据订阅服务。本例中使用Python来模拟接收市场数据，通过DolphinDB Python API写入流数据表中。DolphinDB的流数据时序聚合引擎(TimeSeriesAggregator)可以对实时数据按照指定的频率与移动窗口计算K线。
+
+本例使用的模拟实时数据源为[文本文件trades.csv](data/k_line/trades.csv)。该文件包含以下4列（一同给出一行样本数据）：
+
+Symbol| Datetime | Price| Volume
+---|---|---|---
+000001	|2018.09.03T09:30:06	|10.13	|4500
+
+
+最终输出的K线数据表包含以下7列（一同给出一行样本数据）：
+
+datetime| symbol | open | close | high | low | volume | 
+---|---|---|---|---|---|---
+2018.09.03T09:30:07|	000001	|10.13|	10.13	|10.12	|10.12	| 468060
+
+以下三小节介绍实时K线计算的三个步骤：
+
+### 2.1 使用 Python 接收实时数据，并写入DolphinDB流数据表
+
+* DolphinDB 中建立流数据表
+
+```
+share streamTable(100:0, `Symbol`Datetime`Price`Volume,[SYMBOL,DATETIME,DOUBLE,INT]) as Trade
+```
+
+* Python程序从数据源 trades.csv 文件中读取数据写入DolphinDB。
+
+实时数据中Datetime的数据精度是秒，由于pandas DataFrame中仅能使用DateTime[64]即nanatimestamp类型，所以下列代码在写入前有一个数据类型转换的过程。这个过程也适用于大多数数据需要清洗和转换的场景。
+
+```python
 import dolphindb as ddb
 import pandas as pd
 import numpy as np
+csv_file = "trades.csv"
+csv_data = pd.read_csv(csv_file, dtype={'Symbol':str} )
+csv_df = pd.DataFrame(csv_data)
+s = ddb.session();
+s.connect("192.168.1.103", 8921,"admin","123456")
+#上传DataFrame到DolphinDB，并对Datetime字段做类型转换
+s.upload({"tmpData":csv_df})
+s.run("data = select Symbol, datetime(Datetime) as Datetime, Price, Volume from tmpData")
+s.run("tableInsert(Trade,data)")
+```
+### 2.2 实时计算K线
 
-s = ddb.session()
-s.connect(host, port, "admin", "123456")
+本例中使用时序聚合引擎实时计算K线数据，并将计算结果输出到流数据表 OHLC 中。
 
-dbDir="dfs://ticks"
-tableName='tick'
+计算K线数据，按照计算时间窗口是否存在重合分为两种计算场景：一是时间窗口不重合，比如每隔5分钟计算一次过去5分钟的K线数据；二是时间窗口部分重合，比如每隔1分钟计算过去5分钟的K线数据。
 
-script="""
-login('admin','123456')
+可通过设定 `createTimeSeriesAggregator` 函数的 windowSize 和 step 参数以实现这两个场景。场景一 windowSize 与 step 相等；场景二 windowSize 是 step 的倍数。
 
-// 定义表结构
-n=20000000
-colNames =`Code`Date`DiffAskVol`DiffAskVolSum`DiffBidVol`DiffBidVolSum`FirstDerivedAskPrice`FirstDerivedAskVolume`FirstDerivedBidPrice`FirstDerivedBidVolume
-colTypes = [SYMBOL,DATE,INT,INT,INT,INT,FLOAT,INT,FLOAT,INT]
+首先定义输出表:
+```
+share streamTable(100:0, `datetime`symbol`open`high`low`close`volume,[DATETIME, SYMBOL, DOUBLE,DOUBLE,DOUBLE,DOUBLE,LONG]) as OHLC
+```
+根据应用场景的不同，在以下两行代码中选择一行，以定义时序聚合引擎：
 
-// 创建数据库与分布式表
-dbPath= '{dbPath}'
-if(existsDatabase(dbPath))
-   dropDatabase(dbPath)
-db=database(dbPath,VALUE, 2000.01.01..2030.12.31)
-dfsTB=db.createPartitionedTable(table(n:0, colNames, colTypes),`{tbName},`Date)
-""".format(dbPath=dbDir,tbName=tableName)
+场景一：
+```
+tsAggrKline = createTimeSeriesAggregator(name="aggr_kline", windowSize=300, step=300, metrics=<[first(Price),max(Price),min(Price),last(Price),sum(volume)]>, dummyTable=Trade, outputTable=OHLC, timeColumn=`Datetime, keyColumn=`Symbol)
+```
+场景二：
+```
+tsAggrKline = createTimeSeriesAggregator(name="aggr_kline", windowSize=300, step=60, metrics=<[first(Price),max(Price),min(Price),last(Price),sum(volume)]>, dummyTable=Trade, outputTable=OHLC, timeColumn=`Datetime, keyColumn=`Symbol)
+```
+最后，定义流数据订阅。若此时流数据表Trade中已经有实时数据写入，那么实时数据会马上被订阅并注入聚合引擎：
+```
+subscribeTable(tableName="Trade", actionName="act_tsaggr", offset=0, handler=append!{tsAggrKline}, msgAsTable=true)
 ```
 
-下面，我们将定义两个流数据表`mem_stream_d`和`mem_stream_f`，客户端往流数据表写入数据，由服务端订阅数据。
+### 2.3 在Python中展示K线数据
 
-```Python
-script+="""
-// 定义mem_tb_d表,并开启流数据持久化，将共享表命名为mem_stream_d
-mem_tb_d=streamTable(n:0, colNames, colTypes)
-enableTableShareAndPersistence(mem_tb_d,'mem_stream_d',false,true,n)
+在本例中，聚合引擎的输出表也定义为流数据表，客户端可以通过Python API订阅输出表，并将计算结果展现到Python终端。
 
-// 定义mem_tb_f表,并开启流数据持久化，将共享表命名为mem_stream_f
-mem_tb_f=streamTable(n:0,colNames, colTypes)
-enableTableShareAndPersistence(mem_tb_f,'mem_stream_f',false,true,n)
-"""
-```
+以下代码使用Python API订阅实时聚合计算的输出结果表OHLC，并将结果通过print函数打印出来。
 
-**请注意**，由于表的分区字段是按照日期进行分区，而客户端往`mem_stream_d`和`mem_stream_f`表中写的数据会有日期上的重叠， 若直接由分布式表`tick`同时订阅这两个表的数据，就会造成这两个表同时往同一个日期分区写数据，最终会写入失败。因此，我们需要定义另一个流表`ticks_stream`来订阅`mem_stream_d`和`mem_stream_f`表的数据，再让分布式表`tick`单独订阅这一个流表，这样就形成了一个二级订阅模式。
-
-```Python
-script+="""
-// 定义ftb表,并开启流数据持久化，将共享表命名为ticks_stream
-ftb=streamTable(n:0, colNames, colTypes)
-enableTableShareAndPersistence(ftb,'ticks_stream',false,true,n)
-go
-
-// ticks_stream订阅mem_stream_d表的数据
-def saveToTicksStreamd(mutable TB, msg): TB.append!(select Code,Date,DiffBidVol,DiffBidVolSum,FirstDerivedBidPrice,FirstDerivedBidVolume from msg)
-subscribeTable(, 'mem_stream_d', 'action_to_ticksStream_tde', 0, saveToTicksStreamd{ticks_stream}, true, 100)
-
-// ticks_stream同时订阅mem_stream_f表的数据
-def saveToTicksStreamf(mutable TB, msg): TB.append!(select Code,Date,DiffAskVol,DiffAskVolSum,FirstDerivedAskPrice,FirstDerivedAskVolume from msg)
-subscribeTable(, 'mem_stream_f', 'action_to_ticksStream_tfe', 0, saveToTicksStreamf{ticks_stream}, true, 100)
-
-// dfsTB订阅ticks_stream表的数据
-def saveToDFS(mutable TB, msg): TB.append!(select * from msg)
-subscribeTable(, 'ticks_stream', 'action_to_dfsTB', 0, saveToDFS{dfsTB}, true, 100, 5)
-"""
-s.run(script)
-```
-
-上述几个步骤中，我们定义了一个数据库并创建分布式表`tick`，以及三个流数据表，分别为`mem_stream_d`、`mem_stream_f`和`ticks_stream`。客户端将第三方订阅而来的数据不断地追加到`mem_stream_d`和`mem_stream_f`表中，而写入这两个表的数据会自动由`ticks_stream`表订阅。最后，`ticks_stream`表内的数据会被顺序地写入分布式表`tick`中。
-
-下面，我们将第三方订阅到的数据上传到DolphinDB，通过DolphinDB流数据订阅功能将数据追加到分布式表。我们假定Python客户端从第三方订阅到的数据已经保存在两个名为`dfd`和`dff`的DataFrame中：
-
-```Python
-n = 10000
-dfd = pd.DataFrame({'Code': np.repeat(['a', 'b', 'c', 'd', 'e', 'QWW', 'FEA', 'FFW', 'DER', 'POD'], n/10),
-                    'Date': np.repeat(pd.date_range('2000.01.01', periods=10000, freq='D'), n/10000),
-                    'DiffAskVol': np.random.choice(100, n),
-                    'DiffAskVolSum': np.random.choice(100, n),
-                    'DiffBidVol': np.random.choice(100, n),
-                    'DiffBidVolSum': np.random.choice(100, n),
-                    'FirstDerivedAskPrice': np.random.choice(100, n)*0.9,
-                    'FirstDerivedAskVolume': np.random.choice(100, n),
-                    'FirstDerivedBidPrice': np.random.choice(100, n)*0.9,
-                    'FirstDerivedBidVolume': np.random.choice(100, n)})
-
-n = 20000
-dff = pd.DataFrame({'Code': np.repeat(['a', 'b', 'c', 'd', 'e', 'QWW', 'FEA', 'FFW', 'DER', 'POD'], n/10),
-                    'Date': np.repeat(pd.date_range('2000.01.01', periods=10000, freq='D'), n/10000),
-                    'DiffAskVol': np.random.choice(100, n),
-                    'DiffAskVolSum': np.random.choice(100, n),
-                    'DiffBidVol': np.random.choice(100, n),
-                    'DiffBidVolSum': np.random.choice(100, n),
-                    'FirstDerivedAskPrice': np.random.choice(100, n)*0.9,
-                    'FirstDerivedAskVolume': np.random.choice(100, n),
-                    'FirstDerivedBidPrice': np.random.choice(100, n)*0.9,
-                    'FirstDerivedBidVolume': np.random.choice(100, n)})
-```
-
-**请注意**，在向流数据表追加一个带有时间列的表时，我们需要对时间列进行时间类型转换：首先将整个DataFrame上传到DolphinDB服务器，再通过select语句将其中的列取出，并转换时间类型列的数据类型，最后通过`tableInsert`语句追加表。具体原因与向内存表追加一个DataFrame类似，请参见[第7.1.3小节](#713-使用tableinsert函数追加表)。
-
-```Python
-s.upload({'dfd': dfd, 'dff': dff})
-inserts = """tableInsert(mem_stream_d,select Code,date(Date) as Date,DiffAskVol,DiffAskVolSum,DiffBidVol,DiffBidVolSum,FirstDerivedAskPrice,FirstDerivedAskVolume,FirstDerivedBidPrice,FirstDerivedBidVolume from dfd);
-tableInsert(mem_stream_f,select Code,date(Date) as Date,DiffAskVol,DiffAskVolSum,DiffBidVol,DiffBidVolSum,FirstDerivedAskPrice,FirstDerivedAskVolume,FirstDerivedBidPrice,FirstDerivedBidVolume from dff)"""
-s.run(inserts)
-s.run("select count(*) from loadTable('{dbPath}', `{tbName})".format(dbPath=dbDir,tbName=tableName))
+```python
+from threading import Event
+import dolphindb as ddb
+import pandas as pd
+import numpy as np
+s=ddb.session()
+#设定本地端口20001用于订阅流数据
+s.enableStreaming(20001)
+def handler(lst):         
+    print(lst)
+# 订阅DolphinDB(本机8848端口)上的OHLC流数据表
+s.subscribe("192.168.1.103", 8921, handler, "OHLC")
+Event().wait() 
 
 # output
-   count
-0  30000
+[numpy.datetime64('2018-09-03T09:31:00'), '000001', 10.13, 10.15, 10.1, 10.14, 586160]
+[numpy.datetime64('2018-09-03T09:32:00'), '000001', 10.13, 10.16, 10.1, 10.15, 1217060]
+[numpy.datetime64('2018-09-03T09:33:00'), '000001', 10.13, 10.16, 10.1, 10.13, 1715460]
+[numpy.datetime64('2018-09-03T09:34:00'), '000001', 10.13, 10.16, 10.1, 10.14, 2268260]
+[numpy.datetime64('2018-09-03T09:35:00'), '000001', 10.13, 10.21, 10.1, 10.2, 3783660]
+...
 ```
 
-我们可以执行以下脚本结束订阅：
-
-```Python
-clear="""
-def clears(tbObj,tbName,action)
-{
-	unsubscribeTable(, tbName, action)
-	undef(tbName,SHARED)
-	clearTablePersistence(tbObj)
-}
-clears(ftb, `ticks_stream, `action_to_dfsTB)
-clears(mem_tb_d,`mem_stream_d,`action_to_ticksStream_tde)
-clears(mem_tb_f,`mem_stream_f,`action_to_ticksStream_tfe)
-"""
-s.run(clear)
-```
+也可通过[Grafana](https://github.com/dolphindb/grafana-datasource/blob/master/README_CN.md)等可视化系统来连接DolphinDB database，对输出表进行查询并将结果以图表方式展现。

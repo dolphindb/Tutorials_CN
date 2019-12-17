@@ -431,9 +431,15 @@ TopicPoller poller1 = client.subscribe(serverIP, serverPort, tableName, actionNa
 
 #### 4.2 Python API
 
-Python API提供了流数据接口。注意，只有[python3_api_experimental](https://github.com/dolphindb/python3_api_experimental)才支持流数据处理。
+Python API提供流数据订阅的相关方法，用于订阅DolphinDB服务端的数据。
+
+#### 4.2.1 Python客户端流数据订阅示例
+
+下面简单介绍一下Python API提供的流数据订阅的相关方法与使用示例。
 
 1. 指定客户端的订阅端口号
+
+使用Python API提供的`enableStreaming`函数启用流数据功能：
 
 ```
 import dolphindb as ddb
@@ -482,7 +488,6 @@ conn.subscribe("192.168.1.103", 8941, printMsg, "trades", "sub_trades", 0)
 [8, 9.394394161645323, 5]
 [9, 5.966209815815091, 6]
 [10, 0.03534660907462239, 2]
-
 ```
 
 3. 取消订阅
@@ -495,6 +500,121 @@ conn.unsubscribe(host,port,tableName,actionName="")
 例如，取消示例中的订阅：
 ```
 conn.unsubscribe("192.168.1.103", 8941,"trades","sub_trades")
+```
+
+#### 4.2.2 DolphinDB服务端流数据订阅示例
+
+DolphinDB可以订阅来自Python客户端的流数据。下面的例子中，我们在Python客户端订阅第三方数据到多个DataFrame中，通过DolphinDB的流数据订阅功能将多个表中的数据写入到分布式表中。
+
+首先，在DolphinDB服务端执行以下脚本，创建数据库和表：
+
+```
+login('admin','123456')
+
+// 定义表结构
+n=20000000
+colNames =`Code`Date`DiffAskVol`DiffAskVolSum`DiffBidVol`DiffBidVolSum`FirstDerivedAskPrice`FirstDerivedAskVolume`FirstDerivedBidPrice`FirstDerivedBidVolume
+colTypes = [SYMBOL,DATE,INT,INT,INT,INT,FLOAT,INT,FLOAT,INT]
+
+// 创建数据库与分布式表
+dbPath= "dfs://ticks"
+if(existsDatabase(dbPath))
+   dropDatabase(dbPath)
+db=database(dbPath,VALUE, 2000.01.01..2030.12.31)
+dfsTB=db.createPartitionedTable(table(n:0, colNames, colTypes),`tick,`Date)
+```
+
+下面，我们将定义两个流数据表`mem_stream_d`和`mem_stream_f`，客户端往流数据表写入数据，由服务端订阅数据。
+
+```
+// 定义mem_tb_d表,并开启流数据持久化，将共享表命名为mem_stream_d
+mem_tb_d=streamTable(n:0, colNames, colTypes)
+enableTableShareAndPersistence(mem_tb_d,'mem_stream_d',false,true,n)
+
+// 定义mem_tb_f表,并开启流数据持久化，将共享表命名为mem_stream_f
+mem_tb_f=streamTable(n:0,colNames, colTypes)
+enableTableShareAndPersistence(mem_tb_f,'mem_stream_f',false,true,n)
+```
+
+**请注意**，由于表的分区字段是按照日期进行分区，而客户端往`mem_stream_d`和`mem_stream_f`表中写的数据会有日期上的重叠， 若直接由分布式表`tick`同时订阅这两个表的数据，就会造成这两个表同时往同一个日期分区写数据，最终会写入失败。因此，我们需要定义另一个流表`ticks_stream`来订阅`mem_stream_d`和`mem_stream_f`表的数据，再让分布式表`tick`单独订阅这一个流表，这样就形成了一个二级订阅模式。
+
+```
+// 定义ftb表,并开启流数据持久化，将共享表命名为ticks_stream
+ftb=streamTable(n:0, colNames, colTypes)
+enableTableShareAndPersistence(ftb,'ticks_stream',false,true,n)
+go
+
+// ticks_stream订阅mem_stream_d表的数据
+def saveToTicksStreamd(mutable TB, msg): TB.append!(select Code,Date,DiffBidVol,DiffBidVolSum,FirstDerivedBidPrice,FirstDerivedBidVolume from msg)
+subscribeTable(, 'mem_stream_d', 'action_to_ticksStream_tde', 0, saveToTicksStreamd{ticks_stream}, true, 100)
+
+// ticks_stream同时订阅mem_stream_f表的数据
+def saveToTicksStreamf(mutable TB, msg): TB.append!(select Code,Date,DiffAskVol,DiffAskVolSum,FirstDerivedAskPrice,FirstDerivedAskVolume from msg)
+subscribeTable(, 'mem_stream_f', 'action_to_ticksStream_tfe', 0, saveToTicksStreamf{ticks_stream}, true, 100)
+
+// dfsTB订阅ticks_stream表的数据
+def saveToDFS(mutable TB, msg): TB.append!(select * from msg)
+subscribeTable(, 'ticks_stream', 'action_to_dfsTB', 0, saveToDFS{dfsTB}, true, 100, 5)
+```
+
+上述几个步骤中，我们定义了一个数据库并创建分布式表`tick`，以及三个流数据表，分别为`mem_stream_d`、`mem_stream_f`和`ticks_stream`。客户端将第三方订阅而来的数据不断地追加到`mem_stream_d`和`mem_stream_f`表中，而写入这两个表的数据会自动由`ticks_stream`表订阅。最后，`ticks_stream`表内的数据会被顺序地写入分布式表`tick`中。
+
+下面，我们将第三方订阅到的数据上传到DolphinDB，通过DolphinDB流数据订阅功能将数据追加到分布式表。我们假定Python客户端从第三方订阅到的数据已经保存在两个名为`dfd`和`dff`的DataFrame中：
+
+```Python
+n = 10000
+dfd = pd.DataFrame({'Code': np.repeat(['a', 'b', 'c', 'd', 'e', 'QWW', 'FEA', 'FFW', 'DER', 'POD'], n/10),
+                    'Date': np.repeat(pd.date_range('2000.01.01', periods=10000, freq='D'), n/10000),
+                    'DiffAskVol': np.random.choice(100, n),
+                    'DiffAskVolSum': np.random.choice(100, n),
+                    'DiffBidVol': np.random.choice(100, n),
+                    'DiffBidVolSum': np.random.choice(100, n),
+                    'FirstDerivedAskPrice': np.random.choice(100, n)*0.9,
+                    'FirstDerivedAskVolume': np.random.choice(100, n),
+                    'FirstDerivedBidPrice': np.random.choice(100, n)*0.9,
+                    'FirstDerivedBidVolume': np.random.choice(100, n)})
+
+n = 20000
+dff = pd.DataFrame({'Code': np.repeat(['a', 'b', 'c', 'd', 'e', 'QWW', 'FEA', 'FFW', 'DER', 'POD'], n/10),
+                    'Date': np.repeat(pd.date_range('2000.01.01', periods=10000, freq='D'), n/10000),
+                    'DiffAskVol': np.random.choice(100, n),
+                    'DiffAskVolSum': np.random.choice(100, n),
+                    'DiffBidVol': np.random.choice(100, n),
+                    'DiffBidVolSum': np.random.choice(100, n),
+                    'FirstDerivedAskPrice': np.random.choice(100, n)*0.9,
+                    'FirstDerivedAskVolume': np.random.choice(100, n),
+                    'FirstDerivedBidPrice': np.random.choice(100, n)*0.9,
+                    'FirstDerivedBidVolume': np.random.choice(100, n)})
+```
+
+**请注意**，在向流数据表追加一个带有时间列的表时，我们需要对时间列进行时间类型转换：首先将整个DataFrame上传到DolphinDB服务器，再通过select语句将其中的列取出，并转换时间类型列的数据类型，最后通过`tableInsert`语句追加表。具体原因与向内存表追加一个DataFrame类似，请参见[DolphinDB Python API教程](#713-使用tableinsert函数追加表)。
+
+```Python
+dbDir = "dfs://ticks"
+tableName = 'tick'
+s.upload({'dfd': dfd, 'dff': dff})
+inserts = """tableInsert(mem_stream_d,select Code,date(Date) as Date,DiffAskVol,DiffAskVolSum,DiffBidVol,DiffBidVolSum,FirstDerivedAskPrice,FirstDerivedAskVolume,FirstDerivedBidPrice,FirstDerivedBidVolume from dfd);
+tableInsert(mem_stream_f,select Code,date(Date) as Date,DiffAskVol,DiffAskVolSum,DiffBidVol,DiffBidVolSum,FirstDerivedAskPrice,FirstDerivedAskVolume,FirstDerivedBidPrice,FirstDerivedBidVolume from dff)"""
+s.run(inserts)
+s.run("select count(*) from loadTable('{dbPath}', `{tbName})".format(dbPath=dbDir,tbName=tableName))
+
+# output
+   count
+0  30000
+```
+
+在DolphinDB 服务端执行以下脚本结束订阅：
+
+```
+def clears(tbName,action)
+{
+	unsubscribeTable(, tbName, action)
+	clearTablePersistence(objByName(tbName))
+	undef(tbName,SHARED)
+}
+clears(`ticks_stream, `action_to_dfsTB)
+clears(`mem_stream_d,`action_to_ticksStream_tde)
+clears(`mem_stream_f,`action_to_ticksStream_tfe)
 ```
 
 #### 4.3 C++ API
