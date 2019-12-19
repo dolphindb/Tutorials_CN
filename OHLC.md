@@ -127,9 +127,9 @@ OHLC = wj(barWindows, trade, 0:(30*60*1000),
 
 ### 1.4 使用交易量划分K线窗口
 
-上面的例子我们均使用时间作为划分K线窗口的维度。在实践中，也可以使用其他维度作为划分K线窗口的依据。譬如用累计的交易量来计算K线。
+上面的例子我们均使用时间作为划分K线窗口的维度。在实践中，也可以使用其他变量，譬如用累计的交易量作为划分K线窗口的依据。
 
-**例子6** （每日两个交易时段，使用累计的交易量计算K线）：模拟中国股票市场数据，交易量每增加10000计算K线。
+**例子6** （使用累计的交易量计算K线）：交易量每增加1000000计算一次K线。
 ```
 n = 1000000
 sampleDate = 2019.11.07
@@ -140,10 +140,11 @@ trade = table(take(sampleDate, n) as date,
 	100+cumsum(rand(0.02, n)-0.01) as price, 
 	rand(1000, n) as volume)
 	
-volThreshold = 10000
-select first(time) as barStart, first(price) as open, max(price) as high, min(price) as low, last(price) as close 
-from (select symbol, price, cumsum(volume) as cumvol from trade context by symbol)
+volThreshold = 1000000
+t = select first(time) as barStart, first(price) as open, max(price) as high, min(price) as low, last(price) as close, last(cumvol) as cumvol 
+from (select symbol, time, price, cumsum(volume) as cumvol from trade context by symbol)
 group by symbol, bar(cumvol, volThreshold) as volBar
+
 ```
 代码采用了嵌套查询的方法。子查询为每个股票生成累计的交易量cumvol，然后在主查询中根据累计的交易量用`bar`函数生成窗口。
 
