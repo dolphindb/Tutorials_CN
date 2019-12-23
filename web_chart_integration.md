@@ -1,4 +1,4 @@
-## 前端chart组件展示DolphinDB数据
+## 前端chart组件展示数据教程
 
 ### 1. 概述
 数据图表前端组件在物联网和实时监控的场景有非常广的应用，当前比较流行的有Echarts、HighCharts等组件。本文主要讲解如何利用DolphinDB的Web数据接口，结合JavaScript使用前端组件来展示DolphinDB中的数据。

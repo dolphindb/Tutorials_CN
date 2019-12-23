@@ -1,4 +1,4 @@
-# DolphinDB API 交互协议
+# API交互协议
 
 DolphinDB API有以下三个交互阶段：
 * 连接

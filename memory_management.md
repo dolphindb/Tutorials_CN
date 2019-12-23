@@ -1,4 +1,4 @@
-# DolphinDB 内存管理
+# 内存管理
 DolphinDB是一款支持多用户多任务并发操作的高性能分布式时序数据库软件(Distributed Time Series Database)。针对大数据的高效的内存管理是其性能优异的基础之一。DolphinDB通过向操作系统申请大块内存，然后自行管理。本教程涉及的内存管理包括以下方面：   
 * __变量的内存管理__ ，为用户提供和回收编程环境所需内存； 
 * __分布式表的缓存管理__ ，Session间共享分区表数据，以提高内存使用率；
@@ -122,14 +122,14 @@ for(d in days){
 }
 ```
 内存随着加载分区数的增加变化规律如下图所示：  
-![image](https://github.com/dolphindb/Tutorials_CN/raw/master/images/memory_managment/partition9.png)  
+![image](https://2xdb.net/dolphindb/tutorials_cn/raw/master/images/memory_managment/partition9.png?inline=false)  
 
 当遍历每个分区数据时，在内存使用量不超过maxMemSize的情况下，分区数据会全部缓存到内存中，以在用户下次访问时，直接从内存中提供数据，而不需要再次从磁盘加载。
 
 ### 3.5  节点内存使用达到maxMemSize时，系统自动回收
 如果DolphinDB server使用的内存，没有超过用户设置的maxMemSize，则不会回收内存。当总的内存使用达到maxMemSize时，DolphinDB 会采用LRU的内存回收策略， 来腾出足够的内存给用户。
 示例10，上面用例中我们只加载了8天的数据，此时我们继续共遍历15天数据，查看缓存达到maxMemSize时，内存的占用情况。如下图所示：  
-![image](https://github.com/dolphindb/Tutorials_CN/raw/master/images/memory_managment/partiton15.png)   
+![image](https://2xdb.net/dolphindb/tutorials_cn/raw/master/images/memory_managment/partiton15.png?inline=false)   
 
 如上图所示，当缓存的数据超过maxMemSize时，系统自动回收内存，总的内存使用量仍然小于用户设置的最大内存量8GB。
 
@@ -147,7 +147,7 @@ sum(mem().blockSize - mem().freeSize)
 ## 4 作为流数据消息缓存队列
 当数据进入流数据系统时，首先写入流表，然后写入持久化队列和发送队列（假设用户设置为异步持久化），持久化队列异步写入磁盘，发送队列发送到订阅端。  
 当订阅端收到数据后，先放入接受队列，然后用户定义的handler从接收队列中取数据并处理。如果handler处理缓慢，会导致接收队列有数据堆积，占用内存。如下图所示：  
-![image](https://github.com/dolphindb/Tutorials_CN/raw/master/images/memory_managment/streaming.png)
+![image](https://2xdb.net/dolphindb/tutorials_cn/raw/master/images/memory_managment/streaming.png?inline=false)
 
 流数据内存相关的配置选项：
 *  __maxPersistenceQueueDepth__ : 流表持久化队列的最大消息数。对于异步持久化的发布流表，先将数据放到持久化队列中，再异步持久化到磁盘上。该选项默认设置为1000万。在磁盘写入成为瓶颈时，队列会堆积数据。
@@ -164,7 +164,7 @@ sum(mem().blockSize - mem().freeSize)
 
 DolphinDB为了提高读写的吞吐量和降低读写的延迟，采用先写入WAL和缓存的通用做法，等累积到一定数量时，批量写入。这样减少和磁盘文件的交互次数，提升写入性能，可提升30%+的写入速度。因此，也需要一定的内存空间来临时缓存这些数据，如下图所示：  
 
-![image](https://github.com/dolphindb/Tutorials_CN/raw/master/images/memory_managment/cacheEngine.png)
+![image](https://2xdb.net/dolphindb/tutorials_cn/raw/master/images/memory_managment/cacheEngine.png?inline=false)
 
 当事务t1，t2，t3都完成时，将三个事务的数据一次性写入到DFS的数据库磁盘上。Cache Engine空间一般推荐为maxMemSize的1/8~1/4,可根据最大内存和写入数据量适当调整。CacheEngine的大小可以通过chunkCacheEngineMemSize来配置。
 

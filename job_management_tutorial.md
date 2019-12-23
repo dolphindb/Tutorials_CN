@@ -1,4 +1,4 @@
-# DolphinDB作业管理
+# 作业管理
 
 作业（Job）是DolphinDB中最基本的执行单位，可以简单理解为一段DolphinDB脚本代码在DolphinDB系统中的一次执行。作业根据阻塞与否可分成同步作业和异步作业。
 

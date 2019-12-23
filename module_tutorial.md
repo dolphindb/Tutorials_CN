@@ -124,6 +124,28 @@ DolphinDB GUI从0.99.2版本开始提供了远程同步模块的功能，具体�
 ```
 Modules [Module1] and [Module2] contain function [functionName]. Please use module name to qualify the function.
 ```
+* 如果已导入模块中与自定义函数重名，系统会默认使用模块中的函数。如果要调用自定义函数，需要声明命名空间。自定义函数和内置函数的默认命名空间为根目录，用两个冒号表示。比如：
+
+```
+//定义模块
+module sys
+def myfunc(){
+ return 3
+}
+
+//自定义函数
+login("admin","123456")
+def myfunc(){
+ return 1
+}
+addFunctionView(myfunc)
+
+//调用
+use sys
+sys::myfunc() //调用模块的函数
+myfunc() //调用模块的函数
+::myfunc() //调用自定义函数
+```
 
 * 如果已导入的模块中不包含该函数，DolphinDB会在系统内置函数中搜索该函数。如果内置函数中也没有该函数，将抛出函数为定义的异常。
 

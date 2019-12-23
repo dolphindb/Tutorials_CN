@@ -1,4 +1,4 @@
-##  基于Docker的DolphinDB集群部署教程
+##  基于Docker的集群部署教程
 
 Docker是一个开源的引擎，可以轻松的为任何应用创建一个轻量级的、可移植的、自给自足的容器。DolphinDB database提供了基于docker的分布式集群部署包，可以让用户方便快捷的部署DolphinDB分布式集群。
 

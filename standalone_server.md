@@ -1,4 +1,4 @@
-# DolphinDB 单节点部署
+# 单节点部署
 
 在单节点运行DolphinDB，可以帮助用户快速上手DolphinDB。用户只需下载DolphinDB程序包，下载地址：[http://www.dolphindb.cn/downloads.html](http://www.dolphindb.cn/downloads.html)
 

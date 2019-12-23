@@ -1,4 +1,4 @@
-# DolphinDB C++ API 数据读写指南
+# C++ API 数据读写指南
 
 DolphinDB C++ API是由DolphinDB提供的应用程序接口，可以用来与DolphinDB server进行交互。
 

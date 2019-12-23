@@ -1,4 +1,4 @@
-# DolphinDB 权限和安全
+# 权限管理和安全
 
 DolphinDB database 提供了强大、灵活、安全的权限控制系统。控制节点（controller）作为权限管理中心，使用RSA加密方式对用户关键信息进行加密。
 

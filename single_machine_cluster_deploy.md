@@ -1,4 +1,4 @@
-# DolphinDB 单物理节点集群部署
+# 单服务器集群部署
 
 DolphinDB集群包括三种类型节点：数据节点（data node），代理节点（agent）和控制节点（controller）。
 
