@@ -21,7 +21,9 @@
     - [DolphinDB通用计算教程](https://github.com/dolphindb/Tutorials_CN/blob/master/general_computing.md)
 - 流计算
     - [流数据教程](https://github.com/dolphindb/Tutorials_CN/blob/master/streaming_tutorial.md)
-    - [流数据聚合引擎](https://github.com/dolphindb/Tutorials_CN/blob/master/stream_aggregator.md)
+    - [流数据时序聚合引擎](https://github.com/dolphindb/Tutorials_CN/blob/master/stream_aggregator.md)
+    - [流数据横截面引擎](https://github.com/dolphindb/Tutorials_CN/blob/master/streaming_crossSectionalAggregator.md)
+    - [流数据异常检测引擎](https://github.com/dolphindb/Tutorials_CN/blob/master/Anomaly_Detection_Engine.md)
     - [历史数据回放教程](https://github.com/dolphindb/Tutorials_CN/blob/master/historical_data_replay.md)
 - 系统管理
     - [权限管理和安全](https://github.com/dolphindb/Tutorials_CN/blob/master/ACL_and_Security.md)
