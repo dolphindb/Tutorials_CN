@@ -18,6 +18,7 @@
 - 编程语言
     - [脚本语言的混合范式编程](https://github.com/dolphindb/Tutorials_CN/blob/master/hybrid_programming_paradigms.md)
     - [DolphinDB模块复用教程](https://github.com/dolphindb/Tutorials_CN/blob/master/module_tutorial.md)
+    - [DolphinDB通用计算教程](https://github.com/dolphindb/Tutorials_CN/blob/master/general_computing.md)
 - 流计算
     - [流数据教程](https://github.com/dolphindb/Tutorials_CN/blob/master/streaming_tutorial.md)
     - [流数据聚合引擎](https://github.com/dolphindb/Tutorials_CN/blob/master/stream_aggregator.md)
