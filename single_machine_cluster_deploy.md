@@ -6,9 +6,24 @@ DolphinDB集群包括三种类型节点：数据节点（data node），代理�
 * 代理节点用于关闭或开启数据节点
 * 控制节点用于集群管理
 
+本教程详细讲述了单服务器集群部署步骤，以及分析节点启动失败的可能原因。本教程包含以下内容：
+
+- [1 下载](#1-下载)
+- [2 软件授权许可更新](#2-软件授权许可更新)
+- [3 DolphinDB集群初始化配置](#3-dolphindb集群初始化配置)
+    - [3.1 配置控制节点](#31-配置控制节点)
+    - [3.2 配置代理节点参数文件](#32-配置代理节点参数文件)
+    - [3.3 DolphinDB集群启动](#33-dolphindb集群启动)
+- [4 节点启动失败可能原因分析](#4-节点启动失败可能原因分析)
+- [5 基于Web的集群管理](#5-基于Web的集群管理)
+    - [5.1 控制节点参数配置](#51-控制节点参数配置)
+    - [5.2 增删数据节点](#52-增删数据节点)
+    - [5.3 修改数据节点参数](#53-修改数据节点参数)
+- [6 DolphinDB集群详细配置以及参数意义](#6-dolphindb集群详细配置以及参数意义)
+
 ## 1. 下载
 
-从DolphindB网站下载DolphinDB，并解压到一个指定目录。例如解压到如下目录：
+从DolphinDB官网下载DolphinDB，并解压到一个指定目录。例如解压到如下目录：
 
 ```sh
 /DolphinDB
@@ -222,7 +237,7 @@ log文件中有可能出现错误信息"Failed to bind the socket on XXXX"，这
 startDataNode(["DFS_NODE1", "DFS_NODE2","DFS_NODE3","DFS_NODE4"])
 ```
 
-#### 3.3.7 节点启动失败可能原因分析
+#### 4. 节点启动失败可能原因分析
 
 如果节点长时间无法启动，可能有以下原因：
 
@@ -234,17 +249,19 @@ startDataNode(["DFS_NODE1", "DFS_NODE2","DFS_NODE3","DFS_NODE4"])
 
 4. 如果集群是部署在**云端**或**k8s**环境，需要在agent.cfg和cluster.cfg文件中加上配置项lanCluster=0。
 
-## 4. 基于Web的集群管理
+5. **集群成员配置文件cluster.nodes第一行为空行**。查看log文件，如果log文件中出现错误信息"Failed to load the nodes file [XXXX/cluster.nodes] with error: The input file is empty."，表示cluster.nodes的第一行为空行，这种情况下只需将文件中的空行删除，再重新启动节点即可。
+
+## 5. 基于Web的集群管理
 
 经过上述步骤，我们已经成功部署DolphinDB集群。在实际使用中我们经常会需要改变集群配置。DolphinDB的网络界面提供更改集群配置的所有功能。
 
-### 4.1. 控制节点参数配置
+### 5.1. 控制节点参数配置
 
 点击"Controller Config"按钮会弹出一个控制界面，这里的localExectors, maxConnections, maxMemSize, webWorkerNum以及workerNum等参数是我们在3.1.1中创建controller.cfg时填写的。这些配置信息都可以在这个界面上更改，新的配置会在重启控制节点之后生效。注意如果改变控制节点的localSite参数值，一定要在所有agent.cfg中对controllerSite参数值应做相应修改，否则会造成集群无法正常运行。
 
 ![controller_config](images/cluster_web_controller_config.JPG)
 
-### 4.2. 增删数据节点
+### 5.2. 增删数据节点
 
 点击"Nodes Setup"按钮，会进入集群节点配置界面。下图显示的配置信息是我们在3.1.2中创建的cluster.nodes中的信息。在此界面中可以添加或删除数据节点。新的配置会在整个集群重启之后生效。集群重启的具体步骤为：（1）关闭所有数据节点，（2）关闭控制节点，（3）启动控制节点，（4）启动数据节点。另外需要注意，如果节点上已经存放数据，删除节点有可能会造成数据丢失。
 
@@ -252,13 +269,13 @@ startDataNode(["DFS_NODE1", "DFS_NODE2","DFS_NODE3","DFS_NODE4"])
 
 若新的数据节点位于一个新的物理机器上，我们必须在此物理机器上根据3.2中的步骤配置并启动一个新的代理节点，在cluster.nodes中增添有关新的代理节点和数据节点的信息，并重新启动控制节点。
 
-### 4.3. 修改数据节点参数
+### 5.3. 修改数据节点参数
 
 点击"Nodes Config"按钮, 可进行数据节点配置。以下参数是我们在3.1.3中创建cluster.cfg中提供的。除了这些参数之外，用户还可以根据实际应用在这里添加配置其它参数。重启所有数据节点后即可生效。
 
 ![nodes_config](images/cluster_web_nodes_config.JPG)
 
-## 5. DolphinDB 集群详细配置以及参数意义
+## 6. DolphinDB集群详细配置以及参数意义
 
-* [中文](https://www.dolphindb.cn/cn/help/ClusterSetup.html)
+* [中文](http://www.dolphindb.cn/cn/help/Setup.html)
 * [英文](https://www.dolphindb.com/help/ClusterSetup.html)
