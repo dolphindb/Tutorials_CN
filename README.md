@@ -34,6 +34,7 @@
     - [Java API使用教程](https://github.com/dolphindb/api-java/blob/master/README_CN.md)
     - [C# API使用教程](https://github.com/dolphindb/api-csharp/blob/master/README_CN.md)
     - [C++ API使用教程](https://github.com/dolphindb/api-cplusplus/blob/master/README_CN.md)
+    - [C++ API 数据读写指南](https://github.com/dolphindb/Tutorials_CN/blob/master/c%2B%2Bapi.md)
     - [Go API使用教程](https://github.com/dolphindb/api-go/blob/master/README.md)
     - [R API使用教程](https://github.com/dolphindb/api-r/blob/master/README_CN.md)
     - [Json API使用教程](https://github.com/dolphindb/api-json/blob/master/README_CN.md)
@@ -41,6 +42,7 @@
     - [DolphinDB整合前端chart组件展示数据教程](https://github.com/dolphindb/Tutorials_CN/blob/master/web_chart_integration.md)
     - [Grafana连接DolphinDB数据源](https://github.com/dolphindb/grafana-datasource/blob/master/README_CN.md)
     - [API交互协议](https://github.com/dolphindb/Tutorials_CN/blob/master/api_protocol.md)
+    - [DolphinDB API性能基准测试报告](https://github.com/dolphindb/Tutorials_CN/blob/master/api_performance.md)
 - 插件
     - [ODBC](https://github.com/dolphindb/DolphinDBPlugin/blob/master/odbc/README.md)
     - [MySQL](https://github.com/dolphindb/DolphinDBPlugin/blob/master/mysql/README_CN.md)
@@ -52,7 +54,7 @@
     - [Matching engine](https://github.com/dolphindb/DolphinDBPlugin/blob/master/MatchingEngine/README.md)
     - [MQTT](https://github.com/dolphindb/DolphinDBPlugin/blob/master/mqtt/README_CN.md)
     - [OPC](https://github.com/dolphindb/DolphinDBPlugin/blob/master/opc/README_CN.md)
-    - [Visual Studio Code](https://github.com/dolphindb/Tutorials_CN/blob/master/vscode_extension.md)
+    - [DolphinDB VS code 插件](https://github.com/dolphindb/Tutorials_CN/blob/master/vscode_extension.md)
     - [插件开发教程](https://github.com/dolphindb/Tutorials_CN/blob/master/plugin_development_tutorial.md)
 - 应用场景示例
     - [DolphinDB在工业物联网的应用](https://github.com/dolphindb/Tutorials_CN/blob/master/iot_demo.md)
