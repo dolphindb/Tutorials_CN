@@ -19,6 +19,7 @@
     - [脚本语言的混合范式编程](https://github.com/dolphindb/Tutorials_CN/blob/master/hybrid_programming_paradigms.md)
     - [DolphinDB模块复用教程](https://github.com/dolphindb/Tutorials_CN/blob/master/module_tutorial.md)
     - [DolphinDB通用计算教程](https://github.com/dolphindb/Tutorials_CN/blob/master/general_computing.md)
+    - [DolphinDB即时编译(JIT)教程](https://github.com/dolphindb/Tutorials_CN/blob/master/jit.md)
 - 流计算
     - [流数据教程](https://github.com/dolphindb/Tutorials_CN/blob/master/streaming_tutorial.md)
     - [流数据时序聚合引擎](https://github.com/dolphindb/Tutorials_CN/blob/master/stream_aggregator.md)
