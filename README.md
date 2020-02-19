@@ -32,6 +32,7 @@
     - [作业管理](https://github.com/dolphindb/Tutorials_CN/blob/master/job_management_tutorial.md)
     - [内存管理](https://github.com/dolphindb/Tutorials_CN/blob/master/memory_management.md)
     - [启动脚本教程](https://github.com/dolphindb/Tutorials_CN/blob/master/Startup.md)
+    - [集群间数据库同步](https://github.com/dolphindb/Tutorials_CN/blob/master/data_synchronization_between_clusters.md)
 - API
     - [Python API使用教程](https://github.com/dolphindb/python3_api_experimental/blob/master/README.md)
     - [Java API使用教程](https://github.com/dolphindb/api-java/blob/master/README_CN.md)
