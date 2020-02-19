@@ -17,6 +17,7 @@
     - [内存分区表加载和操作](https://github.com/dolphindb/Tutorials_CN/blob/master/partitioned_in_memory_table.md)
     - [DolphinDB文本数据加载教程](https://github.com/dolphindb/Tutorials_CN/blob/master/import_csv.md)
     - [集群间数据库同步](https://github.com/dolphindb/Tutorials_CN/blob/master/data_synchronization_between_clusters.md)
+    - [DolphinDB CacheEngine与数据库日志教程](https://github.com/dolphindb/Tutorials_CN/blob/master/redoLog_cacheEngine.md)
 - 编程语言
     - [脚本语言的混合范式编程](https://github.com/dolphindb/Tutorials_CN/blob/master/hybrid_programming_paradigms.md)
     - [DolphinDB模块复用教程](https://github.com/dolphindb/Tutorials_CN/blob/master/module_tutorial.md)
