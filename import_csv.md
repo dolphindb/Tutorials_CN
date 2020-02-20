@@ -26,7 +26,7 @@ DolphinDB的文本数据导入不仅灵活，功能丰富，而且速度非常�
 - [6. 其它注意事项](#6-其它注意事项)
     - [6.1 不同编码的数据的处理](#61-不同编码的数据的处理)
     - [6.2 数值类型的解析](#62-数值类型的解析)
-    - [6.3 自动脱去文本外的双引号](#63-自动脱去文本外的双引号)
+    - [6.3 自动去除双引号](#63-自动去除双引号)
 - [附录](#附录)
 
 ## 1. 自动识别数据格式
@@ -130,14 +130,11 @@ turnover   DOUBLE
 unixTime   LONG
 ```
 
-通过`extractTextSchema`函数得到数据文件的表结构schemaTB以后，若表中自动解析的数据类型不符合预期，可以使用SQL语句对该表进行修改，从而得到满足要求的表结构。
-
 ### 2.2 指定字段名称和类型
 
-当系统自动识别的字段名称或者数据类型不符合预期或需求时，可以通过设置schema参数为文本文件中的每列指定字段名称和数据类型。
+当系统自动识别的字段名称或者数据类型不符合预期或需求时，可以通过修改`extractTextSchema`生成的schema表或直接创建schema表为文本文件中的每列指定字段名称和数据类型。
 
-例如，若导入数据的volume列被自动识别为INT类型，而需要的volume类型是LONG类型，就需要通过schema参数指定volumne列类型为LONG。下面的例子中，首先调用`extractTextSchema`函数得到文本文件的表结构，再根据需求修改表中列的数据类型。
-
+例如，若导入数据的volume列被自动识别为INT类型，而需要的volume类型是LONG类型，就需要修改schema表，指定volumn列类型为LONG。
 ```
 dataFilePath="/home/data/candle_201801.csv"
 schemaTB=extractTextSchema(dataFilePath)
@@ -145,32 +142,17 @@ update schemaTB set type="LONG" where name="volume";
 ```
 
 使用`loadText`函数导入文本文件，将数据按照schemaTB所规定的字段数据类型导入到数据库中。
-
 ```
 tmpTB=loadText(filename=dataFilePath,schema=schemaTB);
 ```
 
-查看表中前五行的数据，volume列数据以长整型的形式正常显示：
-
-```
-select top 5 * from tmpTB;
-
-symbol exchange cycle tradingDay date       time     open  high  low   close volume  turnover   unixTime
------- -------- ----- ---------- ---------- -------- ----- ----- ----- ----- ------- ---------- -------------
-000001 SZSE     1     2018.01.02 2018.01.02 93100000 13.35 13.39 13.35 13.38 2003635 2.678558E7 1514856660000
-000001 SZSE     1     2018.01.02 2018.01.02 93200000 13.37 13.38 13.33 13.33 867181  1.158757E7 1514856720000
-000001 SZSE     1     2018.01.02 2018.01.02 93300000 13.32 13.35 13.32 13.35 903894  1.204971E7 1514856780000
-000001 SZSE     1     2018.01.02 2018.01.02 93400000 13.35 13.38 13.35 13.35 1012000 1.352286E7 1514856840000
-000001 SZSE     1     2018.01.02 2018.01.02 93500000 13.35 13.37 13.35 13.37 1601939 2.140652E7 1514856900000
-```
-
 上例介绍了修改数据类型的情况，若要修改表中的字段名称，也可以通过同样的方法实现。
 
-> 请注意，若DolphinDB对日期和时间相关数据类型的解析不符合预期，需要通过本教程[第2.3小节](#23-指定日期和时间类型的格式)的方式解决。
+> 请注意，若对日期和时间相关数据类型的自动解析不符合预期，需要通过本教程[第2.3小节](#23-指定日期和时间类型的格式)的方式解决。
 
 ### 2.3 指定日期和时间类型的格式
 
-对于日期列或时间列的数据，如果DolphinDB识别的数据类型不符合预期，不仅需要在schema的type列指定数据类型，还需要在format列中指定格式（用字符串表示），如"MM/dd/yyyy"。如何表示日期和时间格式请参考[日期和时间的调整及格式](https://www.dolphindb.cn/cn/help/DataTimeParsingandFormat.html)。
+对于日期列或时间列的数据，如果自动识别的数据类型不符合预期，不仅需要在schema的type列指定数据类型，还需要在format列中指定格式（用字符串表示），如"MM/dd/yyyy"。如何表示日期和时间格式请参考[日期和时间的调整及格式](https://www.dolphindb.cn/cn/help/DataTimeParsingandFormat.html)。
 
 下面结合例子具体说明对日期和时间列指定数据类型的方法。
 
@@ -305,9 +287,9 @@ col0   col1 col2 col3       col4       col5      col6  col7  col8  col9  col10  
 000001 SZSE 1    2018.01.08 2018.01.08 101400000 13.13 13.14 13.12 13.13 469800 6.168286E6 1515377640000
 ```
 
-> 请注意：如上例所示，在跳过前n行进行导入时，若数据文件的第一行是列名，改行会作为第一行被略过。
+> 请注意：如上例所示，在跳过前n行进行导入时，若数据文件的第一行是列名，该行会作为第一行被略过。
 
-在上面的例子中，文本文件指定skipRows参数导入以后，由于表示列名的第一行被跳过，列名变成了默认列名：col1，col2等等。若需要保留列名而又指定跳过前n行，可先通过`extractTextSchema`函数得到文本文件的schema，在导入时指定schema参数：
+在上面的例子中，文本文件指定skipRows参数导入以后，由于表示列名的第一行被跳过，列名变成了默认列名：col0, col1, col2, 等等。若需要保留列名而又指定跳过前n行，可先通过`extractTextSchema`函数得到文本文件的schema，在导入时指定schema参数：
 
 ```
 schema=extractTextSchema(dataFilePath)
@@ -362,7 +344,9 @@ Time elapsed: 2669.702 ms
 
 在大数据应用领域，数据导入往往不只是一个或两个文件的导入，而是数十个甚至数百个大型文件的批量导入。为了达到更好的导入性能，建议尽量以并行方式导入批量的数据文件。
 
-[`loadTextEx`](https://www.dolphindb.cn/cn/help/loadTextEx.html)函数可将文本文件导入指定的数据库中，包括分布式数据库，本地磁盘数据库或内存数据库。由于DolphinDB的分区表支持并发读写，因此可以支持多线程导入数据。使用`loadTextEx`将文本数据导入到分布式数据库，具体实现为将数据先导入到内存，再由内存写入到数据库，这两个步骤由同一个函数完成，以保证高效率。
+[`loadTextEx`](https://www.dolphindb.cn/cn/help/loadTextEx.html)函数可将文本文件导入指定的数据库中，包括分布式数据库，本地磁盘数据库或内存数据库。由于DolphinDB的分区表支持并发读写，因此可以支持多线程导入数据。
+
+使用`loadTextEx`将文本数据导入到分布式数据库，具体实现为将数据先导入到内存，再由内存写入到数据库，这两个步骤由同一个函数完成，以保证高效率。
 
 下例展示如何将磁盘上的多个文件批量写入到DolphinDB分区表中。首先，在DolphinDB中执行以下脚本，生成100个文件，共约778MB，包括1千万条记录。
 
@@ -429,7 +413,7 @@ count
 
 ## 4. 导入数据库前的预处理
 
-在将数据导入数据库之前，若需要对数据进行复杂的处理，例如日期和时间数据类型的强制转换，填充空值等，可以在调用[`loadTextEx`](https://www.dolphindb.cn/cn/help/loadTextEx.html)函数时指定transform参数。tansform参数接受一个函数作为参数，并且要求该函数只能接受一个参数。函数的输入是一个未分区的内存表，输出也是一个未分区的内存表。需要注意的是，只有`loadTextEx`函数提供transform参数。
+在将数据导入数据库之前，若需要对数据进行预处理，例如转换日期和时间数据类型，填充空值等，可以在调用[`loadTextEx`](https://www.dolphindb.cn/cn/help/loadTextEx.html)函数时指定transform参数。tansform参数接受一个函数作为参数，并且要求该函数只能接受一个参数。函数的输入是一个未分区的内存表，输出也是一个未分区的内存表。需要注意的是，只有`loadTextEx`函数提供transform参数。
 
 ### 4.1 指定日期和时间数据的数据类型
 
@@ -450,26 +434,26 @@ tb=table(1:0,schemaTB.name,schemaTB.type)
 tb=db.createPartitionedTable(tb,`tb1,`date);
 ```
 
-自定义函数`foo`，用于对数据进行预处理，并返回处理过后的数据表。
+自定义函数`i2t`，用于对数据进行预处理，并返回处理过后的数据表。
 
 ```
-def foo(mutable t){
+def i2t(mutable t){
     return t.replaceColumn!(`time,time(t.time/10))
 }
 ```
 
-> 请注意：在自定义函数体内对数据进行处理时，请尽量使用本地的修改（带有！的函数）来提升性能。
+> 请注意：在自定义函数体内对数据进行处理时，请尽量使用本地的修改（以！结尾的函数）来提升性能。
 
-调用`loadTextEx`函数，并且指定transform参数，系统会对文本文件中的数据执行transform参数指定的函数，即`foo`函数，再将得到的结果保存到数据库中。
+调用`loadTextEx`函数，并且指定transform参数为`i2t`函数，系统会对文本文件中的数据执行`i2t`函数，并将结果保存到数据库中。
 
 ```
-tmpTB=loadTextEx(dbHandle=db,tableName=`tb1,partitionColumns=`date,filename=dataFilePath,transform=foo);
+tmpTB=loadTextEx(dbHandle=db,tableName=`tb1,partitionColumns=`date,filename=dataFilePath,transform=i2t);
 ```
 
 查看表内前5行数据。可见time列是以TIME类型存储，而不是文本文件中的INT类型：
 
 ```
-select top 5* from loadTable(dbPath,`tb1);
+select top 5 * from loadTable(dbPath,`tb1);
 
 symbol exchange cycle tradingDay date       time               open  high  low   close volume  turnover   unixTime
 ------ -------- ----- ---------- ---------- ------------------ ----- ----- ----- ----- ------- ---------- -------------
@@ -480,9 +464,9 @@ symbol exchange cycle tradingDay date       time               open  high  low  
 000001 SZSE     1     2018.01.02 2018.01.02 02:35:50.000000000 13.35 13.37 13.35 13.37 1601939 2.140652E7 1514856900000
 ```
 
-#### 4.1.2 为文本文件中的日期和时间相关列指定数据类型
+#### 4.1.2 日期或时间数据类型之间转换
 
-另一种与日期和时间列相关的处理是，文本文件中日期以DATE类型存储，在导入数据库时希望以MONTH的形式存储。这种情况也可通过`loadTextEx`函数的transform参数转换该日期列的数据类型，步骤与上述过程一致。
+若文本文件中日期以DATE类型存储，在导入数据库时希望以MONTH的形式存储，这种情况也可通过`loadTextEx`函数的transform参数转换该日期列的数据类型，步骤与上一小节一致。
 
 ```
 login(`admin,`123456)
@@ -492,16 +476,16 @@ schemaTB=extractTextSchema(dataFilePath)
 update schemaTB set type="MONTH" where name="tradingDay"
 tb=table(1:0,schemaTB.name,schemaTB.type)
 tb=db.createPartitionedTable(tb,`tb1,`date)
-def fee(mutable t){
+def d2m(mutable t){
     return t.replaceColumn!(`tradingDay,month(t.tradingDay))
 }
-tmpTB=loadTextEx(dbHandle=db,tableName=`tb1,partitionColumns=`date,filename=dataFilePath,transform=fee);
+tmpTB=loadTextEx(dbHandle=db,tableName=`tb1,partitionColumns=`date,filename=dataFilePath,transform=d2m);
 ```
 
 查看表内前5行数据。可见tradingDay列是以MONTH类型存储，而不是文本文件中的DATE类型：
 
 ```
-select top 5* from loadTable(dbPath,`tb1);
+select top 5 * from loadTable(dbPath,`tb1);
 
 symbol exchange cycle tradingDay date       time     open  high  low   close volume  turnover   unixTime
 ------ -------- ----- ---------- ---------- -------- ----- ----- ----- ----- ------- ---------- -------------
@@ -512,9 +496,9 @@ symbol exchange cycle tradingDay date       time     open  high  low   close vol
 000001 SZSE     1     2018.01M   2018.01.02 93500000 13.35 13.37 13.35 13.37 1601939 2.140652E7 1514856900000
 ```
 
-### 4.2 对表内数据填充空值 
+### 4.2 填充空值 
 
-transform参数支持调用DolphinDB的内置函数，当内置函数要求多个参数时，我们可以使用[部分应用](https://www.dolphindb.cn/cn/help/PartialApplication.html)将多参数函数转换为一个参数的函数。例如，调用[`nullFill!`](https://www.dolphindb.cn/cn/help/nullFill1.html)函数对文本文件中的空值进行填充。
+transform参数可调用DolphinDB的内置函数。当内置函数要求多个参数时，我们可以使用[部分应用](https://www.dolphindb.cn/cn/help/PartialApplication.html)将多参数函数转换为一个参数的函数。例如，调用[`nullFill!`](https://www.dolphindb.cn/cn/help/nullFill1.html)函数对文本文件中的空值进行填充。
 
 ```
 db=database(dbPath,VALUE,2018.01.02..2018.01.30)
@@ -541,15 +525,15 @@ trades.saveText(dataFilePath);
 分别创建用于存放股票数据和期货数据的分布式数据库和表:
 ```
 login(`admin,`123456)
-dbPath1="dfs://DolphinDBTickDatabase"
-dbPath2="dfs://DolphinDBFuturesDatabase"
+dbPath1="dfs://stocksDatabase"
+dbPath2="dfs://futuresDatabase"
 db1=database(dbPath1,VALUE,`IBM`MSFT`GM`C`FB`GOOG`V`F`XOM`AMZN`TSLA`PG`S)
 db2=database(dbPath2,VALUE,2000.01.01..2000.06.30)
 tb1=db1.createPartitionedTable(trades,`stock,`sym)
 tb2=db2.createPartitionedTable(trades,`futures,`date);
 ```
 
-定义函数，用于划分数据，并将数据写入到不同的数据库。
+定义以下函数，用于划分数据，并将数据写入到不同的数据库。
 ```
 def divideImport(tb, mutable stockTB, mutable futuresTB)
 {
@@ -568,13 +552,13 @@ ds;
 (DataSource<readTableFromFileSegment, DataSource<readTableFromFileSegment, DataSource<readTableFromFileSegment, DataSource<readTableFromFileSegment)
 ```
 
-调用`mr`函数，指定数据源将文件导入到数据库中。由于map函数（由mapFunc参数指定）只接受一个表作为参数，这里我们使用[部分应用](https://www.dolphindb.cn/cn/help/PartialApplication.html)将多参数函数转换为一个参数的函数。
+调用`mr`函数，指定`textChunkDS`函数结果为数据源，将文件导入到数据库中。由于map函数（由mapFunc参数指定）只接受一个表作为参数，这里我们使用[部分应用](https://www.dolphindb.cn/cn/help/PartialApplication.html)将多参数函数转换为一个参数的函数。
 
 ```
 mr(ds=ds, mapFunc=divideImport{,tb1,tb2}, parallel=false);
 ```
 
-> 请注意，这里每个小文件数据源可能包含相同分区的数据。DolphinDB不允许多个线程同时对相同分区进行写入，因此要将`mr`函数的parallel参数设置为false，否则会抛出异常。
+> 请注意，这里不同的小文件数据源可能包含相同分区的数据。DolphinDB不允许多个线程同时对相同分区进行写入，因此要将`mr`函数的parallel参数设置为false，否则会抛出异常。
 
 查看2个数据库中表的前5行，股票数据库中均为股票数据，期货数据库中均为期货数据。
 
@@ -628,7 +612,7 @@ ds=textChunkDS(dataFilePath, 10);
 head_tail_tb = mr(ds=[ds.head(), ds.tail()], mapFunc=x->x, finalFunc=unionAll{,false});
 ```
 
-查看head_tail_tb表中的记录数以及前5条记录。因为数据是随机生成，记录数可能每次会略有不同，前5行的数据也会跟下面显示的不同。
+查看head_tail_tb表中的记录数：
 
 ```
 select count(*) from head_tail_tb;
@@ -638,25 +622,11 @@ count
 192262
 ```
 
-查看表的前5行数据：
-
-```
-select top 5 * from head_tail_tb;
-
-sym  date       price1    price2     price3      price4       price5       price6       qty1 qty2 qty3 qty4 qty5 qty6
----- ---------- --------- ---------- ----------- ------------ ------------ ------------ ---- ---- ---- ---- ---- ----
-IBM  2000.01.01 10.978551 114.535418 1163.425635 11827.976468 11028.01038  10810.987825 2    51   396  6636 9403 937
-MSFT 2000.01.01 11.776656 106.472172 1138.718459 10720.778545 10164.638399 11348.744314 9    79   691  533  5669 72
-FB   2000.01.01 11.515097 118.674854 1153.305462 10478.6335   12160.662041 13874.09572  3    29   592  2097 4103 113
-MSFT 2000.01.01 11.72034  105.760547 1139.238066 10669.293733 11314.226676 12560.093619 1    99   166  2282 9167 483
-TSLA 2000.01.01 10.272615 114.748639 1043.019437 11508.695323 11825.865846 10495.364306 6    43   95   9433 6641 490
-```
-
 ## 6. 其它注意事项
 
 ### 6.1 不同编码的数据的处理
 
-由于DolphinDB的字符串采用UTF-8编码，加载的文件必须是UTF-8编码。若为其它形式的编码，可以在导入以后进行转化。DolphinDB提供了[`convertEncode`](https://www.dolphindb.cn/cn/help/convertEncode.html)、[`fromUTF8`](https://www.dolphindb.cn/cn/help/fromUTF8.html)和[`toUTF8`](https://www.dolphindb.cn/cn/help/toUTF8.html)函数，用于导入数据后对字符串编码进行转换。
+由于DolphinDB的字符串采用UTF-8编码，若加载的文件不是UTF-8编码，需在导入后进行转化。DolphinDB提供了[`convertEncode`](https://www.dolphindb.cn/cn/help/convertEncode.html)、[`fromUTF8`](https://www.dolphindb.cn/cn/help/fromUTF8.html)和[`toUTF8`](https://www.dolphindb.cn/cn/help/toUTF8.html)函数，用于导入数据后对字符串编码进行转换。
 
 例如，使用`convertEncode`函数转换表tmpTB中的exchange列的编码：
 
@@ -668,14 +638,14 @@ tmpTB.replaceColumn!(`exchange, convertEncode(tmpTB.exchange,"gbk","utf-8"));
 
 ### 6.2 数值类型的解析
 
-本教程[第1节](#1-自动识别数据格式)介绍了DolphinDB在导入数据时的数据类型自动解析机制，本节讲解数值类型数据的解析。在数据导入时，若指定数据类型为数值类型（包括CHAR，SHORT，INT，LONG，FLOAT和DOUBLE），则系统能够识别以下几种形式的数据：
+本教程[第1节](#1-自动识别数据格式)介绍了DolphinDB在导入数据时的数据类型自动解析机制，本节讲解数值类型（包括CHAR，SHORT，INT，LONG，FLOAT和DOUBLE）数据的解析。系统能够识别以下几种形式的数值数据：
 
 - 数字表示的数值，例如：123
-- 以逗号分隔的数字表示的数值，例如：100,000
-- 带有小数点的数字表示的数值，即浮点数，例如：1.231
+- 含有千位分隔符的数值，例如：100,000
+- 含有小数点的数值，即浮点数，例如：1.231
 - 科学计数法表示的数值，例如：1.23E5
 
-DolphinDB在导入时会会自动忽略数字前后的字母及其他符号，如果没有出现任何数字，则解析为NULL值。下面结合例子具体说明。
+若指定数据类型为数值类型，DolphinDB在导入时会自动忽略数字前后的字母及其他符号，如果没有出现任何数字，则解析为NULL值。下面结合例子具体说明。
 
 首先，执行以下脚本，创建一个文本文件。
 
@@ -688,7 +658,7 @@ tt=table(1..3 as id, prices1 as price1, prices2 as price2, totals as total)
 saveText(tt,dataFilePath);
 ```
 
-创建的文本文件中，price1和price2列中既有数字，又有字符。若不指定schema参数导入数据，DolphinDB会将price1和price2列均识别为SYMBOL类型：
+创建的文本文件中，price1和price2列中既有数字，又有字符。若导入数据时不指定schema参数，系统会将这两列均识别为SYMBOL类型：
 
 ```
 tmpTB=loadText(dataFilePath)
@@ -710,28 +680,28 @@ price2 SYMBOL     17
 total  DOUBLE     16
 ```
 
-若分别指定price1和price2列为INT和FLOAT类型，DolphinDB在导入时会会自动忽略数字前后的字母及其他符号。如果没有出现任何数字，则解析为NULL值。
+若指定price1列为INT类型，指定price2列为DOUBLE类型，导入时系统会忽略数字前后的字母及其他符号。如果没有出现任何数字，则解析为NULL值。
 
 ```
-schemaTB=table(`id`price1`price2`total as name, `INT`INT`FLOAT`DOUBLE as type)
+schemaTB=table(`id`price1`price2`total as name, `INT`INT`DOUBLE`DOUBLE as type) 
 tmpTB=loadText(dataFilePath,,schemaTB)
 tmpTB;
 
-id price1 price2     total
--- ------ ---------- --------
-1  2131   213.100006 2.658E7
-2  2131   213.100006 -2.658E7
-3                    2.658E-7
+id price1 price2 total
+-- ------ ------ --------
+1  2131   213.1  2.658E7
+2  2131   213.1  -2.658E7
+3                2.658E-7
 ```
 
-### 6.3 自动脱去文本外的双引号
+### 6.3 自动去除双引号
 
-在CSV文件中，有时候会用双引号来处理文本和数值中含有的特殊字符（譬如分隔符）的字段。DolphinDB处理这样的数据时，会自动脱去文本外的双引号。下面结合例子具体说明。
+在CSV文件中，有时候会用双引号来处理数值中含有的特殊字符（譬如千位分隔符）的字段。DolphinDB处理这样的数据时，会自动去除文本外的双引号。下面结合例子具体说明。
 
-首先生成示例数据。生成的文件中，num列数据为使用三位分节法表示的数值。
+在下例所用的数据文件中，num列为使用千位分节法表示的数值。
 
 ```
-dataFilePath="/home/data/testSym.csv"
+dataFilePath="/home/data/test.csv"
 tt=table(1..3 as id,  ["\"500\"","\"3,500\"","\"9,000,000\""] as num)
 saveText(tt,dataFilePath);
 ```
@@ -739,7 +709,7 @@ saveText(tt,dataFilePath);
 导入数据并查看表内数据，DolphinDB自动脱去了文本外的双引号。
 
 ```
-tmpTB=loadText(dataFilePath,,schemaTB)
+tmpTB=loadText(dataFilePath)
 tmpTB;
 
 id num
