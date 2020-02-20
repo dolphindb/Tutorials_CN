@@ -128,75 +128,13 @@ tb = database("dfs://dataImportCSVDB").loadTable("cycle")
 
 ## 3. 通过二进制文件导入
 
-对于二进制格式的文件，DolphinDB提供了2个函数用于导入：[loadRecord](https://www.dolphindb.cn/cn/help/loadRecord.html)函数和[readRecord!](https://www.dolphindb.cn/cn/help/readRecord.html)函数。下面通过演示将二进制文件[binSample.bin](../data/binSample.bin)导入系统来介绍这两个函数的用法。
-
-- `loadRecord`函数
-
-首先，指定要导入文件的表结构，包括字段名称和数据类型。
-
-关于表结构的指定，有以下3点要求：
-
-1. 对于表中的每个字段，都需要以tuple的形式指定字段名称和相应的数据类型。
-2. 若类型是字符串，还需指定磁盘上的字符串长度（包括结尾的0）。例如：（"name",SYMBOL,24）。
-3. 将所有tuple按照字段顺序组成元组，作为表结构。
-
-针对本例中的数据文件指定表结构，具体如下所示。
-
-```
-schema = [
-     ("id", INT),
-     ("date", INT),
-     ("time", INT),
-     ("last", FLOAT),
-     ("volume", INT),
-     ("value", FLOAT),
-     ("ask1", FLOAT),
-     ("ask_size1", INT),
-     ("bid1", FLOAT),
-     ("bid_size1", INT)
- ]；
-```
-
-使用`loadRecord`函数导入二进制文件。
-
-```
-dataFilePath="/home/data/binSample.bin"
-t=loadRecord(dataFilePath, schema)；
-```
-
-查看表内数据的前5行。
-
-```
-select top 5 * from t;
-
-id date     time     last volume value ask1  ask_size1 bid1  bid_size1
--- -------- -------- ---- ------ ----- ----- --------- ----- ---------
-1  20190902 91804000 0    0      0     11.45 200       11.45 200
-2  20190902 92007000 0    0      0     11.45 200       11.45 200
-3  20190902 92046000 0    0      0     11.45 1200      11.45 1200
-4  20190902 92346000 0    0      0     11.45 1200      11.45 1200
-5  20190902 92349000 0    0      0     11.45 5100      11.45 5100
-```
-
-导入以后的数据中，date列和time列的数据以数值形式存储，为了更直观地显示数据，可以使用[`temporalParse`](https://www.dolphindb.cn/cn/help/temporalParse.html)函数进行[日期和时间类型数据的格式](https://www.dolphindb.cn/cn/help/DataTimeParsingandFormat.html)转换。再使用`replaceColumn!`函数替换表中原有的列。具体如下所示。
-
-```
-t.replaceColumn!(`date, t.date.string().temporalParse("yyyyMMdd"))
-t.replaceColumn!(`time, t.time.format("000000000").temporalParse("HHmmssSSS"))
-select top 5 * from t;
-
-id date       time         last volume value ask1  ask_size1 bid1  bid_size1
--- ---------- ------------ ---- ------ ----- ----- --------- ----- ---------
-1  2019.09.02 09:18:04.000 0    0      0     11.45 200       11.45 200
-2  2019.09.02 09:20:07.000 0    0      0     11.45 200       11.45 200
-3  2019.09.02 09:20:46.000 0    0      0     11.45 1200      11.45 1200
-4  2019.09.02 09:23:46.000 0    0      0     11.45 1200      11.45 1200
-5  2019.09.02 09:23:49.000 0    0      0     11.45 5100      11.45 5100
-```
+对于二进制格式的文件，DolphinDB提供了2个函数用于导入：[readRecord!](https://www.dolphindb.cn/cn/help/readRecord.html)函数和[loadRecord](https://www.dolphindb.cn/cn/help/loadRecord.html)函数。二者的区别是，前者不支持导入字符串类型的数据，后者支持。下面通过2个例子分别介绍这两个函数的用法。
 
 - `readRecord!`函数
 
-首先，创建要导入的文件的schema表，请注意，与`loadRecord`函数不同的是，`readRecord!`函数是通过一个表来指定schema，而不是元组。
+`readRecord!`函数能够导入不含有字符串类型字段的二进制文件，下面介绍如何使用`readRecord!`函数导入一个二进制文件：[binSample.bin](../data/binSample.bin)。
+
+首先，创建一个内存表tb，用于存放导入的数据，需要为每一列指定字段名称和数据类型。
 
 ```
 tb=table(1000:0, `id`date`time`last`volume`value`ask1`ask_size1`bid1`bid_size1, [INT,INT,INT,FLOAT,INT,FLOAT,FLOAT,INT,FLOAT,INT])
@@ -224,7 +162,77 @@ id date     time     last volume value ask1  ask_size1 bid1  bid_size1
 5  20190902 92349000 0    0      0     11.45 5100      11.45 5100
 ```
 
-除了`loadRecord`和`readRecord!`函数之外，DolphinDB还提供了一些与二进制文件的处理相关的函数，例如[`writeRecord`](https://www.dolphindb.cn/cn/help/writeRecord.html)函数，用于将DolphinDB对象保存为二进制文件。具体请参考[用户手册](https://www.dolphindb.cn/cn/help/BinaryFileProcessing.html)。
+导入以后的数据中，date列和time列的数据以数值形式存储，为了更直观地显示数据，可以使用[`temporalParse`](https://www.dolphindb.cn/cn/help/temporalParse.html)函数进行[日期和时间类型数据的格式](https://www.dolphindb.cn/cn/help/DataTimeParsingandFormat.html)转换。再使用`replaceColumn!`函数替换表中原有的列。具体如下所示。
+
+```
+tb.replaceColumn!(`date, tb.date.string().temporalParse("yyyyMMdd"))
+tb.replaceColumn!(`time, tb.time.format("000000000").temporalParse("HHmmssSSS"))
+select top 5 * from tb;
+
+id date       time         last volume value ask1  ask_size1 bid1  bid_size1
+-- ---------- ------------ ---- ------ ----- ----- --------- ----- ---------
+1  2019.09.02 09:18:04.000 0    0      0     11.45 200       11.45 200
+2  2019.09.02 09:20:07.000 0    0      0     11.45 200       11.45 200
+3  2019.09.02 09:20:46.000 0    0      0     11.45 1200      11.45 1200
+4  2019.09.02 09:23:46.000 0    0      0     11.45 1200      11.45 1200
+5  2019.09.02 09:23:49.000 0    0      0     11.45 5100      11.45 5100
+```
+
+- `loadRecord`函数
+
+`loadRecord`函数能够处理字符串类型的数据（包括STRING和SYMBOL类型），但是要求字符串在磁盘上的长度必须固定。如果字符串的长度小于固定值，则用ASCII值0填充，加载的时候会把末尾0去掉。下面介绍使用`loadRecord`函数导入一个带有字符串类型字段的二进制文件：[binStringSample.bin](../data/binStringSample.bin)。
+
+首先，指定要导入文件的表结构，包括字段名称和数据类型。与`readRecord!`函数不同的是，`loadRecord`函数是通过一个元组来指定schema，而不是直接定义一个内存表。关于表结构的指定，有以下3点要求：
+
+1. 对于表中的每个字段，都需要以tuple的形式指定字段名称和相应的数据类型。
+2. 若类型是字符串，还需指定磁盘上的字符串长度（包括结尾的0）。例如：（"name",SYMBOL,24）。
+3. 将所有tuple按照字段顺序组成元组，作为表结构。
+
+针对本例中的数据文件指定表结构，具体如下所示。
+
+```
+schema = [("code", SYMBOL, 32),("date", INT),("time", INT),("last", FLOAT),("volume", INT),("value", FLOAT),("ask1", FLOAT),("ask2", FLOAT),("ask3", FLOAT),("ask4", FLOAT),("ask5", FLOAT),("ask6", FLOAT),("ask7", FLOAT),("ask8", FLOAT),("ask9", FLOAT),("ask10", FLOAT),("ask_size1", INT),("ask_size2", INT),("ask_size3", INT),("ask_size4", INT),("ask_size5", INT),("ask_size6", INT),("ask_size7", INT),("ask_size8", INT),("ask_size9", INT),("ask_size10", INT),("bid1", FLOAT),("bid2", FLOAT),("bid3", FLOAT),("bid4", FLOAT),("bid5", FLOAT),("bid6", FLOAT),("bid7", FLOAT),("bid8", FLOAT),("bid9", FLOAT),("bid10", FLOAT),("bid_size1", INT),("bid_size2", INT),("bid_size3", INT),("bid_size4", INT),("bid_size5", INT),("bid_size6", INT),("bid_size7", INT),("bid_size8", INT),("bid_size9", INT),("bid_size10", INT)]
+```
+
+使用`loadRecord`函数导入二进制文件，由于表的列数较多，通过select语句选出几列有代表性的数据进行后面的介绍。
+
+```
+dataFilePath="/home/data/binStringSample.bin"
+tmp=loadRecord(dataFilePath, schema)
+tb=select code,date,time,last,volume,value,ask1,ask_size1,bid1,bid_size1 from tmp;
+```
+
+查看表内数据的前5行。
+
+```
+select top 5 * from tb;
+
+code      date     time     last volume value ask1  ask_size1 bid1  bid_size1
+--------- -------- -------- ---- ------ ----- ----- --------- ----- ---------
+601177.SH 20190902 91804000 0    0      0     11.45 200       11.45 200
+601177.SH 20190902 92007000 0    0      0     11.45 200       11.45 200
+601177.SH 20190902 92046000 0    0      0     11.45 1200      11.45 1200
+601177.SH 20190902 92346000 0    0      0     11.45 1200      11.45 1200
+601177.SH 20190902 92349000 0    0      0     11.45 5100      11.45 5100
+```
+
+用同样的方法处理日期和时间列的数据：
+
+```
+tb.replaceColumn!(`date, tb.date.string().temporalParse("yyyyMMdd"))
+tb.replaceColumn!(`time, tb.time.format("000000000").temporalParse("HHmmssSSS"))
+select top 5 * from tb;
+
+code      date       time         last volume value ask1  ask_size1 bid1  bid_size1
+--------- ---------- ------------ ---- ------ ----- ----- --------- ----- ---------
+601177.SH 2019.09.02 09:18:04.000 0    0      0     11.45 200       11.45 200
+601177.SH 2019.09.02 09:20:07.000 0    0      0     11.45 200       11.45 200
+601177.SH 2019.09.02 09:20:46.000 0    0      0     11.45 1200      11.45 1200
+601177.SH 2019.09.02 09:23:46.000 0    0      0     11.45 1200      11.45 1200
+601177.SH 2019.09.02 09:23:49.000 0    0      0     11.45 5100      11.45 5100
+```
+
+除了`readRecord!`和`loadRecord`函数之外，DolphinDB还提供了一些与二进制文件的处理相关的函数，例如[`writeRecord`](https://www.dolphindb.cn/cn/help/writeRecord.html)函数，用于将DolphinDB对象保存为二进制文件。具体请参考[用户手册](https://www.dolphindb.cn/cn/help/BinaryFileProcessing.html)。
 
 ## 4. 通过HDF5接口导入
 
@@ -447,6 +455,7 @@ for(year in years){
 #### 7. 附录
 
 - [CSV导入数据文件](https://github.com/dolphindb/Tutorials_CN/blob/master/data/candle_201801.csv)
-- [二进制导入数据文件](https://github.com/dolphindb/Tutorials_CN/blob/master/data/binSample.bin)
+- [二进制导入例1数据文件](https://github.com/dolphindb/Tutorials_CN/blob/master/data/binSample.bin)
+- [二进制导入例2数据文件](https://github.com/dolphindb/Tutorials_CN/blob/master/data/binStringSample.bin)
 - [HDF5导入数据文件](https://github.com/dolphindb/Tutorials_CN/blob/master/data/candle_201801.h5) 
 - [案例完整脚本](https://github.com/dolphindb/Tutorials_CN/blob/master/data/demoScript.txt)
