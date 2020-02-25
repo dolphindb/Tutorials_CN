@@ -80,7 +80,7 @@ testJob20200214000  foo1	2020.02.14T18:00:23.148	2020.02.14T18:00:26.749
 >getJobReturn(`testJob20200214000);
 2020.02.14T18:00:23.148
 ```
-### 1.2 删除定时作业
+### 1.3 删除定时作业
 删除定时作业用函数[deleteScheduledJob](https://www.dolphindb.cn/cn/help/deleteScheduledJob.html)。语法如下：
 ```
 deleteScheduledJob(jobId)

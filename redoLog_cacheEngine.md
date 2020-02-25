@@ -1,40 +1,37 @@
-# DolphinDB CacheEngine与数据库日志教程
+# DolphinDB教程：CacheEngine与数据库日志
 
-这篇教程中我们会分别介绍DolphinDB中的CacheEngine和RedoLog，它们相互之间的关系以及对整体性能的影响。需要注意的是，它们只对DFS数据库起作用，对磁盘表和流表不起作用。
-另外，启用了RedoLog之后必须启用CacheEngine。
+这篇教程介绍DolphinDB中的CacheEngine和Redo Log，它们相互之间的关系以及对整体性能的影响。
 
-## 1 RedoLog
+需要注意的是，它们只对DFS数据库起作用，对磁盘表和流表不起作用。另外，启用了Redo Log之后必须启用CacheEngine。
 
-### 1.1 什么是RedoLog
+## 1 Redo Log
 
-在关系型数据库系统中，预写式日志(Write-ahead logging, WAL)是用于提供原子性和持久性的一系列技术。DolphinDB中引入的RedoLog与WAL的概念类似。
-简而言之，RedoLog核心思想是：只有在描述更改的日志记录刷新到持久化存储以后，才对数据库文件进行修改。如果遵循这个过程，就不需要在每次提交事务时都将
-数据页刷新到磁盘上，因为我们知道在数据库发生宕机时，我们可以使用日志来恢复数据库，尚未应用的所有更改可以从日志记录重做。
+### 1.1 什么是Redo Log
 
-使用RedoLog的主要好处是大大减少了磁盘的写入次数，因为在事务提交时只需要将日志文件刷新到磁盘，而不是将事务涉及到的所有文件刷新。使用RedoLog的另一个原因是顺序写入性能更好。
-DolphinDB中一张表的每一列都分别存储为一个文件，当列数特别多时，这种差异尤为明显。
+在关系型数据库系统中，预写式日志(Write-ahead logging, WAL)是用于提供原子性和持久性的一系列技术。DolphinDB中的Redo Log与WAL的概念类似。
+简而言之，Redo Log的核心思想是：只有在描述更改的日志记录刷新到持久化存储以后，才对数据库文件进行修改。如果遵循这个过程，就不需要在每次提交事务时都将数据页刷新到磁盘上，因为在数据库发生宕机时，可以使用日志来恢复数据库，尚未应用的所有更改可以从日志记录重做。
 
-RedoLog有两种回收机制，一种是定期回收，一种是大小到限度时回收，两种方法都有对应的参数可以进行设置。
+使用Redo Log的主要好处是大大减少了磁盘的写入次数，因为在事务提交时只需要将日志文件刷新到磁盘，而不是将事务涉及到的所有文件刷新。使用Redo Log的另一个原因是顺序写入性能更好。由于DolphinDB中一张表的每一列都分别存储为一个文件，当列数特别多时，这种差异尤为明显。
 
-### 1.2 为什么需要RedoLog
+Redo Log有两种回收机制，一种是定期回收，一种是大小到限度时回收，两种方法都有对应的参数可以进行设置。
 
-引入RedoLog主要是为了解决断电、数据库系统宕机等极端情况下的数据一致性问题。如果没有RedoLog，但是仍要解决这个问题，那么每次提交事务以后都必须调用fsync来将所有内存中的数据刷到磁盘上，
-那么整个系统的性能会急剧下降。这是由于硬盘每秒钟fsync的次数非常有限导致的，引入了RedoLog以后，只需要对个别log文件进行fsync即可，而数据文件采用异步的方式写入，有利于整体的写入性能。
-Redo Log主要用于数据库实时写入的场景。如果只是用于对历史数据分析，可以考虑不开启Redo Log。
+### 1.2 为什么需要Redo Log
 
-### 1.3 RedoLog对性能的影响
+引入Redo Log主要是为了解决断电、数据库系统宕机等极端情况下的数据一致性问题。如果没有Redo Log，但是仍要解决这个问题，那么每次提交事务以后都必须调用fsync来将所有内存中的数据刷到磁盘上，那么整个系统的性能会急剧下降。这是由于硬盘每秒钟fsync的次数非常有限。引入Redo Log以后，只需对个别log文件进行fsync即可，而数据文件采用异步的方式写入，有利于整体的写入性能。Redo Log主要用于数据库实时写入的场景。如果只是用于对历史数据分析，可以考虑不开启Redo Log。
 
-RedoLog会增加磁盘的负载，这是由于在数据文件以外额外写了RedoLog文件；也会增加对内存的使用，由于系统内部对还未写到磁盘上的数据文件进行了缓存。基于以上两点，开启RedoLog以后，
-系统的整体负载会有上升，写入性能也会下降，下降幅度与实际的数据有关，一般在20%左右。另外系统的启动时间也有可能增加，因为启动时需要对上次遗留的RedoLog进行重做，重做过程当中DFS数据库处于不可用状态。
+### 1.3 Redo Log对性能的影响
+
+Redo Log会增加磁盘的负载，这是由于在数据文件以外额外写了Redo Log文件；也会增加对内存的使用，由于系统内部对还未写到磁盘上的数据文件进行了缓存。基于以上两点，开启Redo Log以后，
+系统的整体负载会有上升，写入性能也会下降，下降幅度与实际的数据有关，一般在20%左右。另外系统的启动时间也有可能增加，因为启动时需要对上次遗留的Redo Log进行重做，重做过程当中DFS数据库处于不可用状态。
 
 ### 1.4 相关参数介绍
 
-如果是集群模式，RedoLog只在数据节点上需要配置，只对数据库的数据存部分做Redo，不涉及主节点。因为主节点上只存储DFS数据库的元数据，与RedoLog无关。
+如果是集群模式，Redo Log只在数据节点上需要配置，只对数据库的数据存部分做Redo，不涉及主节点。因为主节点上只存储DFS数据库的元数据，与Redo Log无关。
 
-- dataSync：该参数控制是否使用RedoLog功能，取值为1代表开启RedoLog。默认值为0，表示不启用该功能。
-- redoLogDir：该参数控制RedoLog文件的存放位置，一般建议将该位置设置到ssd上以获取最佳的性能。默认在homeDir（由home参数决定）下的log/redoLog目录下。如果是集群模式，注意要分别设置不同数据节点的目录，避免使用相同目录，造成写入错误。
-- redoLogPurgeLimit：该参数控制RedoLog文件占用的最大空间，单位为GB，默认值为4。当redoLog文件大小超过该值时会自动开始回收。
-- redoLogPurgeInterval：该参数控制RedoLog自动回收的周期，单位为秒，默认值为30，表示每30秒自动回收一次。
+- dataSync：该参数控制是否使用Redo Log功能，取值为1代表开启Redo Log。默认值为0，表示不启用该功能。
+- redoLogDir：该参数控制Redo Log文件的存放位置，一般建议将该位置设置到ssd上以获取最佳的性能。默认在homeDir（由home参数决定）下的log/redoLog目录下。如果是集群模式，注意要分别设置不同数据节点的目录，避免使用相同目录，造成写入错误。
+- redoLogPurgeLimit：该参数控制Redo Log文件占用的最大空间，单位为GB，默认值为4。当redo Log文件大小超过该值时会自动开始回收。
+- redoLogPurgeInterval：该参数控制Redo Log自动回收的周期，单位为秒，默认值为30，表示每30秒自动回收一次。
 
 
 ## 2 CacheEngine
@@ -49,42 +46,42 @@ DolphinDB采用的是列式存储，一个分区内的每一列数据单独存�
 CacheEngine能够提升写入性能的基本逻辑在于：对一个文件进行写入时，写入1行数据和写入1000行数据的时间基本相等，大部分时间都花在打开和关闭文件上；
 因此，如果把多次少量的写入缓存起来，在一次文件IO中批量写入，那么就可以节省许多对文件进行打开和关闭带来的时间开销，从而在整体上提升系统的写入性能。
 
-### 2.2 CacheEngine与RedoLog的关系
+### 2.2 CacheEngine与Redo Log的关系
 
-使用CacheEngine时，为了防止断电、宕机等情况下缓存中的数据丢失，需要配合RedoLog来完成。这种情况下，RedoLog的垃圾回收就会依赖于CacheEngine的垃圾回收。
-简而言之，为了保证极端情况下还能够从RedoLog中恢复数据，RedoLog在对某个事务的日志进行回收之前，首先要向CacheEngine确认该事务已经不在缓存当中，即已经被CacheEngine回收。
-因此要注意不可以将CacheEngine的缓存区大小设置得太大，否则会导致事务长期滞留在缓存当中，无法被RedoLog回收，导致RedoLog占用的空间持续增长。如果发生这种情况，可能导致RedoLog占满
+使用CacheEngine时，为了防止断电、宕机等情况下缓存中的数据丢失，需要配合Redo Log来完成。这种情况下，Redo Log的垃圾回收就会依赖于CacheEngine的垃圾回收。
+简而言之，为了保证极端情况下还能够从Redo Log中恢复数据，Redo Log在对某个事务的日志进行回收之前，首先要向CacheEngine确认该事务已经不在缓存当中，即已经被CacheEngine回收。
+因此要注意不可以将CacheEngine的缓存区大小设置得太大，否则会导致事务长期滞留在缓存当中，无法被Redo Log回收，导致Redo Log占用的空间持续增长。如果发生这种情况，可能导致Redo Log占满
 磁盘空间，导致后续的写入失败。也可能导致数据库在恢复时，重做大量事务，导致重启时间过长。
 
 ### 2.3 CacheEngine对性能的影响
 
 CacheEngine的使用会减少磁盘的负载，因为写入的次数减少了，少量多次的写入变成了批次写入；会增加内存占用，因为系统对还未写入磁盘的数据进行了缓存；可以提高系统的写入性能，列数增多是尤为明显。
 
-### 2.3 相关参数介绍
+### 2.4 相关参数介绍
 
-- chunkCacheEngineMemSize：该参数代表CacheEngine最大滞留的数据大小，单位为GB，类型为double。默认值为0.0，代表不使用CacheEngine。如该值大于0，那么当CacheEngine占用内存大于该值的
+- chunkCacheEngineMemSize: 该参数代表CacheEngine最大滞留的数据大小，单位为GB，类型为double。默认值为0.0，代表不使用CacheEngine。如该值大于0，那么当CacheEngine占用内存大于该值的
 30%时，会主动开始异步回收。除此以外，数据库每分钟会对CacheEngine进行一次垃圾回收。
 
-### 2.4 相关函数介绍
+### 2.5 相关函数介绍
 
-- purgeCacheEngine：使用该函数可以手动清空缓存，需要注意的是只有已经完成的事务才会被清空，正在进行但是还没有提交的事务不会被清空。
-- getCacheEngineStat： 使用该函数查看CacheEngine的状态。
-- getCacheEngineMemSize：使用该函数查看CacheEngine已经使用的内存大小。
+- purgeCacheEngine: 使用该函数可以手动清空缓存，需要注意的是只有已经完成的事务才会被清空，正在进行但是还没有提交的事务不会被清空。
+- getCacheEngineStat: 使用该函数查看CacheEngine的状态。
+- getCacheEngineMemSize: 使用该函数查看CacheEngine已经使用的内存大小。
 
 
 ## 3 DolphinDB集群的启动流程以及注意事项
 
 DolphinDB集群启动流程一般如下，首先启动master节点，然后启动各agent节点，最后启动数据节点。
 
-如果启动时间过长，可能的原因是上一次集群运行结束后遗留的RedoLog过多，原因有三个：
+如果启动时间过长，可能的原因是上一次集群运行结束后遗留的Redo Log过多，原因有三个：
 
-1. RedoLog配置的磁盘空间太大，导致redoLog文件一直没有回收。
-2. RedoLog配置的回收周期太长，导致一直没有触发回收。
-3. CacheEngine配置的内存太大，导致CacheEngine一直没有回收，阻塞了RedoLog的回收。
+1. Redo Log配置的磁盘空间太大，导致Redo Log文件一直没有回收。
+2. Redo Log配置的回收周期太长，导致一直没有触发回收。
+3. CacheEngine配置的内存太大，导致CacheEngine一直没有回收，阻塞了Redo Log的回收。
 
-为了避免以上几种情况，需要注意集群的参数中，合理配置redoLogPurgeLimit、 redoLogPurgeInterval、 chunkCacheEngineMemSize这三个参数。
+为了避免以上几种情况，需要注意集群的参数中，合理配置redoLogPurgeLimit, redoLogPurgeInterval, chunkCacheEngineMemSize这三个参数。
 
-还有一种可能的情况是RedoLog文件存储在机械硬盘上，集群启动的时候读取这些文件耗费的时间较多，因此建议将redoLogDir配置到ssd上，也可以加快集群的重启速度。
+还有一种可能的情况是Redo Log文件存储在机械硬盘上，集群启动的时候读取这些文件耗费的时间较多，因此建议将redoLogDir配置到ssd上，也可以加快集群的重启速度。
 
 ## 4 RaftLog
 
@@ -97,30 +94,30 @@ Raft是一种在分布式系统中用来维持多副本一致性的协议。在�
 DolphinDB中引入了raft协议来完成元数据的高可用，即控制节点的高可用。DolphinDB中的控制节点上保存了分布式文件系统的元数据，如果控制节点宕机，则整个系统会处于不可用状态。
 而有了Raft支持的高可用以后，我们可以同时开启多个控制节点，保存相同的元数据信息，任意时刻只要大多数节点处于可用状态，整个系统就是可用的。
 
-关于元数据高可用，可以参考[这篇教程](https://github.com/dolphindb/Tutorials_CN/blob/master/ha_cluster_deployment.md#3-%E5%85%83%E6%95%B0%E6%8D%AE%E9%AB%98%E5%8F%AF%E7%94%A8)。
+关于元数据高可用，请参考[DolphinDB高可用集群部署教程](https://github.com/dolphindb/Tutorials_CN/blob/master/ha_cluster_deployment.md#3-%E5%85%83%E6%95%B0%E6%8D%AE%E9%AB%98%E5%8F%AF%E7%94%A8)。
 
 
 ## 5 必须使用Log的场景
 
-以下几种场景下必须使用以上的log：
+以下几种场景必须使用以上的log：
 
-1. 实时数据写入场景，对数据可靠性有要求，无法接受宕机情况下数据丢失的情况，必须开启RedoLog和CacheEngine
-2. 数据写入场景下，DFS表的列数特别多的情况，必须开启RedoLog和CacheEngine
-3. 要求DFS数据库具有高可用的场景，必须开启RaftLog
+1. 实时数据写入场景，对数据可靠性有要求，无法接受宕机情况下数据丢失的情况，必须开启Redo Log和CacheEngine。
+2. 数据写入场景下，DFS表的列数特别多的情况，必须开启Redo Log和CacheEngine。
+3. 要求DFS数据库具有高可用的场景，必须开启RaftLog。
 
 ## 6 总体性能优化的建议
 
 根据以上叙述，为了提升数据库的整体写入性能，有以下几点建议：
 
-1. 将所有元数据的存放目录以及redoLog存放目录配置到ssd上，有条件的情况下使用工业级ssd。具体建议如下：
+1. 将所有元数据的存放目录以及Redo Log存放目录配置到ssd上，有条件的情况下使用工业级ssd。具体建议如下：
 
-> - dfsMetaDir : 控制节点元数据存储目录，设置到_SSD__磁盘上，在controller.cfg里面设置。
-> - chunkMetadir : 数据节点元数据存储目录，设置到__SSD__磁盘上，在cluster.cfg里面设置。
-> - rodoLogDir : 设置到__SSD__磁盘上，在cluster.cfg里面设置。
-> - persistenceDir : 流数据的存储路径，建议设置到__SSD__磁盘上。在cluter.cfg中设置。
-> - logFile : 各个节点的运行日志，记录节点的运行状态、错误信息等，可以写到__HDD__磁盘上。controller.cfg、agent.cfg、cluster.cfg中设置。
-> - batchJobDir : 批处理任务的日志目录，例如submiJob提交的任务日志，可以写的__HDD__ 上。在cluster.cfg中设置。
-> - jobLogFile : 各个节点的query 日志，记录各个query的执行情况，可以写到__HDD__磁盘上。cluster.cfg中设置。
+> - dfsMetaDir: 控制节点元数据存储目录，设置到SSD磁盘上，在controller.cfg里面设置。
+> - chunkMetadir: 数据节点元数据存储目录，设置到SSD磁盘上，在cluster.cfg里面设置。
+> - rodoLogDir: 设置到SSD磁盘上，在cluster.cfg里面设置。
+> - persistenceDir: 流数据的存储路径，建议设置到SSD磁盘上。在cluter.cfg中设置。
+> - logFile: 各个节点的运行日志，记录节点的运行状态、错误信息等，可以写到HDD磁盘上。controller.cfg, agent.cfg, cluster.cfg中设置。
+> - batchJobDir: 批处理任务的日志目录，例如submiJob提交的任务日志，可以写到HDD磁盘上。在cluster.cfg中设置。
+> - jobLogFile: 各个节点的query日志，记录各个query的执行情况，可以写到HDD磁盘上。cluster.cfg中设置。
 
 
 2. 合理配置RedoLog的内存大小和垃圾回收周期，一般建议配置内存不超过4G，不低于1G，回收周期配置为60秒。
