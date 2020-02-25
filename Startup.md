@@ -4,7 +4,7 @@ DolphinDB database从1.0版本开始，提供了启动脚本功能。用户可�
 ## 1. DolphinDB启动顺序
 DolphinDB节点的启动是一个复杂的过程。与启动脚本相关的脚本和任务至少包括：系统级的初始化脚本（通过init参数指定，默认值dolphindb.dos），函数视图(function view)以及定时任务(scheduled job)。启动脚本以及相关组件资源的初始化顺序如下图所示。
 
-<div align="center">![image](https://github.com/dolphindb/Tutorials_CN/blob/master/images/startup.png)</div>
+<div align="center">![image](https://github.com/dolphindb/Tutorials_CN/blob/master/images/startup.png?raw=true)</div>
 
 系统级初始化脚本是必需的，默认是版本发布目录中的dolphindb.dos，其中定义了一些系统级的函数。从启动顺序图中我们可以看到，dolphindb.dos脚本在执行时脚本解释器、工作线程等已完成初始化，但系统的网络和分布式文件系统尚未启动、函数视图尚未加载。而启动脚本执行前，系统的网络和分布式文件系统已启动，函数视图已加载。因此在启动脚本中我们几乎可以做任何事情。
 
