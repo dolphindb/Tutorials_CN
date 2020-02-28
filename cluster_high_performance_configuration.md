@@ -95,7 +95,7 @@ __tcpNoDelay__ : 使能TCP的 TCP_NODELAY 选项，可以有效的降低请求�
 
 __maxFileHandles__ :系统打开文件（包括普通文件和socket链接）的最大个数，一般linux默认1024，当集群规模较大时，可对该参数进行配置。也可以直接对操作系统进行配置该参数。  
 
-__enableHttps__ :节点之间的通信协议是否启用https安全协议。该选项会对性能有轻微影响，在局域网环境下，建议设置为false，在公共网络环境下，可以设置为true，以保证数据安全，默认为false。
+__enableHttps__ :对于web连接是否启用https安全协议，默认为false。
 
 #### 2.5 数据安全配置选项
 
