@@ -66,11 +66,19 @@ $ docker-compose --version
 
 (2) 生成DophinDB server 镜像文件
 
-通过下述步骤我们可以得到一个包含最新 DophinDB server 的镜像文件。
+解压后修改包中Dockerbuild/DockerFile文件中的dolphindb_version参数，可以在build时更新到指定的DophinDB server版本。现行发布版本请从 [Release Notes](https://github.com/dolphindb/release) 查询
+
+示例如下：
+```
+ARG dolphindb_version = "DolphinDB_Linux64_V1.00.10.zip" 
+```
+
+通过下述步骤我们可以得到内置 DophinDB server 的镜像文件。
 ```bash
 cd ./DolphinDB-Docker-Compose/Dockerbuild
 docker build -t ddb:latest ./
 ```
+
 编译完成后，执行 docker images 命令：
 ```bash
 $ docker images
@@ -123,3 +131,9 @@ agent3.cfg|代理节点3配置参数|
   * 参照 docker-compose.yml文件，增加容器ddbagentx, 容器配置信息可以参考其他agent的配置，在port和ip这里需要与其他容器错开，避免冲突。
   * 需要修改 ./cfg/cluster.nodes 增加新的agent和datanode信息
   * 增加一个./cfg/agentx.cfg与docker-compose.yml中volumes映射的代理节点配置文件相对应。
+ 
+#### 5. 如何升级版本
+
+* 下载最新的server安装包，解压后，将server目录下dolphindb.lic文件删除
+* 用docker cp命令拷贝server目录覆盖每个docker容器的 /data/ddb/server目录。
+* 重启docker容器。
