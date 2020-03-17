@@ -18,7 +18,7 @@ DolphinDB中的即时编译功能显著提高了for循环，while循环和if-els
 
 下面，我们使用一个最简单的例子，对比使用和不使用JIT的情况下，do-while循环计算1到1000000之和100次所需要的时间。
 
-```
+``` 
 def sum_without_jit(v) {
   s = 0l
   i = 1
@@ -50,7 +50,7 @@ timer(100) sum_with_jit(vec)        //    217 ms
 
 不使用JIT的耗时是使用JIT的419倍。
 
-请注意，以上例子仅是为了展示在do-while循环中JIT的性能优势。实际应用中，类似上例的简单循环计算，一般应当优先使用DolphinDB的内置函数进行向量化运算，这是由于很多内置函数采用了进一步的优化，而且使用内置函数更为方便。上例中，若使用`sum`函数，耗时是JIT的20%左右。一般来说，循环的操作与计算越复杂，JIT相对于使用内置函数的优势越大。
+请注意，以上例子仅是为了展示在do-while循环中JIT的性能优势。实际应用中，类似上例的简单循环计算，一般应当优先使用DolphinDB的内置函数进行向量化运算，这是由于很多内置函数采用了进一步的优化，而且使用内置函数更为方便。上例中，若使用 `sum` 函数，耗时是JIT的20%左右。一般来说，循环的操作与计算越复杂，JIT相对于使用内置函数的优势越大。
 
 <!-- 这里内置函数比JIT快是因为JIT生成的代码中有很多检查NULL值的指令，内置的sum函数如果发现输入的array没有NULL值则会省略这一步操作。
 
@@ -61,12 +61,14 @@ timer(100) sum_with_jit(vec)        //    217 ms
 <!-- 若任务可以使用向量化计算，视情况可以不使用JIT，但是在诸如如高频因子生成等实际应用中，如何把循环计算转化为向量化运算需要一定的技巧。-->
 
 在[知乎上的一篇专栏](https://zhuanlan.zhihu.com/p/77988657)中，我们展示了如何使用在DolphinDB中使用向量化运算，其中计算交易信号的式子如下：
-```
+
+``` 
 direction = (iif(signal>t1, 1h, iif(signal<t10, 0h, 00h)) - iif(signal<t2, 1h, iif(signal>t20, 0h, 00h))).ffill().nullFill(0h)
 ```
 
-对于初学DolphinDB的人来说，需要了解`iif`函数才可写出以上语句。使用for循环改写以上语句则较为容易：
-```
+对于初学DolphinDB的人来说，需要了解 `iif` 函数才可写出以上语句。使用for循环改写以上语句则较为容易：
+
+``` 
 @jit
 def calculate_with_jit(signal, n, t1, t10, t20, t2) {
   cur = 0
@@ -91,8 +93,9 @@ def calculate_with_jit(signal, n, t1, t10, t20, t2) {
 }
 ```
 
-在上述脚本中把@jit去掉，并将函数名改为`calculate_without_jit`，以产生不使用JIT的自定义函数。对比三种方法的耗时：
-```
+在上述脚本中把@jit去掉，并将函数名改为 `calculate_without_jit` ，以产生不使用JIT的自定义函数。对比三种方法的耗时：
+
+``` 
 n = 10000000
 t1= 60
 t10 = 50
@@ -116,7 +119,7 @@ timer calculate_without_jit(signal, size(signal), t1, t10, t20, t2)             
 
 DolphinDB目前仅支持对用户自定义函数进行JIT。只需在函数定义之前的一行添加 @jit 的标识即可：
 
-```
+``` 
 @jit
 def myFunc(/* arguments */) {
   /* implementation */
@@ -129,9 +132,9 @@ def myFunc(/* arguments */) {
 
 目前DolphinDB支持在JIT中使用以下几种语句：
 
-- 赋值语句，例如：
+* 赋值语句，例如：
 
-```
+``` 
 @jit
 def func() {
   y = 1
@@ -140,7 +143,7 @@ def func() {
 
 请注意，multiple assign目前是不支持的，例如：
 
-```
+``` 
 @jit
 def func() {
   a, b = 1, 2
@@ -150,18 +153,18 @@ func()
 
 运行以上语句会抛出异常。
 
-- return语句，例如：
+* return语句，例如：
 
-```
+``` 
 @jit
 def func() {
   return 1
 }
 ```
 
-- if-else语句，例如：
+* if-else语句，例如：
 
-```
+``` 
 @jit
 def myAbs(x) {
   if(x > 0) return x
@@ -169,9 +172,9 @@ def myAbs(x) {
 }
 ```
 
-- do-while语句，例如：
+* do-while语句，例如：
 
-```
+``` 
 @jit
 def mySqrt(x) {
     diff = 0.0000001
@@ -184,9 +187,9 @@ def mySqrt(x) {
 }
 ```
 
-- for语句，例如：
+* for语句，例如：
 
-```
+``` 
 @jit
 def mySum(vec) {
   s = 0
@@ -197,8 +200,9 @@ def mySum(vec) {
 }
 ```
 
-- break和continue语句，例如：
-```
+* break和continue语句，例如：
+
+``` 
 @jit
 def mySum(vec) {
   s = 0
@@ -217,13 +221,13 @@ DolphinDB支持在JIT中以上语句的任意嵌套。
 <!-- add, sub, multi, div, bitor, bitand, bitxor, seq, eq, neq, lt, le, gt, ge, neg, at, mod -->
 目前DolphinDB支持在JIT中使用以下的运算符：add(+), sub(-), multiply(*), divide(/), and(&&), or(||), bitand(&), bitor(|), bitxor(^), eq(==), neq(!=), ge(>=), gt(>), le(<=), lt(<), neg(-), mod(%), seq(..), at([])，以上运算在所有数据类型下的实现都与非JIT的实现一致。
 
-目前DolphinDB支持在JIT中使用以下的数学函数： `exp`, `log`, `sin`, `asin`, `cos`, `acos`, `tan`, `atan`, `abs`, `ceil`, `floor`, `sqrt`。以上数学函数在JIT中出现时，
+目前DolphinDB支持在JIT中使用以下的数学函数： `exp` , `log` , `sin` , `asin` , `cos` , `acos` , `tan` , `atan` , `abs` , `ceil` , `floor` , `sqrt` 。以上数学函数在JIT中出现时，
 如果接受的参数为scalar，那么在最后生成的机器码中会调用glibc中对应的函数或者经过优化的C实现的函数；如果接收的参数为array，那么最后会调用DolphinDB
 提供的数学函数。这样的好处是通过直接调用C实现的代码提升函数运行效率，减少不必要的虚拟函数调用和内存分配。
 
-目前DolphinDB支持在JIT中使用以下的内置函数：`take`, `array`, `size`, `isValid`, `rand`, `cdfNormal`。
+目前DolphinDB支持在JIT中使用以下的内置函数： `take` , `array` , `size` , `isValid` , `rand` , `cdfNormal` 。
 
-需要注意，`array`函数的第一个参数必须直接指定具体的数据类型，不能通过变量传递指定。这是由于JIT编译时必须知道所有变量的类型，而`array`函数返回结果的类型由第一个参数指定，因此编译时必须该值必须已知。
+需要注意， `array` 函数的第一个参数必须直接指定具体的数据类型，不能通过变量传递指定。这是由于JIT编译时必须知道所有变量的类型，而 `array` 函数返回结果的类型由第一个参数指定，因此编译时必须该值必须已知。
 
 ### 3.4 空值的处理
 
@@ -233,7 +237,7 @@ JIT中所有的函数和运算符处理空值的方法都与原生函数和运�
 
 DolphinDB的JIT函数可以调用另一个JIT函数。例如：
 
-```
+``` 
 @jit
 def myfunc1(x) {
   return sqrt(x) + exp(x)
@@ -247,7 +251,7 @@ def myfunc2(x) {
 myfunc2(1.5)
 ```
 
-在上面的例子中，内部会先编译`myfunc1`, 生成一个签名为 double myfunc1(double) 的native函数，`myfunc2`生成的机器码中直接调用这个函数，而不是在运行时判断`myfunc1`是否为JIT函数后再执行，从而达到最高的执行效率。
+在上面的例子中，内部会先编译 `myfunc1` , 生成一个签名为 double myfunc1(double) 的native函数， `myfunc2` 生成的机器码中直接调用这个函数，而不是在运行时判断 `myfunc1` 是否为JIT函数后再执行，从而达到最高的执行效率。
 
 请注意，JIT函数内不可以调用非JIT的用户自定义函数，因为这样无法进行类型推导。关于类型推导下面会提到。
 
@@ -277,7 +281,7 @@ DolphinDB的JIT底层依赖[LLVM](https://llvm.org/)实现，每个用户自定�
 
 在使用LLVM生成IR之前，必须知道脚本中所有变量的类型，这个步骤就是类型推导。DolphinDB的JIT使用的类型推导方式是局部推导，比如：
 
-```
+``` 
 @jit
 def foo() {
   x = 1
@@ -287,22 +291,22 @@ def foo() {
 }
 ```
 
-通过 x = 1 确定x的类型是int；通过 y = 1.1 确定y的类型是 double；通过 z = x + y 以及上面推得的x和y的类型，确定z的类型也是double；通过 return z 确定`foo`函数的返回类型是double。
+通过 x = 1 确定x的类型是int；通过 y = 1.1 确定y的类型是 double；通过 z = x + y 以及上面推得的x和y的类型，确定z的类型也是double；通过 return z 确定 `foo` 函数的返回类型是double。
 
 如果函数有参数的话，比如：
 
-```
+``` 
 @jit
 def foo(x) {
   return x + 1
 }
 ```
 
-`foo`函数的返回类型就依赖于输入值x的类型。
+`foo` 函数的返回类型就依赖于输入值x的类型。
 
 上面我们提到了目前JIT支持的数据类型，如果函数内部出现了不支持的类型，或者输入的变量类型不支持，那么就会导致整个函数的变量类型推导失败，在运行时会抛出异常。例如：
 
-```
+``` 
 @jit
 def foo(x) {
   return x + 1
@@ -331,7 +335,7 @@ foo(1..10)             // 抛出异常，因为目前还不支持cumprod函数�
 
 上面提到过某些计算无法进行向量化运算，计算隐含波动率 (implied volatility)就是一个例子：
 
-```
+``` 
 @jit
 def GBlackScholes(future_price, strike, input_ttm, risk_rate, b_rate, input_vol, is_call) {
   ttm = input_ttm + 0.000000000000001;
@@ -394,13 +398,13 @@ timer(10) test_non_jit(future_price, strike, ttm, risk_rate, b_rate, option_pric
 
 ```
 
-上面的例子中，`ImpliedVolatility`会调用`GBlackScholes`函数。函数`test_non_jit`可通过把`test_jit`定义之前的@jit去掉以获取。JIT版本`test_jit`运行速度是非JIT版本`test_non_jit`的115倍。
+上面的例子中， `ImpliedVolatility` 会调用 `GBlackScholes` 函数。函数 `test_non_jit` 可通过把 `test_jit` 定义之前的@jit去掉以获取。JIT版本 `test_jit` 运行速度是非JIT版本 `test_non_jit` 的115倍。
 
 ### 5.2 计算Greeks
 
 量化金融中经常使用[Greeks](https://www.wikiwand.com/en/Greeks_(finance))进行风险评估，下面以charm(delta衰减)为例展示JIT的使用：
 
-```
+``` 
 @jit
 def myMax(a,b){
 	if(a>b){
@@ -446,7 +450,6 @@ def test_jit(future_price, strike_price, input_ttm, risk_rate, b_rate, vol, mult
 	return ret
 }
 
-
 def ND_validate(x) {
   return (1.0/sqrt(2*pi)) * exp(-(x*x)/2.0)
 }
@@ -481,14 +484,14 @@ timer(10) test_jit(future_price, strike_price, input_ttm, risk_rate, b_rate, vol
 timer(10) test_none_jit(future_price, strike_price, input_ttm, risk_rate, b_rate, vol, multi, is_call)                // 224099 ms
 timer(10) CalculateCharm_vectorized(future_price, strike_price, input_ttm, risk_rate, b_rate, vol, multi, is_call)    //   3118 ms
 ```
-本例比5.1更加复杂，涉及到更多的函数调用和更复杂的计算。JIT比非JIT快120倍，比向量化版本快70%。
 
+本例比5.1更加复杂，涉及到更多的函数调用和更复杂的计算。JIT比非JIT快120倍，比向量化版本快70%。
 
 ### 5.3 计算止损点 (stoploss)
 
 在这篇[知乎专栏](https://zhuanlan.zhihu.com/p/47236676)中，我们展示了如何使用DolphinDB进行技术信号回测，下面我们用JIT来实现其中的stoploss函数：
 
-```
+``` 
 @jit
 def stoploss_JIT(ret, threshold) {
 	n = ret.size()
@@ -503,7 +506,7 @@ def stoploss_JIT(ret, threshold) {
 		if(curRet > curMaxRet) { curMaxRet = curRet }
 		drawDown = 1 - curRet / curMaxRet;
 		if(drawDown >= threshold) {
-			i = n // break is not supported for now
+      break
 		}
 		i += 1
 	} while(i < n)
@@ -524,7 +527,7 @@ def stoploss_no_JIT(ret, threshold) {
 		if(curRet > curMaxRet) { curMaxRet = curRet }
 		drawDown = 1 - curRet / curMaxRet;
 		if(drawDown >= threshold) {
-			i = n // break is not supported for now
+      break
 		}
 		i += 1
 	} while(i < n)
@@ -564,3 +567,4 @@ timer(10) stoploss_vectorization(ret, threshold)    //     152 ms
 ## 7 总结
 
 DolphinDB推出了即时编译执行自定义函数的功能，显著提高了for循环，while循环和if-else等语句的运行速度，特别适合于无法使用向量化运算但又对运行速度有极高要求的场景，例如高频因子计算、实时流数据处理等。
+
