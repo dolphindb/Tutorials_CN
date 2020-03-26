@@ -9,7 +9,6 @@
     - [基于Docker的集群部署教程](https://github.com/dolphindb/Tutorials_CN/blob/master/docker_deployment.md)
     - [高可用集群部署教程](https://github.com/dolphindb/Tutorials_CN/blob/master/ha_cluster_deployment.md)
     - [如何扩展集群节点和存储](https://github.com/dolphindb/Tutorials_CN/blob/master/scale_out_cluster.md)
-    - [高性能集群配置](https://github.com/dolphindb/Tutorials_CN/blob/master/cluster_high_performance_configuration.md)
 - 数据库
     - [分区数据库设计和操作](https://github.com/dolphindb/Tutorials_CN/blob/master/database.md)
     - [数据导入教程](https://github.com/dolphindb/Tutorials_CN/blob/master/import_data.md)
@@ -24,7 +23,7 @@
     - [模块复用教程](https://github.com/dolphindb/Tutorials_CN/blob/master/module_tutorial.md)
     - [通用计算教程](https://github.com/dolphindb/Tutorials_CN/blob/master/general_computing.md)
     - [即时编译(JIT)教程](https://github.com/dolphindb/Tutorials_CN/blob/master/jit.md)
-    - [元编程教程](https://2xdb.net/dolphindb/tutorials_cn/blob/master/meta_programming.md)
+    - [元编程教程](https://github.com/dolphindb/Tutorials_CN/blob/master/meta_programming.md)
 - 流计算
     - [流数据教程](https://github.com/dolphindb/Tutorials_CN/blob/master/streaming_tutorial.md)
     - [流数据时序聚合引擎](https://github.com/dolphindb/Tutorials_CN/blob/master/stream_aggregator.md)
@@ -40,6 +39,7 @@
 - API
     - [Python API使用教程](https://github.com/dolphindb/python3_api_experimental/blob/master/README.md)
     - [Java API使用教程](https://github.com/dolphindb/api-java/blob/master/README_CN.md)
+    - [Java API使用实例](https://github.com/dolphindb/api-java/blob/master/example/README_CN.md)
     - [C# API使用教程](https://github.com/dolphindb/api-csharp/blob/master/README_CN.md)
     - [C++ API使用教程](https://github.com/dolphindb/api-cplusplus/blob/master/README_CN.md)
     - [C++ API 数据读写指南](https://github.com/dolphindb/Tutorials_CN/blob/master/c%2B%2Bapi.md)
