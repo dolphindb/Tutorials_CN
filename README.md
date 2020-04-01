@@ -66,6 +66,8 @@
     - [DolphinDB VSCode 插件](https://github.com/dolphindb/Tutorials_CN/blob/master/vscode_extension.md)
     - [插件开发教程](https://github.com/dolphindb/Tutorials_CN/blob/master/plugin_development_tutorial.md)
 - 应用场景示例
+    - [技术分析(Technical Analysis)指标库](https://github.com/dolphindb/Tutorials_CN/blob/master/ta.md) 
     - [DolphinDB在工业物联网的应用](https://github.com/dolphindb/Tutorials_CN/blob/master/iot_demo.md)
     - [加密货币逐笔交易数据回放](https://github.com/dolphindb/applications/blob/master/cryptocurr_replay/README.md)
     - [在DolphinDB中计算K线](https://github.com/dolphindb/Tutorials_CN/blob/master/OHLC.md) 
+    
