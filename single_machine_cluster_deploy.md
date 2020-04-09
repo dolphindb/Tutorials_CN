@@ -28,6 +28,7 @@ DolphinDB集群包括三种类型节点：数据节点（data node），代理�
 ```sh
 /DolphinDB
 ```
+>请注意：安装路径的目录名中不能含有空格字符或中文字符，否则启动数据节点时会失败。比如不要装到Windows系统的Program Files目录下。
 
 ## 2. 软件授权许可更新
 
