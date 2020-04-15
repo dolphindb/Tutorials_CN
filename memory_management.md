@@ -1,23 +1,23 @@
 # 内存管理
-DolphinDB是一款支持多用户多任务并发操作的高性能分布式时序数据库软件(Distributed Time Series Database)。针对大数据的高效的内存管理是其性能优异的基础之一。DolphinDB通过向操作系统申请大块内存，然后自行管理。本教程涉及的内存管理包括以下方面：   
-* __变量的内存管理__ ，为用户提供和回收编程环境所需内存； 
-* __分布式表的缓存管理__ ，Session间共享分区表数据，以提高内存使用率；
-* __流数据缓存__ ，流数据发送节点提供持久化和发送队列缓存,订阅节点提供接收数据队列缓存； 
-* __DFS数据库写入缓存__ ，写入DFS的数据先写到WAL和缓存， 通过批量写入提升吞吐量；
+DolphinDB是一款支持多用户多任务并发操作的高性能分布式时序数据库软件(distributed time-series database)。针对大数据的高效的内存管理是其性能优异的原因之一。本教程涉及的内存管理包括以下方面：   
+* __变量的内存管理__，为用户提供和回收编程环境所需内存；
+* __分布式表的缓存管理__，多个session共享分区表数据，以提高内存使用率；
+* __流数据缓存__，流数据发送节点提供持久化和发送队列缓存，订阅节点提供接收数据队列缓存； 
+* __DFS数据库写入缓存__，写入DFS的数据先写到WAL和缓存，通过批量写入提升吞吐量；
 
 ## 1. 内存管理机制
-DolphinDB通过向操作系统申请大块内存，并自行进行管理。当申请的内存块闲置时，系统会定期检查并释放。目前vector和table，以及所有字符串的内存分配都已经纳入DolphinDB自己的内存管理系统。    
-__通过参数maxMemSize设定节点的最大内存使用量__ ，该参数制定节点的最大可使用内存。如果设置太小，会严重限制集群的性能，如果设置太大，比如超过物理内存，可能会触发操作系统强制关闭进程。一般来说，如果物理机器16GB，并且只部署1个节点，该参数可设置为12GB左右。
+DolphinDB向操作系统申请大块内存，自行进行管理。当申请的内存块闲置时，系统会定期检查并释放。目前vector和table以及所有字符串的内存分配都已经纳入DolphinDB的内存管理系统。    
+__通过参数maxMemSize设定节点的最大内存使用量__，该参数制定节点的最大可使用内存。如果设置太小，会严重限制集群的性能，如果设置太大，比如超过物理内存，可能会触发操作系统强制关闭进程。一般来说，如果物理机器16GB，并且只部署1个节点，该参数可设置为12GB左右。
 
-__以512兆为单位向操作系统申请内存块__ ，当用户查询操作或者编程换进所需要内存时，DolphinDB会以512兆为单位向操作系统申请内存。如果操作系统无法提供大块的连续内存，则会尝试256MB，128MB等更小的内存块。
+__以512MB为单位向操作系统申请内存块__，当用户查询操作或者编程换进所需要内存时，DolphinDB会以512MB为单位向操作系统申请内存。如果操作系统无法提供大块的连续内存，则会尝试256MB，128MB等更小的内存块。
 
-__系统充分利用可用内存缓存数据库数据__ ，当节点的内存使用总量小于maxMemSize时，DolphinDB会尽可能多的缓存数据库分区数据，以便提升用户下次访问该数据块的速度。当内存不足时，系统自动会剔除部分缓存。
+__系统充分利用可用内存缓存数据库数据__，当节点的内存使用总量小于maxMemSize时，DolphinDB会尽可能多的缓存数据库分区数据，以便提升用户下次访问该数据块的速度。当内存不足时，系统自动会剔除部分缓存。
 
-__每隔30秒扫描一次，空闲的内存块还给操作系统__ ，当用户使用释放内存变量，或者使用函数clearAllCache释放缓存时，如果内存块完全空闲，则会整体还给操作系统，如果仍有小部分内存在使用，比如512兆的内存块中仍有10兆在使用，则不会归还操作系统。
+__每隔30秒扫描一次，空闲的内存块还给操作系统__，当用户使用释放内存变量，或者使用函数clearAllCache释放缓存时，如果内存块完全空闲，则会整体还给操作系统，如果仍有小部分内存在使用，比如512MB的内存块中仍有10MB在使用，则不会归还操作系统。
 
 ## 2. 变量的内存管理
 ### 2.1 创建变量
-我们在DolphinDB 节点上，先创建一个用户user1，然后登陆。创建vector变量，1亿个int类型，约400兆。  
+在DolphinDB节点上，先创建一个用户user1，然后登陆。创建vector变量，1亿个INT类型元素，约400MB。  
 示例1 创建vector变量
 ```
 login("admin","123456")  //创建用户需要登陆admin
@@ -47,10 +47,12 @@ undef(`v)
 ```
 v = NULL
 ```
-除了手动释放变量，当Sessionn关闭时，比如关闭GUI和其他API连接，都会触发对该Session的所有内存进行回收。当通过Web notebook连接时，10分钟内无操作，系统会关闭session，自动回收内存。
+除了手动释放变量，当session关闭时，比如关闭GUI和其他API连接，都会触发对该session的所有内存进行回收。当通过web notebook连接时，10分钟内无操作，系统会关闭session，自动回收内存。
 
 ## 3 分布式表的缓存管理
-DolphinDB对分布式表是以分区为单位管理的。分布式表的缓存是全局共享的，不同的session或读事务在大部分情况下，会看到同一份数据copy（版本可能会有所不同），这样极大的节省了内存的使用。
+
+DolphinDB对分布式表是以分区为单位管理的。分布式表的缓存是全局共享的，不同的session？？？或读事务？？？在大部分情况下，会看到同一份数据copy（版本可能会有所不同），这样极大的节省了内存的使用。
+
 历史数据库都是以分布式表的形式存在数据库中，用户平时查询操作也往往直接与分布式表交互。分布式表的内存管理有如下特点：
 
 * 内存以分区列为单位进行管理；
@@ -122,14 +124,14 @@ for(d in days){
 }
 ```
 内存随着加载分区数的增加变化规律如下图所示：  
-![image](https://2xdb.net/dolphindb/tutorials_cn/raw/master/images/memory_managment/partition9.png?inline=false)  
+![image](https://github.com/dolphindb/Tutorials_CN/blob/master/images/memory_managment/partition9.png?raw=true)  
 
 当遍历每个分区数据时，在内存使用量不超过maxMemSize的情况下，分区数据会全部缓存到内存中，以在用户下次访问时，直接从内存中提供数据，而不需要再次从磁盘加载。
 
 ### 3.5  节点内存使用达到maxMemSize时，系统自动回收
 如果DolphinDB server使用的内存，没有超过用户设置的maxMemSize，则不会回收内存。当总的内存使用达到maxMemSize时，DolphinDB 会采用LRU的内存回收策略， 来腾出足够的内存给用户。
 示例10，上面用例中我们只加载了8天的数据，此时我们继续共遍历15天数据，查看缓存达到maxMemSize时，内存的占用情况。如下图所示：  
-![image](https://2xdb.net/dolphindb/tutorials_cn/raw/master/images/memory_managment/partiton15.png?inline=false)   
+![image](https://github.com/dolphindb/Tutorials_CN/blob/master/images/memory_managment/partiton15.png?raw=true)   
 
 如上图所示，当缓存的数据超过maxMemSize时，系统自动回收内存，总的内存使用量仍然小于用户设置的最大内存量8GB。
 
@@ -147,7 +149,7 @@ sum(mem().blockSize - mem().freeSize)
 ## 4 作为流数据消息缓存队列
 当数据进入流数据系统时，首先写入流表，然后写入持久化队列和发送队列（假设用户设置为异步持久化），持久化队列异步写入磁盘，发送队列发送到订阅端。  
 当订阅端收到数据后，先放入接受队列，然后用户定义的handler从接收队列中取数据并处理。如果handler处理缓慢，会导致接收队列有数据堆积，占用内存。如下图所示：  
-![image](https://2xdb.net/dolphindb/tutorials_cn/raw/master/images/memory_managment/streaming.png?inline=false)
+![image](https://github.com/dolphindb/Tutorials_CN/blob/master/images/memory_managment/streaming.png?raw=true)
 
 流数据内存相关的配置选项：
 *  __maxPersistenceQueueDepth__ : 流表持久化队列的最大消息数。对于异步持久化的发布流表，先将数据放到持久化队列中，再异步持久化到磁盘上。该选项默认设置为1000万。在磁盘写入成为瓶颈时，队列会堆积数据。
@@ -164,7 +166,7 @@ sum(mem().blockSize - mem().freeSize)
 
 DolphinDB为了提高读写的吞吐量和降低读写的延迟，采用先写入WAL和缓存的通用做法，等累积到一定数量时，批量写入。这样减少和磁盘文件的交互次数，提升写入性能，可提升30%+的写入速度。因此，也需要一定的内存空间来临时缓存这些数据，如下图所示：  
 
-![image](https://2xdb.net/dolphindb/tutorials_cn/raw/master/images/memory_managment/cacheEngine.png?inline=false)
+![image](https://github.com/dolphindb/Tutorials_CN/blob/master/images/memory_managment/cacheEngine.png?raw=true)
 
 当事务t1，t2，t3都完成时，将三个事务的数据一次性写入到DFS的数据库磁盘上。Cache Engine空间一般推荐为maxMemSize的1/8~1/4,可根据最大内存和写入数据量适当调整。CacheEngine的大小可以通过chunkCacheEngineMemSize来配置。
 
