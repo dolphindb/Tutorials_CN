@@ -96,5 +96,5 @@ remoteRun(conn, appendData, "dfs://db1", "pt", loadText("c:/users/usr1/data.csv"
 
 ### 4. DolphinDB Notebook
 
-DolphinDB Notebook是一个DolphinDB服务器安装包自带的，基于网页的丰富的图形化交互工具。它主要用于系统监控、日志查看、以及数据浏览。同时也可用于快速编辑执行代码、查看变量、以及画图。和DolphinDB终端一样，它更适合临时任务，不适于执行定期任务，以及开发任务。为了保证DolphinDB服务器的性能，若10分钟内无命令执行，系统会自动关闭会话以释放DolphinDB系统资源。
+DolphinDB Notebook是DolphinDB服务器安装包自带的，基于网页的丰富的图形化交互工具。它主要用于系统监控、日志查看、以及数据浏览。同时也可用于快速编辑执行代码、查看变量、以及画图。和DolphinDB终端一样，它更适合临时任务，不适于执行定期任务，以及开发任务。为了保证DolphinDB服务器的性能，若10分钟内无命令执行，系统会自动关闭会话以释放DolphinDB系统资源。
 
