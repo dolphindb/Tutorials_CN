@@ -9,6 +9,7 @@
     - [基于Docker的集群部署教程](https://github.com/dolphindb/Tutorials_CN/blob/master/docker_deployment.md)
     - [高可用集群部署教程](https://github.com/dolphindb/Tutorials_CN/blob/master/ha_cluster_deployment.md)
     - [如何扩展集群节点和存储](https://github.com/dolphindb/Tutorials_CN/blob/master/scale_out_cluster.md)
+    - [DolphinDB客户端软件教程](https://github.com/dolphindb/Tutorials_CN/blob/master/client_tool_tutorial.md)
 - 数据库
     - [分区数据库设计和操作](https://github.com/dolphindb/Tutorials_CN/blob/master/database.md)
     - [数据导入教程](https://github.com/dolphindb/Tutorials_CN/blob/master/import_data.md)
