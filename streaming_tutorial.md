@@ -536,7 +536,7 @@ mem_tb_f=streamTable(n:0,colNames, colTypes)
 enableTableShareAndPersistence(mem_tb_f,'mem_stream_f',false,true,n)
 ```
 
-**请注意**，由于表的分区字段是按照日期进行分区，而客户端往`mem_stream_d`和`mem_stream_f`表中写的数据会有日期上的重叠， 若直接由分布式表`tick`同时订阅这两个表的数据，就会造成这两个表同时往同一个日期分区写数据，最终会写入失败。因此，我们需要定义另一个流表`ticks_stream`来订阅`mem_stream_d`和`mem_stream_f`表的数据，再让分布式表`tick`单独订阅这一个流表，这样就形成了一个二级订阅模式。
+**请注意**，由于表的分区字段是按照日期进行分区，而客户端往`mem_stream_d`和`mem_stream_f`表中写的数据会有日期上的重叠， 若直接由分布式表`tick`同时订阅这两个表的数据，就会造成这两个表同时往同一个日期分区写数据，导致写入失败。因此，我们需要定义另一个流表`ticks_stream`来汇集`mem_stream_d`和`mem_stream_f`表的数据，最后串行写入`tick`分布式表。
 
 ```
 // 定义ftb表,并开启流数据持久化，将共享表命名为ticks_stream
@@ -545,11 +545,11 @@ enableTableShareAndPersistence(ftb,'ticks_stream',false,true,n)
 go
 
 // ticks_stream订阅mem_stream_d表的数据
-def saveToTicksStreamd(mutable TB, msg): TB.append!(select Code,Date,DiffBidVol,DiffBidVolSum,FirstDerivedBidPrice,FirstDerivedBidVolume from msg)
+def saveToTicksStreamd(mutable TB, msg): TB.append!(select * from msg)
 subscribeTable(, 'mem_stream_d', 'action_to_ticksStream_tde', 0, saveToTicksStreamd{ticks_stream}, true, 100)
 
 // ticks_stream同时订阅mem_stream_f表的数据
-def saveToTicksStreamf(mutable TB, msg): TB.append!(select Code,Date,DiffAskVol,DiffAskVolSum,FirstDerivedAskPrice,FirstDerivedAskVolume from msg)
+def saveToTicksStreamf(mutable TB, msg): TB.append!(select * from msg)
 subscribeTable(, 'mem_stream_f', 'action_to_ticksStream_tfe', 0, saveToTicksStreamf{ticks_stream}, true, 100)
 
 // dfsTB订阅ticks_stream表的数据
@@ -557,14 +557,14 @@ def saveToDFS(mutable TB, msg): TB.append!(select * from msg)
 subscribeTable(, 'ticks_stream', 'action_to_dfsTB', 0, saveToDFS{dfsTB}, true, 100, 5)
 ```
 
-上述几个步骤中，我们定义了一个数据库并创建分布式表`tick`，以及三个流数据表，分别为`mem_stream_d`、`mem_stream_f`和`ticks_stream`。客户端将第三方订阅而来的数据不断地追加到`mem_stream_d`和`mem_stream_f`表中，而写入这两个表的数据会自动由`ticks_stream`表订阅。最后，`ticks_stream`表内的数据会被顺序地写入分布式表`tick`中。
+上述几个步骤中，我们定义了一个数据库并创建分布式表`tick`，以及三个流数据表，分别为`mem_stream_d`、`mem_stream_f`和`ticks_stream`。客户端将第三方订阅而来的数据不断地追加到`mem_stream_d`和`mem_stream_f`表中，而写入这两个表的数据会被汇集到`ticks_stream`表。最后，`ticks_stream`表内的数据顺序地写入分布式表`tick`中。
 
 下面，我们将第三方订阅到的数据上传到DolphinDB，通过DolphinDB流数据订阅功能将数据追加到分布式表。我们假定Python客户端从第三方订阅到的数据已经保存在两个名为`dfd`和`dff`的DataFrame中：
 
 ```Python
 n = 10000
-dfd = pd.DataFrame({'Code': np.repeat(['a', 'b', 'c', 'd', 'e', 'QWW', 'FEA', 'FFW', 'DER', 'POD'], n/10),
-                    'Date': np.repeat(pd.date_range('2000.01.01', periods=10000, freq='D'), n/10000),
+dfd = pd.DataFrame({'Code': np.repeat(['SH000001', 'SH000002', 'SH000003', 'SH000004', 'SH000005'], n/5),
+                    'Date': np.repeat(pd.date_range('1990.01.01', periods=10000, freq='D'), n/10000),
                     'DiffAskVol': np.random.choice(100, n),
                     'DiffAskVolSum': np.random.choice(100, n),
                     'DiffBidVol': np.random.choice(100, n),
@@ -575,8 +575,8 @@ dfd = pd.DataFrame({'Code': np.repeat(['a', 'b', 'c', 'd', 'e', 'QWW', 'FEA', 'F
                     'FirstDerivedBidVolume': np.random.choice(100, n)})
 
 n = 20000
-dff = pd.DataFrame({'Code': np.repeat(['a', 'b', 'c', 'd', 'e', 'QWW', 'FEA', 'FFW', 'DER', 'POD'], n/10),
-                    'Date': np.repeat(pd.date_range('2000.01.01', periods=10000, freq='D'), n/10000),
+dff = pd.DataFrame({'Code': np.repeat(['SZ000001', 'SZ000002', 'SZ000003', 'SZ000004', 'SZ000005'], n/5),
+                    'Date': np.repeat(pd.date_range('1990.01.01', periods=10000, freq='D'), n/10000),
                     'DiffAskVol': np.random.choice(100, n),
                     'DiffAskVolSum': np.random.choice(100, n),
                     'DiffBidVol': np.random.choice(100, n),
