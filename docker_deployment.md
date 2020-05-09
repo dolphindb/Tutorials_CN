@@ -137,3 +137,13 @@ agent3.cfg|代理节点3配置参数|
 * 下载最新的server安装包，解压后，将server目录下dolphindb.lic文件删除
 * 用docker cp命令拷贝server目录覆盖每个docker容器的 /data/ddb/server目录。
 * 重启docker容器。
+
+#### 6. 常见问题
+* 一些docker镜像中不包含tzdata包，比如ubuntu:latest，导致dolphindb启动报如下错误：
+```
+Can't find time zone database. Please use parameter tzdb to set the root directory of time zone database.
+```
+安装 tzdata包可以解决此问题，运行如下命令：
+```
+apt-get install tzdata
+```
