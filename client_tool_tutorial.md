@@ -4,7 +4,7 @@
 
 DolphinDB提供了从基于Java的GUI, VS Code Extension, Web界面，到命令行等各种灵活友好的交互界面，具体包括以下6种客户端交互方式。
 
-- [1. DolphinDB GUI](#1-DolphinDB GUI)
+- [1. DolphinDB GUI](#1-dolphindb-gui)
     - [1.1 核心概念](#11-核心概念)
     - [1.2 安装和启动](#12-安装和启动)
     - [1.3 程序执行及结果查看](#13-程序执行及结果查看)
