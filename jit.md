@@ -555,6 +555,81 @@ timer(10) stoploss_vectorization(ret, threshold)    //     152 ms
 
 本例中计算止损，只需要找到drawdown大于threshold的第一天，一般不需要使用所有的行。如果数据中最后一天才会达到threshold，那么JIT版本的速度会和向量化计算十分接近。
 
+### 5.4 计算持仓成本
+
+若同一个标的的买入卖出交易反复发生，要计算每一笔卖出交易的盈利（或亏损），需要计算平均持仓成本。第一笔买入交易的价格为持仓成本；后续买入交易后，平均持仓成本为之前平均持仓成本与最新交易价格的加权平均；卖出后，平均持仓成本不变；若全部卖出，则重新开始计算持仓成本。这是一个典型的路径依赖问题，不能向量化解决。
+
+下例中trades表的字段price表示交易价格，amount表示交易量（正数为买入，负数为卖出）。
+
+不使用JIT计算持仓成本：
+```
+def holdingCost_no_JIT(price, amount){
+	holding = 0.0
+	cost = 0.0
+	avgPrice = 0.0
+	n = size(price)
+	avgPrices = array(DOUBLE, n, n, 0)
+	for (i in 0:n){
+		holding += amount[i]
+		if (amount[i] > 0){
+			cost += amount[i] * price[i]
+			avgPrice = cost/holding
+		} 
+		else{
+			cost += amount[i] * avgPrice
+		}
+	    avgPrices[i] = avgPrice
+	}
+	return avgPrices
+}
+```
+使用JIT计算持仓成本：
+```
+@jit
+def holdingCost_JIT(price, amount){
+	holding = 0.0
+	cost = 0.0
+	avgPrice = 0.0
+	n = size(price)
+	avgPrices = array(DOUBLE, n, n, 0)
+	for (i in 0..n){
+		holding += amount[i]
+		if (amount[i] > 0){
+			cost += amount[i] * price[i]
+			avgPrice = cost/holding
+		} 
+		else{
+			cost += amount[i] * avgPrice
+		}
+		avgPrices[i]=avgPrice
+	}
+	return avgPrices
+}
+```
+以下为性能对比：
+```
+n=1000000
+id = 1..n
+price = take(101..109,n)
+amount =take(1 2 3 -2 -1 -3 4 -1 -2 2 -1,n)
+trades = table(id, price, amount)
+
+timer (10)
+t = select *, iif(amount < 0, amount*(avgPrice - price), 0) as profit 
+from (
+  select *, holdingCost_no_JIT(price, amount) as avgPrice
+  from trades
+)    // 29,509ms
+
+timer (10)
+select *, iif(amount < 0, amount*(avgPrice - price), 0) as profit 
+from (
+  select *, holdingCost_JIT(price, amount) as avgPrice
+  from trades
+)     // 148 ms
+```
+本例中，使用100万行数据进行计算，JIT版本和非JIT版本在同一台机器各运行10次，耗时分别是148毫秒和29509毫秒。JIT版本比非JIT版本快约200倍。
+
 ## 6 未来
 
 在后续的版本中，我们计划逐步支持以下功能：
