@@ -13,7 +13,7 @@ DolphinDB API提供了自动重连和切换机制，如果当前连接的数据�
 
 ![images](https://github.com/dolphindb/Tutorials_CN/blob/master/images/ha_cluster/arc.png?raw=true)
 
-
+<div align='center'>DolphinDB 高可用架构 </div>
 ## 2. 数据高可用
 
 为了保证数据的安全和高可用，DolphinDB支持在不同的服务器上存储多个数据副本，并且采用二阶段提交协议实现数据副本之间以及数据和元数据之间的强一致性。即使一台机器上的数据损坏，也可以通过访问其他机器上的副本数据来保证数据服务不中断。DolphinDB之所以采用二阶段提交协议实现副本之间的一致性，基于三个因素的考量：（1）DolphinDB集群是为海量数据设计的，单个集群可以支持千万级以上分区数，使用Raft和Paxos等算法创建千万级的协议组，成本太高；（2）使用Raft和Paxos等算法，查询数据时只有一个副本可用，对于OLAP应用场景来说过于浪费资源；（3）写入的数据如果跨分区，即使采用了Raft和Paxos等算法，仍然需要二阶段提交协议保证事务的ACID。
