@@ -2,6 +2,25 @@
 
 开发大数据应用，不仅需要一个能支撑海量数据的分布式数据库，一个能高效利用多核多节点的分布式计算框架，更需要一门能与分布式数据库和分布式计算有机融合，高性能易扩展，表达能力强，满足快速开发和建模需要的编程语言。DolphinDB从流行的SQL和Python语言汲取了灵感，设计了大数据处理脚本语言。本教程讲解如何通过混合范式编程，快速开发大数据分析的应用。从中你也可以了解DolpinDB的编程语言（以下简称DolphinDB）如何与数据库和分布式计算融合。
 
+- [1. 向量化编程(Vector Programming)](#1-向量化编程vector-programming)
+- [2. SQL编程(SQL Programming)](#2-sql编程sql-programming)
+    - [2.1 SQL与编程语言的融合](#21-sql与编程语言的融合)
+    - [2.2 对面板数据(Panel Data)的友好支持](#22-对面板数据panel-data的友好支持)
+    - [2.3 对时间序列数据的友好支持](#23-对时间序列数据的友好支持)
+    - [2.4 SQL的其它扩展](#24-sql的其它扩展)
+- [3. 命令式编程(Imperative Programming)](#3-命令式编程imperative-programming)
+- [4. 函数化编程(Functional Programming)](#4-函数化编程functional-programming)
+    - [4.1 自定义函数和lambda函数](#41-自定义函数和lambda函数)
+    - [4.2 高阶函数(Higher Order Function)](#42-高阶函数higher-order-function)
+    - [4.3 部分应用(Partial Application)](#43-部分应用partial-application)
+- [5. 远程过程调用编程(RPC Programming)](#5-远程过程调用编程rpc-programming)
+    - [5.1 使用remoteRun执行远程函数](#51-使用remoterun执行远程函数)
+    - [5.2 使用rpc执行远程函数](#52-使用rpc执行远程函数)
+    - [5.3 使用其它函数间接执行远程函数](#53-使用其它函数间接执行远程函数)
+    - [5.4 分布式计算](#54-分布式计算)
+- [6. 元编程(Metaprogramming)](#6-元编程metaprogramming)
+- [7. 小结](#7-小结)
+
 ## 1. 向量化编程(Vector Programming)
 
 向量化编程是DolphinDB中最基本的编程范式。DolphinDB中绝大部分函数支持向量作为函数的输入参数。根据函数的返回值的不同，函数可分为两种：一种是聚合函数（aggregate function），返回标量（scalar）；另一种是向量函数，返回与输入向量等长的向量。
@@ -51,7 +70,7 @@ Time elapsed: 12.968 ms
 
 其次，向量化计算通常要将整个向量全部加载到一段连续内存中，Matlab和R都有这样的要求。有时候因为内存碎片原因，无法找到大段的连续内存。DolphinDB针对内存碎片，特别引入了`big array`，可以将物理上不连续的内存块组成一个逻辑上连续的向量。系统是否采用big array是动态决定的，对用户透明。通常，对big array进行扫描，性能损耗对于连续内存而言，在1%~5%之间；对big array进行随机访问，性能损耗在20%~30%左右。在此方面，DolphinDB是以可以接受的少量性能损失来换取系统的更高可用性。
 
-## 2. SQL编程 (SQL Programming)
+## 2. SQL编程(SQL Programming)
 
 SQL是一个面向问题的语言。用户只需要给出问题的描述，SQL引擎会产生结果。通常SQL引擎属于数据库的一部分，其它系统通过JDBC，ODBC或Native API 与数据库交流。DolphinDB脚本语言的SQL语句不仅支持SQL的标准功能，而且为大数据的分析，尤其是时间序列大数据的分析做了很多扩展，可极大简化代码，方便用户使用。
 
@@ -120,7 +139,7 @@ exec first(wage) from emp_wage pivot by month, id;
 2018.08M|6000 6500 5000 5500 6000 6500 5000 5500 6000 6500
 ```
 
-### 2.2 对面板数据（Panel Data）的友好支持
+### 2.2 对面板数据(Panel Data)的友好支持
 
 SQL的group by子句将数据分成多组，每组产生一个值，也就是一行。因此使用group by子句后，行数一般会大大减少。
 
@@ -331,7 +350,7 @@ DolphinDB支持函数式编程的大部分功能，包括：
 
 详细请参考[用户手册第七章](https://www.dolphindb.cn/cn/help/Chapter7FunctionalProgramming.html)。
 
-### 4.1 自定义函数和lambda函数（User Defined Function & Lambda Function）
+### 4.1 自定义函数和lambda函数
 
 DolphinDB中可以创建自定义函数，函数可以有名称或者没有名称（通常是lambda函数）。创建的函数符合纯函数的要求，也就是说只有函数的输入参数可以影响函数的输出结果。DolphinDB与Python不同，函数体内只能引用函数参数和函数内的局部变量，不能使用函数体外定义的变量。从软件工程的角度看，这牺牲了一部分语法糖的灵活性，但对提高软件质量大有裨益。
 
@@ -346,7 +365,7 @@ getWeekDays(2018.07.01 2018.08.01 2018.09.01 2018.10.01)
 ```
 上面的例子中，我们定义了一个函数`getWeekDays`，该函数接受一组日期，返回其在周一和周五之间的日期。函数的实现采用了向量的过滤功能，也就是接受一个布尔型单目函数用于数据的过滤。我们定义了一个lambda函数用于数据过滤。
 
-### 4.2 高阶函数（Higher Order Function）
+### 4.2 高阶函数(Higher Order Function)
 
 高阶函数是指可以接受另一个函数作为参数的函数。在DolphinDB中，高阶函数主要用作数据处理的模板函数，通常第一个参数是另外一个函数，用于具体的数据处理。譬如说，A对象有m个元素，B对象有n个元素，一种常见的处理模式是，A中的任意一个元素和B中的任意一个元素两两计算，最后产生一个m*n的矩阵。DolphinDB将这种数据处理模式抽象成一个高阶函数`cross`。DolphinDB提供了很多类似的模板函数，包括`all`，`any`，`each`，`loop`，`eachLeft`，`eachRight`，`eachPre`，`eachPost`，`accumulate`，`reduce`，`groupby`，`contextby`，`pivot`，`cross`，`moving`，`rolling`等。
 
@@ -390,7 +409,7 @@ IBM |0.005822  0.034159  -0.039278 1         -0.049922
 MSFT|0.084104  -0.117279 -0.025165 -0.049922 1
 ```
 
-### 4.3 部分应用（Partial Application）
+### 4.3 部分应用(Partial Application)
 
 部分应用指当一个函数的一部分或全部参数给定后生成一个新的函数。在DolphinDB中，函数调用使用圆括号()，部分应用使用{}。3.2节中的例子用到的`ratios`函数的具体实现就是高阶函数`eachPre`的一个部分应用 eachPre{ratio}。
 
@@ -438,14 +457,14 @@ each(msgHandler, 1 2 3 4 5)
 [1,1.5,2,2.5,3]
 ```
 
-## 5. 远程过程调用编程 (RPC Programming)
+## 5. 远程过程调用编程(RPC Programming)
 
 远程过程调用（Remote Procedure Call）是分布式系统最常用的基础设施之一。DolphinDB的分布式文件系统实现，分布式数据库实现，分布式计算框架实现都采用了`DolphinDB自己设计`的RPC系统。DolphinDB的脚本语言通过RPC可以在远程机器上执行代码。DolphinDB在使用RPC时有以下特点：
 - 不仅可以执行在远程机器上已经注册的函数，也可以将本地自定义的函数序列化到远程节点执行。在远程机器运行代码时的权限等同于当前登录用户在本地的权限。
 - 函数的参数既可以是常规的scalar，vector，matrix，set，dictionary和table，也可以是函数包括自定义的函数。
 - 既可以使用两个节点之间的独占连接，也可以使用集群数据节点之间的共享连接。
 
-### 5.1 使用`remoteRun`执行远程函数
+### 5.1 使用remoteRun执行远程函数
 
 DolphinDB使用`xdb`创建一个到远程节点的连接。远程节点可以是任何运行DolphinDB的节点，不必属于当前集群的一部分。创建连接之后可以在远程节点上执行远程节点上注册的函数或本地自定义的函数。
 
@@ -493,7 +512,7 @@ h(salesSum, "sales", 2018.07.02);
 40
 ```
 
-### 5.2 使用`rpc`执行远程函数
+### 5.2 使用rpc执行远程函数
 
 DolphinDB使用远程过程调用功能的另一个途径是`rpc`函数。`rpc`函数接受远程节点的名称，需要执行的函数定义以及需要的参数。`rpc`只能在同一个集群内的控制节点及数据节点之间使用，但是不需要创建一个新的连接，而是复用已经存在的网络连接。这样做的好处是可以节约网络资源和免去创建新连接带来的延迟。当节点的用户很多时，这一点非常有意义。`rpc`函数只能在远程节点执行一个函数。如果要运行脚本，请把脚本封装在一个自定义函数内。
 下面的例子必须在一个DolphinDB集群内使用。nodeB是远程节点的别名，nodeB上已经有共享表sales。
@@ -637,7 +656,7 @@ med(y);
 -0.052947
 ```
 
-## 6. 元编程 (Metaprogramming)
+## 6. 元编程(Metaprogramming)
 
 元编程指使用程序代码来创建可以动态运行的程序代码。元编程的目的一般是延迟执行代码或动态创建代码。
 
