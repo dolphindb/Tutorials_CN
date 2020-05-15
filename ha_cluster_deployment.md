@@ -11,6 +11,9 @@ DolphinDB API提供了自动重连和切换机制，如果当前连接的数据�
 
 如果要使用高可用功能，请先部署DolphinDB集群。高可用功能仅在集群中支持，在单实例中不支持。集群部署请参考[多服务器集群部署教程](https://github.com/dolphindb/Tutorials_CN/blob/master/multi_machine_cluster_deploy.md)。
 
+![images](https://github.com/dolphindb/Tutorials_CN/blob/master/images/ha_cluster/arc.png?raw=true)
+
+
 ## 2. 数据高可用
 
 为了保证数据的安全和高可用，DolphinDB支持在不同的服务器上存储多个数据副本，并且数据副本之间保持强一致性。即使一台机器上的数据损坏，也可以通过访问其他机器上的副本数据来保证数据服务不中断。
