@@ -246,44 +246,46 @@ DolphinDB通过[HDF5插件](https://github.com/dolphindb/DolphinDBPlugin/blob/ma
 
 - hdf5::hdf5DS - 返回h5文件中 Dataset 的元数据
 
-- hdf5::loadHdf5 - 将h5文件导入内存表
+- hdf5::loadHDF5 - 将h5文件导入内存表
 
-- hdf5::loadHdf5Ex - 将h5文件导入分区表
+- hdf5::loadHDF5Ex - 将h5文件导入分区表
 
-- hdf5::extractHdf5Schema - 从h5文件中提取表结构
+- hdf5::extractHDF5Schema - 从h5文件中提取表结构
 
-下载[HDF5插件](https://www.dolphindb.cn/alone/alone.php?id=10)，再将插件部署到节点的plugins目录下。使用以下脚本加载插件：
+DolphinDB 1.00.0版本之后，安装目录/server/plugins/hdf5已经包含HDF5插件，使用以下脚本加载插件：
 
 ```txt
 loadPlugin("plugins/hdf5/PluginHdf5.txt")
 ```
 
-调用插件方法时需要在方法前面提供namespace，比如调用loadHdf5可以使用`hdf5::loadHdf5`。另一种写法是：
+若用户使用的是老版本，默认不包含此插件，可先从[HDF5插件](https://github.com/dolphindb/DolphinDBPlugin/tree/master/hdf5)对应版本分支bin目录下载，再将插件部署到节点的plugins目录下。
+
+调用插件方法时需要在方法前面提供namespace，比如调用loadHDF5可以使用`hdf5::loadHDF5`。另一种写法是：
 
 ```txt
 use hdf5
-loadHdf5(filePath,tableName)
+loadHDF5(filePath,tableName)
 ```
 
-HDF5文件的导入与CSV文件类似。例如，若要导入包含一个Dataset candle_201801的文件candle_201801.h5，可使用以下脚本：
+HDF5文件的导入与CSV文件类似。例如，若要导入包含一个Dataset candle_201801的文件candle_201801.h5，可使用以下脚本，其中datasetName可通过ls或lsTable获得：
 
 ```txt
 dataFilePath = "/home/data/candle_201801.h5"
 datasetName = "candle_201801"
-tmpTB = hdf5::loadHdf5(dataFilePath,datasetName)
+tmpTB = hdf5::loadHDF5(dataFilePath,datasetName)
 ```
 
-如果需要指定数据类型导入可以使用`hdf5::extractHdf5Schema`，脚本如下：
+如果需要指定数据类型导入可以使用`hdf5::extractHDF5Schema`，脚本如下：
 
 ```txt
 dataFilePath = "/home/data/candle_201801.h5"
 datasetName = "candle_201801"
-schema=hdf5::extractHdf5Schema(dataFilePath,datasetName)
+schema=hdf5::extractHDF5Schema(dataFilePath,datasetName)
 update schema set type=`LONG where name=`volume
-tt=hdf5::loadHdf5(dataFilePath,datasetName,schema)
+tt=hdf5::loadHDF5(dataFilePath,datasetName,schema)
 ```
 
-如果HDF5文件超过服务器内存，可以使用`hdf5::loadHdf5Ex`载入数据。
+如果HDF5文件超过服务器内存，可以使用`hdf5::loadHDF5Ex`载入数据。
 
 首先创建用于保存数据的分布式表：
 
@@ -297,14 +299,14 @@ db=database(dfsPath,VALUE,2018.01.01..2018.01.31)
 然后导入HDF5文件：
 
 ```txt
-hdf5::loadHdf5Ex(db, "cycle", "tradingDay", dataFilePath,datasetName)
+hdf5::loadHDF5Ex(db, "cycle", "tradingDay", dataFilePath,datasetName)
 ```
 
 ## 5. 通过ODBC接口导入
 
 DolphinDB支持ODBC接口连接第三方数据库，从其中直接将数据表读取成DolphinDB的内存数据表。
 
-DolphinDB官方提供[ODBC插件](https://github.com/dolphindb/DolphinDBPlugin/blob/master/odbc/README.md)用于连接第三方数据源，使用该插件可以方便的从ODBC支持的数据库迁移数据至DolphinDB中。
+DolphinDB官方提供[ODBC插件](https://github.com/dolphindb/DolphinDBPlugin/blob/master/odbc)用于连接第三方数据源，使用该插件可以方便的从ODBC支持的数据库迁移数据至DolphinDB中。
 
 ODBC插件提供了以下四个方法用于操作第三方数据源数据：
 
@@ -312,6 +314,7 @@ ODBC插件提供了以下四个方法用于操作第三方数据源数据：
 - odbc::close - 关闭连接
 - odbc::query - 根据给定的SQL语句查询数据并将结果返回到DolphinDB的内存表
 - odbc::execute - 在第三方数据库内执行给定的SQL语句，不返回结果。
+- odbc::append - 把DolphinDB中表的数据写入第三方数据库的表中。
 
 在使用ODBC插件之前，需要安装ODBC驱动程序，请参考[ODBC插件使用教程](https://github.com/dolphindb/DolphinDBPlugin/blob/master/odbc/README.md)。
 
@@ -323,14 +326,14 @@ ODBC插件提供了以下四个方法用于操作第三方数据源数据：
 - 密码：123456
 - 数据库名称： SZ_TAQ
 
-第一步，下载插件解压并拷贝 plugins\odbc 目录下所有文件到DolphinDB server的 plugins/odbc 目录下，通过下面的脚本完成插件初始化：
+第一步，下载插件解压并拷贝 plugins\odbc 目录下所有文件到DolphinDB server的 plugins/odbc 目录下（有些版本的DolphinDB安装目录/server/plugins/odbc已经包含ODBC插件，可略过此步），通过下面的脚本完成插件初始化：
 
 ```txt
 loadPlugin("plugins/odbc/odbc.cfg")
 conn=odbc::connect("Driver=ODBC Driver 17 for SQL Server;Server=172.18.0.15;Database=SZ_TAQ;Uid=sa;Pwd=123456;")
 ```
 
-第二步，创建分布式磁盘数据库。使用SQL Server中的数据表结构作为DolphinDB数据表的模板。
+第二步，创建分布式数据库。使用SQL Server中的数据表结构作为DolphinDB数据表的模板。
 
 ```txt
 tb = odbc::query(conn,"select top 1 * from candle_201801")
