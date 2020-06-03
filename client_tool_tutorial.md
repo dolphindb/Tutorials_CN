@@ -119,7 +119,20 @@ GUI编程界面提供代码查询，修改，高亮显示，函数提示等功�
 ![image](https://github.com/dolphindb/Tutorials_CN/blob/master/images/GUI/code_editing.JPG?raw=true)
 
 
+### 1.4 中文出现乱码
+如果中文显示出现乱码，需要在文件菜单Preferences中设置中文字体，例如微软雅黑(Microsoft Yahei)。 然后用print(变量)名，查看输出结果，乱码会消失。 
 
+### 1.5 精度配置
+DolphinDB GUI默认精度是4位，如果需要更高或低的精度，需要在Preferences中, 将精度配置项`Default number of decimal place`设置成想要的精度，例如8。
+
+### 1.6 java.lang.OutOfMemoryError: Java heap space
+如果出现内存溢出，说明GUI的默认2048M启动内存不能满足需要，可以通过修改gui/gui.bat或者gui/gui.sh中的`-Xmx`启动参数来扩大内存，如下:
+
+```
+start javaw -classpath dolphindb.jar;dolphingui.jar;jfreechart-1.0.1.jar;jcommon-1.0.0.jar;jxl-2.6.12.jar;rsyntaxarea.jar;autocomplete.jar -Dlook=cross -Xmx4096m com.xxdb.gui.XXDBMain
+
+
+```
 
 ## 2. VS Code Extension
 
