@@ -57,14 +57,16 @@
 - 插件
     - [ODBC](https://github.com/dolphindb/DolphinDBPlugin/blob/master/odbc/README.md)
     - [MySQL](https://github.com/dolphindb/DolphinDBPlugin/blob/master/mysql/README_CN.md)
-    - [AWS S3](https://github.com/dolphindb/DolphinDBPlugin/blob/master/aws/README_CHN.md)
-    - [zlib](https://github.com/dolphindb/DolphinDBPlugin/blob/master/zlib/README_CHN.md)
+    - [AWS S3](https://github.com/dolphindb/DolphinDBPlugin/blob/master/aws/README_CN.md)
+    - [zlib](https://github.com/dolphindb/DolphinDBPlugin/blob/master/zlib/README_CN.md)
     - [HDF5](https://github.com/dolphindb/DolphinDBPlugin/blob/master/hdf5/README_CN.md)
     - [Excel](https://github.com/dolphindb/excel-add-in)
     - [Matching engine](https://github.com/dolphindb/DolphinDBPlugin/blob/master/MatchingEngine/README.md)
     - [MQTT](https://github.com/dolphindb/DolphinDBPlugin/blob/master/mqtt/README_CN.md)
     - [OPC](https://github.com/dolphindb/DolphinDBPlugin/blob/master/opc/README_CN.md)
     - [DolphinDB VSCode 插件](https://github.com/dolphindb/Tutorials_CN/blob/master/vscode_extension.md)
+    - [XGBoost](https://github.com/dolphindb/DolphinDBPlugin/blob/master/XGBoost/README_CN.md)
+    - [SVM](https://github.com/dolphindb/DolphinDBPlugin/blob/master/svm/README_CN.md)
     - [插件开发教程](https://github.com/dolphindb/Tutorials_CN/blob/master/plugin_development_tutorial.md)
 - 模块
     - [技术分析(Technical Analysis)指标库](https://github.com/dolphindb/Tutorials_CN/blob/master/ta.md) 
