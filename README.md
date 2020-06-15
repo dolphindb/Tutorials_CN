@@ -72,4 +72,4 @@
     - [DolphinDB在工业物联网的应用](https://github.com/dolphindb/Tutorials_CN/blob/master/iot_demo.md)
     - [加密货币逐笔交易数据回放](https://github.com/dolphindb/applications/blob/master/cryptocurr_replay/README.md)
     - [在DolphinDB中计算K线](https://github.com/dolphindb/Tutorials_CN/blob/master/OHLC.md) 
-    
+	- [使用DolphinDB进行机器学习](https://github.com/dolphindb/Tutorials_CN/blob/master/machine_learning.md)
