@@ -41,6 +41,7 @@
     - [Python API使用教程](https://github.com/dolphindb/python3_api_experimental/blob/master/README.md)
     - [Java API使用教程](https://github.com/dolphindb/api-java/blob/master/README_CN.md)
     - [Java API使用实例](https://github.com/dolphindb/api-java/blob/master/example/README_CN.md)
+	- [JDBC](https://github.com/dolphindb/jdbc/blob/master/README_CN.md)
     - [C# API使用教程](https://github.com/dolphindb/api-csharp/blob/master/README_CN.md)
     - [C++ API使用教程](https://github.com/dolphindb/api-cplusplus/blob/master/README_CN.md)
     - [C++ API 数据读写指南](https://github.com/dolphindb/Tutorials_CN/blob/master/c%2B%2Bapi.md)
@@ -56,7 +57,6 @@
 - 插件
     - [ODBC](https://github.com/dolphindb/DolphinDBPlugin/blob/master/odbc/README.md)
     - [MySQL](https://github.com/dolphindb/DolphinDBPlugin/blob/master/mysql/README_CN.md)
-    - [JDBC](https://github.com/dolphindb/jdbc/blob/master/README_CN.md)
     - [AWS S3](https://github.com/dolphindb/DolphinDBPlugin/blob/master/aws/README_CHN.md)
     - [zlib](https://github.com/dolphindb/DolphinDBPlugin/blob/master/zlib/README_CHN.md)
     - [HDF5](https://github.com/dolphindb/DolphinDBPlugin/blob/master/hdf5/README_CN.md)
