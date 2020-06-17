@@ -38,7 +38,7 @@
     - [启动脚本教程](Startup.md)
     - [定时作业](scheduledJob.md)
 - API
-    - [Python API使用教程](../../api_python3/blob/master/README.md)
+    - [Python API使用教程](/../../api_python3/blob/master/README.md)
     - [Java API使用教程](https://github.com/dolphindb/api-java/blob/master/README_CN.md)
     - [Java API使用实例](https://github.com/dolphindb/api-java/blob/master/example/README_CN.md)
 	- [JDBC](https://github.com/dolphindb/jdbc/blob/master/README_CN.md)
