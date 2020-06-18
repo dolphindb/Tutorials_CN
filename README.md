@@ -72,6 +72,6 @@
     - [技术分析(Technical Analysis)指标库](ta.md) 
 - 应用场景示例
     - [DolphinDB在工业物联网的应用](iot_demo.md)
-    - [加密货币逐笔交易数据回放](../../..//applications/blob/master/cryptocurr_replay/README.md)
+    - [加密货币逐笔交易数据回放](../../../applications/blob/master/cryptocurr_replay/README.md)
     - [在DolphinDB中计算K线](OHLC.md) 
 	- [使用DolphinDB进行机器学习](machine_learning.md)
