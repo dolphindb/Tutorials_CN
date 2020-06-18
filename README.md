@@ -55,7 +55,7 @@
     - [API交互协议](api_protocol.md)
     - [DolphinDB API性能基准测试报告](api_performance.md)
 - 插件
-    - [ODBC](https://github.com/dolphindb/DolphinDBPlugin/blob/master/odbc/README.md)
+    - [ODBC](../../../DolphinDBPlugin/blob/master/odbc/README.md)
     - [MySQL](https://github.com/dolphindb/DolphinDBPlugin/blob/master/mysql/README_CN.md)
     - [AWS S3](https://github.com/dolphindb/DolphinDBPlugin/blob/master/aws/README_CN.md)
     - [zlib](https://github.com/dolphindb/DolphinDBPlugin/blob/master/zlib/README_CN.md)
