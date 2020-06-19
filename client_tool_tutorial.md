@@ -27,7 +27,7 @@ DolphinDB提供了从基于Java的GUI, VS Code Extension, Web界面，到命令�
 
 ## 1. DolphinDB GUI
 
-DolphinDG GUI是基于Java的功能最齐全的图形化编程以及数据浏览界面。 DolphinDB GUI可以在任何支持Java的操作系统上使用，例如: Windows, Linux, 以及Mac。DolphinDB GUI的特点是速度快，功能齐全，用户友好的图形化界面。 GUI适合用于管理和开发DolphinDB脚本、模块，以及数据库交互，查看运行结果等。 GUI提供非常友好的编程界面：查找替换文本、保留字高亮显示、系统函数提示、行号显示，选择部分代码执行、执行结果浏览、log信息、临时变量浏览、数据库浏览。
+DolphinDB GUI是基于Java的功能最齐全的图形化编程以及数据浏览界面。 DolphinDB GUI可以在任何支持Java的操作系统上使用，例如: Windows, Linux, 以及Mac。DolphinDB GUI的特点是速度快，功能齐全，用户友好的图形化界面。 GUI适合用于管理和开发DolphinDB脚本、模块，以及数据库交互，查看运行结果等。 GUI提供非常友好的编程界面：查找替换文本、保留字高亮显示、系统函数提示、行号显示，选择部分代码执行、执行结果浏览、log信息、临时变量浏览、数据库浏览。
 通过Project浏览器，可以浏览所有项目。通过Database浏览器，可以浏览所有DFS数据库以及其分区表的schema。适用于DolphinDB脚本项目管理和程序开发。
 
 
