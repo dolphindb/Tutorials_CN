@@ -177,14 +177,14 @@ VS Code 插件与GUI功能非常相似，优点是VS Code使用者无需安装�
 
  VS Code打开txt或dos文件时，DolphinDB插件会自动加载右键菜单并且识别脚本，支持语法高亮、智能语法提示。通过 ctrl+E 快捷键或者下拉菜单"executeCode"来执行选中代码，若没有选中代码，则会执行当前光标所在的行。
 
-  ![image](https://github.com/dolphindb/Tutorials_CN/blob/master/images/vscode/4.gif?raw=true)
+  ![image](images/vscode/4.gif?raw=true)
 
 
 ### 2.4 观察变量
 
 DolphinDB 插件在左边导航增加了变量面板，面板显示当前服务器上的所有本地和共享变量，每次执行代码时面板上变量会更新。点击变量右边的"show"链接可以在输出面板查看变量的值
 
-  ![image](https://github.com/dolphindb/Tutorials_CN/blob/master/images/vscode/5.gif?raw=true)
+  ![image](images/vscode/5.gif?raw=true)
 
 
 
@@ -239,7 +239,7 @@ DolphinDB Notebook 最主要的功能是用于集群节点管理、系统监控�
     * 其它原因
 
 
-![image](https://github.com/dolphindb/Tutorials_CN/blob/master/images/Notebook/manage_interface.JPG?raw=true)
+![image](images/Notebook/manage_interface.JPG?raw=true)
 
 
 
