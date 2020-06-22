@@ -209,7 +209,7 @@ mr(ds, calcOHLC, +)
 
 DolphinDB database 中计算实时K线的流程如下图所示：
 
-![avatar](https://github.com/dolphindb/Tutorials_CN/raw/master/images/K-line.png)
+![avatar](/../../../Tutorials_CN/raw/master/images/K-line.png)
 
 实时数据供应商一般会提供基于Python、Java或其他常用语言的API的数据订阅服务。本例中使用Python来模拟接收市场数据，通过DolphinDB Python API写入流数据表中。DolphinDB的流数据时序聚合引擎(TimeSeriesAggregator)可以对实时数据按照指定的频率与移动窗口计算K线。
 
