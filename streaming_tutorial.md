@@ -40,7 +40,7 @@ DolphinDB流数据处理系统提供了多种方便的功能，例如：
 
 DolphinDB流数据模块采用发布-订阅-消费的模式。流数据首先注入流数据表中，通过流数据表来发布数据，数据节点或者第三方的应用可以通过DolphinDB脚本或API来订阅及消费流数据。
 
-![image](https://github.com/dolphindb/Tutorials_CN/blob/master/images/stream_cn.png?raw=true)
+![image](images/stream_cn.png?raw=true)
 
 上图展示了DolphinDB的流数据处理框架。把实时数据注入到发布节点流数据表后，发布的数据可同时供多方订阅消费：
 - 可由数据仓库订阅并保存，作为分析系统与报表系统的数据源。
@@ -55,7 +55,7 @@ DolphinDB流数据模块采用发布-订阅-消费的模式。流数据首先注
 
 #### 1.3 实时聚合引擎
 
-实时聚合引擎指的是专门用于处理流数据实时计算和分析的模块。DolphinDB提供`createTimeSeriesAggregator`与`createCrossSectionalAggregator` 函数创建聚合引擎对流数据做实时聚合计算，并且将计算结果持续输出到指定的数据表中。关于如何使用聚合引擎请参考[流数据聚合引擎](https://github.com/dolphindb/Tutorials_CN/blob/master/stream_aggregator.md)。
+实时聚合引擎指的是专门用于处理流数据实时计算和分析的模块。DolphinDB提供`createTimeSeriesAggregator`与`createCrossSectionalAggregator` 函数创建聚合引擎对流数据做实时聚合计算，并且将计算结果持续输出到指定的数据表中。关于如何使用聚合引擎请参考[流数据聚合引擎](stream_aggregator.md)。
 
 ### 2 核心功能
 
@@ -818,7 +818,7 @@ queueDepth|发布节点消息队列深度（消息数）
 tables|该节点上的所有共享的流数据表。若多表，彼此通过逗号分隔。
 
 在GUI中运行getStreamingStat().pubConns查看表内容：
-![image](https://github.com/dolphindb/Tutorials_CN/blob/master/images/streaming/pubconn.png?raw=true)
+![image](images/streaming/pubconn.png?raw=true)
 
 pubConns表会列出该节点所有的订阅节点信息，发布队列情况，以及流数据表名称。
 
@@ -836,7 +836,7 @@ lastMsgLatency|最后一次接收数据延迟时间(毫秒)
 lastUpdate|最后一次接收数据时刻
 
 在GUI中运行getStreamingStat().subConns查看表内容：
-![image](https://github.com/dolphindb/Tutorials_CN/blob/master/images/streaming/subconn.png?raw=true)
+![image](images/streaming/subconn.png?raw=true)
 这张表列出所有本节点订阅的所有发布节点的连接状态和有关接收消息的统计信息。
 
 #### 5.3 persistWorkers表
@@ -854,11 +854,11 @@ tables|持久化表名。若多表，彼此通过逗号分隔。
 
 当persistenceWorkerNum=1时：
 
-![image](https://github.com/dolphindb/Tutorials_CN/blob/master/images/streaming/persistworker.png?raw=true)
+![image](images/streaming/persistworker.png?raw=true)
 
 当persistenceWorkerNum=3时：
 
-![image](https://github.com/dolphindb/Tutorials_CN/blob/master/images/streaming/persisWorders_2.png?raw=true)
+![image](images/streaming/persisWorders_2.png?raw=true)
 
 从图上可以直观的看出，若要并行处理持久化数据表的任务，可设置persistenceWorkerNum>1。
 
@@ -880,22 +880,22 @@ topics|已订阅主题。若多个，彼此通过逗号分隔。
 
 当subExecutorPooling=false,subExecutors=1时，内容如下：
 
-![image](https://github.com/dolphindb/Tutorials_CN/blob/master/images/streaming/subworker_1.png?raw=true)
+![image](images/streaming/subworker_1.png?raw=true)
 此时，所有表的订阅消息共用一个线程队列。
 
 当subExecutorPooling=false,subExecutors=2时，内容如下：
 
-![image](https://github.com/dolphindb/Tutorials_CN/blob/master/images/streaming/subworker_2.png?raw=true)
+![image](images/streaming/subworker_2.png?raw=true)
 此时，各个表订阅消息分配到两个线程队列独立处理。
 
 当subExecutorPooling=true,subExecutors=2时，内容如下：
 
-![image](https://github.com/dolphindb/Tutorials_CN/blob/master/images/streaming/subworker_pool.png?raw=true)
+![image](images/streaming/subworker_pool.png?raw=true)
 此时，各个表的订阅消息共享由两个线程组成的线程池。
 
 当有流数据进入时，可以通过这个表观察到已处理数据量等信息：
 
-![image](https://github.com/dolphindb/Tutorials_CN/blob/master/images/streaming/subworker_msg.png?raw=true)
+![image](images/streaming/subworker_msg.png?raw=true)
 
 #### 5.5 pubTables表
 pubTables表监控流数据表被订阅情况，每条记录代表流数据表一个订阅连接。
@@ -910,7 +910,7 @@ actions|订阅的action。若有多个action，此处用逗号分割
 比如存流数据发布表名称为pubTable1，发布了100条记录。 有一个订阅从offset=0开始，action名称为"
 act_getdata"。那么当订阅完成之后，用getStreamingStat().pubTables 查看内容为：
 
-![image](https://github.com/dolphindb/Tutorials_CN/blob/master/images/streaming/pubtables1.png?raw=true)
+![image](images/streaming/pubtables1.png?raw=true)
 
 ### 6 性能调优
 
@@ -939,4 +939,4 @@ act_getdata"。那么当订阅完成之后，用getStreamingStat().pubTables 查
 
 - 趋势监控：把新产生的数据附加到原有的数据上并以可视化图表的方式实时更新。
 
-很多数据可视化的平台都能支持流数据的实时监控，比如当前流行的开源数据可视化框架Grafana。DolphinDB database 已经实现了Grafana的服务端和客户端的接口，具体配置可以参考教程：https://github.com/dolphindb/grafana-datasource/blob/master/README_CN.md
+很多数据可视化的平台都能支持流数据的实时监控，比如当前流行的开源数据可视化框架Grafana。DolphinDB database 已经实现了Grafana的服务端和客户端的接口，具体配置可以参考[Grafana接口教程](/../../../grafana-datasource/blob/master/README_CN.md)
