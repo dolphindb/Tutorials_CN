@@ -47,7 +47,7 @@ shell(cmd)
 ```
 restore(restoreDir,"dfs://db1","mt","%",true,loadTable("dfs://db2","mt"))
 ```
-除了恢复所有数据，还可以根据条件恢复指定分区。详细参考教程[数据备份与恢复](https://github.com/dolphindb/Tutorials_CN/blob/master/restore-backup.md)。
+除了恢复所有数据，还可以根据条件恢复指定分区。详细参考教程[数据备份与恢复](restore-backup.md)。
 
 ### 1.4 具体实例
 两个DolphinDB集群部署在不同的机器上。需要每天22:30，同步A集群上的数据库(db1，包括表mt)的所有数据到B集群上。数据库db1的分区类型为VALUE，按天分区，分区字段为Timestamp(类型为TIMESTAMP)。    
