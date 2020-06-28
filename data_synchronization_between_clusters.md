@@ -86,7 +86,7 @@ scheduleJob("syncDB","syncDB",syncDataBases{backupNodeIP,backupNodePort,backupDi
 
 在线方式，要求两个集群同时在线，通过建立socket连接，直接从一个集群中读数据，并写入到另一个集群上。如下图所示:
 
-![image](https://github.com/dolphindb/Tutorials_CN/raw/master/images/datasync/2.png) 
+![image](images/datasync/2.png) 
 
 
 ### 2.1 具体示例
