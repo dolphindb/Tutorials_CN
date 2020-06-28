@@ -8,7 +8,7 @@ DolphinDB提供离线方式和在线方式实现不同集群间数据库的同�
 ## 1. 离线方式
 离线方式先把数据库中数据，通过DolphinDB内置的`backup`函数以二进制形式导入到磁盘，然后将数据同步到数据库所在的物理机器上，再通过`restore`函数将数据从磁盘恢复到到数据库。如下所示：  
 
-![image](https://github.com/dolphindb/Tutorials_CN/raw/master/images/datasync/1.png)   
+![image](images/datasync/1.png)   
 
 ### 1.1 数据备份
 通过backup函数将需要同步的数据表备份到磁盘上，备份以分区为单位。需要同步的数据可以用sql语句指定，如下：  
