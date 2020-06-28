@@ -116,7 +116,7 @@ Java HotSpot(TM) Client VM
 GUI编程界面提供代码查询，修改，高亮显示，函数提示等功能。用户可以选择部分代码执行，也可以点击文件执行代码。执行完毕，可以立刻看到执行结果，以及查看所有的局部变量和共享变量的值。
 关于GUI更详细具体的功能介绍请参阅[GUI帮助手册](https://www.dolphindb.cn/cn/gui/index.html)。
 
-![image](https://github.com/dolphindb/Tutorials_CN/blob/master/images/GUI/code_editing.JPG?raw=true)
+![image](images/GUI/code_editing.JPG?raw=true)
 
 
 ### 1.4 中文出现乱码
