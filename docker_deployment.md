@@ -62,7 +62,7 @@ $ docker-compose --version
 #### 1. 下载并编译 DophinDB docker集群部署包
 
 (1) 下载DolphinDB docker集群部署包
-  在Github可以[下载dolphindb docker部署包](https://github.com/dolphindb/Tutorials_CN/blob/master/docker/DolphinDB-Docker-Compose.zip)
+  在Github可以[下载dolphindb docker部署包](docker/DolphinDB-Docker-Compose.zip)
 
 (2) 生成DophinDB server 镜像文件
 
@@ -109,7 +109,7 @@ Creating ddbagent1     ... done
 
   通过上述步骤，已经完成了分布式集群的创建，启动和初始化工作，这里包含了一个controller容器和三个agent容器。 访问地址 http://localhost:8888/ 就可以访问集群管理web页面, 在集群管理界面全选并启动数据节点，最终界面如下：
 
-  ![image](https://github.com/dolphindb/Tutorials_CN/blob/master/images/docker/cluster_web.png?raw=true)
+  ![image](images/docker/cluster_web.png?raw=true)
 
 
 #### 4. 自定义docker集群

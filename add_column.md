@@ -4,7 +4,7 @@
 
 DolphinDB database 为工业物联网和金融提供了一站式解决方案。数据处理流程如下图所示：
 
-![image](https://github.com/dolphindb/Tutorials_CN/blob/master/images/stream_cn.png?raw=true)
+![image](images/stream_cn.png?raw=true)
 
 工业物联网采集的数据和金融交易的实时数据首先会以流数据的形式注入到DolphinDB的流数据表中，数据节点通过订阅流数据表，可以把实时流数据持久化到分布式数据库中，供将来深度数据分析使用；同时，流聚合引擎通过订阅流数据表，对流数据进行实时聚合运算，计算结果用于工业物联网的监控和预警以及互联网金融的风控监测。
 

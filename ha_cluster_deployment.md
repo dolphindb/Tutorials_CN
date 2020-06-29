@@ -16,9 +16,9 @@ DolphinDB采用多副本机制，相同数据块的多个副本存储在不同�
 
 DolphinDB API提供了自动重连和切换机制，如果当前连接的数据节点宕机，API会尝试重连，若重连失败就会自动切换连接到其他数据节点执行任务。切换数据节点对用户是透明的，用户不会感知到当前连接的节点已经切换。
 
-如果要使用高可用功能，请先部署DolphinDB集群。高可用功能仅在集群中支持，在单实例中不支持。集群部署请参考[多服务器集群部署教程](https://github.com/dolphindb/Tutorials_CN/blob/master/multi_machine_cluster_deploy.md)。
+如果要使用高可用功能，请先部署DolphinDB集群。高可用功能仅在集群中支持，在单实例中不支持。集群部署请参考[多服务器集群部署教程](multi_machine_cluster_deploy.md)。
 
-![images](https://github.com/dolphindb/Tutorials_CN/blob/master/images/ha_cluster/arc.png?raw=true)
+![images](images/ha_cluster/arc.png?raw=true)
 
 <div align='center'>DolphinDB 高可用架构图 </div>
 
@@ -56,7 +56,7 @@ trades=db.createPartitionedTable(t,`trades,`date).append!(t)
 
 分布式表trades被分成3个分区，每个日期表示一个分区。DolphinDB的Web集群管理界面提供了DFS Explorer，可以方便地查看数据分布情况。trades表各个分区的分布情况如下图所示：
 
-![images](https://github.com/dolphindb/Tutorials_CN/blob/master/images/ha_cluster/chunk_location.jpg?raw=true)
+![images](images/ha_cluster/chunk_location.jpg?raw=true)
 
 以20180801这个分区为例，Sites列显示，date=2018.08.01的数据分布在18104datanode和18103datanode上。即使18104datanode宕机，只要18103datanode正常，用户仍然对date=2018.08.01的数据进行读写操作。
 
@@ -161,11 +161,11 @@ nohup ./dolphindb -console 0 -mode agent -home data -config config/agent.cfg -lo
 
 在浏览器地址栏中输入任意控制节点的IP地址和端口号打开集群管理界面，例如10.1.1.1:8900，点击Node列的控制节点别名controller1进入DolphinDB Notebook。
 
-![images](https://github.com/dolphindb/Tutorials_CN/blob/master/images/ha_cluster/ha_web.jpg?raw=true)
+![images](images/ha_cluster/ha_web.jpg?raw=true)
 
 执行`getActiveMaster()`函数，该函数返回Leader的别名。
 
-![images](https://github.com/dolphindb/Tutorials_CN/blob/master/images/ha_cluster/ha_notebook.jpg?raw=true)
+![images](images/ha_cluster/ha_notebook.jpg?raw=true)
 
 在浏览器地址栏中输入Leader的IP地址和端口号打开Leader的集群管理界面。
 

@@ -32,7 +32,7 @@ DolphinDB提供了多种灵活的数据导入方法，来帮助用户方便的�
 - [`ploadText`](https://www.dolphindb.cn/cn/help/ploadText.html): 将数据文件作为分区表并行加载到内存中。与`loadText`函数相比，速度更快。
 - [`loadTextEx`](https://www.dolphindb.cn/cn/help/loadTextEx.html): 把数据文件转换为DolphinDB数据库中的分布式表，然后将表的元数据加载到内存中。
 
-下面通过将 [candle_201801.csv](https://github.com/dolphindb/Tutorials_CN/blob/master/data/candle_201801.csv) 导入DolphinDB来演示`loadText`和`loadTextEx`的用法。
+下面通过将 [candle_201801.csv](data/candle_201801.csv) 导入DolphinDB来演示`loadText`和`loadTextEx`的用法。
 
 ### 2.1. `loadText`
 
@@ -366,7 +366,7 @@ tb.append!(data);
 
 每个文件的结构都是一致的，如图所示：
 
-![csvfile](https://github.com/dolphindb/Tutorials_CN/blob/master/images/csvfile.PNG?raw=true)
+![csvfile](images/csvfile.PNG?raw=true)
 
 ### 6.1. 分区规划
 
@@ -457,8 +457,8 @@ for(year in years){
 
 #### 7. 附录
 
-- [CSV导入数据文件](https://github.com/dolphindb/Tutorials_CN/blob/master/data/candle_201801.csv)
-- [二进制导入例1数据文件](https://github.com/dolphindb/Tutorials_CN/blob/master/data/binSample.bin)
-- [二进制导入例2数据文件](https://github.com/dolphindb/Tutorials_CN/blob/master/data/binStringSample.bin)
-- [HDF5导入数据文件](https://github.com/dolphindb/Tutorials_CN/blob/master/data/candle_201801.h5) 
-- [案例完整脚本](https://github.com/dolphindb/Tutorials_CN/blob/master/data/demoScript.txt)
+- [CSV导入数据文件](data/candle_201801.csv)
+- [二进制导入例1数据文件](data/binSample.bin)
+- [二进制导入例2数据文件](data/binStringSample.bin)
+- [HDF5导入数据文件](data/candle_201801.h5)
+- [案例完整脚本](data/demoScript.txt)

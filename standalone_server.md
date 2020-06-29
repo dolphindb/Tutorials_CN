@@ -46,7 +46,7 @@ nohup ./dolphindb -console 0 &
 
 `-console`默认是为 1，如果要设置为后台运行，必须要设置为0（`-console 0`)，否则系统运行一段时间后会自动退出。
 
-如果用户在Linux前台运行DolphinDB，那么用户可以通过命令行来执行DolphinDB代码；如果在Linux后台运行DolphinDB，那么用户不能通过命令行来执行DolphinDB代码，可以通过[GUI](http://www.dolphindb.cn/cn/gui/GUIGetStarted.html) 或[VS code插件](https://github.com/dolphindb/Tutorials_CN/blob/master/vscode_extension.md)等图形用户界面来执行代码。
+如果用户在Linux前台运行DolphinDB，那么用户可以通过命令行来执行DolphinDB代码；如果在Linux后台运行DolphinDB，那么用户不能通过命令行来执行DolphinDB代码，可以通过[GUI](http://www.dolphindb.cn/cn/gui/GUIGetStarted.html) 或[VS code插件](vscode_extension.md)等图形用户界面来执行代码。
 
 - Windows系统
 
@@ -149,7 +149,7 @@ select top 100 * from pt
 
 ![运行结果](images/single_GUI.PNG)
 
-DolphinDB database 针对的是海量数据的场景，因此数据库表通常是需要分区的。关于分区请参考[DolphinDB分区教程](https://github.com/dolphindb/Tutorials_CN/blob/master/database.md)。
+DolphinDB database 针对的是海量数据的场景，因此数据库表通常是需要分区的。关于分区请参考[DolphinDB分区教程](database.md)。
 
 和传统的数据库不同，DolphinDB是集数据库、编程语言和分布式计算于一体的系统。数据表只是多种数据结构中的一种，必须显式的加载某个数据对象后才可以引用。例如：
 

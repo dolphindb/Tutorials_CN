@@ -7,7 +7,7 @@ DolphinDB是一个分布式数据库系统，提供了一系列配置选项，�
 - 网络：maxConnections、maxConnectionPerSite、tcpNoDelay、maxFileHandles、enableHttps、maxPubConnections、maxSubConnections
 - 数据安全：dfsReplicationFactor、dataSync、dfsReplicaReliabilityLevel、dfsHAMode、streamingHAMode
 
-要熟悉系统的详细配置，首先需要了解集群搭建流程。DolphinDB集群的搭建请参考[单服务器集群部署](https://github.com/dolphindb/Tutorials_CN/blob/master/single_machine_cluster_deploy.md)或[多服务器集群部署](https://github.com/dolphindb/Tutorials_EN/blob/master/single_machine_cluster_deploy.md)。
+要熟悉系统的详细配置，首先需要了解集群搭建流程。DolphinDB集群的搭建请参考[单服务器集群部署](single_machine_cluster_deploy.md)或[多服务器集群部署](https://github.com/dolphindb/Tutorials_EN/blob/master/single_machine_cluster_deploy.md)。
 
 ### 1. 概述
 
@@ -21,7 +21,7 @@ __磁盘__  作为数据库持久化的介质，从磁盘读写数据往往成�
 
 __网络__  提供集群节点之间通信，对于分布式系统，网络本身的时延和吞吐量对系统性能影响极大，网络性能主要是由基础硬件决定，如果有多台服务器，服务器间应使用万兆以太网连接。DolphinDB提供了一些对连接数控制的选项，来合理的控制系统资源消耗。
 
-__数据安全__ DolphinDB提供数据、元数据以及客户端的高可用方案，使得数据库节点发生故障时，数据库依然可以正常运作，保证业务不会中断。采用多副本机制，保证数据节点宕机，系统仍然可用。提供controller节点高可用模式，通过构建多个控制节点来组成一个Raft组，只要宕机的控制节点少于半数，集群仍然可提供服务。DolphinDB API提供了自动重连和切换机制，在节点宕机，用户不需要干预的情况下，自动进行重连或者切换。DolphinDB高可用教程参考[DolphinDB高可用集群部署教程](https://github.com/dolphindb/Tutorials_CN/blob/master/ha_cluster_deployment.md)
+__数据安全__ DolphinDB提供数据、元数据以及客户端的高可用方案，使得数据库节点发生故障时，数据库依然可以正常运作，保证业务不会中断。采用多副本机制，保证数据节点宕机，系统仍然可用。提供controller节点高可用模式，通过构建多个控制节点来组成一个Raft组，只要宕机的控制节点少于半数，集群仍然可提供服务。DolphinDB API提供了自动重连和切换机制，在节点宕机，用户不需要干预的情况下，自动进行重连或者切换。DolphinDB高可用教程参考[DolphinDB高可用集群部署教程](ha_cluster_deployment.md)
 
 典型的DolphinDB的应用场景包括：作为分布式时序数据库，提供入库和查询功能；作为稳定的流数据发布中心，提供来自各种应用的订阅服务；下面分别介绍作为数据库和作为流数据发布中心的配置选项。
 
@@ -109,7 +109,7 @@ __dfsHAMode__ : 默认不启用raft mode， 控制节点的高可用模式。如
 
 __streamingHAMode__ : 默认不启用raft mode，流节点的高可用模式。如果流数据节点有高可用要求，则需要配置该选项，启用高可用模式。
 
-> __注意__ : 数据库的分区设计对查询的性能影响很大。分区过大，会造成并行加载容易出现内存不足，从而造成操作系统频繁对内存和磁盘进行数据交换，大大降低降低性能。分区过小，造成系统中存在大量的子任务，导致节点间产生大量的通信和调度，并且还会频繁的访问磁盘的小文件，也会明显降低性能。关于分区的大小以及详细的设计，请参考教程  [https://github.com/dolphindb/Tutorials_CN/blob/master/database.md]()
+> __注意__ : 数据库的分区设计对查询的性能影响很大。分区过大，会造成并行加载容易出现内存不足，从而造成操作系统频繁对内存和磁盘进行数据交换，大大降低降低性能。分区过小，造成系统中存在大量的子任务，导致节点间产生大量的通信和调度，并且还会频繁的访问磁盘的小文件，也会明显降低性能。关于分区的大小以及详细的设计，请参考教程  [database.md]()
 
 ### 3. 流计算模块高性能配置  
 
@@ -218,7 +218,7 @@ __maxSubConnections__ : 订阅节点的最大订阅连接数。如果一个节�
   maxPubConnections=32，表示信息发布节点最多可连接多少订阅节点，该节点发布表较多，可能有来自多个DlphinDB节点或其他客户端的订阅，因此，设置较大为32。  
   persistenceDir : 每个节点设置为一个单独的磁盘卷。这样持久化的时候，可以并发写入。  
   发布队列深度、持久化线程数以及队列深度按照默认配置即可。  
-> 注意定义每张发布流表的持久化参数，enableTablePersistence，对性能和内存影响极大，每个参数根据数据量和性能需求仔细评估配置，详细参考3.1节。另外，流数据的性能调优参考教程[流数据教程](https://github.com/dolphindb/Tutorials_CN/blob/master/streaming_tutorial.md)
+> 注意定义每张发布流表的持久化参数，enableTablePersistence，对性能和内存影响极大，每个参数根据数据量和性能需求仔细评估配置，详细参考3.1节。另外，流数据的性能调优参考教程[流数据教程](streaming_tutorial.md)
 
 订阅端可以是各种API客户端，或者DolphinDB server。
 如果是DolphinDB server作为订阅客户端， 性能相关的主要配置下这三个参数 subExecutors、maxSubQueueDepth、maxSubConnections，根据实际情况进行合理配置。subExecutors 根据订阅表的多少配置，其他两个参数可以采用默认值。
@@ -268,6 +268,6 @@ __getSessionMemoryStat()__ : 返回该节点的不同用户的内存使用总量
 __mem()__ : 可以显示整个节点的内存分配和占用情况。该函数输出4列，其中列blockSize表示分配的内存块大小，freeSize表示剩余的内存块大小，通过sum(mem().blockSize - mem().freeSize) 得到节点所使用的总的内存大小。  
 __memSize()__ : 查看某个对象占用内存的具体大小，单位为字节。  
 __getMemoryStat()__ : 从系统级查看本节点的内存使用量概述，包括分配的页数，空闲页数，分配的内存总大小，空闲的内存大小。    
-详细内存管理参考教程：[内存管理](https://github.com/dolphindb/Tutorials_CN/blob/master/memory_management.md)。
+详细内存管理参考教程：[内存管理](memory_management.md)。
 
 

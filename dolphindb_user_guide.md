@@ -19,7 +19,7 @@ GUI是DolphinDB的集成开发环境。支持内置函数、语法高亮、自�
 * Windows下启动：双击gui.bat
 * Linux下启动：sh gui.sh
 
-DolphinDB也支持使用 vscode 来编辑脚本, 安装和使用插件请参考教程 https://github.com/dolphindb/Tutorials_CN/blob/master/vscode_extension.md
+DolphinDB也支持使用 vscode 来编辑脚本, 安装和使用插件请参考教程 vscode_extension.md
 
 #### 4、Python/Java/C# API（可选）
 
@@ -32,16 +32,16 @@ DolphinDB提供Java，Python和C#的开发接口。安装步骤及使用请参�
 #### 1、独立服务器
 
 作为一个独立的工作站或服务器使用，无需配置。详见教程
-https://github.com/dolphindb/Tutorials_CN/blob/master/standalone_server.md 
+standalone_server.md
 
 #### 2、单机集群搭建
 
 控制节点(controller)、代理节点（agent）、数据节点(data node)部署在同一个物理机器上。详见教程 
-https://github.com/dolphindb/Tutorials_CN/blob/master/single_machine_cluster_deploy.md
+single_machine_cluster_deploy.md
 
 #### 3、多机集群搭建
 在多个物理机器上部署DolphinDB集群。详见教程
-https://github.com/dolphindb/Tutorials_CN/blob/master/multi_machine_cluster_deploy.md
+multi_machine_cluster_deploy.md
 
 ### 三、使用系统
 
@@ -51,12 +51,12 @@ https://github.com/dolphindb/Tutorials_CN/blob/master/multi_machine_cluster_depl
 
 3. 在DolphinDB database中创建分区数据库和表。DolphinDB支持顺序、值、列表、区间以及复合分区，可灵活应对各类企业实际业务场景。详见教程
 
-https://github.com/dolphindb/Tutorials_CN/blob/master/database.md
+database.md
 
 ### 四、用户权限设置
 
 DolphinDB提供了完善、安全的权限管理机制，满足企业的各种应用需要，详见教程 
-https://github.com/dolphindb/Tutorials_CN/blob/master/ACL_and_Security.md
+ACL_and_Security.md
 
 ### 五、常见错误原因
 1. 节点启动后立即退出，在log文件中显示错误原因为"The license has expired"。

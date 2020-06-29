@@ -38,7 +38,7 @@ DolphinDB作为一个高性能的分布式时序数据库，为工业物联网�
 
 4.2 服务器部署
 
-在本次demo里，为了使用分布式数据库，我们需要使用一个单机多节点集群，可以参考[单机多节点集群部署指南](https://github.com/dolphindb/Tutorials_CN/blob/master/single_machine_cluster_deploy.md)。这里我们配置了1个controller+1个agent+4个datanode的集群，下面列出主要的配置文件内容供参考：
+在本次demo里，为了使用分布式数据库，我们需要使用一个单机多节点集群，可以参考[单机多节点集群部署指南](single_machine_cluster_deploy.md)。这里我们配置了1个controller+1个agent+4个datanode的集群，下面列出主要的配置文件内容供参考：
 
 cluster.nodes
 ```
@@ -60,7 +60,7 @@ maxSubConnections=4
 node1.subPort=8085
 maxPubConnections=4
 ```
-实际生产环境下，建议使用多物理机集群，可以参考 [多物理机集群部署指南](https://github.com/dolphindb/Tutorials_CN/blob/master/multi_machine_cluster_deploy.md)
+实际生产环境下，建议使用多物理机集群，可以参考 [多物理机集群部署指南](multi_machine_cluster_deploy.md)
 
 4.3 实现步骤
 

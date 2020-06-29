@@ -2,7 +2,7 @@
 
 一个量化策略在用于实际交易时，处理实时数据的程序通常为事件驱动。而研发量化策略时，需要使用历史数据进行回测，这时的程序通常不是事件驱动。因此同一个策略需要编写两套代码，不仅耗时而且容易出错。在DolphinDB中，用户可将历史数据按照时间顺序以“实时数据”的方式导入流数据表中，这样就可以使用同一套代码进行回测和实盘交易。
 
-DolphinDB的流数据处理框架采用发布-订阅-消费的模式。数据生产者将实时数据继续地以流的形式发布给所有数据订阅者。订阅者收到消息以后，可使用自定义函数或者DolhpinDB内置的[聚合引擎](https://github.com/dolphindb/Tutorials_CN/blob/master/stream_aggregator.md)来处理消息。DolhpinDB流数据接口支持多种语言的API，包括C++, C#, Java, 和Python等。用户可以使用这些API来编写更加复杂的处理逻辑，更好地与实际生产环境相结合。详细情况请参考[DolphinDB流数据教程](https://github.com/dolphindb/Tutorials_CN/blob/master/streaming_tutorial.md)。
+DolphinDB的流数据处理框架采用发布-订阅-消费的模式。数据生产者将实时数据继续地以流的形式发布给所有数据订阅者。订阅者收到消息以后，可使用自定义函数或者DolhpinDB内置的[聚合引擎](stream_aggregator.md)来处理消息。DolhpinDB流数据接口支持多种语言的API，包括C++, C#, Java, 和Python等。用户可以使用这些API来编写更加复杂的处理逻辑，更好地与实际生产环境相结合。详细情况请参考[DolphinDB流数据教程](streaming_tutorial.md)。
 
 本文介绍`replay`和`replayDS`函数，然后使用金融数据展示数据回放的全过程。
 

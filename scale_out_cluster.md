@@ -79,12 +79,12 @@ tb.append!(data)
 ```
 执行完后通过集群web界面 dfs explorer观察生成的数据分布情况
 
-![image](https://github.com/dolphindb/Tutorials_CN/blob/master/images/scaleout/scale_dfs_exp1.PNG?raw=true)
+![image](images/scaleout/scale_dfs_exp1.PNG?raw=true)
 
 在后续完成节点和存储的扩展之后，我们会用同样的方式追加数据，来验证新节点和存储是否已经启用。
 
 
-> 需要了解集群初始化配置可以参考 [多物理机上部署集群教程](https://github.com/dolphindb/Tutorials_CN/blob/master/multi_machine_cluster_deploy.md)
+> 需要了解集群初始化配置可以参考 [多物理机上部署集群教程](multi_machine_cluster_deploy.md)
 
 ### 4.2 扩展目标
 
@@ -135,7 +135,7 @@ pkill dolphindb
 
 - 回到web管理界面，可以看到已经新增了一个agent4并且是已启动状态，在web界面上启动所有节点
 
- ![image](https://github.com/dolphindb/Tutorials_CN/blob/master/images/scaleout/scale_controller_start.PNG?raw=true)
+ ![image](images/scaleout/scale_controller_start.PNG?raw=true)
 
 到此我们已经完成了新节点的增加。
 
@@ -148,7 +148,7 @@ tb.append!(table(1001..1500 as id,rand(`A`B`C,500) as name))
 ```
 观察dfs explorer，可以看到数据已经分布到新的 node4 节点上。
 
-![image](https://github.com/dolphindb/Tutorials_CN/blob/master/images/scaleout/scale_dfs_exp2.PNG?raw=true)
+![image](images/scaleout/scale_dfs_exp2.PNG?raw=true)
 
 ## 5. 扩展存储
 
@@ -186,7 +186,7 @@ tb.append!(table(1501..2000 as id,rand(`A`B`C,500) as name))
 ```
 到磁盘下观察数据已被写入
 
-![image](https://github.com/dolphindb/Tutorials_CN/blob/master/images/scaleout/3.PNG?raw=true)
+![image](images/scaleout/3.PNG?raw=true)
 
 ## 6 常见问题
 
