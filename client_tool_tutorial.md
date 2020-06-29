@@ -152,13 +152,13 @@ VS Code 插件与GUI功能非常相似，优点是VS Code使用者无需安装�
 
 点击VS Code左侧导航栏的Extensions图标，或者通过ctrl+shift+X快捷键打开插件安装窗口，在搜索框中输入DolphinDB，即可搜索到DolphinDB插件。点击Install进行安装。安装完成后，以txt和dos为后缀的文件都可以被DolphinDB插件识别。
 
-![image](https://github.com/dolphindb/Tutorials_CN/blob/master/images/vscode/1.png?raw=true)
+![image](images/vscode/1.png?raw=true)
   
 ### 2.2 连接DolphinDB Server
 
 在编辑并运行脚本之前，需要先新增并选择一个数据节点作为运行脚本的服务器。新建并打开一个txt或dos文件，通过右键菜单可以增加、选择和移除DolphinDB Server。
 
-![image](https://github.com/dolphindb/Tutorials_CN/blob/master/images/VSCode/server.png?raw=true)
+![image](images/VSCode/server.png?raw=true)
     
 #### 新增服务器
 
@@ -248,7 +248,7 @@ DolphinDB Notebook 最主要的功能是用于集群节点管理、系统监控�
 在single和cluster模式，DolphinDB notebook代码编辑和执行都是一致。唯一的区别是在集群模式下，用户需要点击节点名字的链接来打开notebook界面。
 另外，当需要浏览DFS数据库以及分区表的时候，single模式按钮在屏幕右上角，cluster模式则在屏幕左上角。
 
-![image](https://github.com/dolphindb/Tutorials_CN/blob/master/images/Notebook/code_editing.JPG?raw=true)
+![image](images/Notebook/code_editing.JPG?raw=true)
 
 
 
