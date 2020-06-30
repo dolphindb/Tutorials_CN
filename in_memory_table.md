@@ -188,7 +188,7 @@ val=52 64 25 48 71
 tmp=table(sym, id, val)
 t=streamTable(tmp)
 ```
-流数据表也支持创建单个键值列，可以通过函数`keyedStreamTable`来创建。但与keyed table的设计目的不同，keyed stream table的目的是为了在高可用场景（多个发不端同时写入）下，避免重复消息。通常key就是消息的ID。
+流数据表也支持创建单个键值列，可以通过函数`keyedStreamTable`来创建。但与keyed table的设计目的不同，keyed stream table的目的是为了在高可用场景（多个发布端同时写入）下，避免重复消息。通常key就是消息的ID。
 
 - 数据操作特点
 
