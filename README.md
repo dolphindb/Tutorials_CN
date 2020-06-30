@@ -19,6 +19,7 @@
     - [文本数据加载教程](import_csv.md)
     - [集群间数据库同步](data_synchronization_between_clusters.md)
     - [CacheEngine与数据库日志教程](redoLog_cacheEngine.md)
+    - [内存表详解](in_memory_table.md)
 - 编程语言
     - [脚本语言的混合范式编程](hybrid_programming_paradigms.md)
     - [模块复用教程](module_tutorial.md)
