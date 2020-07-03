@@ -31,7 +31,7 @@ DolphinDB提供Java，Python和C#的开发接口。安装步骤及使用请参�
 
 #### 1、独立服务器
 
-作为一个独立的工作站或服务器使用，无需配置。详见教程:[单节点部署](standalone_server.md)
+作为一个独立的工作站或服务器使用，无需配置。详见教程: [单节点部署](standalone_server.md)
 
 #### 2、单机集群搭建
 
@@ -48,13 +48,11 @@ multi_machine_cluster_deploy.md
 
 2. 客户端GUI提供了方便开发DolphinDB脚本的图形界面。详见GUI帮助文档http://www.dolphindb.com/cn/gui_help/
 
-3. 在DolphinDB database中创建分区数据库和表。DolphinDB支持顺序、值、列表、区间以及复合分区，可灵活应对各类企业实际业务场景。详见教程
-
-database.md
+3. 在DolphinDB database中创建分区数据库和表。DolphinDB支持顺序、值、列表、区间以及复合分区，可灵活应对各类企业实际业务场景。详见教程: [分区数据库](database.md)
 
 ### 四、用户权限设置
 
-DolphinDB提供了完善、安全的权限管理机制，满足企业的各种应用需要，详见教程:[权限管理和安全](ACL_and_Security.md) 
+DolphinDB提供了完善、安全的权限管理机制，满足企业的各种应用需要，详见教程: [权限管理和安全](ACL_and_Security.md) 
 
 
 ### 五、常见错误原因
