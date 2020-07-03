@@ -54,8 +54,8 @@ database.md
 
 ### 四、用户权限设置
 
-DolphinDB提供了完善、安全的权限管理机制，满足企业的各种应用需要，详见教程 
-ACL_and_Security.md
+DolphinDB提供了完善、安全的权限管理机制，满足企业的各种应用需要，详见教程:[权限管理和安全](ACL_and_Security.md) 
+
 
 ### 五、常见错误原因
 1. 节点启动后立即退出，在log文件中显示错误原因为"The license has expired"。
