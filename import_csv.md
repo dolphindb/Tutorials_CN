@@ -35,7 +35,7 @@ DolphinDB的文本数据导入不仅灵活，功能丰富，而且速度非常�
 
 自动识别数据格式包括两部分：字段名称识别和数据类型识别。如果文件的第一行没有任何一列以数字开头，那么系统认为第一行是文件头，包含了字段名称。DolphinDB会抽取少量部分数据作为样本，并自动推断各列的数据类型。因为是基于部分数据，某些列的数据类型的识别可能有误。但是对于大多数文本文件，无须手动指定各列的字段名称和数据类型，就能正确地导入到DolphinDB中。
 
-> 请注意：DolphinDB支持自动识别大部分[DolphinDB提供的数据类型](https://www.dolphindb.cn/cn/help/DataType.html)，但是目前暂不支持识别UUID和IPADDR类型，在后续版本中会支持。
+> 请注意：DolphinDB支持自动识别大部分[DolphinDB提供的数据类型](https://www.dolphindb.cn/cn/help/DataType.html)，但是1.20.0之前的版本不支持识别和导入INT128, UUID和IPADDR三种数据类型。如果在csv文件中包含这三种数据类型，确保下载的版本不低于1.20.0。
 
 [`loadText`](https://www.dolphindb.cn/cn/help/loadText.html)函数用于将数据导入DolphinDB内存表。下例调用`loadText`函数导入数据，并查看生成的数据表的结构。例子中涉及到的数据文件请参考[附录](#附录)。
 
@@ -723,4 +723,4 @@ id num
 附录
 --
 
-本教程的例子中使用的数据文件： [candle_201801.csv](data/candle_201801.csv)。
+本教程的例子中使用的数据文件： [candle_201801.csv](https://github.com/dolphindb/Tutorials_CN/blob/master/data/candle_201801.csv)。
