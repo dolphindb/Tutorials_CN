@@ -1,16 +1,15 @@
-### DolphinDB教程：分区数据库
+## DolphinDB教程：分区数据库
 
 
 - [1. 为什么对数据库进行分区](#1-为什么对数据库进行分区)
 - [2. DolphinDB分区和基于MPP架构的数据存储的区别](#2-dolphindb分区和基于mpp架构的数据存储的区别)
 - [3. 分区类型](#3-分区类型)
-    - [3.1 顺序(SEQ)分区](#31-顺序seq分区)
-    - [3.2 范围(RANGE)分区](#32-范围range分区)
-    - [3.3 哈希(HASH)分区](#33-哈希hash分区)
-    - [3.4 值(VALUE)分区](#34-值value分区)
-    - [3.5 列表(LIST)分区](#35-列表list分区)
-    - [3.6 组合(COMPO)分区](#36-组合compo分区)
-- [4. 分区的原则](#4-分区的原则)
+    - [3.1 范围(RANGE)分区](#31-范围range分区)
+    - [3.2 哈希(HASH)分区](#32-哈希hash分区)
+    - [3.3 值(VALUE)分区](#33-值value分区)
+    - [3.4 列表(LIST)分区](#34-列表list分区)
+    - [3.5 组合(COMPO)分区](#35-组合compo分区)
+- [4. 分区设计注意事项](#4-分区设计注意事项)
     - [4.1 选择合适的分区字段](#41-选择合适的分区字段)
     - [4.2 分区粒度不要过大](#42-分区粒度不要过大)
     - [4.3 分区粒度不要过小](#43-分区粒度不要过小)
@@ -31,7 +30,7 @@
     - [6.2 复制DFS表](#62-复制dfs表)
 - [7. 查询分区表注意事项](#7-查询分区表注意事项)
 
-#### 1. 为什么对数据库进行分区
+### 1. 为什么对数据库进行分区
 
 对数据库进行分区可以显著降低系统响应延迟，提高数据吞吐量。具体来说，分区有以下主要好处。
 * 分区使得大型表更易于管理。对数据子集的维护操作也更加高效，因为这些操作只针对需要的数据而不是整个表。一个好的分区策略通过只读取查询所需的相关数据来减少要扫描的数据量。如果分区机制设计不合理，对数据库的查询、计算以及其它操作都可能受到磁盘访问I/O这个瓶颈的限制。
@@ -39,7 +38,7 @@
 * 分区增加了系统的可用性。由于分区的副本通常是存放在不同的物理节点的，所以一旦某个分区不可用，系统依然可以调用其它副本分区来保证作业的正常运转。
 
 
-#### 2. DolphinDB分区和基于MPP架构的数据存储的区别
+### 2. DolphinDB分区和基于MPP架构的数据存储的区别
 
 MPP(Massive Parallel Processing) 是目前主流数据仓库普遍采用的一种方案, 包括开源软件Greenplum，云数据库AWS Reshift等。MPP有一个主节点，每个客户端都连接到这个主节点。DolphinDB在数据库层面不存在主节点，是点对点结构，每个客户端可以连接到任何一个数据节点，不会出现主节点瓶颈问题。
 
@@ -49,42 +48,23 @@ MPP一般通过哈希规则，将数据分布到各个节点上（水平分割�
 
 ![](images/distributed_mpp.JPG)
 
-#### 3. 分区类型
+### 3. 分区类型
 
-DolphinDB database 支持多种分区类型： 顺序分区、范围分区、哈希分区、值分区、列表分区与复合分区。选择合适的分区类型，有助于用户根据业务特点对数据进行均匀分割。
-  *  顺序分区适用于快速的将数据读取到内存。将一个几十GB的csv文件转换成顺序分区数据库读取到内存要比直接读取csv文件高效得多。顺序分区只能用在单节点。
+DolphinDB database 支持多种分区类型： 范围分区、哈希分区、值分区、列表分区与复合分区。选择合适的分区类型，有助于用户根据业务特点对数据进行均匀分割。
   *  范围分区对每个分区区间创建一个分区，是最常用的也是推荐的一种分区方式。
   *  哈希分区利用哈希函数对分区列操作，方便建立指定数量的分区。
   *  值分区每个值创建一个分区，例如股票交易日期、股票交易月等。
   *  列表分区是根据用户枚举的列表来进行分区，比值分区更加灵活。
-  *  复合分区适用于数据量特别大而且SQL where或group by语句经常涉及多列。可使用2个或3个分区列，每个分区选择都可以采用区间、值或列表分区。例如按股票交易日期进行值分区， 同时按股票代码进行范围分区。
+  *  复合分区适用于数据量特别大而且SQL where或group by语句经常涉及多列。可使用2个或3个分区列，每个分区选择都可以采用区间、值、哈希或列表分区。例如按股票交易日期进行值分区， 同时按股票代码进行范围分区。
 
-当我们创建一个新的分布式数据库时，我们需要在`database`函数中指定数据库路径directory，分区类型partitionType以及分区模式partitionScheme。当我们重新打开现有的分布式数据库时，我们只需指定数据库路径。不允许用不同的分区类型或分区方案覆盖现有的分布式数据库。
+创建一个新的分布式数据库时，需要在`database`函数中指定数据库路径directory，分区类型partitionType以及分区模式partitionScheme。重新打开已有的分布式数据库时，只需指定数据库路径。不允许用不同的分区类型或分区方案覆盖已有的分布式数据库。
 
 聚合函数在分区表上利用分区列操作时，例如当group by列与分区列一致时，运行速度特别快。
 
 为了学习方便， 以下分区例子使用Windows本地目录，用户可以将数据库创建使用的路径改成Linux或DFS目录。
 
 
-#### 3.1 顺序(SEQ)分区
-
-在顺序域（SEQ）中，分区基于输入数据文件中行的顺序。顺序域只能在本地文件系统中使用，不能在分布式文件系统中使用。下面例子中，在"C/DolphinDB/data/seqdb"文件夹下，创建了8个子文件夹，其中每一个对应输入数据文件的一个分区。
-
-```
-n=1000000
-ID=rand(100, n)
-dates=2017.08.07..2017.08.11
-date=rand(dates, n)
-x=rand(10.0, n)
-t=table(ID, date, x)
-saveText(t, "C:/DolphinDB/Data/t.txt")
-
-db = database("C:/DolphinDB/Data/seqdb", SEQ, 8) 
-pt = loadTextEx(db, `pt, , "C:/DolphinDB/Data/t.txt");
-```
-![](images/database/seq.png)
-
-#### 3.2 范围(RANGE)分区
+#### 3.1 范围(RANGE)分区
 
 在范围分区中，分区由区间决定，而区间由分区向量的任意两个相邻元素定义。区间包含起始值，但不包含结尾值。
 
@@ -95,7 +75,7 @@ n=1000000
 ID=rand(10, n)
 x=rand(1.0, n)
 t=table(ID, x)
-db=database("C:/DolphinDB/Data/rangedb", RANGE,  0 5 10)
+db=database("dfs://rangedb", RANGE,  0 5 10)
 
 pt = db.createPartitionedTable(t, `pt, `ID)
 pt.append!(t)
@@ -108,24 +88,10 @@ select count(x) from pt;
 
 ![](images/database/range.png)
 
-如果要创建DFS分区数据库，只需更改路径格式即可：把本地路径更改为DFS路径。系统会自动分配资源存储数据。
 
-```
-n=1000000
-ID=rand(10, n)
-x=rand(1.0, n)
-t=table(ID, x)
-db=database("dfs://rangedb", RANGE,  0 5 10)
-pt = db.createPartitionedTable(t, `pt, `ID)
-pt.append!(t)
+#### 3.2 哈希(HASH)分区
 
-pt=loadTable(db,`pt)
-select count(x) from pt;
-```
-
-#### 3.3 哈希(HASH)分区
-
-哈希分区对分区列使用哈希函数以产生分区。哈希分区是产生指定数量的分区的一个简便方法。但是要注意，哈希分区不能保证分区的大小一致，尤其当分区列的值的分布存在偏态的时候。此外，若要查找分区列上一个连续区域的数据时，哈希分区的效率比区域分区或值分区要低。
+哈希分区对分区列使用哈希函数以产生分区。哈希分区是产生指定数量的分区的一个简便方法。但是要注意，哈希分区不能保证分区的大小一致，尤其当分区列的值的分布存在偏态的时候。此外，若要查找分区列中一个连续范围的数据时，哈希分区的效率比范围分区或值分区要低。
 
 在下面的例子中，数据库db有两个分区。使用ID作为分区列，并使用函数`append!`在数据库db中保存表t为分区表pt。
 
@@ -134,7 +100,7 @@ n=1000000
 ID=rand(10, n)
 x=rand(1.0, n)
 t=table(ID, x)
-db=database("C:/DolphinDB/Data/hashdb", HASH,  [INT, 2])
+db=database("dfs://hashdb", HASH,  [INT, 2])
 
 pt = db.createPartitionedTable(t, `pt, `ID)
 pt.append!(t)
@@ -143,7 +109,7 @@ pt=loadTable(db,`pt)
 select count(x) from pt;
 ```
 
-#### 3.4  值(VALUE)分区
+#### 3.3  值(VALUE)分区
 
 在值域（VALUE）分区中，一个值代表一个分区。
 
@@ -153,7 +119,7 @@ month=take(2000.01M..2016.12M, n)
 x=rand(1.0, n)
 t=table(month, x)
 
-db=database("C:/DolphinDB/Data/valuedb", VALUE, 2000.01M..2016.12M)
+db=database("dfs://valuedb", VALUE, 2000.01M..2016.12M)
 
 pt = db.createPartitionedTable(t, `pt, `month)
 pt.append!(t)
@@ -161,7 +127,6 @@ pt.append!(t)
 pt=loadTable(db,`pt)
 select count(x) from pt;
 ```
-在DFS分布式文件系统中创建VALUE类型的分区数据库，只需把数据库路径名改为db=database("dfs://valuedb", VALUE, 2000.01M..2016.12M)。
 
 上面的例子定义了一个具有204个分区的数据库db。每个分区是2000年1月到2016年12月之间的一个月(如下图）。在数据库db中，表t被保存为分区表pt，分区列为month。
 
@@ -169,7 +134,7 @@ select count(x) from pt;
 
 值分区创建后，可使用`addValuePartitions`函数来追加分区。细节参见用户手册。
 
-#### 3.5 列表(LIST)分区
+#### 3.4 列表(LIST)分区
 
 在列表（LIST）分区中，我们用一个包含多个元素的列表代表一个分区。
 
@@ -179,7 +144,7 @@ ticker = rand(`MSFT`GOOG`FB`ORCL`IBM,n)
 x=rand(1.0, n)
 t=table(ticker, x)
 
-db=database("C:/DolphinDB/Data/listdb", LIST, [`IBM`ORCL`MSFT, `GOOG`FB])
+db=database("dfs://listdb", LIST, [`IBM`ORCL`MSFT, `GOOG`FB])
 pt = db.createPartitionedTable(t, `pt, `ticker)
 pt.append!(t)
 
@@ -190,11 +155,9 @@ select count(x) from pt;
 
 ![](images/database/list.png)
 
-在DFS分布式文件系统中创建LIST类型的分区数据库，只需把路径名改为db=database("dfs://listdb", LIST, [`IBM`ORCL`MSFT, `GOOG`FB])。
+#### 3.5 组合(COMPO)分区
 
-#### 3.6 组合(COMPO)分区
-
-组合（COMPO）分区可以定义2或3个分区列。每列可以独立采用范围(RANGE)，值(VALUE)或列表(LIST)分区。组合分区的多个列在逻辑上是并列的，不存在从属关系或优先级关系。
+组合（COMPO）分区可以定义2或3个分区列。每列可以独立采用范围(RANGE)、值(VALUE)、哈希(HASH)或列表(LIST)分区。组合分区的多个列在逻辑上是并列的，不存在从属关系或优先级关系。
 
 ```
 n=1000000
@@ -206,7 +169,7 @@ t=table(ID, date, x)
 
 dbDate = database(, VALUE, 2017.08.07..2017.08.11)
 dbID=database(, RANGE, 0 50 100)
-db = database("C:/DolphinDB/Data/compoDB", COMPO, [dbDate, dbID])
+db = database("dfs://compoDB", COMPO, [dbDate, dbID])
 
 pt = db.createPartitionedTable(t, `pt, `date`ID)
 pt.append!(t)
@@ -219,36 +182,31 @@ select count(x) from pt;
 
 ![](images/database/hier1.png)
 
-进入到，20170807这个分区，可见区间域(RANGE)有2个分区：
+在20170807这个分区中，有2个区间域(RANGE)分区：
 
 ![](images/database/hier2.png)
 
-在DFS分布式文件系统中创建COMPO类型的分区数据库，只需把数据库路径名改为db = database("dfs://compoDB", COMPO, [dbDate, dbID])。
 
 若组合分区有一列为值分区，创建后可使用`addValuePartitions`函数来追加分区。细节参见用户手册。
 
-#### 4. 分区的原则
+
+### 4. 分区设计注意事项
 
 分区的总原则是让数据管理更加高效，提高查询和计算的性能，达到低延时和高吞吐量。下面是设计和优化分区表的需要考虑的因素，以供参考。
 
 #### 4.1 选择合适的分区字段
 
-在DolphinDB中，可以用于分区的数据类型必须是可以用32位整型来表示的，包括整型(CHAR, SHORT, INT)，日期类型(DATE, MONTH, TIME, SECOND, MINUTE, DATETIME)，以及SYMBOL)。STRING，FLOAT和DOUBLE数据类型不可作为分区字段。
+在DolphinDB中，可以用于分区的数据类型必须是可以用32位整型来表示的，包括整型(CHAR, SHORT, INT)，日期类型(DATE, MONTH, TIME, SECOND, MINUTE, DATETIME)，以及SYMBOL。STRING，FLOAT和DOUBLE数据类型不可作为分区字段。
 
 ```
 db=database("dfs://rangedb1", RANGE,  0.0 5.0 10.0)
-
-//出错信息：DOUBLE数据类型的字段不能作为分区字段
-
+```
+会产生出错信息：DOUBLE数据类型的字段不能作为分区字段
+```
 The data type DOUBLE can't be used for a partition column
-
 ```
 
-虽然DolphinDB支持对TIME, SECOND, DATETIME类型字段的分区，但是在实际使用中要谨慎使用，避免采用值分区，以免分区粒度过细，将大量系统时间耗费在创建或查询百万级以上的很小的分区。例如下面这个例子就会产生过多的分区。序列：2012.06.01T09:30:00..2012.06.30T16:00:00包含2,529,001个元素，所以如果用这个序列做值分区，将会产生在磁盘上产生2,529,001个分区，即2,529,001个文件目录和相关文件，从而使得分区表创建、写入、查询都非常缓慢。
-
-```
-db=database("dfs://valuedb1",VALUE , 2012.06.01T09:30:00..2012.06.30T16:00:00);
-```
+虽然DolphinDB支持对TIME, SECOND, DATETIME类型字段的分区，但是在实际使用中要尽量避免对这些数据类型采用值分区，以免分区粒度过细，将耗费大量时间创建或查询百万级以上的很小的分区。例如下面这个例子就会产生过多的分区。序列：2012.06.01T09:30:00..2012.06.30T16:00:00包含2,529,001个元素。如果用这个序列进行值分区，将会产生在磁盘上产生2,529,001个分区，即2,529,001个文件目录和相关文件，从而使得分区表创建、写入、查询都非常缓慢。
 
 分区字段应当在业务中，特别是数据更新的任务中有重要相关性。譬如在证券交易领域，许多任务都与股票交易日期或股票代码相关，因此以这两个字段来分区比较合理。更新数据库时，DolphinDB的事务机制（在5.2中会提到）不允许多个writer的事务在分区上有重叠。鉴于经常需要对某个交易日或某只股票的数据进行更新，若采用其它分区字段（例如交易时刻），有可能造成多个writer同时对同一分区进行写入而导致问题。
 
@@ -325,7 +283,7 @@ stockDB.createPartitionedTable(tradeSchema, "trades", `date`sym)
 ```
 上面的例子中，quotes和trades两个分区表采用同一个分区机制。
 
-#### 5. 导入数据到分布式数据表
+### 5. 导入数据到分布式数据表
 
 DolphinDB是为OLAP设计的系统，主要是解决海量结构化数据的快速存储和计算，以及通过内存数据库和流数据计算引擎实现高性能的数据处理。DolphinDB不适合数据频繁更改的OLTP业务系统。DolphinDB的数据写入与Hadoop HDFS类似，快速在每个分区或文件的末尾批量插入数据。插入的数据会压缩存储到磁盘，一般压缩比例在20%~25%。数据一旦追加到基于磁盘的数据表后，不能快速更新或删除某些符合条件的记录，必须以分区为单位对数据表进行修改。这也是分区原则中提到单个分区不宜过大的原因之一。
 
@@ -463,7 +421,7 @@ args.add(quotes);
 conn.run("saveQuotes", args);
 ```
 
-#### 6. 数据重分区和复制DFS表
+### 6. 数据重分区和复制DFS表
 
 #### 6.1 数据重分区
 
@@ -576,14 +534,14 @@ datasrc=sqlDS(<select * from tb1>)
 mr(ds=datasrc, mapFunc=writeDataTo{"dfs://db1","tb1_bak"}, parallel=true)
 ```
 
-当然，repartitionDS的方法也适用于复制DFS表，但是使用sqlDS的性能更好。
+当然，`repartitionDS`的方法也适用于复制DFS表，但是使用`sqlDS`的性能更好。
 
 ```
 datasrc=repartitionDS(<select * from tb1>,`date,VALUE)
 mr(ds=datasrc, mapFunc=writeDataTo{"dfs://db1","tb1_bak"}, parallel=true)
 ```
 
-#### 7. 查询分区表注意事项
+### 7. 查询分区表注意事项
 
 系统在执行分布式查询时，首先根据WHERE条件确定需要的分区，然后重写查询，把新的查询发送到相关分区所在的节点，最后整合这些分区的结果返回给用户。
 
