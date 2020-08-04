@@ -10,6 +10,7 @@
     - [高可用集群部署教程](ha_cluster_deployment.md)
     - [如何扩展集群节点和存储](scale_out_cluster.md)
     - [DolphinDB客户端软件教程](client_tool_tutorial.md)
+    - [DolphinDB技术支持攻略](dolphindb_support.md)
 - 数据库
     - [分区数据库设计和操作](database.md)
     - [数据导入教程](import_data.md)
