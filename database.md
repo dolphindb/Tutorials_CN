@@ -543,10 +543,9 @@ mr(ds=datasrc, mapFunc=writeDataTo{"dfs://db1","tb1_bak"}, parallel=true)
 
 ### 7. 查询分区表注意事项
 
-系统在执行分布式查询时，首先根据WHERE条件确定需要的分区，然后重写查询，把新的查询发送到相关分区所在的节点，最后整合这些分区的结果返回给用户。
+系统在执行分布式查询时，首先根据WHERE条件确定需要的分区，然后把查询发送到相关分区所在的节点，最后整合这些分区的结果返回给用户。
 
-大多数分布式查询只涉及分布式表的部分分区。系统会根据关系运算符（<, <=, =, ==, >, >=, in, between）和逻辑运算符（or，and）在加载和处理数据前确定相关的分区，不必全表扫描，从而节省大量时间。下面的例子可以帮助理解DolphinDB如何确定相关分区。以下脚本创建了包含5个分区的分布式数据库。
-
+大多数分布式查询只涉及分布式表的部分分区。系统会根据关系运算符（<, <=, =, ==, >, >=, in, between）和逻辑运算符（or，and）在加载和处理数据前确定相关的分区，避免全表扫描，从而节省大量时间。下面的例子可以帮助理解DolphinDB如何确定相关分区。以下脚本创建了分布式表pt，其中分区字段是date，分区类型是RANGE，从1990.01.01开始，每2个月为一个分区。
 
 ```
 n=10000000
@@ -555,8 +554,8 @@ date=1989.12.31+take(1..10000, n)
 x=rand(1.0, n)
 y=rand(10, n)
 t=table(id, date, x, y)
-db=database("dfs://rangedb1", RANGE, 1 201 401 601 801 1001)
-pt = db.createPartitionedTable(t, `pt, `id)
+db=database("dfs://rangedb1", RANGE, date(1990.01M+(0..200)*2))
+pt = db.createPartitionedTable(t, `pt, `date)
 pt.append!(t);
 
 pt=db.loadTable(`pt);
@@ -584,7 +583,7 @@ select * from pt where y<5 and date between 1990.08.01:1990.08.31;
 ```
 系统确定了一个相关分区：[1990.07.01, 1990.09.01)。注意，系统忽略了y<5的条件。加载了相关分区后，系统会根据y<5的条件进一步筛选数据。
 
-以下类型的查询不能确定相关分区。对于数据量非常大的分区表，以下类型的查询会耗费大量时间，应当尽量避免。
+以下类型的查询不能确定相关分区，会全表扫描。对于数据量非常大的分区表，会耗费大量时间，应当尽量避免。
 
 ```
 select * from pt where date+10>1990.08.01;
@@ -596,6 +595,7 @@ select * from pt where month(date)<=1990.03M;
 select * from pt where y<5;
 
 announcementDate=1990.08.01
+
 select * from pt where date<announcementDate-3;
 
 select * from pt where y<5 or date between 1990.08.01:1990.08.31;
