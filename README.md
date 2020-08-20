@@ -32,7 +32,6 @@
     - [流数据时序聚合引擎](stream_aggregator.md)
     - [流数据横截面引擎](streaming_crossSectionalAggregator.md)
     - [流数据异常检测引擎](Anomaly_Detection_Engine.md)
-    - [流计算引擎实现传感器数据异常检测](iot_anomaly_detection.md)
     - [历史数据回放教程](historical_data_replay.md)
 - 系统管理
     - [权限管理和安全](ACL_and_Security.md)
@@ -77,4 +76,7 @@
     - [DolphinDB在工业物联网的应用](iot_demo.md)
     - [加密货币逐笔交易数据回放](../../../applications/blob/master/cryptocurr_replay/README.md)
     - [在DolphinDB中计算K线](OHLC.md) 
-	- [使用DolphinDB进行机器学习](machine_learning.md)
+    - [使用DolphinDB进行机器学习](machine_learning.md)
+    - [流计算引擎实现传感器数据异常检测](iot_anomaly_detection.md)
+    
+
