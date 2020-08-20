@@ -77,6 +77,6 @@
     - [加密货币逐笔交易数据回放](../../../applications/blob/master/cryptocurr_replay/README.md)
     - [在DolphinDB中计算K线](OHLC.md) 
     - [使用DolphinDB进行机器学习](machine_learning.md)
-    - [流计算引擎实现传感器数据异常检测](iot_anomaly_detection.md)
+    - [DolphinDB流计算引擎实现传感器数据异常检测](iot_anomaly_detection.md)
     
 
