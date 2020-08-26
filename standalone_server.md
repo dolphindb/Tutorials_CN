@@ -142,6 +142,7 @@ select top 100 * from pt
 
 点击工具栏中的 ![execute](images/execute.JPG) 按钮以运行脚本。下图展示了运行结果：
 
+
 ![运行结果](images/single_GUI.PNG)
 
 默认情况下，数据文件保存在DolphinDB部署包/server/local8848目录下。若需要修改保存数据文件的目录，可设置volumes配置参数。
