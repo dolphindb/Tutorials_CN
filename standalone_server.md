@@ -142,7 +142,6 @@ select top 100 * from pt
 
 点击工具栏中的 ![execute](images/execute.JPG) 按钮以运行脚本。下图展示了运行结果：
 
-
 ![运行结果](images/single_GUI.PNG)
 
 默认情况下，数据文件保存在DolphinDB部署包/server/local8848目录下。若需要修改保存数据文件的目录，可设置volumes配置参数。
@@ -169,7 +168,7 @@ Windows系统：
 dolphindb.exe -localSite localhost:8900:local8900 -maxMemSize 4
 ```
 
-更多DolphinDB配置参数请查看[集群配置](https://www.dolphindb.cn/cn/help/ClusterSetup.html)。
+更多DolphinDB配置参数请查看[集群配置](https://www.dolphindb.cn/cn/help/ClusterSetup1.html)。
 
 ## 6. 更多详细信息，请参阅DolphinDB帮助文档
 
