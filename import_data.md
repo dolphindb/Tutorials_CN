@@ -132,7 +132,7 @@ tb = database("dfs://dataImportCSVDB").loadTable("cycle")
 
 - `readRecord!`函数
 
-`readRecord!`函数能够导入不含有字符串类型字段的二进制文件，下面介绍如何使用`readRecord!`函数导入一个二进制文件：[binSample.bin](../data/binSample.bin)。
+`readRecord!`函数能够导入不含有字符串类型字段的二进制文件，下面介绍如何使用`readRecord!`函数导入一个二进制文件：[binSample.bin](data/binSample.bin)。
 
 首先，创建一个内存表tb，用于存放导入的数据，需要为每一列指定字段名称和数据类型。
 
