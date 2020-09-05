@@ -180,7 +180,7 @@ id date       time         last volume value ask1  ask_size1 bid1  bid_size1
 
 - `loadRecord`函数
 
-`loadRecord`函数能够处理字符串类型的数据（包括STRING和SYMBOL类型），但是要求字符串在磁盘上的长度必须固定。如果字符串的长度小于固定值，则用ASCII值0填充，加载的时候会把末尾0去掉。下面介绍使用`loadRecord`函数导入一个带有字符串类型字段的二进制文件：[binStringSample.bin](../data/binStringSample.bin)。
+`loadRecord`函数能够处理字符串类型的数据（包括STRING和SYMBOL类型），但是要求字符串在磁盘上的长度必须固定。如果字符串的长度小于固定值，则用ASCII值0填充，加载的时候会把末尾0去掉。下面介绍使用`loadRecord`函数导入一个带有字符串类型字段的二进制文件：[binStringSample.bin](data/binStringSample.bin)。
 
 首先，指定要导入文件的表结构，包括字段名称和数据类型。与`readRecord!`函数不同的是，`loadRecord`函数是通过一个元组来指定schema，而不是直接定义一个内存表。关于表结构的指定，有以下3点要求：
 
