@@ -19,7 +19,7 @@ GUI是DolphinDB的集成开发环境。支持内置函数、语法高亮、自�
 * Windows下启动：双击gui.bat
 * Linux下启动：sh gui.sh
 
-DolphinDB也支持使用 vscode 来编辑脚本, 安装和使用插件请参考教程: [DolphinDB VSCode 插件](vscode_extension.md)
+DolphinDB也支持使用 vscode 来编辑脚本, 安装和使用插件请参考教程 https://github.com/dolphindb/Tutorials_CN/blob/master/vscode_extension.md
 
 #### 4、Python/Java/C# API（可选）
 
@@ -31,29 +31,32 @@ DolphinDB提供Java，Python和C#的开发接口。安装步骤及使用请参�
 
 #### 1、独立服务器
 
-作为一个独立的工作站或服务器使用，无需配置。详见教程: [单节点部署](standalone_server.md)
+作为一个独立的工作站或服务器使用，无需配置。详见教程
+https://github.com/dolphindb/Tutorials_CN/blob/master/standalone_server.md 
 
 #### 2、单机集群搭建
 
 控制节点(controller)、代理节点（agent）、数据节点(data node)部署在同一个物理机器上。详见教程 
-single_machine_cluster_deploy.md
+https://github.com/dolphindb/Tutorials_CN/blob/master/single_machine_cluster_deploy.md
 
 #### 3、多机集群搭建
 在多个物理机器上部署DolphinDB集群。详见教程
-multi_machine_cluster_deploy.md
+https://github.com/dolphindb/Tutorials_CN/blob/master/multi_machine_cluster_deploy.md
 
 ### 三、使用系统
 
 1. 使用网络集群管理器可以配置集群、启动或关闭数据节点、查看集群各节点的性能指标、浏览分布式数据库数据分区情况及详细数据。详见上文中的单机和多机集群部署教程。
 
-2. 客户端GUI提供了方便开发DolphinDB脚本的图形界面。详见GUI帮助文档http://www.dolphindb.com/cn/gui_help/
+2. 客户端GUI提供了方便开发DolphinDB脚本的图形界面。详见GUI帮助文档 https://www.dolphindb.cn/cn/gui/
 
-3. 在DolphinDB database中创建分区数据库和表。DolphinDB支持顺序、值、列表、区间以及复合分区，可灵活应对各类企业实际业务场景。详见教程: [分区数据库](database.md)
+3. 在DolphinDB database中创建分区数据库和表。DolphinDB支持顺序、值、列表、区间以及复合分区，可灵活应对各类企业实际业务场景。详见教程
+
+https://github.com/dolphindb/Tutorials_CN/blob/master/database.md
 
 ### 四、用户权限设置
 
-DolphinDB提供了完善、安全的权限管理机制，满足企业的各种应用需要，详见教程: [权限管理和安全](ACL_and_Security.md) 
-
+DolphinDB提供了完善、安全的权限管理机制，满足企业的各种应用需要，详见教程 
+https://github.com/dolphindb/Tutorials_CN/blob/master/ACL_and_Security.md
 
 ### 五、常见错误原因
 1. 节点启动后立即退出，在log文件中显示错误原因为"The license has expired"。
