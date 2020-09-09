@@ -6,16 +6,16 @@ redash当前仅在线(SAAS)版本中支持JSON数据源，因此使用在线版�
 
 在首页上可以选择创建数据源，按如下步骤进行配置：
 * 选择建立新的数据源
-![image](https://github.com/dolphindb/Tutorials_CN/raw/master/images/redash/ds1.png)
+![image](images/redash/ds1.png)
 * 选择JSON数据源
-![image](https://github.com/dolphindb/Tutorials_CN/raw/master/images/redash/ds2.png)
+![image](images/redash/ds2.png)
 * 在Name里配置数据源名称
-![image](https://github.com/dolphindb/Tutorials_CN/raw/master/images/redash/ds8.png)
+![image](images/redash/ds8.png)
 
 
 然后通过Create按钮，创建一个Query：
 
-![image](https://github.com/dolphindb/Tutorials_CN/raw/master/images/redash/ds4.png)
+![image](images/redash/ds4.png)
 JSON数据源需要使用yaml格式编辑，
 * DolphinDB接口需要query中包含基本的三种元素`url, method, json`
 	* url：接受数据的地址，即DolphinDB数据节点，如`http://192.168.1.113:8848`
@@ -32,9 +32,9 @@ JSON数据源需要使用yaml格式编辑，
 redash的url数据源不仅在线版本支持，在开源独立部署的版本上也可以支持。因此，使用独立部署的用户可以通过这种方式来连接DolphinDB。
 
 连接和配置数据源的方式与JSON方式基本相同，在数据源选择时选择URL类型数据源，如下图：
-![image](https://github.com/dolphindb/Tutorials_CN/raw/master/images/redash/ds5.png)
+![image](images/redash/ds5.png)
 * 在URL中配置数据源名称和路径，`URL Base path`是获取数据的跟地址，配置成DolphinDB的数据节点web地址即可
-![image](https://github.com/dolphindb/Tutorials_CN/raw/master/images/redash/ds6.png)
+![image](images/redash/ds6.png)
 * 创建一个`new query`,在编辑区以URL参数字符串的形式输入查询内容，查询内容格式上有如下要求：
     * 子路径必须为/json
     * query参数必须包含 : `client`和`queries`两个key，其中`client`指定固定值为`redash`
