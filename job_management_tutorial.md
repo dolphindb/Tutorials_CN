@@ -82,7 +82,7 @@ DolphinDB系统把批处理作业的输出结果保存到磁盘文件。文件�
 
 ## 3. 子任务
 
-在DolphinDB中，若数据表数据量过大，一般都需要进行[分区处理](https://www.dolphindb.cn/cn/help/index.html?DistributedDatabase.html)。如果一个job里含有分区表的查询计算任务（如SQL查询），系统会将其分解成多个子任务并发送到不同的节点上并行执行，等待子任务执行完毕之后，再合并结果，继续此job的执行。类似的，DolphinDB[分布式计算](https://www.dolphindb.cn/cn/help/DistributedComputing.html)也会被分解成子任务，以子任务为单位进行调度。因此，job也可以理解成一系列的子任务。
+在DolphinDB中，若数据表数据量过大，一般都需要进行[分区处理](https://www.dolphindb.cn/cn/help/index.html?DistributedDatabase.html)。如果一个job里含有分区表的查询计算任务（如SQL查询），系统会将其分解成多个子任务并发送到不同的节点上并行执行，等待子任务执行完毕之后，再合并结果，继续此job的执行。类似的，DolphinDB[分布式计算](https://www.dolphindb.cn/cn/help/index.html?distributedCalculation.html)也会被分解成子任务，以子任务为单位进行调度。因此，job也可以理解成一系列的子任务。
 
 DolphinDB首先是一个数据库，内置的计算引擎主要解决高并发、交互式的计算任务。因此DolphinDB的资源配置方式与Apache Spark等低并发、批处理的计算引擎有所不同。Apache Spark以独占方式按应用事先分配计算资源包括CPU核，内存等。DolphinDB则将作业分解成子任务，以子任务为单位进行调度。每一个子任务并不独占CPU核和内存。而是将计算资源放入一个共享的资源池，根据每个计算任务的优先级和并行度来调度子任务。
 
