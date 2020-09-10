@@ -68,7 +68,7 @@
     - [MQTT](../../../DolphinDBPlugin/blob/master/mqtt/README_CN.md)
     - [OPC](../../../DolphinDBPlugin/blob/master/opc/README_CN.md)
     - [DolphinDB VSCode 插件](vscode_extension.md)
-    - [XGBoost](../../../DolphinDBPlugin/blob/master/XGBoost/README_CN.md)
+    - [XGBoost](../../../DolphinDBPlugin/blob/master/xgboost/README_CN.md)
     - [SVM](../../../DolphinDBPlugin/blob/master/svm/README_CN.md)
     - [插件开发教程](plugin_development_tutorial.md)
 - 模块
