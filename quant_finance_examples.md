@@ -252,7 +252,7 @@ importBinFiles(dataDir, schema);
 
 ### 3.3 生成模拟数据
 
-若您尚无高频数据，可下载[20200601.csv](http://www.dolphindb.cn/downloads/tutorial/20200601.zip)（或[20200601.bin](http://www.dolphindb.cn/downloads/tutorial/20200601.zip)），采用3.1节（或3.2节）中的脚本，将这天数据载入数据库，然后通过修改日期，生成多天的高频数据以供测试。
+若您尚无高频数据，可下载[20200601.csv](http://www.dolphindb.cn/downloads/tutorial/20200601.zip)（或[20200601.bin](http://www.dolphindb.cn/downloads/tutorial/20200601_bin.zip)），采用3.1节（或3.2节）中的脚本，将这天数据载入数据库，然后通过修改日期，生成多天的高频数据以供测试。
 
 下列代码通过[`sqlDS`](https://www.dolphindb.cn/cn/help/sqlDS.html)函数将之前导入的2020.06.01这一天的数据，按分布式表一个分区生成一个数据源的方式，共分成10个数据源，然后通过[`mr`](https://www.dolphindb.cn/cn/help/distributedCalculation.html)函数将这10份数据先取到内存更新日期，再写入数据库。`mr`函数的parallel参数可设为true，即采用并行执行，以加块生成模拟数据的速度。若服务器内存不足容纳一天的数据，则需要设为false，即采用串行执行以尽量少占用内存。
 
