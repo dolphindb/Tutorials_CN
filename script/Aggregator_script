@@ -1,0 +1,168 @@
+login("admin","123456")
+//-===================start 
+//流数据表
+st=streamTable(1000000:0,`deviceID`ts`batteryTemperature`cpuPercentage`memFree,[INT,TIMESTAMP,DOUBLE,DOUBLE,DOUBLE])
+enableTableShareAndPersistence(st,`sensorReadings,false, true, 1000000)
+
+//存储
+if(exists("dfs://iotDemoDB")){
+	dropDatabase("dfs://iotDemoDB")
+}
+tableSchema = table(1000000:0,`deviceID`ts`batteryTemperature`cpuPercentage`memFree,[INT,TIMESTAMP,DOUBLE,DOUBLE,DOUBLE])
+db1 = database("",VALUE,2019.04.24..2029.12.31) 
+db2 = database("",RANGE,0..10*100)
+db = database("dfs://iotDemoDB",COMPO,[db1,db2])
+dfsTable = db.createPartitionedTable(tableSchema,"sensorReadings",`ts`deviceID)
+
+dfsTable=loadTable("dfs://iotDemoDB","sensorReadings")
+subscribeTable(, "sensorReadings", "saveToDfs", -1, append!{dfsTable}, true, 1000,1)
+
+//时序聚合引擎
+share streamTable(1000000:0, `time`deviceID`batteryTemperatureAvg`cpuPercentageAvg`memFreeAvg, [TIMESTAMP,INT,DOUBLE,DOUBLE,DOUBLE]) as sensorReadingsAvg
+metrics = createTimeSeriesAggregator("tsAggr1",60000,2000,<[avg(batteryTemperature),avg(cpuPercentage),avg(memFree)]>,sensorReadings,sensoReadingsAvg,`ts,,`deviceID,2000) 
+subscribeTable(, "sensorReadings", "metricEngine", -1, append!{metrics},true)
+
+
+//横截面聚合引擎
+
+allDevicesReadingsAvg = table(1:0, `time`batteryTemperatureAvg`cpuPercentageAvg`memFreeAvg, [TIMESTAMP,DOUBLE,DOUBLE,DOUBLE])
+iotCrossAggregator=createCrossSectionalAggregator("crossSectionalAggr", <[avg(batteryTemperature), avg(cpuPercentage),avg(memFree)]>, sensorReadings, allDevicesReadingsAvg, `deviceID, `perBatch)
+subscribeTable(,"sensorReadings","iotCrossAggregator",-1,append!{iotCrossAggregator},true)
+
+
+
+//查询结果
+select gmtime(time) as time,batteryTemperatureAvg ,cpuPercentageAvg ,memFreeAvg from sensorReadingsAvg where deviceID = 1
+select gmtime(time) as time, batteryTemperatureAvg,cpuPercentageAvg,memFreeAvg from allDevicesReadingsAvg
+
+dfsTable=loadTable("dfs://iotDemoDB","sensorReadings")
+select count(*) from dfsTable
+
+//快照引擎
+
+registerSnapshotEngine("dfs://iotDemoDB", "sensorReadings", `deviceID)
+select [64] * from loadTable("dfs://iotDemoDB","sensorReadings")
+
+getNodeAlias()
+getAggregatorStat()
+
+//模拟采集数据
+def writeData(){
+	deviceNum = 1000
+	for (i in 0:100000) {
+		data = table(take(1..deviceNum,deviceNum) as deviceID ,take(now(),deviceNum) as ts,rand(70..102,deviceNum) as batteryTemperature,rand(15..80,deviceNum) as cpuPercentage,rand(1..32,deviceNum) as memFree)
+		sensorReadings.append!(data)
+		sleep(10000)
+	}
+}
+jobId = submitJob("simulateData", "simulate sensor data", writeData)
+
+//===========clear
+//getJobReturn(jobId,true)
+clearTablePersistence(sensorRreadings)
+unsubscribeTable(,"sensorReadings", "metricEngine")
+unsubscribeTable(,"sensorReadings", "saveToDfs")
+unsubscribeTable(,"sensor_readings", "iotCrossAggregator")
+dropAggregator("tsAggr1")
+dropAggregator("CrossSectionalDemo")
+clearTablePersistence(sensorReadings)
+undef(`sensorReadings,SHARED)
+
+getRecentJobs()
+getStreamingStat()
+
+
+
+////////////////////////////////////////////////第2个例子/////////////////////////////////////////////
+
+st=streamTable(1000000:0,`deviceID`ts`RunningStatus`spindleSpeed,[INT,TIMESTAMP,CHAR,INT])
+enableTableShareAndPersistence(st,`cncSt,false, true, 1000000)
+
+
+share streamTable(1000000:0, `time`deviceID`spindleSpeedAvg`spindleSpeedMax, [TIMESTAMP,INT,INT,INT]) as cncCompSt
+metrics = createTimeSeriesAggregator("tsAggr1",60000,2000,<[avg(spindleSpeed),max(spindleSpeed)]>,cncSt,cncCompSt,`ts,,`deviceID,2000) 
+subscribeTable(, "cncSt", "metricEngine", -1, append!{metrics},true)
+
+
+defg countStatus(col, status) {
+	return sum(col == status)
+}
+allCncSt = table(1:0, `time`count0`count1`count2, [TIMESTAMP,INT,INT,INT])
+crossAggregator1=createCrossSectionalAggregator("crossSectionalAggr", <[countStatus(RunningStatus,0), countStatus(RunningStatus,1),countStatus(RunningStatus,2)]>, cncSt, allCncSt, `deviceID, `perBatch)
+subscribeTable(,"cncSt","crossAggregator1",-1,append!{crossAggregator1},true)
+
+
+tableSchema = table(1000000:0,`deviceID`ts`RunningStatus`spindleSpeed,[INT,TIMESTAMP,CHAR,INT])
+db1 = database("",VALUE,2019.10.01..2029.12.31) 
+db2 = database("",RANGE,0..10*100)
+db = database("dfs://cncDB",COMPO,[db1,db2])
+db.createPartitionedTable(tableSchema,"cncReadings",`ts`deviceID)
+
+dfsTable=loadTable("dfs://cncDB","cncReadings")
+subscribeTable(, "cncReadings", "saveToCncDfs", -1, append!{dfsTable}, true, 1000000,10)
+registerSnapshotEngine("dfs://cncDB", "cncReadings", `deviceID)
+select [64] * from loadTable("dfs://cncDB","cncReadings")
+
+//模拟写入流表
+def writeCncData(){
+	deviceNum = 10
+	for (i in 0:100) {
+		data = table(take(1..deviceNum,deviceNum) as deviceID ,take(now(),deviceNum) as ts,rand(0..2,deviceNum) as runningStatus,rand(2000..3000,deviceNum) as speed)
+		cncSt.append!(data)
+		sleep(1000)
+	}
+}
+submitJob("simulateCncData", "simulate cnc data", writeCncData)
+
+////////////////////////////////////////////////第3个例子/////////////////////////////////////////////
+//从csv导入dolphindb
+
+FP_DEVICES 	= '/mnt/data/devices/'
+FP_INFO 	= FP_DEVICES + 'csv/devices_big_device_info.csv'
+FP_READINGS = FP_DEVICES + 'csv/devices_big_readings.csv'
+FP_DB 		= FP_DEVICES + 'devicedb/'
+
+// ----------------- 创建两张表的 schema
+COLS_INFO 		= `device_id`api_version`manufacturer`model`os_name
+COLS_READINGS 	= `time`device_id`battery_level`battery_status`battery_temperature`bssid`cpu_avg_1min`cpu_avg_5min`cpu_avg_15min`mem_free`mem_used`rssi`ssid
+
+TYPES_INFO		= `SYMBOL`SYMBOL`SYMBOL`SYMBOL`SYMBOL
+TYPES_READINGS  = `DATETIME`SYMBOL`INT`SYMBOL`DOUBLE`SYMBOL`DOUBLE`DOUBLE`DOUBLE`LONG`LONG`SHORT`SYMBOL
+
+schema_info 	= table(COLS_INFO, TYPES_INFO)
+schema_readings = table(COLS_READINGS, TYPES_READINGS)
+
+// ----------------- 从 CSV 导入 device_info 表的数据到 device_info 内存表
+device_info = loadText(FP_INFO, , schema_info)
+
+// ----------------- 创建 readings 分区数据库并定义分区方式
+TIME_RANGE 	= 2016.11.15 +0..4
+ID_RANGE 	= ('demo' + lpad((0..10 * 300)$STRING, 6, "0"))$SYMBOL
+
+time_schema   = database('', RANGE, TIME_RANGE)
+id_schema     = database('', RANGE, ID_RANGE)
+
+db = database(FP_DB, COMPO, [time_schema, id_schema])
+
+// ----------------- 从 CSV 导入 readings 表的数据到 readings 数据库并完成数据分区操作
+readings = loadTextEx(db, `readings, `time`device_id, FP_READINGS, , schema_readings)
+
+
+
+
+//流数据表
+share streamTable(10000000:0, schema_readings.COLS_READINGS, schema_readings.TYPES_READINGS) as streamoutput
+enableTablePersistence(streamoutput, true, false, 1000000)
+
+//回放
+readings = loadTable(FP_DB, `readings, , false)// 加载表
+ds = replayDS(<select * from readings>, `time, );
+replay([ds], [streamoutput], `time, `time, 1, 4)
+submitJob("a", "a", replay, [ds], [output2], `time, `time, , 4)
+
+
+//横截面聚合引擎
+all_devices_readings_avg = table(1:0, `time`battery_temperature_avg, [TIMESTAMP,DOUBLE])
+iotCrossAggregator1=createCrossSectionalAggregator("CrossSectionalDemo1", <[avg(battery_temperature)]>, streamoutput, all_devices_readings_avg, `deviceID, `perBatch)
+subscribeTable(,"streamoutput","iotCrossAggregator1",-1,append!{iotCrossAggregator1},true)
+

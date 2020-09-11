@@ -1,0 +1,32 @@
+def createSt(tableName,cacheLimit,retentionMinutes){
+	n = 1000000;
+	tableSchema = streamTable(n:0, ["fwname","filename","source_address","source_port","destination_address","destination_port","nat_source_address","nat_source_port","starttime","stoptime","elapsed_time"] , [SYMBOL,STRING,INT,INT,INT,INT,INT,INT,DATETIME,DATETIME,INT] )
+	enableTableShareAndPersistence(tableSchema,tableName, false, false,cacheLimit,retentionMinutes,1)
+}
+createSt("natlogrecords",1000000,1440)
+
+
+
+def createHaSt(tableName,groupId,cacheLimit,keyColumn,retentionMinutes){
+	m = "tag" + string(0..199)
+	t1=table(1:0, ["fwname","filename","source_address","source_port","destination_address","destination_port","nat_source_address","nat_source_port","starttime","stoptime","elapsed_time"] join m, [SYMBOL,STRING,INT,INT,INT,INT,INT,INT,DATETIME,DATETIME,INT] join  take(DOUBLE,200) )
+	//t1=table(1:0, ["fwname","filename","source_address","source_port","destination_address","destination_port","nat_source_address","nat_source_port","starttime","stoptime","elapsed_time"] , [SYMBOL,STRING,INT,INT,INT,INT,INT,INT,DATETIME,DATETIME,INT] )
+	haStreamTable(groupId,t1,tableName,cacheLimit,keyColumn,retentionMinutes)
+}
+createHaSt("natlogrecords",groupId,1000000,"",1440)
+
+
+def createSt(tableName,cacheLimit,retentionMinutes){
+	n = 1000000;
+	m = "tag" + string(0..199)
+	tableSchema = streamTable(n:0, ["fwname","filename","source_address","source_port","destination_address","destination_port","nat_source_address","nat_source_port","starttime","stoptime","elapsed_time"] join m, [SYMBOL,STRING,INT,INT,INT,INT,INT,INT,DATETIME,DATETIME,INT]  join  take(DOUBLE,200) )
+	enableTableShareAndPersistence(tableSchema,tableName, true, false,cacheLimit,retentionMinutes,1)
+}
+createSt("natlogrecords211",1000000,1440)
+
+def createHaSt(tableName,groupId,cacheLimit,keyColumn,retentionMinutes){
+	m = "tag" + string(0..199)
+	t1=table(1:0, ["fwname","filename","source_address","source_port","destination_address","destination_port","nat_source_address","nat_source_port","starttime","stoptime","elapsed_time"] join m, [SYMBOL,STRING,INT,INT,INT,INT,INT,INT,DATETIME,DATETIME,INT] join  take(DOUBLE,200) )
+	haStreamTable(groupId,t1,tableName,cacheLimit,keyColumn,retentionMinutes)
+}
+createHaSt("natlogrecords211",groupId,1000000,"",1440)
