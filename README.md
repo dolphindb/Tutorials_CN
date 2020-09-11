@@ -79,5 +79,6 @@
     - [在DolphinDB中计算K线](OHLC.md) 
     - [使用DolphinDB进行机器学习](machine_learning.md)
     - [DolphinDB流计算引擎实现传感器数据异常检测](iot_anomaly_detection.md)
+    - [DolphinDB入门：量化金融范例](quant_finance_examples.md)
     
 
