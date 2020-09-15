@@ -16,7 +16,7 @@
     - [数据导入教程](import_data.md)
     - [数据备份恢复教程](restore-backup.md)
     - [动态增加字段和计算指标](add_column.md)
-    - [内存分区表加载和操作](partitioned_in_memory_table.md)
+    - [内存表数据加载与操作](partitioned_in_memory_table.md)
     - [文本数据加载教程](import_csv.md)
     - [集群间数据库同步](data_synchronization_between_clusters.md)
     - [CacheEngine与数据库日志教程](redoLog_cacheEngine.md)
