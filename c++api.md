@@ -56,7 +56,7 @@ int start = 0;
 int N = v->size();
 while (start < N) {
     int len = std::min(N - start, BUF_SIZE);
-    v->getIntConst(start, len, buf);
+    v->getInt(start, len, buf);
     for (int i = 0; i < len; ++i) {
         cout << buf[i << ' ';
     }
