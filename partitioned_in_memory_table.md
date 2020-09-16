@@ -1,4 +1,4 @@
-# 内存分区表加载和操作
+# DolphinDB教程：内存数据表
 
 DolphinDB的内存数据表可以是非分区的，也可以是分区的。除了组合分区以外的所有分区方式都适用于内存数据表。使用分区内存表进行运算能充分发挥多核CPU并行计算的优势。
 
@@ -109,7 +109,7 @@ x C1 C2 C3  C4
 
 - 第二种用法：table(capacity:size, colNames, colTypes)
 
-我们可以通过指定表的容量和初始大小、列名以及每列的数据类型来创建内存表。如果表中实际的记录行数超出的capacity，它会自动扩展。如果要创建一个空的表，可以把size设置为0，如果size>0，创建表时会使用默认值填充。例如，
+我们可以通过指定表的容量和初始大小、列名以及每列的数据类型来创建内存表。如果表中实际的记录行数超出的capacity，它会自动扩展。如果要创建一个空的表，可以把size设置为0，如果size>0，创建表时会使用默认值填充。例如：
 
 ```
 table(200:0, `name`id`value, [STRING,INT,DOUBLE])
@@ -137,7 +137,7 @@ name id value
 
 ### 1.2 创建分区内存表
 
-通过`createPartitionedTable`函数可以创建分区内存表。在创建分区内存表之前，需要创建内存的分区数据库，并且分区数据库的路径为空字符串。
+通过`createPartitionedTable`函数可以创建分区内存表。在创建分区内存表之前，需要创建内存的分区数据库，其路径为空字符串。
 
 ```
 n=10000
@@ -157,8 +157,7 @@ select * from pt
 
 ## 2. 加载数据到内存表
 
-我们通过以下脚本，生成一个模拟数据集，用于后续例子。
-
+通过以下脚本，生成一个模拟数据集，用于后续例子。
 ```
 n=30000000
 workDir = "C:/DolphinDB/Data"
@@ -169,18 +168,16 @@ trades.saveText(workDir + "/trades.txt");
 
 ### 2.1 加载数据到未分区内存表
 
-使用`loadText`函数将文本文件数据导入到未分区的内存表。
-
+使用`loadText`函数将文本文件数据导入到未分区内存表：
 ```
 trades=loadText(workDir + "/trades.txt")
 ```
 
-## 2.2 加载数据到内存分区表
+## 2.2 加载数据到分区内存表
 
 ### 2.2.1 使用`ploadText`函数将文本文件导入为顺序分区的内存表
 
-这是最简单的将数据导入到内存分区表的方法，但缺乏其它导入方法的某些优点及灵活性。例如，需要导入的文本文件必须小于可用内存；无法使用函数`sortBy!`进行分区内有意义的排序，等等。
-
+这是最简单的将数据导入到内存分区表的方法，但缺乏其它导入方法的某些优点及灵活性。例如，需要导入的文本文件必须小于可用内存；无法使用函数`sortBy!`进行有意义的排序，等等。
 ```
 trades = ploadText(workDir + "/trades.txt");
 ```
@@ -188,12 +185,10 @@ trades = ploadText(workDir + "/trades.txt");
 ### 2.2.3 使用`loadTextEx`函数将文本文件导入为指定分区方式的表
 
 这种方法适合下列情况：
-
 * 经常需要在各个分区内部进行排序
 * 经常需要根据分区字段进行group by与context by的计算
 
 使用这种方法时，`database`函数的directory参数以及`loadTextEx`函数的tableName参数需使用空字符串("")。
-
 ```
 db = database("", VALUE, `IBM`MSFT`GM`C`FB`GOOG`V`F`XOM`AMZN`TSLA`PG`S)
 trades = db.loadTextEx("", `sym, workDir + "/trades.txt");
@@ -237,7 +232,6 @@ db.loadTextEx(`trades, `sym, workDir + "/trades.txt");
 ```
 
 若只需要加载两个分区(["A","G")与["M","S"))到内存时：
-
 ```
 db = database(workDir+"/tradeDB")
 trades=loadTable(db, `trades, ["A", "M"], 1);
@@ -269,7 +263,6 @@ sample = loadTableBySQL(st);
 ## 3. 内存表的数据处理
 
 以2.2.3中的分区内存表trades为例，介绍内存表的用法。
-
 ```
 trades = ploadText(workDir + "/trades.txt");
 ```
@@ -278,7 +271,7 @@ trades = ploadText(workDir + "/trades.txt");
 
 可以通过以下方法往内存表中插入数据：
 
-1. SQL `insert`语句
+1. SQL insert 语句
 
 ```
 //往指定列插入数据，其他列为空
@@ -292,7 +285,6 @@ insert into trades values(`S`IBM,[2000.12.31,2000.12.30],[10.0,20.0],[10.0,20.0]
 2. `append!`函数
 
 如果使用`append!`函数往表中插入数据，新数据必须是以表的形式表示。例如：
-
 ```
 tmp=table(`S`IBM as col1,[2000.12.31,2000.12.30] as col2,[10.0,20.0] as col3,[10.0,20.0] as col4,[10.0,20.0] as col5,[10.0,20.0] as col6,[10.0,20.0] as col7,[10.0,20.0] as col8,[10,20] as col9,[10,20] as col10,[10,20] as col11,[10,20] as col12,[10,20] as col13,[10,20] as col14)
 trades.append!(tmp)
@@ -303,7 +295,6 @@ trades.append!(tmp)
 `tableInsert`函数会返回插入的行数。
 
 对于分区表，如果使用`tableInsert`函数往表中插入数据，新数据必须是以表的形式表示。
-
 ```
 tmp=table(`S`IBM as col1,[2000.12.31,2000.12.30] as col2,[10.0,20.0] as col3,[10.0,20.0] as col4,[10.0,20.0] as col5,[10.0,20.0] as col6,[10.0,20.0] as col7,[10.0,20.0] as col8,[10,20] as col9,[10,20] as col10,[10,20] as col11,[10,20] as col12,[10,20] as col13,[10,20] as col14)
 trades.tableInsert(tmp)
@@ -312,7 +303,6 @@ trades.tableInsert(tmp)
 ```
 
 对于未分区表，如果使用`tableInsert`函数往表中插入数据，新数据可以用元组的形式表示。
-
 ```
 a=(`S`IBM,[2000.12.31,2000.12.30],[10.0,20.0],[10.0,20.0],[10.0,20.0],[10.0,20.0],[10.0,20.0],[10.0,20.0],[10,20],[10,20],[10,20],[10,20],[10,20],[10,20])
 trades.tableInsert(a)
@@ -322,7 +312,7 @@ trades.tableInsert(a)
 
 可以通过以下三种方法为内存表增加列：
 
-1. SQL `update`语句
+1. SQL update 语句
 
 ```
 update trades set logPrice1=log(price1), newQty1=double(qty1);
@@ -344,7 +334,7 @@ trades[`logPrice1`newQty1] = <[log(price1), double(qty1)]>;
 
 可以通过以下三种方法为内存表更新列：
 
-1. SQL `update`语句
+1. SQL update 语句
 
 ```
 update trades set qty1=qty1+10;
@@ -372,14 +362,12 @@ trades[`qty1, <sym=`IBM>] = <qty1+10>;
 
 可以通过以下三种方法为内存表删除行：
 
-1. SQL `delete`语句
-
+1. SQL delete 语句
 ```
 delete from trades where qty3<20;
 ```
 
 2. `erase!`函数
-
 ```
 trades.erase!(< qty3<30 >);
 ```
@@ -387,7 +375,6 @@ trades.erase!(< qty3<30 >);
 ### 3.5 删除列
 
 通过`drop!`函数删除列：
-
 ```
 trades.drop!("qty1");
 ```
@@ -395,7 +382,6 @@ trades.drop!("qty1");
 ### 3.6 重命名列
 
 通过`rename!`函数重命名列：
-
 ```
 trades.rename!("qty2", "qty2New");
 ```
@@ -403,7 +389,6 @@ trades.rename!("qty2", "qty2New");
 ### 3.7 查看表结构
 
 通过`schema`函数查看表的结构：
-
 ```
 schema(trades)
 
