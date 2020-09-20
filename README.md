@@ -28,6 +28,7 @@
     - [即时编译(JIT)教程](jit.md)
     - [元编程教程](meta_programming.md)
     - [自定义聚合函数](udaf.md)
+    - [矩阵计算](matrix.md)
 - 流计算
     - [流数据教程](streaming_tutorial.md)
     - [流数据时序聚合引擎](stream_aggregator.md)
