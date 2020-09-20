@@ -72,6 +72,8 @@
     - [DolphinDB VSCode 插件](vscode_extension.md)
     - [XGBoost](../../../DolphinDBPlugin/blob/master/xgboost/README_CN.md)
     - [SVM](../../../DolphinDBPlugin/blob/master/svm/README_CN.md)
+    - [parquet](../../../DolphinDBPlugin/blob/master/parquet/README_CN.md)
+    - [mongodb](../../../DolphinDBPlugin/blob/master/mongodb/README.md)
     - [插件开发教程](plugin_development_tutorial.md)
 - 模块
     - [技术分析(Technical Analysis)指标库](ta.md) 
