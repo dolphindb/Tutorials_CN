@@ -10,7 +10,7 @@
     - [2.3 基本操作](#23-基本操作)
     - [2.4 与DateOffset相关的函数](#24-与DateOffset相关的函数)
     - [2.5 格式及调整](#25-格式及调整)
-- [3. DolphinDB Python API中日期和时间相关操作](#3-DolphinDB Python API中日期和时间相关操作)
+- [3. DolphinDB Python API中日期和时间相关操作](#3-dolphindb-python-api中日期和时间相关操作)
 
 ## 1. 日期和时间类型
 ### 1.1 DolphinDB时序数据类型
