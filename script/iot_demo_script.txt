@@ -1,8 +1,9 @@
 login("admin","123456")
 //-===================start 
 
-share streamTable(1000000:0,`hardwareId`ts`temp1`temp2`temp3,[INT,TIMESTAMP,DOUBLE,DOUBLE,DOUBLE]) as sensorTemp
-enableTablePersistence(sensorTemp, true, false, 1000000)
+st=streamTable(1000000:0,`hardwareId`ts`temp1`temp2`temp3,[INT,TIMESTAMP,DOUBLE,DOUBLE,DOUBLE])
+enableTableShareAndPersistence(table=st, tableName=`sensorTemp, asynWrite=true, compress=false, cacheSize=1000000)
+
 def writeData(){
 	hardwareNumber = 1000
 	for (i in 0:10000) {
@@ -13,24 +14,33 @@ def writeData(){
 }
 
 share streamTable(1000000:0, `time`hardwareId`tempavg1`tempavg2`tempavg3, [TIMESTAMP,INT,DOUBLE,DOUBLE,DOUBLE]) as sensorTempAvg
-demoAgg = createTimeSeriesAggregator("demoAgg", 60000, 2000, <[avg(temp1),avg(temp2),avg(temp3)]>, sensorTemp, sensorTempAvg, `ts ,, `hardwareId, 2000) 
-subscribeTable(, "sensorTemp", "demoAgg", -1, append!{demoAgg},true)
+demoAgg = createTimeSeriesAggregator(name="demoAgg", windowSize=60000, step=2000, metrics=<[avg(temp1),avg(temp2),avg(temp3)]>, dummyTable=sensorTemp, outputTable=sensorTempAvg, timeColumn=`ts,  keyColumn=`hardwareId, garbageSize=2000)
+subscribeTable( tableName="sensorTemp", actionName="demoAgg", offset=-1, handler=append!{demoAgg}, msgAsTable=true)
+
 
 if(exists("dfs://iotDemoDB")){
 	dropDatabase("dfs://iotDemoDB")
 }
-tableSchema = table(1000000:0,`hardwareId`ts`temp1`temp2`temp3,[INT,TIMESTAMP,DOUBLE,DOUBLE,DOUBLE])
-db1 = database("",VALUE,2018.08.14..2018.09.20) 
+
+db1 = database("",VALUE,today()..(today()+30))
 db2 = database("",RANGE,0..10*100)
 db = database("dfs://iotDemoDB",COMPO,[db1,db2])
-dfsTable = db.createPartitionedTable(tableSchema,"sensorTemp",`ts`hardwareId)
-subscribeTable(, "sensorTemp", "save_to_db", -1, append!{dfsTable}, true, 1000000,10)
+tableSchema=table(1:0,`hardwareId`ts`temp1`temp2`temp3,[INT,TIMESTAMP,DOUBLE,DOUBLE,DOUBLE]) 
+db.createPartitionedTable(tableSchema,"sensorTemp",`ts`hardwareId)
+subscribeTable(tableName="sensorTemp", actionName="sensorTemp", offset=-1, handler=append!{dfsTable}, msgAsTable=true, batchSize=1000000, throttle=10)
 
 jobId = submitJob("simulateData", "simulate sensor data", writeData)
+
+getRecentJobs()
+
+dfsTable=loadTable("dfs://iotDemoDB","sensorTemp")
+select count(*) from dfsTable where ts > today().timestamp()
+
 //===========clear
 getJobReturn(jobId,true)
 
+dropStreamTable(`sensorTemp)
 clearTablePersistence(sensorTemp)
-unsubscribeTable(,"sensorTemp", "demoAgg")
-unsubscribeTable(,"sensorTemp", "save_to_db")
+unsubscribeTable(tableName="sensorTemp", actionName="demoAgg")
+unsubscribeTable(tableName="sensorTemp", actionName="sensorTemp"
 dropAggregator("demoAgg")
