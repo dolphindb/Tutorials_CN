@@ -7,6 +7,7 @@
 - [5 动态增加数据节点](#5动态增加数据节点)
 - [6 总结](#6总结)
 
+
 ## 1.概述
 DolphinDB提供数据、元数据以及客户端的高可用方案，使得数据库节点发生故障时，数据库依然可以正常运作，保证业务不会中断。
 
@@ -186,10 +187,11 @@ connect(host,port,username,password,startup,highAvailability)
 ```java
 import com.xxdb;
 DBConnection conn = new DBConnection();
-boolean success = conn.connect("10.1.1.1", 8911,"admin","123456","",true);
+String[] sites = {"192.168.1.189:22207","192.168.1.224:22207","192.168.1.228:22207","192.168.1.189:22208","192.168.1.224:22208","192.168.1.228:22208"};
+boolean success = conn.connect("192.168.1.228", 22207,"admin","123456","",true, sites);
 ```
 
-如果数据节点10.1.1.1:8911宕机，API会自动连接到其他可用的数据节点。
+如果数据节点192.168.1.228:22207宕机，API会自动连接到其他可用的数据节点。
 
 ## 5.动态增加数据节点
 
