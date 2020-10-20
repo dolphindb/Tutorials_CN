@@ -38,7 +38,7 @@ DolphinDB作为一个高性能的分布式时序数据库，为工业物联网�
 
 4.2 服务器部署
 
-在本次demo里，为了使用分布式数据库，我们需要使用一个单机多节点集群，可以参考[单机多节点集群部署指南](single_machine_cluster_deploy.md)。这里我们配置了1个controller+1个agent+4个datanode的集群，下面列出主要的配置文件内容供参考：
+在本次demo里，为了使用分布式数据库，我们需要使用一个单机多节点集群，可以参考[单机多节点集群部署指南](https://github.com/dolphindb/Tutorials_CN/blob/master/single_machine_cluster_deploy.md)。这里我们配置了1个controller+1个agent+4个datanode的集群，下面列出主要的配置文件内容供参考：
 
 cluster.nodes
 ```
@@ -49,7 +49,7 @@ localhost:8083:node2,datanode
 localhost:8082:node3,datanode
 localhost:8084:node4,datanode
 ```
-由于DolphinDB系统默认是不启用Streaming模块功能的，所以我们需要通过在cluster.cfg里做显式配置来启用它，因为本次demo里使用的数据量不大，为了避免demo复杂化，所以这里只启用了node1来做数据订阅
+由于DolphinDB系统默认是不启用Streaming模块功能的，所以我们需要通过在cluster.cfg里做显式配置来启用它，因为本次demo里使用的数据量不大，为了避免demo复杂化，所以这里只启用了node1来做数据订阅。 写入分布式表的数据若再分区范围外，会写入失败。因此添加配置项newValuePartitionPolicy=add，即如果新增的数据中包含分区方案外的数据，系统会根据分区列中新的值自动创建分区。
 
 cluster.cfg
 ```
@@ -59,34 +59,38 @@ persistenceDir=dbcache
 maxSubConnections=4
 node1.subPort=8085
 maxPubConnections=4
+newValuePartitionPolicy=add
 ```
-实际生产环境下，建议使用多物理机集群，可以参考 [多物理机集群部署指南](multi_machine_cluster_deploy.md)
+实际生产环境下，建议使用多物理机集群，可以参考 [多物理机集群部署指南](https://github.com/dolphindb/Tutorials_CN/blob/master/multi_machine_cluster_deploy.md)
 
 4.3 实现步骤
 
-首先我们定义一个sensorTemp流数据表用于接收实时采集的温度数据，我们使用enableTablePersistence函数对sensorTemp表做持久化，内存中保留的最大数据量是100万行。
+首先我们定义一个流数据表st用于接收实时采集的温度数据，使用[`enableTableShareAndPersistence`](https://www.dolphindb.cn/cn/help/enableTableShareAndPersistence.html)函数对st表做持久化并共享为sensorTemp，内存中保留的最大数据量是100万行。
 ```
-share streamTable(1000000:0,`hardwareId`ts`temp1`temp2`temp3,[INT,TIMESTAMP,DOUBLE,DOUBLE,DOUBLE]) as sensorTemp
-enableTablePersistence(sensorTemp, true, false, 1000000)
-```
-通过订阅流数据表sensorTmp，把采集的数据准实时的批量保存到分布式数据库中。分布式表使用日期和设备编号两个分区维度。在物联网大数据场景下，经常要清除过时的数据，这样分区的模式可以简单的通过删除指定日期分区就可以快速的清理过期数据。subscribeTable函数最后两个参数控制数据保存的频率，只有订阅数据达到100万或时间间隔达到10秒才批量将数据写入分布式数据库。
+st=streamTable(1000000:0,`hardwareId`ts`temp1`temp2`temp3,[INT,TIMESTAMP,DOUBLE,DOUBLE,DOUBLE])
+enableTableShareAndPersistence(table=st, tableName=`sensorTemp, asynWrite=true, compress=false, cacheSize=1000000)
 
 ```
-db1 = database("",VALUE,2018.08.14..2018.12.20)
+通过订阅流数据表sensorTmp，把采集的数据准实时的批量保存到分布式数据库中。分布式表使用日期和设备编号两个分区维度。在物联网大数据场景下，经常要清除过时的数据，这样分区的模式可以简单的通过删除指定日期分区就可以快速的清理过期数据。[`subscribeTable`](https://www.dolphindb.cn/cn/help/subscribeTable.html)函数最后两个参数控制数据保存的频率，只有订阅数据达到100万或时间间隔达到10秒才批量将数据写入分布式数据库。
+
+```
+db1 = database("",VALUE,today()..(today()+30))
 db2 = database("",RANGE,0..10*100)
 db = database("dfs://iotDemoDB",COMPO,[db1,db2])
-dfsTable = db.createPartitionedTable(sensorTemp,"sensorTemp",`ts`hardwareId)
-subscribeTable(, "sensorTemp", "save_to_db", -1, append!{dfsTable}, true, 1000000, 10)
+tableSchema=table(1:0,`hardwareId`ts`temp1`temp2`temp3,[INT,TIMESTAMP,DOUBLE,DOUBLE,DOUBLE]) 
+db.createPartitionedTable(tableSchema,"sensorTemp",`ts`hardwareId)
+subscribeTable(tableName="sensorTemp", actionName="sensorTemp", offset=-1, handler=append!{dfsTable}, msgAsTable=true, batchSize=1000000, throttle=10)
+
 ```
 
-在对流数据做分布式保存数据库的同时，系统使用createTimeSeriesAggregator函数创建一个指标聚合引擎， 用于实时计算。函数第一个参数表示时间序列聚合引擎的名称，是时间序列聚合引擎的唯一标识。第二个参数指定了窗口大小为60秒，第三个参数指定每2秒钟做一次求均值运算，第四个参数是运算的元代码，可以由用户自己指定计算函数，任何系统支持的或用户自定义的聚合函数这里都能支持，通过指定分组字段hardwareId，函数会将流数据按设备分成1000个队列进行均值运算，每个设备都会按各自的窗口计算得到对应的平均温度。最后通过subscribeTable订阅流数据，在有新数据进来时触发实时计算，并将运算结果保存到一个新的数据流表sensorTempAvg中。
+在对流数据做分布式保存数据库的同时，系统使用[`createTimeSeriesAggregator`](https://www.dolphindb.cn/cn/help/createTimeSeriesAggregator.html)函数创建一个指标聚合引擎， 用于实时计算。函数第一个参数表示时间序列聚合引擎的名称，是时间序列聚合引擎的唯一标识。第二个参数指定了窗口大小为60秒，第三个参数指定每2秒钟做一次求均值运算，第四个参数是运算的元代码，可以由用户自己指定计算函数，任何系统支持的或用户自定义的聚合函数这里都能支持，通过指定分组字段hardwareId，函数会将流数据按设备分成1000个队列进行均值运算，每个设备都会按各自的窗口计算得到对应的平均温度。最后通过`subscribeTable`订阅流数据，在有新数据进来时触发实时计算，并将运算结果保存到一个新的数据流表sensorTempAvg中。
 
 createTimeSeriesAggregator 参数说明：时间序列聚合引擎的名称，窗口时间，运算间隔时间，聚合运算元代码，原始数据输入表，运算结果输出表，时序字段，分组字段，触发GC记录数阈值。
 
 ```
 share streamTable(1000000:0, `time`hardwareId`tempavg1`tempavg2`tempavg3, [TIMESTAMP,INT,DOUBLE,DOUBLE,DOUBLE]) as sensorTempAvg
-demoAgg = createTimeSeriesAggregator("demoAgg", 60000, 2000, <[avg(temp1),avg(temp2),avg(temp3)]>, sensorTemp, sensorTempAvg, `ts ,, `hardwareId, 2000) 
-subscribeTable(, "sensorTemp", "demoAgg", -1, append!{demoAgg},true)
+demoAgg = createTimeSeriesAggregator(name="demoAgg", windowSize=60000, step=2000, metrics=<[avg(temp1),avg(temp2),avg(temp3)]>, dummyTable=sensorTemp, outputTable=sensorTempAvg, timeColumn=`ts,  keyColumn=`hardwareId, garbageSize=2000)
+subscribeTable( tableName="sensorTemp", actionName="demoAgg", offset=-1, handler=append!{demoAgg}, msgAsTable=true)
 ```
 
 在DolphinDB Server端在对高频数据流做保存、分析的时候，Grafana前端程序每秒钟会轮询实时运算的结果，并刷新平均温度的趋势图。DolphinDB提供了Grafana_DolphinDB的datasource插件，关于Grafana的安装以及DolphinDB的插件配置请参考[Grafana配置教程](https://www.github.com/dolphindb/grafana-datasource/blob/master/README_CN.md)
