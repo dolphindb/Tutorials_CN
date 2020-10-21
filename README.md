@@ -76,6 +76,7 @@
     - [parquet](../../../DolphinDBPlugin/blob/master/parquet/README_CN.md)
     - [mongodb](../../../DolphinDBPlugin/blob/master/mongodb/README.md)
     - [插件开发教程](plugin_development_tutorial.md)
+    - [Py](../../../DolphinDBPlugin/blob/master/py/README.md)
 - 模块
     - [技术分析(Technical Analysis)指标库](ta.md) 
 - 应用场景示例
