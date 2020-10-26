@@ -1,4 +1,4 @@
-# 脚本语言的混合范式编程
+# DolphinDB教程：编程语言介绍
 
 开发大数据应用，不仅需要一个能支撑海量数据的分布式数据库，一个能高效利用多核多节点的分布式计算框架，更需要一门能与分布式数据库和分布式计算有机融合，高性能易扩展，表达能力强，满足快速开发和建模需要的编程语言。DolphinDB从流行的SQL和Python语言汲取了灵感，设计了大数据处理脚本语言。本教程讲解如何通过混合范式编程，快速开发大数据分析的应用。从中你也可以了解DolpinDB的编程语言（以下简称DolphinDB）如何与数据库和分布式计算融合。
 
@@ -123,7 +123,7 @@ id name    avg_wage
 SQL的select语句返回的数据表可以直接赋给一个本地变量，做进一步的处理分析。DolphinDB还引入了exec关键词，与select相比，EXEC语句返回的结果可以是一个matrix，vector或scalar，更便于数据分析。下面的例子中，exec与pivot by配合使用，直接返回一个矩阵。
 
 ```
-exec first(wage) from emp_wage pivot by month, id;
+exec first(wage) from empWages pivot by month, id;
 
          1    2    3    4    5    6    7    8    9    10
          ---- ---- ---- ---- ---- ---- ---- ---- ---- ----
@@ -150,10 +150,10 @@ SQL的group by子句将数据分成多组，每组产生一个值，也就是一
 - 窗口函数仅限于少数几个函数。context by不仅不限制使用的函数，而且可以使用任意表达式，譬如多个函数的组合。
 - context by可以与having子句配合使用，以过滤每个组内部的行。
 
-假定trades数据表记录了每个股票每天的日终价格，我们可以用context by方便的计算每个股票每天的回报以及每天的排名。首先按股票代码进行分组，计算每个股票每天的回报。我们这里假设数据是时间顺序排列的。
+假定trades数据表记录了每个股票每天的日终价格，可以使用context by子句方便的计算每个股票每天的回报以及每天的排名。首先按股票代码进行分组，计算每个股票每天的回报。这里假设每个股票的数据是时间顺序排列的。
 
 ```
-update trades set ret = ratios(price) - 1.0 context by sym;
+update trades set ret = ratios(price) - 1.0 context by symbol;
 ```
 
 按日期进行分组，计算每天每个股票的回报降序排名：
