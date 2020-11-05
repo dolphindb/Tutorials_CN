@@ -1,0 +1,37 @@
+
+def createDatabase(dbName,tableName,compress){
+ tableSchema = table(1:0,`tagid`ts`data,[INT,TIMESTAMP,INT]);
+ db1 = database("",VALUE,2013.01.01..2013.01.01)
+ db2 = database("",VALUE,1..3)
+ db = database(dbName,COMPO,[db1,db2])
+ db.createPartitionedTable(tableSchema,tableName,`ts`tagid,compress)//{ts:"delta", data:"delta"})
+}
+login(`admin,`123456)
+createDatabase("dfs://lz4","sc",) 
+createDatabase("dfs://delta","sc",{tagid:"delta",ts:"delta", data:"delta"}) 
+
+csvFile="/home/ddb/compressDemo.csv"
+//loadTextEx(database("dfs://lz4"),`sc,`ts`tagid,csvFile);
+//loadTextEx(database("dfs://delta"),`sc,`ts`tagid,csvFile);
+
+t=loadText(csvFile)
+lz4=loadTable("dfs://lz4","sc")
+delta=loadTable("dfs://delta","sc")
+lz4.append!(t)
+delta.append!(t)
+
+batch=[10,100,10000,100000]
+for(j in 0..3){
+	n=batch[j]
+	print "batch is "+n
+	t[`tagid]=2+j
+	for(i in 0:(size(t)/n + 1)){
+		end = (i+1)*n
+		if (end> size(t)) end = size(t)
+		t1=table(t[(i*n):end][t.columnNames()])
+		lz4.append!(t1)
+		delta.append!(t1)
+		if(i%1000==0) print i
+	}
+}
+
