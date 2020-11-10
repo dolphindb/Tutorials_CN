@@ -360,8 +360,8 @@ def factorHandler(mutable historyDict, mutable factors, msg){
      re = array(DOUBLE, n)
      for(i in 0:n){
          jump = ceil(initMP[i] * 15.0 / 100.0) / 100.0
-         w_av1 = 0.0  //有必要吗？
-         w_bv1 = 0.0  //有必要吗？
+         w_av1 = 0.0  
+         w_bv1 = 0.0  
          w_av1 = wavol(ap1[i], av1[i], mp[i], jump) + wavol(ap2[i], av2[i], mp[i], jump) + wavol(ap3[i], av3[i], mp[i], jump) + wavol(ap4[i], av4[i], mp[i], jump) + wavol(ap5[i], av5[i], mp[i], jump)
          w_bv1 = wbvol(bp1[i], bv1[i], mp[i], jump) + wbvol(bp2[i], bv2[i], mp[i], jump) + wbvol(bp3[i], bv3[i], mp[i], jump) + wbvol(bp4[i], bv4[i], mp[i],jump) + wbvol(bp5[i], bv5[i], mp[i], jump)
          if(delta[i]>0){
