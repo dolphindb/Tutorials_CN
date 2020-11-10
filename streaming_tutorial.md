@@ -307,12 +307,12 @@ undef("pubStreamTable", SHARED)
 
 要持久化流数据表，在发布节点首先需要设置持久化路径参数persistenceDir:
 ```
-persisitenceDir = /data/streamCache
+persistenceDir = /data/streamCache
 ```
 然后执行[`enableTableShareAndPersistence`](https://www.dolphindb.cn/cn/help/enableTableShareAndPersistence.html)命令。下面的示例针对pubTable表启用持久化，其中asyn = true, compress = true, cacheSize=1000000，即当流数据表达到100万行数据时启用持久化，将其中50%的数据采用异步方式压缩保存到磁盘。
 ```
 pudTable=streamTable(10000:0,`timestamp`temperature, [TIMESTAMP,DOUBLE])
-enableTablePersistence(`sharedPubTable, pubTable, true, true, 1000000)
+enableTableShareAndPersistence(`sharedPubTable, pubTable, true, true, 1000000)
 ```
 
 `enableTableShareAndPersistence`函数会将pubTable共享为sharedPubTable，并把它持久化到磁盘上。
