@@ -36,6 +36,7 @@
     - [流数据横截面引擎](streaming_crossSectionalAggregator.md)
     - [流数据异常检测引擎](Anomaly_Detection_Engine.md)
     - [历史数据回放教程](historical_data_replay.md)
+    - [流数据高可用](haStreamingTutorial.md)
 - 系统管理
     - [权限管理和安全](ACL_and_Security.md)
     - [作业管理](job_management_tutorial.md)
