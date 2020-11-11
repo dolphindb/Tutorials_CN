@@ -76,6 +76,7 @@
     - [parquet](../../../DolphinDBPlugin/blob/master/parquet/README_CN.md)
     - [mongodb](../../../DolphinDBPlugin/blob/master/mongodb/README.md)
     - [插件开发教程](plugin_development_tutorial.md)
+    - [Py](../../../DolphinDBPlugin/blob/master/py/README.md)
 - 模块
     - [技术分析(Technical Analysis)指标库](ta.md) 
 - 应用场景示例
@@ -84,7 +85,10 @@
     - [在DolphinDB中计算K线](OHLC.md) 
     - [使用DolphinDB进行机器学习](machine_learning.md)
     - [DolphinDB流计算引擎实现传感器数据异常检测](iot_anomaly_detection.md)
+    - [实时计算高频因子](hf_factor_streaming.md)
 - 入门和测试
     - [DolphinDB入门：量化金融范例](quant_finance_examples.md)
+    - [DolphinDB入门：物联网范例](iot_examples.md)
+    
     
 
