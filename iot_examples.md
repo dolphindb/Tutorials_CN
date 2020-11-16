@@ -15,10 +15,10 @@
     - [2.3 多值模型](#23-多值模型)
 	- [2.4 使用脚本生成测试数据](#24-使用脚本生成测试数据)
 - [3. 历史数据查询](#3-历史数据查询)
-    - [3.1 求topN的分组查询](#31-求topN的分组查询)
-    - [3.2 趋势查询](#32-趋势查询)
-	- [3.3 对比查询](#33-对比查询)
-    - [3.4 关联查询](#34-关联查询)
+    - [3.1 趋势查询](#31-趋势查询)
+	- [3.2 对比查询](#32-对比查询)
+    - [3.1 求topN的分组查询](#33-分组查询-top-n)
+	- [3.4 关联查询](#34-关联查询)
 	- [3.5 降精度](#35-降精度)
 	- [3.6 插值查询](#36-插值查询)
     - [3.7 去重](#37-去重)
@@ -26,7 +26,7 @@
 	- [3.9 API查询数据](#39-api查询数据)
 - [4. 生产数据写入](#4-生产数据写入)
     - [4.1 Java API](#41-java-api)
-	- [4.2 c# API](#42-c#-api)
+	- [4.2 c# API](#42-c-api)
     - [4.3 Python API](#43-python-api)
 	- [4.4 C++ API](#44-c++-api)
     - [4.5 提升写入性能](#45-提升写入性能)
@@ -70,7 +70,7 @@ localSite=localhost:8900:local8900
 > 注意：
 - 上述命令中DolphinDB_Linux64_V1.20.3.zip表明下载的是1.20.3版本，若是其他版本，请修改文件名中的版本号。 
 - 上述命令中采用前台运行的方式，若要后台运行，修改`./dolphindb`命令为`nohup ./dolphindb -console 0 &`，然后用命令`ps aux | grep dolphindb`查看dolphindb进程是否已启动。若启动失败，请打开安装目录下的日志文件dolphindb.log，查看日志中的错误提示信息。
-- 数据文件默认存放在<DolphinDB安装包>/server/local8848/storage/CHUNKS。请选择容量较大的磁盘存放数据文件，可通过参数volumes配置数据文件存放目录。
+- 数据文件默认存放在<DolphinDB安装包>/server/local8848/storage/CHUNKS。请选择容量较大的磁盘存放数据文件，并通过参数volumes配置数据文件存放目录。
 - DolphinDB通过参数maxMemSize设置节点的最大内存使用量，默认设置为0，表示内存使用没有限制。内存对于改进节点的计算性能非常明显，尽可能高配，但也不能设置太大。例如一台机器内存为16GB，并且只部署1个节点，建议将该参数设置为12GB左右。否则使用内存接近或超过实际物理内存，有可能会触发操作系统强制关闭进程。如果在数据库使用过程中发生奔溃，可以用`dmesg -T  | grep dolphindb`查看一下Linux日志，确认一下是否被操作系统kill。
 - 其他配置项请参见[用户手册](https://www.dolphindb.cn/cn/help/StandaloneSetup.html)。修改配置后，需要重启DolphinDB服务。前台用`quit`命令退出，后台用`kill -9 <进程号>`退出。
 
@@ -126,7 +126,7 @@ start javaw -classpath dolphindb.jar;dolphingui.jar;jfreechart-1.0.1.jar;jcommon
 
 #### 1.2.2 Web连接
 
-Web Notebook是DolphinDB安装包自带的、基于网页的图形化交互工具，主要用于系统监控、日志查看、以及数据浏览，也可用于快速编辑执行代码、查看变量、以及基本的画图功能。与GUI不同，Web Notebook更适合临时任务，不适于执行复杂的开发任务。为了保证DolphinDB服务器的性能，若10分钟内无命令执行，系统会自动关闭Notebook的会话以释放DolphinDB系统资源。在单节点模式下，启动DolphinDB服务器后，只要在浏览器输入网址(http://IP:PORT，默认为 http://localhost:8848)即可访问。若无法访问，请检查：
+Web Notebook是DolphinDB安装包自带的、基于网页的图形化交互工具，主要用于系统监控、日志查看、以及数据浏览，也可用于快速编辑执行代码、查看变量、以及基本的画图功能。与GUI不同，Web Notebook更适合临时任务，不适于执行复杂的开发任务。为了保证DolphinDB服务器的性能，若10分钟内无命令执行，系统会自动关闭Notebook的会话以释放DolphinDB系统资源。在单节点模式下，启动DolphinDB服务器后，只要在浏览器输入网址(http://IP:PORT ，默认为 http://localhost:8848 )即可访问。若无法访问，请检查：
 - DolphinDB端口是否被防火墙屏蔽。若端口没有开放，需要在防火墙打开该端口。
 - DolphinDB server的license是否过期。
 - http是否写成了https。若需要使用https协议访问web，请按照[权限管理和安全](./ACL_and_Security.md#3-%E4%BD%BF%E7%94%A8https%E5%AE%9E%E7%8E%B0%E5%AE%89%E5%85%A8%E9%80%9A%E4%BF%A1)第3节"使用HTTPS实现安全通信"进行配置。
@@ -228,7 +228,7 @@ login(`admin, `123456)
 ```
 登录后使用函数[`changePwd`](https://www.dolphindb.cn/cn/help/changePwd.html)修改密码。更多权限管理细节，请参阅[权限管理和安全](./ACL_and_Security.md)。
 
-- 库表创建后，可使用函数[`getAllDBs()`]显示当前所有数据库，使用函数[`schema`](https://www.dolphindb.cn/cn/help/schema.html)显示某个表或某个数据库的结构信息。例如查询上述`dfs://iot`数据库的设备分区信息可用如下代码：
+- 库表创建后，可使用函数`getAllDBs()`显示当前所有数据库，使用函数[`schema`](https://www.dolphindb.cn/cn/help/schema.html)显示某个表或某个数据库的结构信息。例如查询上述`dfs://iot`数据库的设备分区信息可用如下代码：
 ```
 database("dfs://iot").schema().partitionSchema[1]
 ```
@@ -278,12 +278,12 @@ select * from machines where machineId=1 and datetime between 2020.10.05T00:00:0
 ```
 The number of partitions [372912] relevant to the query is too large. Please add more specific filtering conditions on partition columns in WHERE clause, or consider changing the value of the configuration parameter maxPartitionNumPerQuery.
 ```
-配置参数maxPartitionNumPerQuery指定一个query（查询）最多可以涉及的分区数量，默认值是65535，用于防止生产环境中有人手误提交超级大的query，影响性能。请注意，若where子句中的过滤条件不符合分区剪枝的规则，即使计算只使用了少数分区，在确定相关分区的过程中仍可能进行全表扫描，导致涉及的分区数量多于maxPartitionNumPerQuery的值。例如，若例2中的涉及日期的where条件写为 date(datetime)=2020.10.05，即使计算实质使用的分区数量不变，但由于违反了分区剪枝的规则，会全表扫描，耗时会显著增加。有关分区剪枝的规则请参考用户手册中的[查询数据](https://www.dolphindb.cn/cn/help/Queries.html)一节。
+配置参数maxPartitionNumPerQuery指定一个查询最多可以涉及的分区数量，默认值是65535，用于防止生产环境中有人手误提交超级大的query，影响性能。请注意，若where子句中的过滤条件不符合分区剪枝的规则，即使计算只使用了少数分区，在确定相关分区的过程中仍可能进行全表扫描，导致涉及的分区数量多于maxPartitionNumPerQuery的值。例如，若例2中的涉及日期的where条件写为 date(datetime)=2020.10.05，即使计算实质使用的分区数量不变，但由于违反了分区剪枝的规则，会全表扫描，耗时会显著增加。有关分区剪枝的规则请参考用户手册中的[查询数据](https://www.dolphindb.cn/cn/help/Queries.html)一节。
 
 可以使用以下方法解决这个问题：
-- query中限定尽可能精确的分区范围。
+- 查询中限定尽可能精确的分区范围。
 - 定义数据库的分区机制时，时间戳列的定义不要包含将来的日期，可以在系统中将newValuePartitionPolicy设置成add。这样新的日期出现时，系统会自动更新数据库定义。
-- 将 maxPartitionNumPerQuery 的值调大。不推荐这种方法，因为若不小心忘记设定query的过滤条件或将过滤条件设置过松，则该query会耗时过久，浪费系统资源。
+- 将 maxPartitionNumPerQuery 的值调大。不推荐这种方法，因为若不小心忘记设定查询的过滤条件或将过滤条件设置过松，则该查询会耗时过久，浪费系统资源。
 
 例3. 查询设备1在2020.10.05这一天的最早的10条历史记录：
 ```
@@ -538,7 +538,7 @@ createDatabase("dfs://mvmDemo","machines", ps1, ps2, 50)
 
 - 每次写入数据涉及的分区数量不宜过多。DolphinDB存储时，每个分区每个列存为一个文件。若每次写入3列数据，涉及3,600个分区，那么每次需要写入3,600*3=10,800个文件，会严重影响写入性能。例如在上述测试环境中，还是每批写入360,000条，并写入一样多的记录总数，但每批涉及分区3,600个，耗时7,922秒，是每次写入单个分区耗时的200余倍。
 
-- 对小批量写入，启用Redo Log和写入数据缓存(Cache Engine)功能，能把多次少量的写入缓存起来，一次批量写入，能大大提高写入吞吐量。以上述100个测点共写入777,600,000条记录为例，在同样的测试环境，但设置了dataSync=1和chunkCacheEngineMemSize=1。测试结果显示，每批写入100条记录，仅耗时81秒，吞吐量提高约100倍。有关Redo Log和Cache Engine的更多信息，请参阅[Cache Engine与数据库日志](./redoLog_cacheEngine.md)
+- 对小批量写入，启用Redo Log和写入数据缓存(Cache Engine)功能，能把多次少量的写入缓存起来，一次批量写入，能大大提高写入吞吐量。以上述100个测点共写入777,600,000条记录为例，在同样的测试环境，但设置了dataSync=1（表示将Redo log、数据和元数据强制刷盘）和chunkCacheEngineMemSize=1（缓存为1GB）。测试结果显示，每批写入100条记录，仅耗时81秒，吞吐量提高约100倍。有关Redo Log和Cache Engine的更多信息，请参阅[Cache Engine与数据库日志](./redoLog_cacheEngine.md)
 
 - 使用多个客户端多线程并行写入，但注意多个writer不能同时向同一个分区写入。
 
@@ -628,12 +628,12 @@ DolphinDB支持如下7种关联查询:[equal join (`ej`)](https://www.dolphindb.
 
 这些测点信息可以存储在维度表中。维度表是分布式数据库中没有分区的表，一般用于存储不频繁更新的小数据集。维度表可与任何分布式表，维度表以及内存表进行关联。DolphinDB自动会在各个节点上缓存(cache)维度表，以提升查询和关联的性能。下面例子创建维度表tagInfo并插入一些样本数据：
 ```
-db=database("dfs://svmDemo")
+db = database("dfs://svmDemo")
 schema = table(1:0, `tagId`machineId`tagName`organization`description, [INT,INT,SYMBOL,SYMBOL,SYMBOL])
-dt=db.createTable(schema,`tagInfo)
+dt = db.createTable(schema,`tagInfo)
 
 tagInfo=loadTable("dfs://svmDemo","tagInfo")
-t=table(1 2 51 52 as tagId,1 1 2 2 as machineId,`speed`temperature`speed`temperature as tagName,`hangzhou`hangzhou`shanghai`shanghai as organization,
+t = table(1 2 51 52 as tagId,1 1 2 2 as machineId,`speed`temperature`speed`temperature as tagName,`hangzhou`hangzhou`shanghai`shanghai as organization,
   "Speed/No.1 Wind Turbine in Hangzhou" "Temperature/No.1 Wind Turbine in Hangzhou" "Speed/No.2 Wind Turbine in Shanghai" "Temperature/No.2 Wind Turbine in Shanghai" as description )
 tagInfo.append!(t)
 ```
@@ -696,7 +696,7 @@ db.createPartitionedTable(alarmAction, "alarmAction", `time`deviceID)
 //告警表中模拟写入3条记录
 alarm = loadTable("dfs://demo","alarm")
 action = loadTable("dfs://demo","alarmAction")
-t=table([uuid("b9f36c85-43ce-45a3-8427-b3529a6c41cc"),uuid("baba6fe6-67b9-4c18-885a-3fd6edd3002e"),uuid("b510c959-4f9b-4eaf-81a7-ee7e420810c0")] as UUID,"BDSA11_PSCADA" "DMS01" "XKZDEPOT_CCTV_DI20" as deviceID,take(now().datetime(),3) as time,1..3 as priority,"CONN_FAIL" "OFFLINE" "ERROR" as descs)
+t = table([uuid("b9f36c85-43ce-45a3-8427-b3529a6c41cc"),uuid("baba6fe6-67b9-4c18-885a-3fd6edd3002e"),uuid("b510c959-4f9b-4eaf-81a7-ee7e420810c0")] as UUID,"BDSA11_PSCADA" "DMS01" "XKZDEPOT_CCTV_DI20" as deviceID,take(now().datetime(),3) as time,1..3 as priority,"CONN_FAIL" "OFFLINE" "ERROR" as descs)
 alarm.append!(t)
 
 //确认2条告警，写入告警操作流水表
@@ -719,9 +719,9 @@ select * from lj(alarm, tmp,`time`deviceId`ID,`time`deviceID`ID) where time > to
 
 |ID|	deviceID|	time|	priority|	desc|	actionTime|	confirmUser|	confirmRemark|	t2_actionTime|	clearUser|	clearRemark|
 |----|----|----|----|----|----|----|----|----|----|----|
-|b9f36c85-43ce-45a3-8427-b3529a6c41cc|	BDSA11_PSCADA|	2020.11.05T17:10:11|	1|	CONN_FAIL|	2020.11.05T17:19:26|	admin|	test confirm|	2020.11.05T17:30:53|	admin|	test clear|
-|baba6fe6-67b9-4c18-885a-3fd6edd3002e|	DMS01|	2020.11.05T17:10:11|	2|	OFFLINE|	2020.11.05T17:19:26|	admin|	test confirm||||			
-|b510c959-4f9b-4eaf-81a7-ee7e420810c0|	XKZDEPOT_CCTV_DI20|	2020.11.05T17:10:11|	3|	ERROR|	||||||					
+|b9f...|	BDSA11_PSCADA|	2020.11.05T17:10:11|	1|	CONN_FAIL|	2020.11.05T17:19:26|	admin|	test confirm|	2020.11.05T17:30:53|	admin|	test clear|
+|bab...|	DMS01|	2020.11.05T17:10:11|	2|	OFFLINE|	2020.11.05T17:19:26|	admin|	test confirm||||			
+|b51...|	XKZDEPOT_CCTV_DI20|	2020.11.05T17:10:11|	3|	ERROR|	||||||					
 
 
 
@@ -755,7 +755,7 @@ select min(avg) as minAvg from(
 
 ### 3.6 插值查询
 
-在物联网领域经常会发生采集的数据缺失。对数据中的空值，DolphinDB提供了[`interpolate`](https://www.dolphindb.cn/cn/help/interpolate.html?search=%u63D2%u503C)用于插值查询，插值的方式支持：linear（线性插值）；pad（使用已有的值填充）；nearest（使用最接近NULL值的有效值填充）；krogh（使用krogh多项式插值）。
+在物联网领域经常会发生采集的数据缺失。对数据中的空值，DolphinDB提供了[`interpolate`](https://www.dolphindb.cn/cn/help/interpolate.html)用于插值查询，插值的方式支持：linear（线性插值），pad（使用已有的值填充），nearest（使用最接近NULL值的有效值填充）和krogh（使用krogh多项式插值）。
 
 DolphinDB还提供了以下4个[填充NULL值](https://www.dolphindb.cn/cn/help/NULL.html)的函数：向前/向后取非空值（`bfill`/`ffill`），线性填充（`lfill`）和指定值填充（`nullFill`）。用户也可以通过脚本或C++插件扩充新的插值函数。
 
@@ -771,12 +771,12 @@ update t set value=value.ffill()
 
 用下面代码插值后，可得到2020.09.01这一天每分钟的数据，插值的方式用了线性插值：
 ```
-timeRange=2020.09.01T00:00:00+(0..1439)*60
-t=table(timeRange as time,take(1,size(timeRange)) as id)
+timeRange = 2020.09.01T00:00:00+(0..1439)*60
+t = table(timeRange as time,take(1,size(timeRange)) as id)
 
 t1=select avg(value)  as value 
 from sensors 
-where id =1 and datetime between 2020.09.01T00:00:00 : 2020.09.01T23:59:59 
+where id = 1 and datetime between 2020.09.01T00:00:00 : 2020.09.01T23:59:59 
 group by id,bar(datetime,60) as time  
 delete from t1 where rowNo(id)%2=1 //为了查看插值效果，特意删去t1偶数行
 
@@ -1022,7 +1022,7 @@ API的写入性能的优化主要可通过以下几个方面：
 * 批量写入: 每次组织大批量数据写入能够有效提升性能。
 * 并行写入：将不同分区的数据，分多个任务并行写入。
 
-DolphinDB的最小存储单元是分区，同一个分区不允许多个线程同时写入，否则会抛出异常。所以在做并行写入时，需要考虑将数据按分区进行分流，避免同时向一个分区写入数据。具体多线程写入的实现案例请参考[Java多线程写入示例代码](https://github.com/dolphindb/api-java/blob/master/example/DFSWritingWithMultiThread.java)和[c++多线程并行写入示例代码](https://gitee.com/dolphindb/api-cplusplus/tree/master/example/DFSWritingWithMultiThread)。
+DolphinDB的最小存储单元是分区，同一个分区不允许多个线程同时写入，否则会抛出异常。所以在并行写入时，需要考虑将数据按分区进行分流，避免同时向一个分区写入数据。具体多线程写入的实现案例请参阅[Java多线程写入示例代码](https://github.com/dolphindb/api-java/blob/master/example/DFSWritingWithMultiThread.java)和[c++多线程并行写入示例代码](https://gitee.com/dolphindb/api-cplusplus/tree/master/example/DFSWritingWithMultiThread)。
 * 异步写入：异步写入在写入时不需要等待server回复确认消息，可显著提高连续写入的速度，适用于对写入速度要求高但可靠性要求不苛刻的场景。使用异步写入的方法是在声明DBConnection类变量的时候，置enableAYSN参数值为true即可。适用于DolphinDB 1.10.17、1.20.6及以上linux64版本。
 
 ### 4.6 提升数据压缩比
@@ -1037,7 +1037,7 @@ DolphinDB压缩算法支持压缩效果和解压缩时间综合性能较高的LZ
 |100			|1,639,168 |3,105,776 |35,960,194|3,795,960 |27,385,932 |11,447,608 |
 |10,000			|150,136 |1,100,840 |34,870,756 |1,138,784 |24,756,356 |9,546,840 |
 |100,000		|145,647 |1,094,972 |34,863,223 |1,118,460 |24,782,836 |9,540,884 |
-|8,627,069  	|1,093,160 |144,304 |34,862,003 |1,116,356 |24,787,171 |9,539,072 |
+|8,627,069  	|144,304 |1,093,160 |34,862,003 |1,116,356 |24,787,171 |9,539,072 |
 
 启用写入缓存机制，测试结果如下：
 
@@ -1107,7 +1107,7 @@ preloadModules=plugins::opc,plugins::mqtt
 
 ```
 loadPlugin("/plugins/opcua/PluginOPCUA.txt") //预加载可省略
-conn=opcua::connect(EndpointUrl,"myclient")
+conn = opcua::connect(EndpointUrl,"myclient")
 opcua::subscribe(conn, 3, ["Counter","Expression","Random","Sawtooth"],iot_stream)
 ```
 
@@ -1164,7 +1164,7 @@ engine = createAnomalyDetectionEngine(name="engine1", metrics=<[value > 10, valu
 ```
 异常检测引擎的更多信息，请参阅[流数据异常检测引擎](./Anomaly_Detection_Engine.md)和[流计算引擎实现传感器数据异常检测](./iot_anomaly_detection.md)。
 
-### 5.3 自定义实时计算逻辑
+### 5.3 自定义计算引擎
 
 除了内置的聚合引擎之外，`subscribeTable`函数的handler可以指定任意一个自定义函数作为消息处理函数，例如：当风机的5分钟转速均值超出一个阈值时，需要邮件告警并采取人工介入，那么可以通过实时自定义函数来达到这一目标。对于阈值设定，系统中有一个表(threshold)来保存每类指标的阈值。
 
@@ -1275,7 +1275,7 @@ localSite,mode
 192.168.1.14:22218:NODE2282,datanode
 ~                                      
 ```
-API中启用高可用，配置要切换的节点见如下所示sites字符串变量
+API中启用高可用，配置要切换的节点见如下所示sites字符串变量:
 ```
 String[]  sites={"192.168.1.12:22217", "192.168.1.12:22218", "192.168.1.13:22217", "192.168.1.13:22218", "192.168.1.14:22217", "192.168.1.14:22218"}
 s.connect(host="192.168.1.12", port=21117, userid="admin", password="123456", highAvailability=True, highAvailabilitySites=sites)
