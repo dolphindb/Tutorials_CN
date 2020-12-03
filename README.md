@@ -78,6 +78,7 @@
     - [mongodb](../../../DolphinDBPlugin/blob/master/mongodb/README.md)
     - [插件开发教程](plugin_development_tutorial.md)
     - [Py](../../../DolphinDBPlugin/blob/master/py/README.md)
+    - [利用httpClient插件整合外部消息](send_messages_external_systems.md)
 - 模块
     - [技术分析(Technical Analysis)指标库](ta.md) 
 - 应用场景示例
