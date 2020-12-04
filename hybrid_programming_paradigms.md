@@ -444,13 +444,13 @@ for(i in 0:cols)
 部分应用的另一个妙用是使函数保持状态。通常我们希望函数是无状态的，即函数的输出结果完全是由输入参数决定的。但有时候我们希望函数是有“状态”的。譬如说，在流计算中，用户通常需要给定一个消息处理函数（message handler），接受一条新的信息后返回一个结果。如果我们希望消息处理函数返回的是迄今为止所有接收到的数据的平均数，可以通过部分应用来解决。
 
 ```
-def cumavg(mutable stat, newNum){
+def cumulativeAverage(mutable stat, newNum){
     stat[0] = (stat[0] * stat[1] + newNum)/(stat[1] + 1)
     stat[1] += 1
     return stat[0]
 }
 
-msgHandler = cumavg{0.0 0.0}
+msgHandler = cumulativeAverage{0.0 0.0}
 each(msgHandler, 1 2 3 4 5)
 
 [1,1.5,2,2.5,3]
