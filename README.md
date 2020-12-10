@@ -36,6 +36,7 @@
     - [流数据横截面引擎](streaming_crossSectionalAggregator.md)
     - [流数据异常检测引擎](Anomaly_Detection_Engine.md)
     - [历史数据回放教程](historical_data_replay.md)
+    - [流数据高可用](haStreamingTutorial.md)
 - 系统管理
     - [权限管理和安全](ACL_and_Security.md)
     - [作业管理](job_management_tutorial.md)
@@ -77,6 +78,7 @@
     - [mongodb](../../../DolphinDBPlugin/blob/master/mongodb/README.md)
     - [插件开发教程](plugin_development_tutorial.md)
     - [Py](../../../DolphinDBPlugin/blob/master/py/README.md)
+    - [利用httpClient插件整合外部消息](send_messages_external_systems.md)
 - 模块
     - [技术分析(Technical Analysis)指标库](ta.md) 
 - 应用场景示例

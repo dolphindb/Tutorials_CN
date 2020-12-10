@@ -66,9 +66,9 @@ timer mavg(a, window);
 Time elapsed: 12.968 ms
 ```
 
-向量化编程也有其局限性。首先，不是所有的操作都可以用向量化计算来完成。在机器学习和统计分析中，在某些场景下，我们只能对逐行数据进行迭代处理，无法向量化计算。针对这种场景，DolphinDB计划在后续的版本中推出即时编译技术（JIT），能将用for语句编写的逐行处理代码在运行时动态编译成机器码来执行，显著提升性能。
+向量化编程也有其局限性。首先，不是所有的操作都可以用向量化计算来完成。在机器学习和统计分析中，在某些场景下，只能对逐行数据进行迭代处理，无法向量化计算。对于这种场景，可使用DolphinDB的JIT（即时编译）版本（参见[DolphinDB JIT教程](https://gitee.com/dolphindb/Tutorials_CN/blob/master/jit.md))，将用for语句编写的逐行处理代码在运行时动态编译成机器码执行，从而显著提升性能。
 
-其次，向量化计算通常要将整个向量全部加载到一段连续内存中，Matlab和R都有这样的要求。有时候因为内存碎片原因，无法找到大段的连续内存。DolphinDB针对内存碎片，特别引入了`big array`，可以将物理上不连续的内存块组成一个逻辑上连续的向量。系统是否采用big array是动态决定的，对用户透明。通常，对big array进行扫描，性能损耗对于连续内存而言，在1%~5%之间；对big array进行随机访问，性能损耗在20%~30%左右。在此方面，DolphinDB是以可以接受的少量性能损失来换取系统的更高可用性。
+其次，向量化计算通常要将整个向量全部加载到一段连续内存中，Matlab和R都有这样的要求。有时候因为内存碎片原因，无法找到大段的连续内存。DolphinDB针对内存碎片，特别引入了big array，可以将物理上不连续的内存块组成一个逻辑上连续的向量。系统是否采用big array是动态决定的，对用户透明。通常，对big array进行扫描，性能损耗对于连续内存而言，在1%~5%之间；对big array进行随机访问，性能损耗在20%~30%左右。在此方面，DolphinDB是以可以接受的少量性能损失来换取系统的更高可用性。
 
 ## 2. SQL编程(SQL Programming)
 
@@ -346,7 +346,6 @@ DolphinDB支持函数式编程的大部分功能，包括：
 - lambda函数
 - 高阶函数（higher order function）
 - 部分应用（partial application）
-- 闭包（closure
 
 详细请参考[用户手册第七章](https://www.dolphindb.cn/cn/help/Chapter7FunctionalProgramming.html)。
 
@@ -445,13 +444,13 @@ for(i in 0:cols)
 部分应用的另一个妙用是使函数保持状态。通常我们希望函数是无状态的，即函数的输出结果完全是由输入参数决定的。但有时候我们希望函数是有“状态”的。譬如说，在流计算中，用户通常需要给定一个消息处理函数（message handler），接受一条新的信息后返回一个结果。如果我们希望消息处理函数返回的是迄今为止所有接收到的数据的平均数，可以通过部分应用来解决。
 
 ```
-def cumavg(mutable stat, newNum){
+def cumulativeAverage(mutable stat, newNum){
     stat[0] = (stat[0] * stat[1] + newNum)/(stat[1] + 1)
     stat[1] += 1
     return stat[0]
 }
 
-msgHandler = cumavg{0.0 0.0}
+msgHandler = cumulativeAverage{0.0 0.0}
 each(msgHandler, 1 2 3 4 5)
 
 [1,1.5,2,2.5,3]
@@ -708,13 +707,11 @@ def generateReport(tbl, colNames, colFormat, filter){
 ```
 
 模拟生成一个100行的数据表：
-
 ```
 t = table(1..100 as id, (1..100 + 2018.01.01) as date, rand(100.0, 100) as price, rand(10000, 100) as qty);
 ```
 
 输入过滤条件，字段和格式，定制报表。过滤条件使用了元编程。
-
 ```
 generateReport(t, ["id","date","price","qty"], ["000","MM/dd/yyyy", "00.00", "#,###"], < id<5 or id>95 >);
 
@@ -775,4 +772,5 @@ trades[`qty, <sym=`IBM>]=<qty+100>;
 ```
 
 ## 7. 小结
-DolpinDB是一门为数据分析而生的编程语言。与其它数据分析语言Matlab，SAS，pandas等不同，DolpinDB与分布式数据库和分布式计算紧密集成，天生具备处理海量数据的能力。DolphinDB支持SQL编程，函数化编程和元编程，语言简洁灵活，表达能力强，大大提高了数据科学家的开发效率。DolphinDB支持向量化计算和分布式计算，具有极快的运行速度。
+
+DolpinDB是一门为数据分析而生的编程语言。DolphinDB支持向量化计算和分布式计算，具有极快的运行速度。与其它数据分析语言Matlab，SAS，pandas等不同，DolpinDB与分布式数据库和分布式计算紧密集成，天生具备处理海量数据的能力。DolphinDB支持SQL编程，函数化编程和元编程，语言简洁灵活，表达能力强，大大提高了数据科学家的开发效率。
