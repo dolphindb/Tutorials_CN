@@ -295,10 +295,12 @@ model = xgboost::train(Y, X, params, , model)
 -------|------|------|----------------
 [adaBoostClassifier](http://dolphindb.cn/cn/help/adaBoostClassifier.html) | 分类 | AdaBoost分类 | 支持
 [adaBoostRegressor](http://dolphindb.cn/cn/help/adaBoostRegressor.html) | 回归 | AdaBoost回归 | 支持
+[elasticNet](http://dolphindb.cn/cn/help/elasticNet.html)|回归|ElasticNet回归|支持
 [gaussianNB](http://dolphindb.cn/cn/help/gaussianNB.html) | 分类 | 高斯朴素贝叶斯 | 不支持
 [glm](http://dolphindb.cn/cn/help/glm.html) | 分类/回归 | 广义线性模型 | 支持
 [kmeans](http://dolphindb.cn/cn/help/kmeans.html) | 聚类 | K-均值 | 不支持
 [knn](http://dolphindb.cn/cn/help/knn.html) | 分类 | K-近邻 | 不支持
+[lasso](http://dolphindb.cn/cn/help/lasso.html)|回归|Lasso回归|支持
 [logisticRegression](http://dolphindb.cn/cn/help/logisticRegression.html) | 分类 | 逻辑回归 | 支持
 [multinomialNB](http://dolphindb.cn/cn/help/multinomialNB.html) | 分类 | 多项式朴素贝叶斯 | 不支持
 [ols](http://dolphindb.cn/cn/help/logisticRegression.html) | 回归 | 最小二乘线性回归 | 不支持
@@ -306,6 +308,8 @@ model = xgboost::train(Y, X, params, , model)
 [pca](http://dolphindb.cn/cn/help/pca.html) | 降维 | 主成分分析 | 支持
 [randomForestClassifier](http://dolphindb.cn/cn/help/randomForestClassifier.html) | 分类 | 随机森林分类 | 支持
 [randomForestRegressor](http://dolphindb.cn/cn/help/randomForestRegressor.html) | 回归 | 随机森林回归 | 支持
+[ridge](https://www.dolphindb.cn/cn/help/ridge.html)|回归|Ridge回归|支持
+
 
 ### B. 机器学习工具函数
 
