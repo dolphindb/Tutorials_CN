@@ -52,7 +52,7 @@ P5: 10.1.1.9
 ```sh
 /DolphinDB
 ```
->请注意：安装路径的目录名中不能含有空格字符或中文字符，否则启动数据节点时会失败。比如不要装到Windows系统的Program Files目录下。
+>请注意：安装路径的目录名中不能含有空格字符，也不能含有中文字符，否则启动数据节点时会失败。
 
 ## 3. 软件授权许可更新
 
@@ -311,8 +311,10 @@ startDataNode(["P1-NODE1", "P2-NODE1","P3-NODE1","P5-NODE1"])
 1. **端口号被占用**。查看log文件，如果log文件中出现错误信息"Failed to bind the socket on XXXX"，这里的XXXX是待启动的节点端口号。这可能是该端口号已经被其他程序占用，这种情况下将其他程序关闭或者重新给DolphinDB节点分配端口号在重新启动节点即可，也有可能是刚刚关闭了该节点，Linux kernel还没有释放此端口号。这种情况下稍等30秒，再启动节点即可。
 2. **防火墙未开放端口**。防火墙会对一些端口进行限制，如果使用到这些端口，需要在防火墙中开放这些端口。
 3. **配置文件中的IP地址、端口号或节点别名没有书写正确。**
-4. 如果集群是部署在**云端**或**k8s**环境，需要在agent.cfg和cluster.cfg文件中加上配置项lanCluster=0。
+4. 集群默认情况下是采用UDP发送心跳，** 若发现agent节点进程已经启动了，但是集群web界面上显示不在线**，那就应该是集群网络不支持UDP包，需要将心跳机制改为TCP方式发送: 在agent.cfg和cluster.cfg文件中加上配置项lanCluster=0。
 5. **集群成员配置文件cluster.nodes第一行为空行**。查看log文件，如果log文件中出现错误信息"Failed to load the nodes file [XXXX/cluster.nodes] with error: The input file is empty."，表示cluster.nodes的第一行为空行，这种情况下只需将文件中的空行删除，再重新启动节点即可。
+6. **宏变量\<ALIAS>在明确节点的情况下使用无效**。查看配置文件cluster.cfg，若在明确了节点的情况下使用宏变量\<ALIAS>，如： P1-NODE1.persistenceDir = /hdd/hdd1/streamCache/\<ALIAS>, 则会导致该节点无法正常启动。这种情况下只需要把\<ALIAS>删除，替换成特定节点即可，如：P1-NODE1.persistenceDir = /hdd/hdd1/streamCache/P1-NODE1; 
+若想对所有节点使用宏变量, 则做如下修改：persistenceDir = /hdd/hdd1/streamCache/\<ALIAS>。 宏变量的具体使用可详情参照[DolphinDB用户手册](https://www.dolphindb.cn/cn/help/index.html?ClusterSetup1.html)
 
 ## 6. 基于Web的集群管理
 
@@ -345,9 +347,8 @@ startDataNode(["P1-NODE1", "P2-NODE1","P3-NODE1","P5-NODE1"])
 
 ![nodes_config](images/multi_nodes_config.JPG)
 
-## 6.4 如何设置外网访问
-
-设置外网访问可以通过域名或者IP地址。如果要启动HTTPS, 外网地址必须是域名。若要设置**P1**, **P2**, **P3**和**P5**上所有节点的外网地址，可在cluster.cfg中填入如下信息。%是节点别名的通配符。用户需要根据自己的真实IP做修改。
+## 6.4 如何设置集群管理器通过外网访问
+通常同属一个内网的集群节点我们会将site信息设置为内网地址，这样节点间的网络通信会更加高效。若同时需要通过外网地址访问集群管理器，需要配置publicName选项，作用是告诉集群管理器，在浏览器中用指定的外网地址来打开节点的Notebook。publicName可以设置为域名或者IP地址，如果要启动HTTPS,则必须是域名。举个例子，要设置**P1**, **P2**, **P3**和**P5**上所有节点的外网地址，需要在cluster.cfg中填入如下信息。%是节点别名的通配符。
 
 ```txt
 P1-%.publicName=19.56.128.21
