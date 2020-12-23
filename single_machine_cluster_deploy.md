@@ -10,16 +10,17 @@ DolphinDB集群包括三种类型节点：数据节点（data node），代理�
 
 - [1 下载](#1-下载)
 - [2 软件授权许可更新](#2-软件授权许可更新)
-- [3 DolphinDB集群初始化配置](#3-dolphindb集群初始化配置)
-    - [3.1 配置控制节点](#31-配置控制节点)
-    - [3.2 配置代理节点参数文件](#32-配置代理节点参数文件)
-    - [3.3 DolphinDB集群启动](#33-dolphindb集群启动)
-- [4 节点启动失败可能原因分析](#4-节点启动失败可能原因分析)
-- [5 基于Web的集群管理](#5-基于Web的集群管理)
-    - [5.1 控制节点参数配置](#51-控制节点参数配置)
-    - [5.2 增删数据节点](#52-增删数据节点)
-    - [5.3 修改数据节点参数](#53-修改数据节点参数)
-- [6 DolphinDB集群详细配置以及参数意义](#6-dolphindb集群详细配置以及参数意义)
+- [3 DolphinDB server版本的更新](#3-dolphindb-server版本的更新)
+- [4 DolphinDB集群初始化配置](#4-dolphindb集群初始化配置)
+    - [4.1 配置控制节点](#41-配置控制节点)
+    - [4.2 配置代理节点参数文件](#42-配置代理节点参数文件)
+    - [4.3 DolphinDB集群启动](#43-dolphindb集群启动)
+- [5 节点启动失败可能原因分析](#5-节点启动失败可能原因分析)
+- [6 基于Web的集群管理](#6-基于Web的集群管理)
+    - [6.1 控制节点参数配置](#61-控制节点参数配置)
+    - [6.2 增删数据节点](#62-增删数据节点)
+    - [6.3 修改数据节点参数](#63-修改数据节点参数)
+- [7 DolphinDB集群详细配置以及参数意义](#7-dolphindb集群详细配置以及参数意义)
 
 ## 1. 下载
 
@@ -28,21 +29,27 @@ DolphinDB集群包括三种类型节点：数据节点（data node），代理�
 ```sh
 /DolphinDB
 ```
->请注意：安装路径的目录名中不能含有空格字符或中文字符，否则启动数据节点时会失败。比如不要装到Windows系统的Program Files目录下。
+>请注意：安装路径的目录名中不能含有空格字符，也不能含有中文字符，否则启动数据节点时会失败。
 
 ## 2. 软件授权许可更新
 
-如果用户拿到了企业版试用授权许可，只需用其把替换如下授权许可文件即可。每个物理节点的授权许可文件都需要更新。与社区版本相比，企业版支持更多的节点，CPU内核和内存。
+如果用户拿到了企业版试用授权许可，只需用其把替换如下授权许可文件即可。每个物理节点的授权许可文件都需要更新。与社区版本相比，企业版支持更多的节点，CPU内核和内存。请注意社区版license最多支持2个节点，而本教程中使用了4节点，所以必须使用支持4个以上数据节点的企业版license。
 
 ```sh
 /DolphinDB/server/dolphindb.lic
 ```
+## 3. DolphinDB server版本的更新
 
-## 3. DolphinDB集群初始配置
+下载最新版本的server后，需要明确的是，不可以覆盖旧版本的所有文件。
+
+为了避免软件授权许可dolphindb.lic和配置文件dolphindb.cfg中的相关信息丢失，请覆盖更新除dolphindb.lic和dolphindb.cfg以外的文件。
+
+
+## 4. DolphinDB集群初始配置
 
 启动一个集群之前，必须配置控制节点和代理节点。数据节点可以在集群启动后通过网络界面来配置，也可以在初始阶段配置。
 
-### 3.1.  配置控制节点
+### 4.1.  配置控制节点
 
 在配置集群时请核对授权文件规定的节点个数以及每个节点最多内核。如果配置超出授权文件规定，集群将无法正常启动。这些异常信息都会记录在log文件中。
 
@@ -56,7 +63,7 @@ mkdir /DolphinDB/server/data
 mkdir /DolphinDB/server/log
 ```
 
-#### 3.1.1 配置控制节点的参数文件
+#### 4.1.1 配置控制节点的参数文件
 
 在config目录下，创建controller.cfg文件，可填写以下集群管理的常用参数。用户可根据实际需要调整参数。controller.cfg文件中只有localSite参数是必需的，其它参数都是可选参数。
 
@@ -84,7 +91,7 @@ dfsReplicaReliabilityLevel=0
 |dfsReplicationFactor=1     |        每个表分区或文件块的副本数量。默认值是2。|
 |dfsReplicaReliabilityLevel=0 |      多个副本是否可以保存在同一台物理服务器上。 0：可以; 1：不可以。默认值是0。|
 
-#### 3.1.2 配置集群成员参数文件
+#### 4.1.2 配置集群成员参数文件
 
 在config目录下，创建cluster.nodes文件，可填写如下内容。用户可根据实际需要调整参数。cluster.nodes用于存放集群代理节点和数据节点信息。本教程使用4个数据节点，用户可更改节点个数。该配置文件分为两列，第一例存放节点IP地址，端口号，和节点别名。这三个信息由冒号：分隔。第二列是说明节点类型。比如代理节点类型为agent, 而数据节点类型为datanode。节点别名是大小写敏感的，而且在集群内必须是唯一的。
 
@@ -97,7 +104,7 @@ localSite,mode
 192.168.1.103:8924:DFS_NODE4,datanode
 ```
 
-#### 3.1.3 配置数据节点参数文件
+#### 4.1.3 配置数据节点参数文件
 
 在config目录下，创建cluster.cfg文件，可填写如下内容。用户可根据实际需要调整参数。cluster.cfg的配置适用于集群中所有数据节点。
 
@@ -109,7 +116,7 @@ localExecutors=7
 webWorkerNum=2
 ```
 
-### 3.2 配置代理节点参数文件
+### 4.2 配置代理节点参数文件
 
 在config目录下，创建agent.cfg文件，可填写如下常用参数。用户可根据实际需要调整参数。只有LocalSite和controllerSite是必需参数。其它参数均为可选参数。
 
@@ -123,9 +130,9 @@ controllerSite=192.168.1.103:8920:ctl8920
 
 在controller.cfg中的参数localSite应当与所有代理节点的配置文件agent.cfg中的参数controllerSite一致, 因为代理节点使用agent.cfg中的参数controllerSite来寻找controller。若controller.cfg中的参数localSite有变化，即使只是node alias有改变，所有代理节点的配置文件agent.cfg中的参数controllerSite都应当做相应的改变。
 
-### 3.3. DolphinDB集群启动
+### 4.3. DolphinDB集群启动
 
-#### 3.3.1 启动代理节点
+#### 4.3.1 启动代理节点
 
 在可执行文件所在目录(server目录)运行以下命令行。请注意agent.log存放在log子目录下。如果出现agent无法正常启动的情况，可以查看此log file来诊断错误原因。
 
@@ -153,7 +160,7 @@ nohup ./dolphindb -console 0 -mode agent -home data -config config/agent.cfg -lo
 dolphindb.exe -mode agent -home data -config config/agent.cfg -logFile log/agent.log
 ```
 
-#### 3.3.2 启动控制节点
+#### 4.3.2 启动控制节点
 
 在可执行文件所在目录(server目录)运行以下命令行。请注意controller.log存放在log子目录下，如果出现agent无法正常启动的情况，可以查看此log文件来诊断错误原因。
 
@@ -175,7 +182,7 @@ nohup ./dolphindb -console 0 -mode controller -home data -config config/controll
 dolphindb.exe -mode controller -home data -config config/controller.cfg -clusterConfig config/cluster.cfg -logFile log/controller.log -nodesFile config/cluster.nodes
 ```
 
-#### 3.3.3 如何关闭代理节点和控制节点
+#### 4.3.3 如何关闭代理节点和控制节点
 
 如果是启动为前端交互模式，可以在控制台中输入"quit"退出。
 
@@ -189,7 +196,7 @@ quit
 ps aux | grep dolphindb  | grep -v grep | grep ec2-user|  awk '{print $2}' | xargs kill -TERM
 ```
 
-#### 3.3.4 启动网络上的集群管理器
+#### 4.3.4 启动网络上的集群管理器
 
 启动控制节点和代理节点之后，可以通过DolphinDB提供的集群管理界面来开启或关闭数据节点。在浏览器的地址栏中输入(目前支持浏览器为Chrome与Firefox)：
 
@@ -201,7 +208,7 @@ ps aux | grep dolphindb  | grep -v grep | grep ec2-user|  awk '{print $2}' | xar
 
 ![集群](images/cluster_web.JPG)
 
-#### 3.3.5 DolphinDB权限控制
+#### 4.3.5 DolphinDB权限控制
 
 DolphinDB database 提供了良好的权限控制机制。只有系统管理员才有权限做集群部署。在初次使用DolphinDB网络集群管理器时，需要用以下默认的系统管理员账号登录。
 
@@ -220,7 +227,7 @@ DolphinDB database 提供了良好的权限控制机制。只有系统管理员�
 
 使用上述账号登录以后，可修改"admin"的密码，亦可添加用户或其他管理员账户。
 
-#### 3.3.6 启动数据节点
+#### 4.3.6 启动数据节点
 
 选择所有数据节点，点击执行图标并确定。节点启动可能要耗时30秒到一分钟。点击刷新图标来查看状态。若看到State栏全部为绿色对勾，则整个集群已经成功启动。
 
@@ -238,7 +245,7 @@ log文件中有可能出现错误信息"Failed to bind the socket on XXXX"，这
 startDataNode(["DFS_NODE1", "DFS_NODE2","DFS_NODE3","DFS_NODE4"])
 ```
 
-#### 4. 节点启动失败可能原因分析
+#### 5. 节点启动失败可能原因分析
 
 如果节点长时间无法启动，可能有以下原因：
 
@@ -248,21 +255,23 @@ startDataNode(["DFS_NODE1", "DFS_NODE2","DFS_NODE3","DFS_NODE4"])
 
 3. **配置文件中的IP地址、端口号或节点别名没有书写正确。**
 
-4. 如果集群是部署在**云端**或**k8s**环境，需要在agent.cfg和cluster.cfg文件中加上配置项lanCluster=0。
-
+4. 如果集群是部署在云端或k8s环境，需要在agent.cfg和cluster.cfg文件中加上配置项lanCluster=0。
 5. **集群成员配置文件cluster.nodes第一行为空行**。查看log文件，如果log文件中出现错误信息"Failed to load the nodes file [XXXX/cluster.nodes] with error: The input file is empty."，表示cluster.nodes的第一行为空行，这种情况下只需将文件中的空行删除，再重新启动节点即可。
 
-## 5. 基于Web的集群管理
+6. **宏变量\<ALIAS>在明确节点的情况下使用无效**。查看配置文件cluster.cfg，若在明确了节点的情况下使用宏变量\<ALIAS>，如： P1-NODE1.persistenceDir = /hdd/hdd1/streamCache/\<ALIAS>, 则会导致该节点无法正常启动。这种情况下只需要把\<ALIAS>删除，替换成特定节点即可，如：P1-NODE1.persistenceDir = /hdd/hdd1/streamCache/P1-NODE1; 
+若想对所有节点使用宏变量, 则做如下修改：persistenceDir = /hdd/hdd1/streamCache/\<ALIAS>。 宏变量的具体使用可详情参照[DolphinDB用户手册](https://www.dolphindb.cn/cn/help/index.html?ClusterSetup1.html)
+
+## 6. 基于Web的集群管理
 
 经过上述步骤，我们已经成功部署DolphinDB集群。在实际使用中我们经常会需要改变集群配置。DolphinDB的网络界面提供更改集群配置的所有功能。
 
-### 5.1. 控制节点参数配置
+### 6.1. 控制节点参数配置
 
 点击"Controller Config"按钮会弹出一个控制界面，这里的localExectors, maxConnections, maxMemSize, webWorkerNum以及workerNum等参数是我们在3.1.1中创建controller.cfg时填写的。这些配置信息都可以在这个界面上更改，新的配置会在重启控制节点之后生效。注意如果改变控制节点的localSite参数值，一定要在所有agent.cfg中对controllerSite参数值应做相应修改，否则会造成集群无法正常运行。
 
 ![controller_config](images/cluster_web_controller_config.JPG)
 
-### 5.2. 增删数据节点
+### 6.2. 增删数据节点
 
 点击"Nodes Setup"按钮，会进入集群节点配置界面。下图显示的配置信息是我们在3.1.2中创建的cluster.nodes中的信息。在此界面中可以添加或删除数据节点。新的配置会在整个集群重启之后生效。集群重启的具体步骤为：（1）关闭所有数据节点，（2）关闭控制节点，（3）启动控制节点，（4）启动数据节点。另外需要注意，如果节点上已经存放数据，删除节点有可能会造成数据丢失。
 
@@ -270,13 +279,13 @@ startDataNode(["DFS_NODE1", "DFS_NODE2","DFS_NODE3","DFS_NODE4"])
 
 若新的数据节点位于一个新的物理机器上，我们必须在此物理机器上根据3.2中的步骤配置并启动一个新的代理节点，在cluster.nodes中增添有关新的代理节点和数据节点的信息，并重新启动控制节点。
 
-### 5.3. 修改数据节点参数
+### 6.3. 修改数据节点参数
 
 点击"Nodes Config"按钮, 可进行数据节点配置。以下参数是我们在3.1.3中创建cluster.cfg中提供的。除了这些参数之外，用户还可以根据实际应用在这里添加配置其它参数。重启所有数据节点后即可生效。
 
 ![nodes_config](images/cluster_web_nodes_config.JPG)
 
-## 6. DolphinDB集群详细配置以及参数意义
+## 7. DolphinDB集群详细配置以及参数意义
 
 * [中文](http://www.dolphindb.cn/cn/help/Setup.html)
 * [英文](https://www.dolphindb.com/help/ClusterSetup.html)
