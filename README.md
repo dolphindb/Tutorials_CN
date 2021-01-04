@@ -60,7 +60,6 @@
     - [DolphinDB整合前端chart组件展示数据教程](web_chart_integration.md)
     - [Grafana连接DolphinDB数据源](../../../grafana-datasource/blob/master/README_CN.md)
     - [API交互协议](api_protocol.md)
-    - [DolphinDB API性能基准测试报告](api_performance.md)
 - 插件
     - [ODBC](../../../DolphinDBPlugin/blob/master/odbc/README.md)
     - [MySQL](../../../DolphinDBPlugin/blob/master/mysql/README_CN.md)
@@ -92,6 +91,9 @@
 - 入门和测试
     - [DolphinDB入门：量化金融范例](quant_finance_examples.md)
     - [DolphinDB入门：物联网范例](iot_examples.md)
+- 测试报告
+    - [DolphinDB API性能基准测试报告](api_performance.md)
+    - [金融市场高频数据应当如何管理 - DolphinDB与pickle的性能对比测试和分析](DolphinDB_pickle_comparison.md)
     
     
 
