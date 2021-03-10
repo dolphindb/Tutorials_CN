@@ -89,6 +89,7 @@
     - [DolphinDB流计算引擎实现传感器数据异常检测](iot_anomaly_detection.md)
     - [实时计算高频因子](hf_factor_streaming.md)
     - [DolphinDB教程：面板数据的处理](panel_data.md)
+    - [金融高频因子的流批统一计算：DolphinDB响应式状态引擎](reactive_state_engine.md)
 - 入门和测试
     - [DolphinDB入门：量化金融范例](quant_finance_examples.md)
     - [DolphinDB入门：物联网范例](iot_examples.md)
