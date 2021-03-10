@@ -24,13 +24,13 @@ DolphinDB是一款高性能分布式时序数据库。与传统的关系数据�
 
 ## 1. 概述
 
-与其它流计算处理框架类似，DolphinDB的流计算系统也包括消息发布、消息代理和消息订阅三个部分。消息发布端与消息订阅端均可为本地的数据节点、另一个数据节点，或第三方的API（例如Python，C++, Java, C#等API）。DolphinDB数据节点上的流数据表（stream table）充当消息代理的角色，发布端向流表插入记录即实现了消息发布的功能。本教程以数据节点作为消息订阅方，介绍如何实时计算生成高频因子。
+与其它流计算处理框架类似，DolphinDB的流计算系统也包括消息发布、消息代理和消息订阅三个部分。消息发布端与消息订阅端均可为本地的数据节点、另一个数据节点，或第三方的API（例如Python,C++, Java, C#等API）。DolphinDB数据节点上的流数据表（stream table）充当消息代理的角色，发布端向流表插入记录即实现了消息发布的功能。
 
 高频因子的计算，以交易和报价数据作为主要的流数据输入，亦可配合使用其它数据。高频因子的计算结果通常输出到一个流数据表或内存表。
 
 DolphinDB流计算中使用的消息可以采用两种格式：表（table）和元组（tuple），由`subscribeTable`函数的msgAsTable参数指定。
 
-本教程中所用的csv数据文件，可由[此处](https://www.dolphindb.cn/downloads/tutorial/hfFactorsSampleData.zip)下载。
+本教程中所用的csv数据文件，可由[此处](https://www.dolphindb.cn/downloads/tutorial/hfFactorsSampleData.zip)下载，并存于文件夹 YOURDIR 中。
 
 ## 2. 无状态因子计算
 
@@ -54,7 +54,7 @@ DolphinDB流计算中使用的消息可以采用两种格式：表（table）和
     select symbol, time(now()) as time, 0.5*log(rowSum([bidVolume1,bidVolume2,bidVolume3,bidVolume4,bidVolume5]*w)/rowSum([askVolume1,askVolume2,askVolume3,askVolume4,askVolume5]*w)) as factorValue from msg
 ```
 
-要实时计算上述无状态因子，把上述脚本封装成函数并在`subscribeTable`函数中指定其为handler参数（消息处理函数）即可。消息处理函数必须是单目函数，且唯一的参数就是当前的消息。以因子2为例:
+要实时计算上述无状态因子，把上述脚本封装成函数并在`subscribeTable`函数中指定其为handler参数（消息处理函数）即可。消息处理函数必须是单目函数，且唯一的参数就是本批次订阅到的消息。以因子2为例:
 ```
 quotesData = loadText(yourDIR + "sampleQuotes.csv")
 
@@ -70,9 +70,9 @@ share(streamTable(1000000:0, x.name, x.typeString), "quotes")
 subscribeTable(tableName="quotes", actionName="hfFactor", handler=factorHandler{factor1}, msgAsTable=true)
 
 ```
-然后使用`replay`函数将样本数据quotesData写入流数据表quotes触发计算。
+然后使用`replay`函数将样本数据quotesData写入流数据表quotes触发计算。本教程的所有例子均使用`replay`函数将历史数据进行回放以模拟实时数据。
 ```
-replay(quotesData, quotes, `date, `time)
+replay(inputTables=quotesData, outputTables=quotes, dateColumn=`date, timeColumn=`time)
 ```
 最后在数据表factor1中查看计算结果。本例计算结果中的时间为计算发生时间，也可以根据业务要求调整为数据时间，即直接取消息中的date与time列。
 
@@ -87,20 +87,23 @@ tradesData = loadText(yourDIR + "sampleTrades1.csv")
 //定义流数据表Trade
 x=tradesData.schema().colDefs
 share streamTable(100:0, x.name, x.typeString) as Trade
+
 //定义OHLC输出表
 share streamTable(100:0, `datetime`symbol`open`high`low`close`volume`updatetime,[TIMESTAMP,SYMBOL,DOUBLE,DOUBLE,DOUBLE,DOUBLE,LONG,TIMESTAMP]) as OHLC
+
 //定义实时聚合引擎：每分钟计算过去5分钟K线
-tsAggrOHLC = createTimeSeriesAggregator(name="aggr_ohlc", windowSize=300000, step=60000, metrics=<[first(Price),max(Price),min(Price),last(Price),sum(Volume),now()]>, dummyTable=objByName("Trade"), outputTable=objByName("OHLC"), timeColumn=`Datetime, keyColumn=`Symbol)
+tsAggrOHLC = createTimeSeriesAggregator(name="aggr_ohlc", windowSize=300000, step=60000, metrics=<[first(Price),max(Price),min(Price),last(Price),sum(Volume),now()]>, dummyTable=Trade, outputTable=OHLC, timeColumn=`Datetime, keyColumn=`Symbol)
+
 //订阅流数据写入聚合引擎
 subscribeTable(tableName="Trade", actionName="minuteOHLC1", offset=0, handler=append!{tsAggrOHLC}, msgAsTable=true)
 
-replay(tradesData, Trade, `Datetime)
+replay(inputTables=tradesData, outputTables=Trade, dateColumn=`Datetime)
 ```
 查看结果：
 ```
 select top 10 * from OHLC
 ```
-上面的例子中，流数据表Trade的消息直接作为聚合引擎的输入。某些场景下，需要对流数据表中的数据进行预处理后再输入到聚合引擎。若Trade表中的Volume是从开盘到当前的累计交易量，下例中定义函数calcVolume作为消息处理函数，在把累计交易量输入到聚合引擎之前，将其转化成当前交易量。使用字典dictVol保存每只股票上一条消息中的累计交易量，以计算当前交易量。
+上面的例子中，流数据表Trade的消息直接作为聚合引擎的输入。某些场景下，需要对流数据表中的数据进行预处理后再输入到聚合引擎。若Trade表中的Volume是从开盘到当前的累计交易量，下例中定义函数calcVolume作为数据订阅的消息处理函数（即handler参数），将累计交易量转化为当前交易量之后，再输入聚合引擎。使用字典dictVol保存每只股票上一条消息中的累计交易量，以计算当前交易量。由于若handler参数是函数时，必须仅有一个参数，即本批次订阅到的消息，所以calcVolume必须包括msg这样一个代表本批次订阅数据的参数，且在subscribeTable函数中使用时，使用“部分应用”将其它参数固化。
 ```
 def calcVolume(mutable dictVolume, mutable tsAggrOHLC, msg){
 	t = select Symbol, DateTime, Price, Volume from msg context by Symbol limit -1 
@@ -119,13 +122,13 @@ share streamTable(100:0, x.name, x.typeString) as Trade
 share streamTable(100:0, `datetime`symbol`open`high`low`close`volume`updatetime,[TIMESTAMP,SYMBOL,DOUBLE,DOUBLE,DOUBLE,DOUBLE,LONG,TIMESTAMP]) as OHLC
 
 //定义实时聚合引擎：每分钟计算过去5分钟K线
-tsAggrOHLC = createTimeSeriesAggregator(name="aggr_ohlc", windowSize=300000, step=60000, metrics=<[first(Price),max(Price),min(Price),last(Price),sum(Volume),now()]>, dummyTable=objByName("Trade"), outputTable=objByName("OHLC"), timeColumn=`Datetime, keyColumn=`Symbol)
+tsAggrOHLC = createTimeSeriesAggregator(name="aggr_ohlc", windowSize=300000, step=60000, metrics=<[first(Price),max(Price),min(Price),last(Price),sum(Volume),now()]>, dummyTable=Trade, outputTable=OHLC, timeColumn=`Datetime, keyColumn=`Symbol)
 
 //订阅流数据写入聚合引擎
 dictVol = dict(STRING, DOUBLE)
 subscribeTable(tableName="Trade", actionName="minuteOHLC2", offset=0, handler=calcVolume{dictVol,tsAggrOHLC}, msgAsTable=true)
 
-replay(tradesData, Trade, `Datetime)
+replay(inputTables=tradesData, outputTables=Trade, dateColumn=`Datetime)
 ```
 最后查看结果：
 ```
@@ -133,7 +136,7 @@ select top 10 * from OHLC
 ```
 ## 4. 状态因子计算
 
-有状态的因子，即因子的计算不仅用到当前数据，还会用到历史数据。实现状态因子的计算，一般包括这几个步骤：（1）保存当前的消息数据到历史记录中；（2）根据历史记录与当前记录，计算因子，（3）将因子计算结果写到输出表中。如有必要，删除未来不再需要的的历史记录。
+有状态的因子，即因子的计算不仅用到当前数据，还会用到历史数据。实现状态因子的计算，一般包括这几个步骤：（1）保存本批次的消息数据到历史记录；（2）根据更新后的历史记录，计算因子，（3）将因子计算结果写入输出表中。如有必要，删除未来不再需要的的历史记录。
 
 由于DolphinDB的消息处理函数必须是单目函数，且唯一的参数就是当前的消息。要保存历史状态并且可以在消息处理函数中引用它，可以使用部分应用，定义一个多个参数的消息处理函数，其中一个参数用于接收消息，其它所有参数被固化，用于保存历史状态。这些固化参数只对消息处理函数可见，不受其他应用的影响。
 
@@ -141,7 +144,15 @@ select top 10 * from OHLC
 
 ### 4.1 使用内存表计算状态因子
 
-因子定义为当前的第一档卖价与之前第30个报价的第一档卖价的比值。因此，对于每只股票，至少需要保留30个历史报价。这里，我们定义一个内存表用于保存所有股票的历史状态。核心代码如下所示。其中，自定义聚合函数factorAskPriceRatio用于计算因子。消息处理函数factorHandler中，第一行将消息保存到history内存表中，第三行计算每只股票的因子，最后一行将生成的因子输出到factors表中。消息订阅函数`subscribeTable`的核心参数handler是factorHandler的一个部分应用，其中两个固定的参数history和factors分别用于保存历史状态和输出生成的因子。
+本例中因子为当前第一档卖价与30个报价之前的第一档卖价的比值。因此，对于每只股票，至少需要保留30个历史报价。为此，可以定义一个内存表history用于保存所有股票的历史状态。
+
+核心代码如下所示。其中，自定义聚合函数factorAskPriceRatio用于计算因子。消息处理函数factorHandler中：
+- 第一行将本批次消息保存到内存表history中。 
+- 第二行用于提取本批次消息的股票代码。每次计算仅针对本批次消息所包含的股票。
+- 第三行计算每只股票的因子。
+- 最后一行将生成的因子输出到factors表中。
+
+消息订阅函数`subscribeTable`的核心参数handler是factorHandler的一个部分应用，其中两个固定的参数history和factors分别用于保存历史状态和输出生成的因子。
 ```
 quotesData = loadText(yourDIR + "sampleQuotes.csv")
 
@@ -164,7 +175,7 @@ history = table(1000000:0, `symbol`askPrice1, [SYMBOL,DOUBLE])
 share streamTable(100000:0, `timestamp`symbol`factor, [TIMESTAMP,SYMBOL,DOUBLE]) as factors
 subscribeTable(tableName = "quotes1", offset=0, handler=factorHandler{history, factors}, msgAsTable=true, batchSize = 3000, throttle=0.005)
 
-replay(quotesData, quotes1, `date, `time)
+replay(inputTables=quotesData, outputTables=quotes1, dateColumn=`date, timeColumn=`time)
 ```
 查看结果：
 ```
@@ -172,16 +183,20 @@ select top 10 * from factors where isValid(factor)
 ```
 ### 4.2 基于分区内存表的状态因子计算
 
-内存表和分区内存表在数据插入和SQL查询方面，大部分情况下没有语法上的区别。因此4.1中的代码仍然适用于分区内存表。唯一需要修改的是history表的创建和初始化。
+使用普通内存表计算因子，是单线程操作，不能并行计算。使用分区内存表计算因子，可以并行计算以提高效率。
+
+对内存表执行SQL语句时，只有一个子任务。对分区内存表执行SQL语句时，会产生与分区数量一致的子任务，由当前的流数据执行线程和系统的执行线程池来完成。系统的线程池的大小由配置参数localExecutors决定。因此执行一个分区内存表的SQL语句，在分区数量大于localExecutors的情况下，最大的并行度是localExecutors + 1。
+
+内存表与分区内存表在数据插入和SQL查询方面，大部分情况下没有语法上的区别。因此4.1节中的代码仍然适用于分区内存表。唯一需要修改的是history表的创建和初始化。
 ```
 history_model = table(1000000:0, `symbol`askPrice1, [SYMBOL,DOUBLE])
 syms = format(600000..601000, "000000")
-db = database(, VALUE, syms)
-history = db.createPartitionedTable(history_model, `history, `symbol)
+db = database(partitionType=VALUE, partitionScheme=syms)
+history = db.createPartitionedTable(table=history_model, tableName=`history, partitionColumns=`symbol)
 ```
-在内存表上执行SQL语句时，只有一个子任务。在分区内存表上执行SQL语句时，会产生跟分区数量一致的子任务，由当前的流数据执行线程和系统的执行线程池来完成。系统的线程池的大小由配置参数localExecutors决定。因此执行一个分区内存表的SQL语句，在分区数量大于localExecutors的情况下，最大的并行度是localExecutors + 1。
+> 请注意，syms仅包括样本数据中的1001个股票代码。实际使用时请根据具体情况进行调整。
 
-当分区内存表的分区机制是值分区，而且因子比较简单时，除了使用SQL，也可以自行操作每个分区来计算因子。在大量的小表上使用SQL的成本较高，自行在分区上进行计算可能提高效率。下面的代码中改写了factorHandler的定义。通过系统内置函数`getTablet`获取消息中包含的所有股票对应的分区子表，然后通过循环计算每只股票的因子，最后把因子写入factors表中。该计算方案虽然实际上使用了单线程，但是耗时却只有SQL方案的三分之一左右。
+当分区内存表的分区机制是值分区，而且因子比较简单时，除了使用SQL语句，亦可直接在每个分区中计算因子。在大量的小表上使用SQL的成本较高，直接在每个分区中进行计算可能提高效率。下面的代码中改写了factorHandler的定义。通过系统内置函数`getTablet`获取消息中所有股票对应的分区子表，然后循环计算每只股票的因子，最后把因子写入factors表中。该计算方案虽然实际上使用了单线程，但是耗时却只有SQL方案的三分之一左右。
 ```
 def factorHandler(mutable history, mutable factors, msg){
 	history.append!(select symbol, askPrice1 from msg)
@@ -198,7 +213,7 @@ def factorHandler(mutable history, mutable factors, msg){
 
 ### 4.3 基于字典的状态因子计算
 
-创建一个键值为STRING类型，值为ANY的字典，为每只股票创建一个数组，存储ask price的历史。ANY字典中存储的数组对象不能直接修改，必须通过`dictUpdate!`函数来完成。存储完数据之后，循环计算每只股票的因子。因为每只股票的历史数据已经分开存储，计算因子时不再需要对数据分组，因而有更高的效率。
+创建一个键值为STRING类型，值为元组（tuple）类型的字典。该字典中，每只股票对应一个数组，以存储卖价的历史数据。使用`dictUpdate!`函数更新该字典，然后循环计算每只股票的因子。由于每只股票的历史数据分别存储，计算因子时不再需要对数据分组，因而有更高的效率。
 ```
 defg factorAskPriceRatio(x){
 	cnt = x.size()
@@ -206,7 +221,7 @@ defg factorAskPriceRatio(x){
 	else return x[cnt - 1]/x[cnt - 31]
 }
 def factorHandler(mutable historyDict, mutable factors, msg){
-	historyDict.dictUpdate!(append!, msg.symbol, msg.askPrice1                                                                             , x->array(x.type(), 0, 512).append!(x))
+	historyDict.dictUpdate!(function=append!, keys=msg.symbol, parameters=msg.askPrice1, initFunc=x->array(x.type(), 0, 512).append!(x))
 	syms = msg.symbol.distinct()
 	cnt = syms.size()
 	v = array(DOUBLE, cnt)
@@ -220,15 +235,18 @@ x=quotesData.schema().colDefs
 share streamTable(100:0, x.name, x.typeString) as quotes1
 history = dict(STRING, ANY)
 share streamTable(100000:0, `timestamp`symbol`factor, [TIMESTAMP,SYMBOL,DOUBLE]) as factors
-subscribeTable(tableName = "quotes1", offset=0, handler=factorHandler{history, factors}, msgAsTable=true, batchSize = 3000, throttle=0.005)
+subscribeTable(tableName = "quotes1", offset=0, handler=factorHandler{history, factors}, msgAsTable=true, batchSize=3000, throttle=0.005)
 
-replay(quotesData, quotes1, `date, `time)
+replay(inputTables=quotesData, outputTables=quotes1, dateColumn=`date, timeColumn=`time)
 ```
 查看结果：
 ```
 select top 10 * from factors where isValid(factor)
 ```
-这三种方法各有优缺点。内存表简单易用，计算可以通过简单的SQL完成，缺点是计算性能较低，尤其是每只股票的消息单独处理时，性能尤为低下。字典方法的数据结构最为简单，当因子较为简单时，无论大量股票批量处理，还是每只股票单独处理，效率均为最高。字典方法的缺点是如果因子计算较为复杂时，逐个处理的效率不高。分区内存表方法居于两者之间，可以通过SQL来完成复杂或简单的因子计算，但与未分区的内存表相比，可以通过分区来实现并行计算，以提高效率。
+这三种方法各有优缺点。
+- 内存表简单易用，计算可以使用简单的SQL语句完成，缺点是计算性能较低，尤其是每只股票的消息单独处理时，性能尤为低下。
+- 字典方法的数据结构最为简单，当因子较为简单时，无论大量股票批量处理，还是每只股票单独处理，效率均为最高。字典方法的缺点是如果因子计算较为复杂时，逐个处理的效率不高。
+- 分区内存表方法居于两者之间。可以使用SQL语句来完成复杂或简单的因子计算，但与未分区的内存表相比，可以通过分区来实现并行计算，以提高效率。
 
 ## 5. 因子计算流水线
 
@@ -257,23 +275,25 @@ def factorHandler2(mutable historyDict, mutable factors, msg){
 	factors.tableInsert([take(now(), cnt), syms, v])
 }
 
-//计算K线
 //定义流数据表Trade
 x=tradesData.schema().colDefs
 share streamTable(100:0, x.name, x.typeString) as Trade
+
 //定义OHLC输出表
 share streamTable(100:0, `datetime`symbol`open`high`low`close`volume`updatetime,[TIMESTAMP,SYMBOL,DOUBLE,DOUBLE,DOUBLE,DOUBLE,LONG,TIMESTAMP]) as OHLC
+
 //定义实时聚合引擎：每分钟计算过去1分钟K线
-tsAggrOHLC = createTimeSeriesAggregator(name="aggr_ohlc", windowSize=60000, step=60000, metrics=<[first(Price),max(Price),min(Price),last(Price),sum(Volume),now()]>, dummyTable=objByName("Trade"), outputTable=objByName("OHLC"), timeColumn=`Datetime, keyColumn=`Symbol)
+tsAggrOHLC = createTimeSeriesAggregator(name="aggr_ohlc", windowSize=60000, step=60000, metrics=<[first(Price),max(Price),min(Price),last(Price),sum(Volume),now()]>, dummyTable=Trade, outputTable=OHLC, timeColumn=`Datetime, keyColumn=`Symbol)
+
 //订阅流数据写入聚合引擎
 subscribeTable(tableName="Trade", actionName="minuteOHLC3", offset=0, handler=append!{tsAggrOHLC}, msgAsTable=true)
 
-//订阅流表OHLC，计算指标net amount ratio，并输出到流表factors
+//订阅流表OHLC，计算指标，并输出到流表factors
 dictHistory = dict(STRING, ANY)
 share streamTable(100000:0, `timestamp`symbol`factor, [TIMESTAMP,SYMBOL,DOUBLE]) as factors
 subscribeTable(tableName="OHLC", actionName="calcMoneyFlowRatio", offset=0, handler=factorHandler2{dictHistory,factors}, msgAsTable=true)
 
-replay(tradesData, Trade, `Datetime)
+replay(inputTables=tradesData, outputTables=Trade, dateColumn=`Datetime)
 ```
 查看结果：
 ```
@@ -415,7 +435,7 @@ dictUpdate!(d,append!, quotesData.symbol, (quotesData.bidPrice1+quotesData.askPr
 share streamTable(100:0,`starttime`endtime`symbol`factorName`orderbook_factor_15, [LONG,LONG,SYMBOL,SYMBOL,DOUBLE]) as factor_result
 subscribeTable(tableName="quotes", actionName="act_factor", offset=-1, handler=factor1_handler{d, factor_result}, msgAsTable=true);
 
-replay(quotesData, quotes, `date, `time)
+replay(inputTables=quotesData, outputTables=quotes, dateColumn=`date, timeColumn=`time)
 ```
 
 ## 7. 流计算调试
