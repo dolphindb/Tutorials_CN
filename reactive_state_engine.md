@@ -2,7 +2,7 @@
 
 量化金融的研究和实盘中，越来越多的机构需要根据高频的行情数据（L1/L2以及逐笔委托数据）来计算量价因子。这些因子通常是有状态的：不仅与当前的多个指标有关，而且与多个指标的历史状态相关。以国内的股票市场为例，每3秒收到一个快照，每个股票每天得到4800个快照，计算因子时可能会用到之前若干个快照的数据，甚至之前若干天的数据。若研发环境系统（例如Python）与生产环境系统（例如C++）不同，要维护两套代码，对用户是非常沉重的负担。
 
-本教程介绍如何使用DolphinDB 1.30.3版本发布的响应式状态引擎（Reactive State Engine）高效开发与计算带有状态的高频因子，实现流批统一计算。状态引擎接受在历史数据批量处理（研发阶段）中编写的表达式或函数作为输入，避免了在生产环境中重写代码的高额成本，以及维护研发和生产两套代码的负担。状态引擎确保流式计算的结果与批量计算完全一致，只要在历史数据的批量计算中验证正确，即可保证流数据的实时计算正确，这大大降低了实时计算调试的成本。
+本教程介绍如何使用DolphinDB 1.30.3版本发布的响应式状态引擎（Reactive State Engine）高效开发与计算带有状态的高频因子，实现流批统一计算。状态引擎接受在历史数据批量处理（研发阶段）中编写的表达式或函数作为输入，避免了在生产环境中重写代码的高额成本，以及维护研发和生产两套代码的负担。状态引擎确保流式计算的结果与批量计算完全一致，只要在历史数据的批量计算中验证正确，即可保证流数据的实时计算正确，这大幅降低了实时计算调试的成本。
 
 ## 1. 金融高频因子计算
 
@@ -38,7 +38,7 @@ python pandas/numpy目前是研究阶段最常用的高频因子解决方案。p
 
 ```
 def sum_diff(x, y){
-	return (x-y)/(x+y)
+    return (x-y)/(x+y)
 }
 factor1 = <ema(1000 * sum_diff(ema(price, 20), ema(price, 40)),10) -  ema(1000 * sum_diff(ema(price, 20), ema(price, 40)), 20)>
 
@@ -99,21 +99,21 @@ def slr(y, x){
 ```
 @state
 def multiFactors(lowPrice, highPrice, volumeTrade, closePrice, buy_active, sell_active, tradePrice, askPrice1, bidPrice1, askPrice10, agg_vol, agg_amt){
-	a = ema(askPrice10, 300)
-	term0 = ema((lowPrice - a) / (ema(highPrice, 300) - a), 500)
-	term1 = rank((highPrice - a) / (ema(highPrice, 500) - a), 150)
-	term2 = mcorr(askPrice10, volumeTrade, 10) * rank(mstd(closePrice, 200, 200), 10)
-	buy_vol_ma = mavg(buy_active, 60)
-	sell_vol_ma = mavg(sell_active, 60)
-	zero_free_vol = iif(agg_vol==0, 1, agg_vol)
-	stl_prc = ffill(agg_amt \ zero_free_vol \ 200).nullFill(tradePrice)
-	buy_prop = stl_prc
+    a = ema(askPrice10, 30)
+    term0 = ema((lowPrice - a) / (ema(highPrice, 30) - a), 50)
+    term1 = mrank((highPrice - a) / (ema(highPrice, 5) - a), true,  15)
+    term2 = mcorr(askPrice10, volumeTrade, 10) * mrank(mstd(closePrice, 20, 20), true, 10)
+    buy_vol_ma = mavg(buy_active, 6)
+    sell_vol_ma = mavg(sell_active, 6)
+    zero_free_vol = iif(agg_vol==0, 1, agg_vol)
+    stl_prc = ffill(agg_amt \ zero_free_vol \ 20).nullFill(tradePrice)
+    buy_prop = stl_prc
 	
-	spd = askPrice1 - bidPrice1
-	spd_ma = round(mavg(iif(spd < 0, 0, spd), 60), 5)
-	term3 = buy_prop * spd_ma
-	term4 = iif(spd_ma == 0, 0, buy_prop / spd_ma)
-	return term0, term1, term2, term3, term4
+    spd = askPrice1 - bidPrice1
+    spd_ma = round(mavg(iif(spd < 0, 0, spd), 6), 5)
+    term3 = buy_prop * spd_ma
+    term4 = iif(spd_ma == 0, 0, buy_prop / spd_ma)
+    return term0, term1, term2, term3, term4
 }
 ```
 
@@ -121,13 +121,12 @@ def multiFactors(lowPrice, highPrice, volumeTrade, closePrice, buy_active, sell_
 ```
 @state
 def factor1(price) {
-	a = ema(price, 20)
-	b = ema(price, 40)
-	c = 1000 * sum_diff(a, b)
-	return  ema(c, 10) - ema(c, 20)
+    a = ema(price, 20)
+    b = ema(price, 40)
+    c = 1000 * sum_diff(a, b)
+    return  ema(c, 10) - ema(c, 20)
 }
 ```
-
 
 ### 3.5 输出结果过滤
 
@@ -148,7 +147,7 @@ subscribeTable(tableName=`tickStream, actionName="filter", handler=tableInsert{r
 响应式状态引擎的快照包括已处理的最后一条消息的ID以及引擎当前的状态。当系统出现异常，重新初始化状态引擎时，可恢复到最后一个快照的状态，并且从已处理的消息的下一条开始订阅。
 ```
 def sum_diff(x, y){
-	return (x-y)/(x+y)
+    return (x-y)/(x+y)
 }
 factor1 = <ema(1000 * sum_diff(ema(price, 20), ema(price, 40)),10) -  ema(1000 * sum_diff(ema(price, 20), ema(price, 40)), 20)>
 
@@ -178,7 +177,7 @@ subscribeTable(tableName=`tickStream, actionName="factors", offset=msgId, handle
 
 ```
 def sum_diff(x, y){
-	return (x-y)/(x+y)
+    return (x-y)/(x+y)
 }
 factor1 = <ema(1000 * sum_diff(ema(price, 20), ema(price, 40)),10) -  ema(1000 * sum_diff(ema(price, 20), ema(price, 40)), 20)>
 
@@ -187,8 +186,8 @@ setStreamTableFilterColumn(tickStream, `sym)
 share streamTable(1000:0, `sym`factor1, [STRING,DOUBLE]) as resultStream
 
 for(i in 0..3){
-	rse = createReactiveStateEngine(name="reactiveDemo"+string(i), metrics =factor1, dummyTable=tickStream, outputTable=resultStream, keyColumn="sym")
-	subscribeTable(tableName=`tickStream, actionName="sub"+string(i), handler=tableInsert{rse}, msgAsTable = true, hash = i, filter = (4,i))
+    rse = createReactiveStateEngine(name="reactiveDemo"+string(i), metrics =factor1, dummyTable=tickStream, outputTable=resultStream, keyColumn="sym")
+    subscribeTable(tableName=`tickStream, actionName="sub"+string(i), handler=tableInsert{rse}, msgAsTable = true, hash = i, filter = (4,i))
 }
 
 n=2000000
@@ -207,7 +206,7 @@ tickStream.append!(tmp)
 第二种方法，历史数据通过回放，转变成流数据，然后使用流数据计算引擎来完成计算。我们仍然以教程开始部分的因子为例，唯一的区别是流数据表tickStream的数据源来自于历史数据库的replay。使用这种方法计算历史数据的因子值，效率不高是一个缺点。
 ```
 def sum_diff(x, y){
-	return (x-y)/(x+y)
+    return (x-y)/(x+y)
 }
 factor1 = <ema(1000 * sum_diff(ema(price, 20), ema(price, 40)),10) -  ema(1000 * sum_diff(ema(price, 20), ema(price, 40)), 20)>
 
@@ -223,51 +222,77 @@ replay(inputDS, tickStream, `date, `time, 1000, true, 2)
 
 ## 5. 性能测试
 
-我们测试了响应式状态引擎计算因子的性能。测试使用模拟数据，并使用warmupStreamEngine函数模拟状态引擎已经处理部分数据的情况。为方便测试，计算仅使用单线程处理。
+我们测试了响应式状态引擎计算因子的性能。测试使用模拟数据，并使用warmupStreamEngine函数模拟状态引擎已经处理部分数据的情况。测试共包括20个不同复杂度度的因子，其中两个自定义状态函数分别返回3个和5个因子。为方便测试，计算仅使用单线程处理。
 
 ```
-metrics = array(ANY, 20, 20)
-metrics[0] = <mslr(low, last, 11)[0]>
-metrics[1] = <mslr(low, high, 11)[0]>
-metrics[2] = <mslr(mavg(high, 29), volume, 63)[1]>
-metrics[3] = <mslr(mavg(high, 30), volume, 71)[1]>
-metrics[4] = <mslr(high, mstdp(volume, 7), 77)[1]>
-metrics[5] = <mstdp(low, 8)>
-metrics[6] = <mstdp(high, 8)>
-metrics[7] = <mslr(low, volume, 230)[1] * mavg(low, 8)>
-metrics[8] = <mstdp(mmax(high, 13), 7)>
-metrics[9] = <mslr(high, volume, 8)[1]>
-metrics[10] = <mslr(low, high, 11)[0]>
-metrics[11] = <mstdp(low, 15)>
-metrics[12] = <mslr(high, value, 63)[1]>
-metrics[13] = <mslr(low, value, 71)[1]>
-metrics[14] = <mslr(high, low, 77)[1]>
-metrics[15] = <mstdp(high, 15)>
-metrics[16] = <mslr(high, low, 25)[0]>
-metrics[17] = <mslr(mavg(last, 14), volume, 63)[1]>
-metrics[18] = <mslr(mavg(open, 25), volume, 71)[1]>
-metrics[19] = <mslr(high, mstdp(last, 8), 77)[1]>
-
-dummy = streamTable(10000:0, `symbol`market`date`time`quote_type`preclose`open`high`low`last`numTrade`volume`value`position`recvtime,[SYMBOL,SHORT,DATE,TIME,SHORT,DOUBLE,DOUBLE,DOUBLE,DOUBLE,DOUBLE,LONG,LONG,LONG,LONG,TIMESTAMP])
-
-def prepareData(tickNum, batch){
-	total = tickNum*batch
-	data=table(total:total, `symbol`market`date`time`quote_type`preclose`open`high`low`last`numTrade`volume`value`position`recvtime,[SYMBOL,SHORT,DATE,TIME,SHORT,LONG,LONG,LONG,LONG,LONG,LONG,LONG,LONG,LONG,TIMESTAMP])
-	data[`market]=rand(10, total)
-	data[`date]=take(date(now()), total)
-	data[`time]=take(time(now()), total)
-	data[`symbol]=take("A"+string(1..tickNum), total)
-	data[`open]=rand(100, total)
-	data[`high]=rand(100, total)
-	data[`low]=rand(100, total)
-	data[`last]=rand(100, total)
-	data[`volume]=rand(0..10, total)
-	data[`value]=rand(100, total)
-	data[`recvtime]=take(now(), total)
-	return data
+@state
+def slr(y, x){
+    alpha, beta = mslr(y, x, 12)
+    residual = mavg(y, 12) - beta * mavg(x, 12) - alpha
+    return alpha, beta, residual
 }
 
-//4000个股票，100个因子
+@state
+def multiFactors(lowPrice, highPrice, volumeTrade, closePrice, buy_active, sell_active, tradePrice, askPrice1, bidPrice1, askPrice10, agg_vol, agg_amt){
+    a = ema(askPrice10, 30)
+    term0 = ema((lowPrice - a) / (ema(highPrice, 30) - a), 50)
+    term1 = mrank((highPrice - a) / (ema(highPrice, 5) - a), true,  15)
+    term2 = mcorr(askPrice10, volumeTrade, 10) * mrank(mstd(closePrice, 20, 20), true, 10)
+    buy_vol_ma = mavg(buy_active, 6)
+    sell_vol_ma = mavg(sell_active, 6)
+    zero_free_vol = iif(agg_vol==0, 1, agg_vol)
+    stl_prc = ffill(agg_amt \ zero_free_vol \ 20).nullFill(tradePrice)
+    buy_prop = stl_prc
+	
+    spd = askPrice1 - bidPrice1
+    spd_ma = round(mavg(iif(spd < 0, 0, spd), 6), 5)
+    term3 = buy_prop * spd_ma
+    term4 = iif(spd_ma == 0, 0, buy_prop / spd_ma)
+    return term0, term1, term2, term3, term4
+}
+
+metrics = array(ANY, 14)
+metrics[0] = <ema(1000 * sum_diff(ema(close, 20), ema(close, 40)),10) -  ema(1000 * sum_diff(ema(close, 20), ema(close, 40)), 20)>
+metrics[1] = <mslr(high, volume, 8)[1]>
+metrics[2] = <mcorr(low, high, 11)>
+metrics[3] = <mstdp(low, 15)>
+metrics[4] = <mbeta(high, value, 63)>
+metrics[5] = <mcovar(low, value, 71)>
+metrics[6] = <(close/mavg(close, 1..6)-1)*100>
+metrics[7] = <mmin(high, 15)>
+metrics[8] = <mavg(((high+low)/2+(mavg(high, 2)+mavg(low, 2))/2)*(high-low)/volume, 7, 2)>
+metrics[9] = <mslr(mavg(close, 14), volume, 63)[1]>
+metrics[10] = <mcorr(mavg(open, 25), volume, 71)>
+metrics[11] = <mbeta(high, mstdp(close, 8), 77)>
+metrics[12] = <slr(close, volume)>
+metrics[13] = <multiFactors(low, high, volume, close, numTrade, numTrade, close, value, close, open, volume, numTrade)>
+
+dummy = streamTable(10000:0, `symbol`market`date`time`quote_type`preclose`open`high`low`close`numTrade`volume`value`position`recvtime,[SYMBOL,SHORT,DATE,TIME,SHORT,DOUBLE,DOUBLE,DOUBLE,DOUBLE,DOUBLE,DOUBLE,LONG,DOUBLE,LONG,TIMESTAMP])
+
+def prepareData(tickNum, batch){
+    total = tickNum*batch
+    data=table(total:total, `symbol`market`date`time`quote_type`preclose`open`high`low`close`numTrade`volume`value`position`recvtime,[SYMBOL,SHORT,DATE,TIME,SHORT,DOUBLE,DOUBLE,DOUBLE,DOUBLE,DOUBLE,DOUBLE,LONG,DOUBLE,LONG,TIMESTAMP])
+    data[`market]=rand(10, total)
+    data[`date]=take(date(now()), total)
+    data[`time]=take(time(now()), total)
+    data[`symbol]=take("A"+string(1..tickNum), total)
+    data[`open]=rand(100.0, total)
+    data[`high]=rand(100.0, total)
+    data[`low]=rand(100.0, total)
+    data[`close]=rand(100.0, total)
+    data[`numTrade]=rand(100, total)
+    data[`volume]=rand(100, total)
+    data[`value]=rand(100.0, total)
+    data[`recvtime]=take(now(), total)
+    return data
+}
+
+dropStreamEngine("demo1")
+dropStreamEngine("demo2")
+dropStreamEngine("demo3")
+dropStreamEngine("demo4")
+
+//4000个股票，20个因子
 hisData = prepareData(4000, 100)
 realData = prepareData(4000, 1)
 colNames = ["symbol"].append!("factor"+string(0..19))
@@ -276,8 +301,9 @@ resultTable = streamTable(10000:0, colNames, colTypes)
 engine1 = createReactiveStateEngine(name="demo1", metrics=metrics, dummyTable=dummy, outputTable=resultTable, keyColumn="symbol")
 warmupStreamEngine(engine1, hisData)
 timer(10) engine1.append!(realData)
+dropAggregator("demo1")
 
-//1个股票，100个因子
+//1个股票，20个因子
 hisData = prepareData(1, 100)
 realData = prepareData(1, 1)
 colNames = ["symbol"].append!("factor"+string(0..19))
@@ -286,11 +312,12 @@ resultTable = streamTable(10000:0, colNames, colTypes)
 engine2 = createReactiveStateEngine(name="demo2", metrics=metrics, dummyTable=dummy, outputTable=resultTable, keyColumn="symbol")
 warmupStreamEngine(engine2, hisData)
 timer(10) engine2.append!(realData)
+dropAggregator("demo2")
 
 //4000个股票，1个因子
 hisData = prepareData(4000, 100)
 realData = prepareData(4000, 1)
-metrics3 = rand(metrics, 1)
+metrics3 = metrics[0]
 colNames = ["symbol", "factor0"]
 colTypes = [SYMBOL, DOUBLE]
 resultTable = streamTable(10000:0, colNames, colTypes)
@@ -307,16 +334,17 @@ resultTable = streamTable(10000:0, colNames, colTypes)
 engine4 = createReactiveStateEngine(name="demo4", metrics=metrics, dummyTable=dummy, outputTable=resultTable, keyColumn="symbol")
 warmupStreamEngine(engine4, hisData)
 timer(10) engine4.append!(realData)
+
 ```
 
 我们统计了10次的总耗时，取平均值作为单次的耗时。测试使用的服务器CPU为Intel(R) Xeon(R) Silver 4216 CPU @ 2.10GHz。单线程情况下，测试结果如下：
 
 |股票个数|因子个数|耗时(单位:ms)|
 |---------|---------|-----|
-|4000|20|8|
-|1|20|0.04|
-|4000|1|2|
-|200|20|0.6|
+|4000|20|6|
+|1|20|0.07|
+|4000|1|0.8|
+|200|20|0.2|
 
 ## 6. 多个引擎的流水线处理
 
