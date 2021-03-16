@@ -27,7 +27,7 @@ ema(1000 * sum_diff(ema(price, 20), ema(price, 40)),10) -  ema(1000 * sum_diff(e
 
 python pandas/numpy目前是研究阶段最常用的高频因子解决方案。pandas对面板数据处理有非常成熟的解决方案，而且内置了大部分高频因子计算需要用到的算子，可以快速实现这些高频因子。但性能是pandas实现的一个短板，尤其是算子需要用自定义函数实现的时候，速度较慢。一个解决办法是通过启动多个python进程来并行计算。python pandas的实现是针对历史数据的，面对生产环境中的流式数据，如果不修改代码，只能采用类似apache spark的处理方法，把数据缓存起来，划分成一个个数据窗口来计算。因此，性能的问题在生产环境中会更突出。
  
-为解决上述方案在生产环境中的性能问题，很多机构会用C++重新实现研究（历史数据）代码。这样做，需要维护两套代码，开发成本（时间和人力）会大大增加。此外，还要耗费大量精力确保两套系统的结果完全一致。
+为解决上述方案在生产环境中的性能问题，很多机构会用C++重新实现研究（历史数据）代码。这样做，需要维护两套代码，开发成本（时间和人力）会大幅增加。此外，还要耗费大量精力确保两套系统的结果完全一致。
 
 类似Flink批流统一的解决方案应运而生。Flink支持SQL和窗口函数，高频因子用到的常见算子在Flink中已经内置实现。因此，简单的因子用Flink实现会非常高效，运行性能也会非常好。但Flink最大的问题是无法实现复杂的高频因子计算。如前一章中提到的例子，需要多个窗口函数的嵌套，无法直接用Flink实现。这也正是DolphinDB开发响应式状态引擎的动机所在。
 
@@ -355,9 +355,9 @@ DolphinDB内置的流计算引擎包括响应式状态引擎，时间序列聚�
 Alpha#001公式：rank(Ts_ArgMax(SignedPower((returns<0?stddev(returns,20):close), 2), 5))-0.5
 
 //创建横截面引擎，计算每个股票的rank
-dummy = table(1:0, `sym`time`maxIndex, [SYMBOL, TIMESTAMP, INDEX])
-resultTable = streamTable(10000:0, `sym`time`factor1, [SYMBOL, TIMESTAMP, DOUBLE])
-ccsRank = createCrossSectionalAggregator(name="alpha1CCS", metrics=[<time>, <rank(maxIndex)\count(maxIndex) - 0.5>],  dummyTable=dummy, outputTable=resultTable,  keyColumn=`sym, triggeringPattern='keyCount', triggeringInterval=3000, timeColumn=`time)
+dummy = table(1:0, `sym`time`maxIndex, [SYMBOL, TIMESTAMP, DOUBLE])
+resultTable = streamTable(10000:0, `time`sym`factor1, [TIMESTAMP, SYMBOL, DOUBLE])
+ccsRank = createCrossSectionalAggregator(name="alpha1CCS", metrics=<[sym, rank(maxIndex)\count(maxIndex) - 0.5]>,  dummyTable=dummy, outputTable=resultTable,  keyColumn=`sym, triggeringPattern='keyCount', triggeringInterval=3000, timeColumn=`time)
 
 @state
 def wqAlpha1TS(close){
@@ -368,7 +368,8 @@ def wqAlpha1TS(close){
 
 //创建响应式状态引擎，输出到前面的横截面引擎ccsRank
 input = table(1:0, `sym`time`close, [SYMBOL, TIMESTAMP, DOUBLE])
-rse = createReactiveStateEngine(name="alpha1", metrics=<wqAlpha1TS(close)>, dummyTable=input, outputTable=ccsRank, keyColumn="sym")
+rse = createReactiveStateEngine(name="alpha1", metrics=<[time, wqAlpha1TS(close)]>, dummyTable=input, outputTable=ccsRank, keyColumn="sym")
+
 ```
 在上面这个例子中，我们还是需要人工来区分哪一部分是横截面操作，哪一部分是时间序列操作。在后续的版本中，DolphinDB将以行函数（rowRank，rowSum等）表示横截面操作的语义，其它向量函数表示时间序列操作，从而系统能够自动识别一个因子中的横截面操作和时间序列操作，进一步自动构建引擎流水线。
 

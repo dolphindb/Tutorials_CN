@@ -1,8 +1,6 @@
 # DolphinDB教程：流数据时序聚合引擎
 
-流数据是指随时间延续而不断增长的动态数据集合。金融机构的交易数据、物联网的传感器数据和互联网的运营数据等都属于流数据的范畴。传统的面向静态数据表的计算引擎不适合流数据领域的分析和计算任务，流数据场景需要一套针对性的计算引擎。
-
-DolphinDB database提供了轻量且使用方便的流数据聚合引擎，本教程讲述流数据时序聚合引擎。
+DolphinDB提供了轻量且使用方便的流数据聚合引擎。本教程讲述流数据时序聚合引擎。
 
 ## 1. 创建时序聚合引擎
 
@@ -12,7 +10,7 @@ DolphinDB database提供了轻量且使用方便的流数据聚合引擎，本�
 
 ### 1.1 语法
 
-createTimeSeriesAggregator(name, windowSize, step, metrics, dummyTable, outputTable, [timeColumn], [useSystemTime=false], [keyColumn], [garbageSize], [updateTime], [useWindowStartTime])
+createTimeSeriesAggregator(name, windowSize, step, metrics, dummyTable, outputTable, [timeColumn], [useSystemTime=false], [keyColumn], [garbageSize], [updateTime], [useWindowStartTime], [roundTime=true], [snapshotDir], [snapshotIntervalInMsgCount],)
 
 ### 1.2 参数介绍
 
@@ -28,45 +26,41 @@ createTimeSeriesAggregator(name, windowSize, step, metrics, dummyTable, outputTa
 
 类型：布尔值
 
-可选参数，表示聚合引擎计算的驱动方式，缺省值为false。
+可选参数，表示聚合引擎计算的触发方式。
 
-当参数值为true时，表示聚合引擎计算为定时驱动。聚合引擎会按照数据进入聚合引擎的时刻（毫秒精度的本地系统时间，与数据中的时间列无关），每隔固定时间截取固定长度窗口的流数据进行计算。只要一个数据窗口中含有数据，数据窗口结束后就会自动进行计算。
+当参数值为true时，聚合引擎会按照数据进入聚合引擎的时刻（毫秒精度的本地系统时间，与数据中的时间列无关），每隔固定时间截取固定长度窗口的流数据进行计算。只要一个数据窗口中含有数据，数据窗口结束后就会自动进行计算。结果中的第一列为计算发生的时间戳，与数据中的时间无关。
 
-当参数值为false时，表示聚合引擎计算为数据驱动。根据流数据中的timeColumn列来截取数据窗口。一个数据窗口结束后的第一条新数据才会触发该数据窗口的计算。请注意，触发计算的数据并不会参与该次计算。
+当参数值为false（默认值）时，聚合引擎根据流数据中的timeColumn列来截取数据窗口。一个数据窗口结束后的第一条新数据才会触发该数据窗口的计算。请注意，触发计算的数据并不会参与该次计算。
 
 例如，一个数据窗口从10:10:10到10:10:19。若useSystemTime=true，则只要该窗口中至少有一条数据，该窗口的计算会在窗口结束后的10:10:20触发。若useSystemTime=false，且10:10:19后的第一条数据为10:10:25，则该窗口的计算会在10:10:25触发。
 
 - windowSize
 
-类型：整型
+类型：整型或者整型的数组
 
-必选参数，指定数据窗口长度。
-
-windowSize的单位取决于useSystemTime参数。若useSystemTime=true，windowSize的单位是毫秒。若useSystemTime=false，windowSize的单位为timeColumn列的精度。例如，若timeColumn列是timestamp类型，那么windowSize的单位是毫秒；如果timeColumn列是datetime类型，那么windowSize的单位是秒。
-
-数据窗口包含其左边界，但不包含右边界。
+必选参数，指定数据窗口长度。数据窗口包含左边界，但不包含右边界。
 
 - step
 
 类型：整型
 
-必选参数，指定窗口每次移动的时间间隔。为简化起见，windowSize必须可被step整除。
+必选参数，指定窗口每次移动的时间间隔。windowSize必须可被step整除。
 
-当useSystemTime=true时，step值基于系统时间，与数据的时间列无关，单位是毫秒，比如step=3代表每隔3毫秒移动一次窗口。
+windowSize与step的单位取决于useSystemTime参数。若useSystemTime=true，windowSize与step的单位是毫秒。若useSystemTime=false，windowSize与step的单位是timeColumn列的精度。例如，若timeColumn列是timestamp类型，那么windowSize与step的单位是毫秒；如果timeColumn列是datetime类型，那么windowSize与step的单位是秒。
 
-当useSystemTime=false时，step值基于timeColumn列，单位亦为timeColumn列的精度。例如，若timeColumn列为TIMESTAMP类型，精度为毫秒，那么step也以毫秒为单位；若timeColumn列为DATETIME类型，精度为秒，那么step也以秒为单位。
-
-为了方便对比计算结果，系统会对第一个数据窗口的起始时刻进行规整。例如若第一条数据进入聚合引擎的时刻为2018.10.10T03:26:39.178，且step=100，那么系统会将第一个窗口起始时间规整为2018.10.10T03:26:39.100。规整数据窗口的细节在第1.3.1小节中介绍。
+为了方便观察和对比计算结果，系统会对第一个数据窗口的起始时刻进行规整。例如若第一条数据进入聚合引擎的时刻为2018.10.10T03:26:39.178，且step=100，那么系统会将第一个窗口起始时间规整为2018.10.10T03:26:39.100。规整数据窗口的细节在第1.3.1小节中介绍。
 
 当聚合引擎使用分组计算时，所有分组的窗口均进行统一的规整。相同时刻的数据窗口在各组均有相同的边界。
 
 - metrics
 
-类型：元代码
+类型：元代码或者元代码的数组
 
-必选参数。聚合引擎的核心参数，以元代码的格式表示计算公式。它可以是一个或多个系统内置或用户自定义的聚合函数，比如<[sum(volume),avg(price)]>；可对聚合结果使用表达式，比如<[avg(price1)-avg(price2)]>；也可对列与列的计算结果进行聚合计算，如<[std(price1-price2)]>这样的写法。
+必选参数。聚合引擎的核心参数，以元代码的格式表示计算公式。它可以是一个或多个系统内置或用户自定义的聚合函数，比如<[sum(volume),avg(price)]>；可对聚合结果使用表达式，比如<[avg(price1)-avg(price2)]>；也可对列与列的计算结果进行聚合计算，例如<[std(price1-price2)]>；也可以是一个函数返回多个指标，如自定义函数 func(price) , 则可以指定metrics为<[func(price) as ['res1','res2']> 。
 
-DolphinDB针对某些聚合函数在流数据时序引擎中的使用进行了优化，在计算每个窗口时充分利用上一个窗口的计算结果，最大程度降低了重复计算，显著提高运行速度。下表列出了已优化的聚合函数：
+如果windowSize为数组，则metrics必须和windowSize大小一致的数组，并且聚合时一一对应计算。比如定义windowSize=[3,6], metrics=[<[sum(volume),avg(price)]>, <std(volume)>], 则sum(volume)和avg(price)按windowSize=3聚合，std(volume)按windowSize=6聚合。
+
+DolphinDB针对以下聚合函数在流数据时序引擎中的使用进行了优化，最大程度降低了重复计算，显著提高运行速度。
 
 函数名 | 函数说明 
 ---|---
@@ -135,7 +129,7 @@ wsum|加权和
 
 如果没有指定updateTime，一个数据窗口结束前，不会发生对该数据窗口数据的计算。若要求在当前窗口结束前对当前窗口已有数据进行计算，可指定updateTime。step必须是updateTime的整数倍。要设置updateTime，useSystemTime必须设为false。
 
-如果指定了updateTime，当前窗口内可能会发生多次计算。计算触发的规则为：
+如果指定了updateTime，当前窗口内可能会发生多次计算。这些计算触发的规则为：
 
 (1) 将当前窗口分为windowSize/updateTime个小窗口，每个小窗口长度为updateTime。一个小窗口结束后，若有一条新数据到达，且在此之前当前窗口内有未参加计算的的数据，会触发一次计算。请注意，该次计算不包括这条新数据。
 
@@ -153,7 +147,19 @@ wsum|加权和
 
 类型：布尔类型
 
-可选参数，表示输出表中的时间是否为数据窗口起始时间。默认值为false，表示输出表中的时间为数据窗口起始时间 + windowSize。
+可选参数，表示输出表中的时间是否为数据窗口起始时间。默认值为false，表示输出表中的时间为数据窗口起始时间 + windowSize。如果windowSize为多个窗口大小，则必须为fasle。
+
+- snapshotDir
+
+类型：字符串类型
+
+可选参数，表示保存引擎快照的文件目录，可以用于系统出现异常之后，对引擎进行恢复。该目录必须存在，否则系统会提示异常。创建流数据引擎的时候，如果指定了snapshotDir，也会检查相应的快照是否存在。如果存在，会加载该快照，恢复引擎的状态。
+
+- snapshotIntervalInMsgCount
+
+类型：整型
+
+可选参数，表示保存引擎快照的消息间隔。
 
 ### 1.3 参数详细介绍及用例
 
@@ -211,8 +217,8 @@ DolphinDB系统将各种时间类型数据存储为以最小精度为单位的�
 ```
 share streamTable(1000:0, `time`volume, [TIMESTAMP, INT]) as trades
 outputTable = table(10000:0, `time`sumVolume, [TIMESTAMP, INT])
-tradesAggregator = createTimeSeriesAggregator("streamAggr1", 6, 3, <[sum(volume)]>, trades, outputTable, `time)
-subscribeTable(, "trades", "append_tradesAggregator", 0, append!{tradesAggregator}, true)    
+tradesAggregator = createTimeSeriesAggregator(name="streamAggr1", windowSize=6, step=3, metrics=<[sum(volume)]>, dummyTable=trades, outputTable=outputTable, timeColumn=`time)
+subscribeTable(tableName="trades", actionName="append_tradesAggregator", offset=0, handler=append!{tradesAggregator}, msgAsTable=true)    
 ```
 
 向流数据表trades中写入10条数据，并查看流数据表trades内容：
@@ -253,40 +259,80 @@ time|sumVolume
 
 若需要重复执行以上程序，应首先解除订阅，并将流数据表trades与聚合引擎streamAggr1二者删除：
 ```
-unsubscribeTable(, "trades", "append_tradesAggregator")
+unsubscribeTable(tableName="trades", actionName="append_tradesAggregator")
 undef(`trades, SHARED)
 dropAggregator("streamAggr1")
 ```
 
-#### 1.3.2 metrics
+#### 1.3.2 windowSize
+
+DolphinDB聚合引擎支持多个窗口。
+
+下例说如何对相同的metrics按不同的windowSize聚合。以下代码建立流数据表trades，包含time和volume两列。创建时序聚合引擎streamAggr1，每3毫秒对过去6毫秒和过去12毫秒的数据计算sum(volume)。time列的精度为毫秒，模拟插入的数据流频率也设为每毫秒一条数据。
+
+```
+share streamTable(1000:0, `time`volume, [TIMESTAMP, INT]) as trades
+outputTable = table(10000:0, `time`sumVolume1`sumVolume2, [TIMESTAMP, INT,INT])
+tradesAggregator = createTimeSeriesAggregator(name="streamAggr1", windowSize=[6,12], step=3, metrics=[<sum(volume)>,<sum(volume)>], dummyTable=trades, outputTable=outputTable, timeColumn=`time)
+subscribeTable(tableName="trades", actionName="append_tradesAggregator", offset=0, handler=append!{tradesAggregator}, msgAsTable=true)    
+```
+
+```
+def writeData(t, n){
+    timev = 2018.10.08T01:01:01.001 + timestamp(1..n)
+    volumev = take(1, n)
+    insert into t values(timev, volumev)
+}
+writeData(trades, 20)
+
+select * from trades;
+```
+
+再查看结果表outputTable:
+
+```
+select * from outputTable;
+```
+
+| time                    | sumVolume1 | sumVolume2 |
+| ----------------------- | ---------- | ---------- |
+| 2018.10.08T01:01:01.003 | 1          | 1          |
+| 2018.10.08T01:01:01.006 | 4          | 4          |
+| 2018.10.08T01:01:01.009 | 7          | 7          |
+| 2018.10.08T01:01:01.012 | 6          | 10         |
+| 2018.10.08T01:01:01.015 | 6          | 12         |
+| 2018.10.08T01:01:01.018 | 6          | 12         |
+| 2018.10.08T01:01:01.021 | 6          | 12         |
+
+#### 1.3.3 metrics
 
 DolphinDB聚合引擎支持使用多种表达式进行实时计算。
 
 - 一个或多个聚合函数：
 ```
-tsAggregator = createTimeSeriesAggregator("streamAggr1", 6, 3, <sum(ask)>, quotes, outputTable, `time)
+tsAggregator = createTimeSeriesAggregator(name="streamAggr1", windowSize=6, step=3, metrics=<sum(ask)>, dummyTable=quotes, outputTable=outputTable, timeColumn=`time)
 ```
 
 - 使用聚合结果进行计算：
 ```
-tsAggregator = createTimeSeriesAggregator("streamAggr1", 6, 3, <max(ask)-min(ask)>, quotes, outputTable, `time)
+tsAggregator = createTimeSeriesAggregator(name="streamAggr1", windowSize=6, step=3, metrics=<max(ask)-min(ask)>, dummyTable=quotes, outputTable=outputTable, timeColumn=`time)
 ```
 
 - 对列与列的操作结果进行聚合计算：
 ```
-tsAggregator = createTimeSeriesAggregator("streamAggr1", 6, 3, <max(ask-bid)>, quotes, outputTable, `time)
+tsAggregator = createTimeSeriesAggregator(name="streamAggr1", windowSize=6, step=3, metrics=<max(ask-bid)>, dummyTable=quotes, outputTable=outputTable, timeColumn=`time)
 ```
 
 - 输出多个聚合结果
 ```
-tsAggregator = createTimeSeriesAggregator("streamAggr1", 6, 3, <[max((ask-bid)/(ask+bid)*2), min((ask-bid)/(ask+bid)*2)]>, quotes, outputTable, `time)
+tsAggregator = createTimeSeriesAggregator(name="streamAggr1", windowSize=6, step=3, metrics=<[max((ask-bid)/(ask+bid)*2), min((ask-bid)/(ask+bid)*2)]>, dummyTable=quotes, outputTable=outputTable, timeColumn=`time)
 ```
 
 - 使用多参数聚合函数
 ```
-tsAggregator = createTimeSeriesAggregator("streamAggr1", 6, 3, <corr(ask,bid)>, quotes, outputTable, `time)
+tsAggregator = createTimeSeriesAggregator(name="streamAggr1", windowSize=6, step=3, metrics=<corr(ask,bid)>, dummyTable=quotes, outputTable=outputTable, timeColumn=`time)
 
-tsAggregator = createTimeSeriesAggregator("streamAggr1", 6, 3, <percentile(ask-bid,99)/sum(ask)>, quotes, outputTable, `time)
+tsAggregator = createTimeSeriesAggregator(name="streamAggr1", windowSize=6, step=3, metrics=<percentile(ask-bid,99)/sum(ask)>, dummyTable=quotes, outputTable=outputTable, timeColumn=`time)
 ```
 
 - 使用自定义函数
@@ -294,21 +340,31 @@ tsAggregator = createTimeSeriesAggregator("streamAggr1", 6, 3, <percentile(ask-b
 def spread(x,y){
 	return abs(x-y)/(x+y)*2
 }
-tsAggregator = createTimeSeriesAggregator("streamAggr1", 6, 3, <spread(ask, bid)>, quotes, outputTable, `time)
+tsAggregator = createTimeSeriesAggregator(name="streamAggr1", windowSize=6, step=3, metrics=<spread(ask, bid)>, dummyTable=quotes, outputTable=outputTable, timeColumn=`time)
+```
+
+- 使用多个返回结果的函数
+
+```
+def sums(x){
+	return [sum(x),sum2(x)]
+}
+tsAggregator = createTimeSeriesAggregator(name="streamAggr1", windowSize=6, step=3, metrics=<sums(ask) as `sumAsk`sum2Ask>, dummyTable=quotes, outputTable=outputTable, timeColumn=`time)
+
 ```
 
 注意：不支持聚合函数嵌套调用，例如sum(spread(ask,bid))。
 
 
-#### 1.3.3 dummyTable
+#### 1.3.4 dummyTable
 
 系统利用dummyTable的schema来决定订阅的流数据中每一列的数据类型。dummyTable有无数据对结果没有任何影响。
 ```
 share streamTable(1000:0, `time`volume, [TIMESTAMP, INT]) as trades
 modelTable = table(1000:0, `time`volume, [TIMESTAMP, INT])
 outputTable = table(10000:0, `time`sumVolume, [TIMESTAMP, INT])
-tradesAggregator = createTimeSeriesAggregator("streamAggr1", 5, 5, <[sum(volume)]>, modelTable, outputTable, `time)
-subscribeTable(, "trades", "append_tradesAggregator", 0, append!{tradesAggregator}, true)    
+tradesAggregator = createTimeSeriesAggregator(name="streamAggr1", windowSize=5, step=5, metrics=<[sum(volume)]>, dummyTable=modelTable, outputTable=outputTable, timeColumn=`time)
+subscribeTable(tableName="trades", actionName="append_tradesAggregator", offset=0, handler=append!{tradesAggregator}, msgAsTable=true)    
 
 def writeData(t,n){
     timev = 2018.10.08T01:01:01.001 + timestamp(1..n)
@@ -322,7 +378,7 @@ sleep(1)
 select * from outputTable
 ```
 
-#### 1.3.4 outputTable
+#### 1.3.5 outputTable
 
 聚合结果可以输出到内存表或流数据表。输出到内存表的数据可以更新或删除，而输出到流数据表的数据无法更新或删除，但是可以通过流数据表将聚合结果作为另一个聚合引擎的数据源再次发布。
 
@@ -333,13 +389,13 @@ share streamTable(1000:0,`time`voltage`current,[TIMESTAMP,DOUBLE,DOUBLE]) as ele
 //将第一个聚合引擎的输出表定义为流数据表，可以再次订阅
 share streamTable(10000:0,`time`avgVoltage`avgCurrent,[TIMESTAMP,DOUBLE,DOUBLE]) as outputTable1 
 
-electricityAggregator1 = createTimeSeriesAggregator("electricityAggregator1", 10, 10, <[avg(voltage), avg(current)]>, electricity, outputTable1, `time, , , 2000)
-subscribeTable(, "electricity", "avgElectricity", 0, append!{electricityAggregator1}, true)
+electricityAggregator1 = createTimeSeriesAggregator(name="electricityAggregator1", windowSize=10, step=10, metrics=<[avg(voltage), avg(current)]>, dummyTable=electricity, outputTable=outputTable1, timeColumn=`time, garbageSize=2000)
+subscribeTable(tableName="electricity", actionName="avgElectricity", offset=0, handler=append!{electricityAggregator1}, msgAsTable=true)
 
 //订阅聚合结果，再次进行聚合计算
 outputTable2 =table(10000:0, `time`maxVoltage`maxCurrent, [TIMESTAMP,DOUBLE,DOUBLE])
-electricityAggregator2 = createTimeSeriesAggregator("electricityAggregator2", 100, 100, <[max(avgVoltage), max(avgCurrent)]>, outputTable1, outputTable2, `time, , , 2000)
-subscribeTable(, "outputTable1", "maxElectricity", 0, append!{electricityAggregator2}, true);
+electricityAggregator2 = createTimeSeriesAggregator(name="electricityAggregator2", windowSize=100, step=100, metrics=<[max(avgVoltage), max(avgCurrent)]>, dummyTable=outputTable1, outputTable=outputTable2, timeColumn=`time, garbageSize=2000)
+subscribeTable(tableName="outputTable1", actionName="maxElectricity", offset=0, handler=append!{electricityAggregator2}, msgAsTable=true);
 
 //向electricity表中插入500条数据
 def writeData(t, n){
@@ -364,22 +420,22 @@ time	|maxVoltage	|maxCurrent
 
 若要对上述脚本进行重复使用，需先执行以下脚本以清除共享表、订阅以及聚合引擎：
 ```
-unsubscribeTable(, "electricity", "avgElectricity")
+unsubscribeTable(tableName="electricity", actionName="avgElectricity")
 undef(`electricity, SHARED)
-unsubscribeTable(, "outputTable1", "maxElectricity")
+unsubscribeTable(tableName="outputTable1", actionName="maxElectricity")
 undef(`outputTable1, SHARED)
 dropAggregator("electricityAggregator1")
 dropAggregator("electricityAggregator2")
 ```
 
-#### 1.3.5 keyColumn
+#### 1.3.6 keyColumn
 
 下例中，设定keyColumn参数为sym。
 ```
 share streamTable(1000:0, `time`sym`volume, [TIMESTAMP, SYMBOL, INT]) as trades
 outputTable = table(10000:0, `time`sym`sumVolume, [TIMESTAMP, SYMBOL, INT])
-tradesAggregator = createTimeSeriesAggregator("streamAggr1", 3, 3, <[sum(volume)]>, trades, outputTable, `time, false,`sym, 50)
-subscribeTable(, "trades", "append_tradesAggregator", 0, append!{tradesAggregator}, true)    
+tradesAggregator = createTimeSeriesAggregator(name="streamAggr1", windowSize=3, step=3, metrics=<[sum(volume)]>, dummyTable=trades, outputTable=outputTable, timeColumn=`time, useSystemTime=false, keyColumn=`sym, garbageSize=50)
+subscribeTable(tableName="trades", actionName="append_tradesAggregator", offset=0, handler=append!{tradesAggregator}, msgAsTable=true)    
 
 def writeData(t, n){
     timev = 2018.10.08T01:01:01.001 + timestamp(1..n)
@@ -414,14 +470,14 @@ time	|sym|	sumVolume
 2018.10.08T01:01:01.006	|B|	2
 
 各组窗口规整后统一从000时间点开始，根据windowSize=3以及step=3，每个组的窗口会按照000-003-006划分。
-(1) 在003，B组有一条数据，但是由于B组在第一个窗口没有任何数据，不会进行计算也不会产生结果，所以B组第一个窗口没有结果输出。
-(2) 004的A组数据触发A组第一个窗口的计算。
-(3) 006的A组数据触发A组第二个窗口的计算。
-(4) 007的B组数据触发B组第二个窗口的计算。
+- (1) 在003，B组有一条数据，但是由于B组在第一个窗口没有任何数据，不会进行计算也不会产生结果，所以B组第一个窗口没有结果输出。
+- (2) 004的A组数据触发A组第一个窗口的计算。
+- (3) 006的A组数据触发A组第二个窗口的计算。
+- (4) 007的B组数据触发B组第二个窗口的计算。
 
 如果进行分组聚合计算，流数据源中的每个分组中的'timeColumn'必须是递增的，但是整个数据源的'timeColumn'可以不是递增的；如果没有进行分组聚合，那么整个数据源的'timeColumn'必须是递增的，否则聚合引擎的输出结果会与预期不符。
 
-#### 1.3.6 updateTime
+#### 1.3.7 updateTime
 
 通过以下两个例子，可以理解updateTime的作用。
 
@@ -443,8 +499,8 @@ insert into trades values(2018.10.08T01:04:05.152,`B,23);
 - 不指定updateTime：
 ```
 output1 = table(10000:0, `time`sym`sumVolume, [TIMESTAMP, SYMBOL, INT])
-agg1 = createTimeSeriesAggregator("agg1",60000, 60000, <[sum(volume)]>, trades, output1, `time, false,`sym, 50,,false)
-subscribeTable(, "trades", "agg1",  0, append!{agg1}, true)
+agg1 = createTimeSeriesAggregator(name="agg1", windowSize=60000, step=60000, metrics=<[sum(volume)]>, dummyTable=trades, outputTable=output1, timeColumn=`time, useSystemTime=false, keyColumn=`sym, garbageSize=50, useWindowStartTime=false)
+subscribeTable(tableName="trades", actionName="agg1", offset=0, handler=append!{agg1}, msgAsTable=true)
 
 sleep(10)
 
@@ -461,8 +517,8 @@ time                    |sym| sumVolume
 - 将updateTime设为1000：
 ```
 output2 = keyedTable(`time`sym,10000:0, `time`sym`sumVolume, [TIMESTAMP, SYMBOL, INT])
-agg2 = createTimeSeriesAggregator("agg2",60000, 60000, <[sum(volume)]>, trades, output2, `time, false,`sym, 50, 1000,false)
-subscribeTable(, "trades", "agg2",  0, append!{agg2}, true)
+agg2 = createTimeSeriesAggregator(name="agg2", windowSize=60000, step=60000, metrics=<[sum(volume)]>, dummyTable=trades, outputTable=output2, timeColumn=`time, useSystemTime=false, keyColumn=`sym, garbageSize=50, updateTime=1000, useWindowStartTime=false)
+subscribeTable(tableName="trades", actionName="agg2", offset=0, handler=append!{agg2}, msgAsTable=true)
 
 sleep(2010)
 
@@ -486,6 +542,203 @@ time                    |sym| sumVolume
 
 (3) 2000毫秒后，在01:04:07.152时，由于01:04:05.152时的B组记录仍未参与计算，触发一次B组计算，输出一条记录(01:05:00.000,"B",55)。由于输出表的主键为time和sym，并且输出表中已有(01:05:00.000,"B",32)这条记录，因此将该记录更新为(01:05:00.000,"B",55)。
 
+#### 1.3.7 snapshot
+
+通过以下这个例子，可以理解snapshotDir和snapshotIntervalInMsgCount的作用。如果启用snapshot，引擎订阅流表时，handler需是appendMsg函数，需指定handlerNeedMsgId=true，用来记录快照的消息位置。
+
+```
+share streamTable(10000:0,`time`sym`price`id, [TIMESTAMP,SYMBOL,INT,INT]) as trades
+output1 =table(10000:0, `time`sumprice, [TIMESTAMP,INT]);
+Agg1 = createTimeSeriesAggregator(name=`Agg1, windowSize=100, step=50, metrics=<sum(price)>, dummyTable=trades, outputTable=output1, timeColumn=`time, snapshotDir="/home/server1/snapshotDir", snapshotIntervalInMsgCount=100)
+subscribeTable(server="", tableName="trades", actionName="Agg1",offset= 0, handler=appendMsg{Agg1}, msgAsTable=true, handlerNeedMsgId=true)
+
+n=500
+timev=timestamp(1..n) + 2021.03.12T15:00:00.000
+symv = take(`abc`def, n)
+pricev = int(1..n)
+id = take(-1, n)
+insert into trades values(timev, symv, pricev, id)
+
+select * from output1
+```
+
+| time                    | sumprice |
+| ----------------------- | -------- |
+| 2021.03.12T15:00:00.050 | 1225     |
+| 2021.03.12T15:00:00.100 | 4950     |
+| 2021.03.12T15:00:00.150 | 9950     |
+| 2021.03.12T15:00:00.200 | 14950    |
+| 2021.03.12T15:00:00.250 | 19950    |
+| 2021.03.12T15:00:00.300 | 24950    |
+| 2021.03.12T15:00:00.350 | 29950    |
+| 2021.03.12T15:00:00.400 | 34950    |
+| 2021.03.12T15:00:00.450 | 39950    |
+| 2021.03.12T15:00:00.500 | 44950    |
+
+```
+getSnapshotMsgId(Agg1)
+>499
+```
+
+取消订阅并删除引擎来模拟系统异常
+
+```
+unsubscribeTable(, "trades", "Agg1")
+dropAggregator("Agg1")
+Agg1=NULL
+```
+
+此时发布端仍在写入数据
+
+```
+n=500
+timev=timestamp(501..1000) + 2021.03.12T15:00:00.000
+symv = take(`abc`def, n)
+pricev = int(1..n)
+id = take(-1, n)
+insert into trades values(timev, symv, pricev, id)
+```
+
+再次创建aggr, 加载snapshot，从上次处理最后一条消息开始重新订阅
+
+```
+Agg1 = createTimeSeriesAggregator(name=`Agg1, windowSize=100, step=50, metrics=<sum(price)>, dummyTable=trades, outputTable=output1, timeColumn=`time, snapshotDir="/home/server1/snapshotDir", snapshotIntervalInMsgCount=100)
+
+ofst=getSnapshotMsgId(Agg1)
+print(ofst)
+>499
+
+subscribeTable(server="", tableName="trades", actionName="Agg1",offset=ofst+1, handler=appendMsg{Agg1}, msgAsTable=true, handlerNeedMsgId=true)
+
+select * from output1
+```
+
+| time                        | sumprice  |
+| :-------------------------- | --------- |
+| 2021.03.12T15:00:00.050     | 1225      |
+| 2021.03.12T15:00:00.100     | 4950      |
+| 2021.03.12T15:00:00.150     | 9950      |
+| 2021.03.12T15:00:00.200     | 14950     |
+| 2021.03.12T15:00:00.250     | 19950     |
+| 2021.03.12T15:00:00.300     | 24950     |
+| 2021.03.12T15:00:00.350     | 29950     |
+| 2021.03.12T15:00:00.400     | 34950     |
+| 2021.03.12T15:00:00.450     | 39950     |
+| 2021.03.12T15:00:00.500     | 44950     |
+| **2021.03.12T15:00:00.550** | **25450** |
+| **2021.03.12T15:00:00.600** | **5450**  |
+| 2021.03.12T15:00:00.650     | 9950      |
+| 2021.03.12T15:00:00.700     | 14950     |
+| 2021.03.12T15:00:00.750     | 19950     |
+| 2021.03.12T15:00:00.800     | 24950     |
+| 2021.03.12T15:00:00.850     | 29950     |
+| 2021.03.12T15:00:00.900     | 34950     |
+| 2021.03.12T15:00:00.950     | 39950     |
+| 2021.03.12T15:00:01.000     | 44950     |
+
+结果和订阅不中断一样。
+
+```
+share streamTable(10000:0,`time`sym`price`id, [TIMESTAMP,SYMBOL,INT,INT]) as trades
+output1 =table(10000:0, `time`sumprice, [TIMESTAMP,INT]);
+Agg1 = createTimeSeriesAggregator(name=`Agg1, windowSize=100, step=50, metrics=<sum(price)>, dummyTable=trades, outputTable=output1, timeColumn=`time)
+subscribeTable(server="", tableName="trades", actionName="Agg1",offset= 0, handler=append!{Agg1}, msgAsTable=true)
+
+n=500
+timev=timestamp(1..n) + 2021.03.12T15:00:00.000
+symv = take(`abc`def, n)
+pricev = int(1..n)
+id = take(-1, n)
+insert into trades values(timev, symv, pricev, id)
+
+n=500
+timev=timestamp(501..1000) + 2021.03.12T15:00:00.000
+symv = take(`abc`def, n)
+pricev = int(1..n)
+id = take(-1, n)
+insert into trades values(timev, symv, pricev, id)
+
+select * from output1
+```
+
+| time                        | sumprice  |
+| :-------------------------- | --------- |
+| 2021.03.12T15:00:00.050     | 1225      |
+| 2021.03.12T15:00:00.100     | 4950      |
+| 2021.03.12T15:00:00.150     | 9950      |
+| 2021.03.12T15:00:00.200     | 14950     |
+| 2021.03.12T15:00:00.250     | 19950     |
+| 2021.03.12T15:00:00.300     | 24950     |
+| 2021.03.12T15:00:00.350     | 29950     |
+| 2021.03.12T15:00:00.400     | 34950     |
+| 2021.03.12T15:00:00.450     | 39950     |
+| 2021.03.12T15:00:00.500     | 44950     |
+| **2021.03.12T15:00:00.550** | **25450** |
+| **2021.03.12T15:00:00.600** | **5450**  |
+| 2021.03.12T15:00:00.650     | 9950      |
+| 2021.03.12T15:00:00.700     | 14950     |
+| 2021.03.12T15:00:00.750     | 19950     |
+| 2021.03.12T15:00:00.800     | 24950     |
+| 2021.03.12T15:00:00.850     | 29950     |
+| 2021.03.12T15:00:00.900     | 34950     |
+| 2021.03.12T15:00:00.950     | 39950     |
+| 2021.03.12T15:00:01.000     | 44950     |
+
+如果不开启snapshot，即使从上次中断的地方开始订阅，得到的结果也与订阅不中断不一样。
+
+```
+share streamTable(10000:0,`time`sym`price`id, [TIMESTAMP,SYMBOL,INT,INT]) as trades
+output1 =table(10000:0, `time`sumprice, [TIMESTAMP,INT]);
+Agg1 = createTimeSeriesAggregator(name=`Agg1, windowSize=100, step=50, metrics=<sum(price)>, dummyTable=trades, outputTable=output1, timeColumn=`time)
+subscribeTable(server="", tableName="trades", actionName="Agg1",offset= 0, handler=append!{Agg1}, msgAsTable=true)
+
+n=500
+timev=timestamp(1..n) + 2021.03.12T15:00:00.000
+symv = take(`abc`def, n)
+pricev = int(1..n)
+id = take(-1, n)
+insert into trades values(timev, symv, pricev, id)
+
+unsubscribeTable(, "trades", "Agg1")
+dropAggregator("Agg1")
+Agg1=NULL
+
+n=500
+timev=timestamp(501..1000) + 2021.03.12T15:00:00.000
+symv = take(`abc`def, n)
+pricev = int(1..n)
+id = take(-1, n)
+insert into trades values(timev, symv, pricev, id)
+
+Agg1 = createTimeSeriesAggregator(name=`Agg1, windowSize=100, step=50, metrics=<sum(price)>, dummyTable=trades, outputTable=output1, timeColumn=`time)
+subscribeTable(server="", tableName="trades", actionName="Agg1",offset= 500, handler=append!{Agg1}, msgAsTable=true)
+
+select * from output1
+```
+
+| time                        | sumprice |
+| :-------------------------- | -------- |
+| 2021.03.12T15:00:00.050     | 1225     |
+| 2021.03.12T15:00:00.100     | 4950     |
+| 2021.03.12T15:00:00.150     | 9950     |
+| 2021.03.12T15:00:00.200     | 14950    |
+| 2021.03.12T15:00:00.250     | 19950    |
+| 2021.03.12T15:00:00.300     | 24950    |
+| 2021.03.12T15:00:00.350     | 29950    |
+| 2021.03.12T15:00:00.400     | 34950    |
+| 2021.03.12T15:00:00.450     | 39950    |
+| 2021.03.12T15:00:00.500     | 44950    |
+| **2021.03.12T15:00:00.550** | **1225** |
+| **2021.03.12T15:00:00.600** | **4950** |
+| 2021.03.12T15:00:00.650     | 9950     |
+| 2021.03.12T15:00:00.700     | 14950    |
+| 2021.03.12T15:00:00.750     | 19950    |
+| 2021.03.12T15:00:00.800     | 24950    |
+| 2021.03.12T15:00:00.850     | 29950    |
+| 2021.03.12T15:00:00.900     | 34950    |
+| 2021.03.12T15:00:00.950     | 39950    |
+| 2021.03.12T15:00:01.000     | 44950    |
+
 ## 2. 流数据源过滤
 
 使用`subscribeTable`函数时，可利用handle参数过滤订阅的流数据。
@@ -502,8 +755,8 @@ def append_after_filtering(inputTable, msg){
 		insert into inputTable values(t.time,t.voltage,t.current)		
 	}
 }
-electricityAggregator = createTimeSeriesAggregator("electricityAggregator", 6, 3, <[avg(voltage), avg(current)]>, electricity, outputTable, `time, , , 2000)
-subscribeTable(, "electricity", "avgElectricity", 0, append_after_filtering{electricityAggregator}, true)
+electricityAggregator = createTimeSeriesAggregator(name="electricityAggregator", windowSize=6, step=3, metrics=<[avg(voltage), avg(current)]>, dummyTable=electricity, outputTable=outputTable, timeColumn=`time, garbageSize=2000)
+subscribeTable(tableName="electricity", actionName="avgElectricity", offset=0, handler=append_after_filtering{electricityAggregator}, msgAsTable=true)
 
 //模拟产生数据
 def writeData(t, n){
@@ -545,7 +798,7 @@ time	|avgVoltage |avgCurrent
 
 ## 3. 聚合引擎管理函数
 
-系统提供聚合引擎的管理函数，方便查询和管理系统中已经存在的集合引擎。
+DolphinDB database提供聚合引擎的管理函数，方便查询和管理系统中已经存在的集合引擎。
 
 - 获取已定义的聚合引擎清单，可使用函数[`getAggregatorStat`](https://www.dolphindb.cn/cn/help/getAggregatorStat.html)。
 
