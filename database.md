@@ -51,7 +51,7 @@ MPP一般通过哈希规则，将数据分布到各个节点上（水平分割�
 ### 3. 分区类型
 
 DolphinDB database 支持多种分区类型： 范围分区、哈希分区、值分区、列表分区与复合分区。选择合适的分区类型，有助于用户根据业务特点对数据进行均匀分割。
-  *  范围分区对每个分区区间创建一个分区，是最常用的也是推荐的一种分区方式。
+  *  范围分区对每个分区区间创建一个分区。
   *  哈希分区利用哈希函数对分区列操作，方便建立指定数量的分区。
   *  值分区每个值创建一个分区，例如股票交易日期、股票交易月等。
   *  列表分区是根据用户枚举的列表来进行分区，比值分区更加灵活。
@@ -196,7 +196,7 @@ select count(x) from pt;
 
 #### 4.1 选择合适的分区字段
 
-在DolphinDB中，可以用于分区的数据类型必须是可以用32位整型来表示的，包括整型(CHAR, SHORT, INT)，日期类型(DATE, MONTH, TIME, SECOND, MINUTE, DATETIME)，以及SYMBOL。STRING，FLOAT和DOUBLE数据类型不可作为分区字段。
+在DolphinDB中，可以用于分区的数据类型必须是可以用32位整型来表示的，包括整型(CHAR, SHORT, INT)，日期类型(DATE, MONTH, TIME, SECOND, MINUTE, DATETIME)，以及SYMBOL。FLOAT和DOUBLE数据类型不可作为分区字段。为性能考虑，不建议使用STRING作为分区字段。
 
 ```
 db=database("dfs://rangedb1", RANGE,  0.0 5.0 10.0)
@@ -244,13 +244,15 @@ DolphinDB是为OLAP的场景优化设计的，支持添加数据，不支持对�
 下面的例子中，需要对股票的报价数据按日期和股票代码两个维度做数据分区。如果简单的按股票的首字母进行范围分区，极易造成数据分布不均，因为极少量的股票代码以U, V, X，Y，Z等字母开头。我们这里使用使用`cutPoints`函数根据2007.08.01这天的数据将股票代码划为128个分区，每个分区在这天含有相同数量的记录，
 
 ```
-t = ploadText(WORK_DIR+"/TAQ20070801.csv")
-t=select count(*) as ct from t where date=2007.08.01 group by symbol
-buckets = cutPoints(t.symbol, 128, t.ct)
-
-dateDomain = database("", VALUE, 2017.07.01..2018.06.30)
-symDomain = database("", RANGE, buckets)
-stockDB = database("dfs://stockDBTest", COMPO, [dateDomain, symDomain])
+dates=2020.10.01..2020.10.29;
+syms="A"+string(1..13);
+syms.append!(string('B'..'Z'));
+buckets=cutPoints(syms,5);//cutpoints
+t1=table(take(syms,10000) as stock, rand(dates,10000) as date, rand(10.0,10000) as x);
+dateDomain = database("", VALUE, dates);
+symDomain = database("", RANGE, buckets);
+stockDB = database("dfs://stockDBTest", COMPO, [dateDomain, symDomain]);
+pt = stockDB.createPartitionedTable(t1, `pt, `date`stock).append!(t1);
 ```
 
 除了使用范围分区的方法，列表分区也是解决数据分布不均匀的有效方法。
@@ -347,7 +349,7 @@ bid = rand(10.0, n)
 bidSize = 1 + rand(100, n)
 ask = rand(10.0, n)
 askSize = 1 + rand(100, n)
-quotes = table(rand(syms, n) as sym, 2018.05.04 as date, time, bid, bidSize, ask, askSize)
+quotes = table(rand(syms, n) as sym, take(2018.05.04..2018.05.11,n) as date, time, bid, bidSize, ask, askSize)
 
 loadTable("dfs://stockDB", "quotes").append!(quotes);
 ```
@@ -359,12 +361,14 @@ DolphinDB提供三个函数`loadText`，`ploadText`和`loadTextEx`加载文本�
 workDir = "C:/DolphinDB/Data"
 if(!exists(workDir)) mkdir(workDir)
 quotes.saveText(workDir + "/quotes.csv")
+quotes.saveText(workDir + "/quotes_new.csv")
 ```
 
 使用`loadText`或`ploadText`将数据从文件加载到内存，然后再调用`append!`函数。这种方法适合于数据量小于物理内存的情况， 因为数据将被全部导入内存。 `ploadText`和`loadText`的区别在于前者采用并行方法加载文本文件。
 ```
-t=loadText(workDir + "/trades.csv")
+t=loadText(workDir + "/quotes_new.csv")
 loadTable("dfs://stockDB", "quotes").append!(t)
+
 ```
 
 `loadTextEx`直接将文本数据导入到数据库分区表，是DolphinDB推荐使用的加载文本数据的方法。它的优点是：并行处理速度快,而且文件尺寸可远远大于物理内存。`loadTextEx`运行时，帮助用户调用了`append!`函数。
@@ -386,10 +390,12 @@ subscribeTable(, "quotes_stream", "quotes", -1, saveQuotesToDFS{dfsQuotes}, true
 
 ##### 5.4.3 通过ODBC导入数据
 
-用户也可以通过ODBC Plugin， 将其它数据源中的数据导入到DolphinDB中。下面例子通过ODBC将mysql中的quotes表导入到DolphinDB。ODBC Plugin存放在server/plugins/odbc/。
+用户也可以通过ODBC Plugin， 将其它数据源中的数据导入到DolphinDB中。下面例子通过ODBC将mysql中的quotes表导入到DolphinDB。
+
+下载插件解压并拷贝 plugins/odbc 目录下所有文件到DolphinDB server/plugins/odbc 目录下。
 
 ```
-loadPlugin("/DOLPHINDB_DIR/server/plugins/odbc/odbc.cfg")
+loadPlugin("plugins/odbc/odbc.cfg")
 conn=odbc::connect("Driver=MySQL;Data Source = mysql-stock;server=127.0.0.1;uid=[xxx];pwd=[xxx];database=stockDB")
 t=odbc::query(conn,"select * from quotes")
 loadTable("dfs://stockDB", "quotes").append!(t)
@@ -476,7 +482,7 @@ def writeDataTo(dbPath, tbName, mutable tbdata){
 	loadTable(dbPath,tbName).append!(tbdata)
 }
 
-datasrc=repartitionDS(<select * from tb1>,`date,VALUE,dates,true)
+datasrc=repartitionDS(<select * from loadTable("dfs://db1","tb1")>,`date,VALUE,dates)
 mr(ds=datasrc, mapFunc=writeDataTo{"dfs://db2","tb2"}, parallel=true)
 ```
 
@@ -503,7 +509,7 @@ def writeDataTo(dbPath, tbName, mutable tbdata){
 	loadTable(dbPath,tbName).append!(tbdata)
 }
 
-datasrc=repartitionDS(<select * from tb1>,`date,VALUE,dates)
+datasrc=repartitionDS(<select * from loadTable("dfs://db1","tb1")>,`date,VALUE,dates)
 mr(ds=datasrc, mapFunc=writeDataTo{"dfs://db2","tb2"}, parallel=true)
 ```
 
