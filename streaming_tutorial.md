@@ -53,9 +53,9 @@ DolphinDB流数据模块采用发布-订阅-消费的模式。流数据首先注
 ### 1.2 发布与订阅
 采用经典的发布订阅模式。每当有新的流数据写入时，发布方会通知所有的订阅方处理新的流数据。数据节点使用`subscribeTable`函数来订阅流数据。
 
-### 1.3 实时聚合引擎
+### 1.3 流数据计算引擎
 
-实时聚合引擎指的是专门用于处理流数据实时计算和分析的模块。DolphinDB提供`createTimeSeriesAggregator`与`createCrossSectionalAggregator` 函数创建聚合引擎对流数据做实时聚合计算，并且将计算结果持续输出到指定的数据表中。关于如何使用聚合引擎请参考[流数据聚合引擎](stream_aggregator.md)。
+流数据计算引擎指的是专门用于处理流数据实时计算和分析的模块。DolphinDB提供`createTimeSeriesAggregator`、`createCrossSectionalEngine `、`createSessionWindowEngine` 、`createAnomalyDetectionEngine` 、`createReactiveStateEngine`函数创建流数据计算引擎对流数据做实时计算，并且将计算结果持续输出到指定的数据表中。关于如何使用聚合引擎请参考[流数据聚合引擎](stream_aggregator.md)。
 
 ## 2 核心功能
 
@@ -97,7 +97,7 @@ share keyedStreamTable(`timestamp, 10000:0,`timestamp`temperature, [TIMESTAMP,DO
 
 订阅数据通过[`subscribeTable`](https://www.dolphindb.cn/cn/help/subscribeTable.html)函数来实现。
 ```
-subscribeTable([server],tableName,[actionName],[offset=-1],handler,[msgAsTable=false],[batchSize=0],[throttle=1],[hash=-1],[reconnect=false],[filter],[persistOffset=false],[timeTrigger=false])
+subscribeTable([server],tableName,[actionName],[offset=-1],handler,[msgAsTable=false],[batchSize=0],[throttle=1],[hash=-1],[reconnect=false],[filter],[persistOffset=false],[timeTrigger=false],[handlerNeedMsgId=false)
 ```
 参数说明：
 
@@ -197,7 +197,7 @@ vtimestamp = 1..10
 vtemp = 2.0 2.2 2.3 2.4 2.5 2.6 2.7 0.13 0.23 2.9
 tableInsert(pubTable,vtimestamp,vtemp)
 ```
-- batchSize：一个整数，表示触发handler工作的尚未处理的消息的行数。如果它是正数，则直到尚未处理的消息行数达到batchSize时，handler才会开始处理消息。如果它没有指定或者是非正数，只要有一条消息进入，handler就会马上开始处理消息。
+- batchSize：一个整数。若为正数，表示未处理消息的数量达到batchSize时，handler才会处理消息。若未指定或为非正数，每一批次的消息到达之后，handler就会马上处理。
 
 下例中，batchSize设置为11。 
 ```
@@ -217,21 +217,28 @@ print size(subTable1)
 ```
 接着向pubTable写入1条数据。订阅表subTable1此时有11条数据。
 
-- throttle：一个整数，表示handler处理消息之前等待的时间，以秒为单位，默认值为1。如果没有指定batchSize，throttle将不会起作用。
+- throttle：一个浮点数，表示继上次handler处理消息之后，若batchSize条件一直未达到，多久后再次处理消息。以秒为单位，默认值为1。如果没有指定batchSize，throttle即使指定，也不起作用。若throttle小于配置参数subThrottle/1000，throttle的效果等同于其被指定为subThrottle/1000。
 
 handler处理一条数据与批量处理多条（例如1000条）数据的耗时差别很小。若每一条数据注入handler时都要处理一次，在写入速度极高的情况下有可能导致数据消费能力慢于数据写入速度，不仅不能及时处理所有数据，而且会造成数据不断堆积在订阅端缓冲区而耗光内存。合理设置batchSize与throttle参数，可通过调整handler处理消息的频率以提升吞吐量。
 
 batchSize与throttle参数用于数据缓冲。当流数据的写入频率非常高，以致数据消费能力跟不上数据写入的速度时，需要在订阅端进行流量控制，否则订阅端缓冲区会堆积数据并很快耗光内存。可以根据订阅端的消费速度设定throttle参数，定时将数据导入订阅端，保障订阅端的缓冲区数据量稳定。
 
-- hash：一个非负整数，指定某个订阅线程处理消息。如果没有指定该参数，系统会自动分配一个线程。若需要在多个订阅的处理过程中保持消息数据的同步，可以将多个订阅的hash值设置为相同，这样就能使用同一个线程来同步处理多个数据源，不会出现数据处理有先后而导致结果误差（有误？1 具体解释需要进一步细致，需要具体例子）。
+- hash：一个非负整数，指定某个订阅线程处理消息。如果没有指定该参数，系统会自动分配一个线程。若需要在多个订阅的处理过程中保持消息数据的同步，可以将多个订阅的hash值设置为相同，这样就能使用同一个线程来同步处理多个数据源，不会出现数据处理有先后而导致结果误差。
 
-- reconnect是一个布尔值。默认值为false，表示如果网络异常等问题导致订阅中断，订阅端不会自动重新订阅；如果设为true，订阅端会在网络恢复正常时，自动从中断位置重新订阅。如果发布端崩溃或关闭导致订阅中断，那么订阅端会不断尝试重新订阅，直到能够重新与发布端建立连接。若发布端对流数据表启用了持久化，那么发布端重启后会首先读取硬盘上持久化的数据，直到发布端读取到订阅中断位置的数据，订阅端才能成功重新订阅。若发布端没有对流数据表启用持久化，那么重新订阅将会失败。订阅端不保存订阅信息（不保存offset？2），如果订阅端崩溃或关闭导致订阅中断，即使设置了reconnect=true，订阅端重启后也无法自动重新订阅。(重新订阅指的是从上次中断之处订阅？是否这种情况下根本无法重新订阅，只能从开头或指定位置开始订阅？3)
+- reconnect是一个布尔值。默认值为false，表示如果网络异常等问题导致订阅中断，订阅端不会自动重新订阅；如果设为true，订阅端会在网络恢复正常时，自动从中断位置重新订阅。如果发布端崩溃或关闭导致订阅中断，那么订阅端会不断尝试重新订阅，直到能够重新与发布端建立连接。若发布端对流数据表启用了持久化，那么发布端重启后会首先读取硬盘上持久化的数据，直到发布端读取到订阅中断位置的数据，订阅端才能成功重新订阅。若发布端没有对流数据表启用持久化，那么重新订阅将会失败。订阅端不保存订阅信息，如果订阅端崩溃或关闭导致订阅中断，即使设置了reconnect=true，订阅端重启后也无法自动重新订阅。
 
-- filter是一个向量。该参数需要配合`setStreamTableFilterColumn`函数一起使用。使用`setStreamTableFilterColumn`指定流数据表的过滤列，流数据表过滤列在filter中的数据才会发布到订阅端，不在filter中的数据不会发布。filter不支持过滤BOOL类型数据。（不能一个订阅过滤x，另一个订阅过滤y？过滤列不能为float类型？4）
+- filter 参数需要配合`setStreamTableFilterColumn`函数一起使用。使用`setStreamTableFilterColumn`指定流数据表的过滤列，流数据表过滤列在filter中的数据才会发布到订阅端，不在filter中的数据不会发布。filter不支持过滤BOOL类型数据。
+
+filter 参数可以使用以下三种方法指定。其中范围过滤与哈希过滤于1.30.3版本发布。
+*  值过滤：一个向量。
+*  范围过滤：一个数据对。范围包含下限值，但不包括上限值。
+*  哈希过滤：一个元组。第一个元素表示bucket的个数；第二个元素是一个标量或数据对，其中标量表示bucket的索引（从0开始），数据对表示bucket的索引范围（包含下限值，但不包括上限值）。
 
 - persistOffset是一个布尔值，表示是否持久化保存本次订阅已经处理的数据的偏移量，默认值为false。持久化保存的偏移量用于重订阅，可通过`getTopicProcessedOffset`函数获取。
 
 - timeTrigger是一个布尔值。若设为true，表示即使没有新的消息进入，handler也会在throttle参数所设定的时间间隔被触发。
+
+- handlerNeedMsgId是一个布尔值，默认值为false。若设为true，handler必须支持两个参数：一个是msgBody，一个是msgId。调用handler时，传入消息以及消息的偏移量。一个例子为函数`appendMsg`。若设为false，handler仅支持一个参数：msgBody。调用handler时，只传入消息本身。
 
 ### 2.3 断线重连
 
@@ -239,7 +246,9 @@ DolphinDB的流数据订阅提供了自动重连的功能。如果要启用自�
 
 ### 2.4 发布端数据过滤
 
-发布端可以过滤数据，只发布符合条件的数据。(难道不是订阅段过滤数据？5）使用`setStreamTableFilterColumn`指定流数据表的过滤列，过滤列的值在filter指定值中的数据会发布到订阅端，不在filter指定值中的数据不会发布。目前仅支持对一个列进行过滤。例如，发布端上的流数据表trades只发布symbol为IBM或GOOG的数据：
+发布端可以过滤数据，只发布符合条件的数据。使用`setStreamTableFilterColumn`指定流数据表的过滤列，过滤列的值在filter中的数据会发布到订阅端，不在filter指定值中的数据不会发布。filter可以是值，范围(从1.30.3开始)，哈希(从1.30.3开始)。目前仅支持对一个列进行过滤。例如，发布端上的流数据表trades只发布symbol为IBM或GOOG的数据：
+
+值过滤用一个vector表示。
 
 ```
 share streamTable(10000:0,`time`symbol`price, [TIMESTAMP,SYMBOL,INT]) as trades
@@ -249,6 +258,26 @@ trades_1=table(10000:0,`time`symbol`price, [TIMESTAMP,SYMBOL,INT])
 filter=symbol(`IBM`GOOG)
 
 subscribeTable(tableName="trades", actionName="trades_1", handler=append!{trades_1}, msgAsTable=true, filter=filter)
+```
+
+范围过滤用一个pair表示，end值不包括。
+
+```
+share streamTable(10000:0,`time`symbol`price, [TIMESTAMP,SYMBOL,INT]) as trades
+setStreamTableFilterColumn(trades, `price)
+trades_1=table(10000:0,`time`symbol`price, [TIMESTAMP,SYMBOL,INT])
+
+subscribeTable(tableName="trades", actionName="trades_1", handler=append!{trades_1}, msgAsTable=true, filter=1:100)
+```
+
+哈希过滤用一个tuple表示，第一个元素是bucket的个数，第二个元素是一个scalar或pair，scalar表示bucket的索引（从零开始），pair表示bucket的索引的范围，end值不包括。
+
+```
+share streamTable(10000:0,`time`symbol`price, [TIMESTAMP,SYMBOL,INT]) as trades
+setStreamTableFilterColumn(trades, `price)
+trades_1=table(10000:0,`time`symbol`price, [TIMESTAMP,SYMBOL,INT])
+
+subscribeTable(tableName="trades", actionName="trades_1", handler=append!{trades_1}, msgAsTable=true, filter=(10,1:5))
 ```
 
 ### 2.5 取消订阅
@@ -268,6 +297,18 @@ unsubscribeTable(server="NODE_1", tableName="pubTable", actionName="act1")
 若要删清理共享的流数据表，可以使用`undef`命令：
 ```
 undef("pubStreamTable", SHARED)
+```
+
+取消订阅一个本地表，但保留offset，以便下次从这个offset继续订阅：
+
+```
+unsubscribeTable(tableName="pubTable", actionName="act1", removeOffset=false)
+```
+
+从节点的内存中删除给定topic的offset
+
+```
+removeTopicOffset(topic)
 ```
 
 ### 2.6 流数据持久化
@@ -291,7 +332,7 @@ enableTableShareAndPersistence(table=pubTable, tableName=`sharedPubTable, cacheS
 
 若执行`enableTableShareAndPersistence`时，磁盘上已经存在sharedPubTable表的持久化数据，那么系统会加载最新的cacheSize=1000000行记录到内存中。
 
-对于持久化是否启用异步，需要在持久化数据一致性和性能之间作权衡。当流数据的一致性要求较高时，可以使用同步方式，这样可以保证持久化完成以后，数据才会进入发布队列（之前并没有介绍发布队列？8）；若对实时性要求较高，不希望磁盘IO影响到流数据的实时性，则可启用异步方式（这里的异步和同步何义？9）。只有启用异步方式时，持久化工作线程数persistenceWorkerNum配置项才会起作用。若有多个发布表需要持久化，增加persistenceWorkerNum的配置值可以提升异步保存的效率。
+对于持久化是否启用异步，需要在持久化数据一致性和性能之间作权衡。当流数据的一致性要求较高时，可以使用同步方式，这样可以保证持久化完成以后，数据才会进入发布队列；若对实时性要求较高，不希望磁盘IO影响到流数据的实时性，则可启用异步方式。只有启用异步方式时，持久化工作线程数persistenceWorkerNum配置项才会起作用。若有多个发布表需要持久化，增加persistenceWorkerNum的配置值可以提升异步保存的效率。
 
 当不需要保存在磁盘上的流数据时，通过`clearTablePersistence`命令可以删除持久化数据：
 ```
