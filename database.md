@@ -196,8 +196,9 @@ select count(x) from pt;
 
 #### 4.1 选择合适的分区字段
 
-在DolphinDB中，可以用于分区的数据类型必须是可以用32位整型来表示的，包括整型(CHAR, SHORT, INT)，日期类型(DATE, MONTH, TIME, SECOND, MINUTE, DATETIME)，以及SYMBOL。FLOAT和DOUBLE数据类型不可作为分区字段。为性能考虑，不建议使用STRING作为分区字段。
+在DolphinDB中，可以用于分区的数据类型包括整型(CHAR, SHORT, INT)，日期类型(DATE, MONTH, TIME, MINUTE, SECOND, DATETIME, DATEHOUR)，以及STRING与SYMBOL。除此之外，哈希分区还支持LONG, UUID, IPADDR, INT128类型。虽然STRING可作为分区列，但为了性能考虑，建议将STRING转化为SYMBOL再用于分区列。
 
+FLOAT和DOUBLE数据类型不可作为分区字段。
 ```
 db=database("dfs://rangedb1", RANGE,  0.0 5.0 10.0)
 ```
@@ -210,7 +211,7 @@ The data type DOUBLE can't be used for a partition column
 
 分区字段应当在业务中，特别是数据更新的任务中有重要相关性。譬如在证券交易领域，许多任务都与股票交易日期或股票代码相关，因此以这两个字段来分区比较合理。更新数据库时，DolphinDB的事务机制（在5.2中会提到）不允许多个writer的事务在分区上有重叠。鉴于经常需要对某个交易日或某只股票的数据进行更新，若采用其它分区字段（例如交易时刻），有可能造成多个writer同时对同一分区进行写入而导致问题。
 
-一个分区字段相当于给数据表建了一个物理索引。如果查询时用到了该字段做数据过滤，SQL引擎就能快速定位需要的数据块，而无需对整表进行扫描，从而大幅度提高处理速度。因此，分区字段应当选用查询和计算时经常用到的过滤字段。
+一个分区字段相当于数据表的一个物理索引。如果查询时用到了该字段做数据过滤，SQL引擎就能快速定位需要的数据块，而无需对整表进行扫描，从而大幅度提高处理速度。因此，分区字段应当选用查询和计算时经常用到的过滤字段。
 
 
 #### 4.2 分区粒度不要过大
