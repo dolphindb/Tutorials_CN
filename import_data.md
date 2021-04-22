@@ -84,7 +84,7 @@ ints = rand(100, appendRows)
 symbols = take(string('A'..'Z'), appendRows)
 dates = take(dateRange, appendRows)
 floats = rand(float(100), appendRows)
-times = 00:00:00.000 + rand(60 * 60 * 24, appendRows)
+times = 00:00:00.000 + rand(60 * 60 * 24 * 1000, appendRows)
 t = table(ints as int, symbols as symbol, dates as date, floats as float, times as time)
 t.saveText(filePath)
 ```
