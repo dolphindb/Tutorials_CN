@@ -84,7 +84,7 @@ ints = rand(100, appendRows)
 symbols = take(string('A'..'Z'), appendRows)
 dates = take(dateRange, appendRows)
 floats = rand(float(100), appendRows)
-times = 00:00:00.000 + rand(86400000, appendRows)
+times = 00:00:00.000 + rand(60 * 60 * 24, appendRows)
 t = table(ints as int, symbols as symbol, dates as date, floats as float, times as time)
 t.saveText(filePath)
 ```
@@ -128,7 +128,7 @@ tb = database("dfs://dataImportCSVDB").loadTable("cycle")
 
 ## 3. 通过二进制文件导入
 
-对于二进制格式的文件，DolphinDB提供了2个函数用于导入：[readRecord!](https://www.dolphindb.cn/cn/help/readRecord.html)函数和[loadRecord](https://www.dolphindb.cn/cn/help/loadRecord.html)函数。二者的区别是，前者不支持导入字符串类型的数据，后者支持。下面通过2个例子分别介绍这两个函数的用法。
+对于二进制格式的文件，DolphinDB提供了2个函数用于导入：[`readRecord!`](https://www.dolphindb.cn/cn/help/readRecord.html)函数和[`loadRecord`](https://www.dolphindb.cn/cn/help/loadRecord.html)函数。二者的区别是，前者不支持导入字符串类型的数据，后者支持。下面通过2个例子分别介绍这两个函数的用法。
 
 - `readRecord!`函数
 
@@ -162,7 +162,7 @@ id date     time     last volume value ask1  ask_size1 bid1  bid_size1
 5  20190902 92349000 0    0      0     11.45 5100      11.45 5100
 ```
 
-导入以后的数据中，date列和time列的数据以数值形式存储，为了更直观地显示数据，可以使用[`temporalParse`](https://www.dolphindb.cn/cn/help/temporalParse.html)函数进行[日期和时间类型数据的格式](https://www.dolphindb.cn/cn/help/DataTimeParsingandFormat.html)转换。再使用`replaceColumn!`函数替换表中原有的列。具体如下所示。
+date列和time列的数据为INT类型。可以使用[`temporalParse`](https://www.dolphindb.cn/cn/help/temporalParse.html)函数进行[日期和时间类型数据的格式](https://www.dolphindb.cn/cn/help/DataTimeParsingandFormat.html)转换，再使用`replaceColumn!`函数替换表中原有的列。
 
 ```
 tb.replaceColumn!(`date, tb.date.string().temporalParse("yyyyMMdd"))
@@ -202,8 +202,7 @@ tmp=loadRecord(dataFilePath, schema)
 tb=select code,date,time,last,volume,value,ask1,ask_size1,bid1,bid_size1 from tmp;
 ```
 
-查看表内数据的前5行。
-
+查看表内数据的前5行：
 ```
 select top 5 * from tb;
 
@@ -216,8 +215,7 @@ code      date     time     last volume value ask1  ask_size1 bid1  bid_size1
 601177.SH 20190902 92349000 0    0      0     11.45 5100      11.45 5100
 ```
 
-用同样的方法处理日期和时间列的数据：
-
+处理日期和时间列的数据：
 ```
 tb.replaceColumn!(`date, tb.date.string().temporalParse("yyyyMMdd"))
 tb.replaceColumn!(`time, tb.time.format("000000000").temporalParse("HHmmssSSS"))
