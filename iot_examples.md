@@ -6,7 +6,7 @@
     - [1.1 安装部署单节点服务](#11-安装部署单节点服务)
 	- [1.2 测试GUI和Web连接](#12-测试gui和web连接)
     - [1.3 使用脚本建库建表](#13-使用脚本建库建表)
-	- [1.4 数据库读写](#14-数据库读写)
+	- [1.4 数据库增删改查](#14-数据库增删改查)
 	- [1.5 Grafana连接DolphinDB](#15-grafana连接dolphindb)
 	- [1.6 DolphinDB与其他数据库异同点小结](#16-dolphindb与其他数据库异同点小结)
 - [2. 分布式数据库设计和测试](#2-分布式数据库设计和测试)
@@ -52,8 +52,8 @@
 
 下载后，请参照[单节点部署教程](./standalone_server.md)部署DolphinDB。以Linux系统为例，步骤如下：
 ```
- wget  https://www.dolphindb.com/downloads/DolphinDB_Linux64_V1.20.3.zip
- unzip DolphinDB_Linux64_V1.20.3.zip -d dolphindb
+ wget  https://www.dolphindb.com/downloads/DolphinDB_Linux64_V1.30.7.zip
+ unzip DolphinDB_Linux64_V1.30.7.zip -d dolphindb
  cd dolphindb/server
  chmod +x dolphindb
  ./dolphindb
@@ -68,8 +68,8 @@ localSite=localhost:8900:local8900
 ![image](images/iotExam/serverStarted.png?raw=true)
 
 > 注意：
-- 上述命令中DolphinDB_Linux64_V1.20.3.zip表明下载的是1.20.3版本，若是其他版本，请修改文件名中的版本号。 
-- 上述命令中采用前台运行的方式，若要后台运行，修改`./dolphindb`命令为`nohup ./dolphindb -console 0 &`，然后用命令`ps aux | grep dolphindb`查看dolphindb进程是否已启动。若启动失败，请打开安装目录下的日志文件dolphindb.log，查看日志中的错误提示信息。
+- 上述命令中DolphinDB_Linux64_V1.30.7.zip表明下载的是1.30.7版本，若是其他版本，请修改文件名中的版本号。 
+- 上述命令中采用前台运行的方式，若要后台运行，修改`./dolphindb`命令为`nohup ./dolphindb -console 0 &`或`sh startSingle.sh`，然后用命令`ps aux | grep dolphindb`查看dolphindb进程是否已启动。若启动失败，请打开安装目录下的日志文件dolphindb.log，查看日志中的错误提示信息。
 - 数据文件默认存放在<DolphinDB安装包>/server/local8848/storage/CHUNKS。请选择容量较大的磁盘存放数据文件，并通过参数volumes配置数据文件存放目录。
 - DolphinDB通过参数maxMemSize设置节点的最大内存使用量，默认设置为0，表示内存使用没有限制。内存对于改进节点的计算性能非常明显，尽可能高配，但也不能设置太大。例如一台机器内存为16GB，并且只部署1个节点，建议将该参数设置为12GB左右。否则使用内存接近或超过实际物理内存，有可能会触发操作系统强制关闭进程。如果在数据库使用过程中发生奔溃，可以用`dmesg -T  | grep dolphindb`查看一下Linux日志，确认一下是否被操作系统kill。
 - 其他配置项请参见[用户手册](https://www.dolphindb.cn/cn/help/StandaloneSetup.html)。修改配置后，需要重启DolphinDB服务。前台用`quit`命令退出，后台用`kill -9 <进程号>`退出。
@@ -240,11 +240,11 @@ loadTable("dfs://iot","machines").schema().colDefs
 
 有关数据库操作更详细的说明，请参阅用户手册中[数据库操作](https://www.dolphindb.cn/cn/help/DatabaseOperation.html)。
 
-### 1.4 数据库读写
+### 1.4 数据库增删改查
 
 分布式表(DFS table)不支持使用`insert into`插入数据，仅支持使用[`append!`](https://www.dolphindb.cn/cn/help/append1.html)或[`tableInsert`](https://www.dolphindb.cn/cn/help/tableInsert.html)函数插入数据。即使只插入一条数据，也要用表的形式来表示新增的数据。插入数据的代码示例如下，其中自定义函数`genData`输入设备编号集，开始时间和每台设备记录数，返回一个包含所有模拟记录的内存表。
 
-下面首先为1000个设备产生1小时的数据，然后举例说明如何查询数据库：
+下面首先为1000个设备产生1小时的数据，然后举例说明如何查询、修改和删除数据库记录：
 ```
 def genData(uniqueMachineId, startDateTime, freqPerMachine){
 	numMachines = size(uniqueMachineId)
@@ -331,6 +331,17 @@ Time elapsed: 9.52 ms
 ```
 这里打印了2个时间。第一个时间9.52 ms是`timer`返回的时间，为这个查询在服务器上运行耗费的时间；第二个时间46 ms则是从脚本命令发送到接收返回结果的整个过程花费的时间，两者之差为序列化/反序列化和网络传输的耗时。类似select * from table即返回整个数据集到GUI这样的查询语句，若数据量特别大，序列化/反序列化和网络传输的耗时可能会远远超过在服务器上运行的耗时。
 
+**从1.30.6版本起，DolphinDB支持使用SQL update和delete语句修改分布式表（包括维度表和分区表）**。
+
+例5. 更新设备1在2020.10.05T00:00:00时间点tag1值为1.0：
+```
+update machines set tag1 = 1.0  where machineId=1 and datetime=2020.10.05T00:00:00
+```
+例6. 删除设备1在2020.10.05T00:00:01时间点的记录：
+```
+delete from machines  where machineId=1 and datetime=2020.10.05T00:00:01
+```
+
 ### 1.5  Grafana连接DolphinDB
 
 DolphinDB提供了标准协议的SQL查询接口，与第三方分析可视化系统如Grafana、Redash和帆软等可轻松实现集成与对接。本节以Grafana为例，介绍DolphinDB与第三方可视化系统的连接与展示。
@@ -375,8 +386,6 @@ login('admin', '123456'); select gmtime(timestamp(datetime)) as time_sec, tag1  
 ### 1.6 DolphinDB与其他数据库异同点小结
 
 物联网历史数据有可能达到几百TB甚至PB级别。传统的关系型数据库（如Oracle，SQL Server，MySQL等）受到行式存储和数据索引的限制，处理如此量级数据的性能非常低下，即使分库分表，效果也不理想。DolphinDB采用了分区机制，可以轻松应对PB级别的海量数据。DolphinDB通过数据分区而不是索引的方式来快速定位数据，适合海量数据的存储，检索和计算。在数据量不是非常大时，创建索引可以显著提高系统的性能，但在海量数据场景下，随着数据量的不断增加，索引会不断膨胀（需要占用的内存甚至可能超过了服务器的内存），反而导致系统性能下降。
-
-关系型数据库解决增删改查四个问题，而DolphinDB主要解决万亿级结构化数据的增查算三个问题。DolphinDB目前不支持交易型场景需要的单条记录修改和删除功能。如果用户需要删除或修改单条记录，只能以分区为单位进行删除和修改。DolphinDB近期将推出多存储引擎模型，支持单行更新和删除的功能。目前DolphinDB提供了DataX-Writer工具，可以方便地在关系型数据库和DolphinDB之间进行数据同步，也内置了对分区级别的数据进行同步更新的功能。具体请参阅[基于DataX的DolphinDB数据导入工具](https://github.com/dolphindb/datax-writer) 。
 
 DolphinDB将分布式数据库、分布式计算和编程语言从底层进行一体化设计，这种设计使得DolphinDB可以一站式轻量化的解决海量大数据的存储与计算。但是，引用数据库和表时，因为可能会与脚本中的变量名发生冲突，所以不能直接使用数据库或表名，必须使用[`loadTable`](https://www.dolphindb.cn/cn/help/loadTable.html)函数先加载数据表。
 
@@ -769,7 +778,16 @@ update t set value=value.ffill()
 
 例2：查询一段时间内每分钟的平均值，如果某一分钟内没有原始数据，需要插值。
 
-用下面代码插值后，可得到2020.09.01这一天每分钟的数据，插值的方式用了线性插值：
+DolphinDB从1.30.7版本起在group by子句中引入了dummy函数`interval(X, duration, fill)`来实现插值功能，fill的方式有5种，分别是：prev，缺失值使用前一个值填充；post， 缺失值使用后一个值填充；linear，缺失值使用线性插值填充（注意如果列是非数值列，则无法使用线性插值填充，这种情况下会回退到使用prev的方式填充）；null， 缺失值使用null值填充；numericValue，以一个指定的numeric值来填充。例子如下，插值的方式用了线性插值：
+
+```
+select avg(value)  as value 
+from sensors 
+where id = 1 and date(datetime)=2020.09.01 group by id, interval(datetime, 1m, "linear")
+```
+
+> 注意：1.30.7前的版本，要用下面的方法实现，先生成时间戳表做为左表，然后用lsj连接：
+
 ```
 timeRange = 2020.09.01T00:00:00+(0..1439)*60
 t = table(timeRange as time,take(1,size(timeRange)) as id)
