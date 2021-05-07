@@ -1,4 +1,5 @@
 # 流数据教程
+
 实时流处理是指将业务系统产生的持续增长的动态数据进行实时的收集、清洗、统计、入库，并对结果进行实时的展示。在金融交易、物联网、互联网/移动互联网等应用场景中，复杂的业务需求对大数据处理的实时性提出了极高的要求。面向静态数据表的传统计算引擎无法胜任流数据领域的分析和计算任务。
 
 DolphinDB内置的流数据框架支持流数据的发布、订阅、预处理、实时内存计算、复杂指标的滚动窗口计算等，是一个运行高效，使用便捷的流数据处理框架。
@@ -9,7 +10,7 @@ DolphinDB内置的流数据框架支持流数据的发布、订阅、预处理�
 - 天然具备流表对偶性，支持使用SQL语句进行数据注入和查询分析。
 
 DolphinDB流数据处理系统提供了多种方便的功能，例如：
-- 内置时间序列及横截面聚合引擎
+- 内置流数据时间序列、横截面、异常检测、响应式状态引擎
 - 高频交易数据回放
 - 流数据过滤
 
@@ -18,7 +19,7 @@ DolphinDB流数据处理系统提供了多种方便的功能，例如：
 - [1 流程图及相关概念](#1-流程图及相关概念)
     - [1.1 流数据表](#11-流数据表)
     - [1.2 发布和订阅](#12-发布和订阅)
-    - [1.3 实时聚合引擎](#13-实时聚合引擎)
+    - [1.3 流数据引擎](#13-流数据引擎)
 - [2 核心功能](#2-核心功能)
     - [2.1 流数据发布](#21-流数据发布)
     - [2.2 流数据订阅](#22-流数据订阅)
@@ -44,33 +45,35 @@ DolphinDB流数据模块采用发布-订阅-消费的模式。流数据首先注
 
 上图展示了DolphinDB的流数据处理框架。把实时数据注入到发布节点流数据表后，发布的数据可同时供多方订阅消费：
 - 可由数据仓库订阅并保存，作为分析系统与报表系统的数据源。
-- 可由聚合引擎订阅，进行聚合计算，并将聚合结果输出到流数据表。聚合结果既可以由Grafana等平台进行实时展示，也可以作为数据源再次发布，供二次订阅做事件处理。
+- 可由流数据计算引擎订阅，进行计算，并将结果输出到流数据表。计算结果既可以由Grafana等平台进行实时展示，也可以作为数据源再次发布，供二次订阅做事件处理。
 - 可由API订阅，例如第三方的Java应用程序可以通过Java API订阅流数据进行业务操作。
 
 ### 1.1 流数据表
-流数据表是一种特殊的内存表，用以存储及发布流数据。流数据表支持同时读写，只能添加记录，不可修改或删除记录。发布一条消息等价于向流数据表插入一条记录。可使用SQL语句对流数据表进行查询和分析。
+
+流数据表是一种特殊的内存表，用以存储及发布流数据。与普通内存表不同，流数据表支持同时读写，且只能添加记录，不可修改或删除记录。数据源发布一条消息等价于向流数据表插入一条记录。与普通内存表相同，可使用SQL语句对流数据表进行查询和分析。
 
 ### 1.2 发布与订阅
-采用经典的发布订阅模式。每当有新的流数据写入时，发布方会通知所有的订阅方处理新的流数据。数据节点使用`subscribeTable`函数来订阅流数据。
+
+采用经典的发布订阅模式。每当有新的流数据注入负责发布消息的流数据表时，会通知所有的订阅方处理新的流数据。数据节点使用`subscribeTable`函数来订阅流数据。
 
 ### 1.3 流数据计算引擎
 
-流数据计算引擎指的是专门用于处理流数据实时计算和分析的模块。DolphinDB提供`createTimeSeriesAggregator`、`createCrossSectionalEngine `、`createSessionWindowEngine` 、`createAnomalyDetectionEngine` 、`createReactiveStateEngine`函数创建流数据计算引擎对流数据做实时计算，并且将计算结果持续输出到指定的数据表中。关于如何使用聚合引擎请参考[流数据聚合引擎](stream_aggregator.md)。
+流数据计算引擎是专门用于处理流数据实时计算和分析的模块。DolphinDB提供[`createTimeSeriesEngine`](stream_aggregator.md), `createAnomalyDetectionEngine`, `createReactiveStateEngine`, `createCrossSectionalEngine `, `createSessionWindowEngine`等函数创建流数据计算引擎对流数据进行实时计算，并将计算结果持续输出到指定的数据表中。
 
 ## 2 核心功能
 
-要开启支持流数据功能的模块，必须对发布节点指定maxPubConnections配置参数，对订阅节点指定subPort配置参数。以下为所有流数据相关配置参数。
+要开启支持流数据功能的模块，必须对发布节点指定maxPubConnections配置参数，并对订阅节点指定subPort配置参数。以下为所有流数据相关配置参数。
 
-对于发布节点需要的配置参数：
+发布节点的配置参数：
 
 - maxPubConnections: 发布节点可以连接的订阅节点数量上限，默认值为0。只有指定maxPubConnections为正整数后，该节点才可作为发布节点。
-- persistenceDir: 保存共享的流数据表的文件夹路径。若需要保存流数据表，必须指定该参数。
+- persistenceDir: 保存发布消息的流数据表的文件夹路径。若需要保存流数据表，必须指定该参数。所有生产环境中都强烈推荐设定此参数。若不设定此参数，随着消息的积累，内存会最终耗尽。
 - persistenceWorkerNum: 负责以异步模式保存流数据表的工作线程数。默认值为0。
 - maxPersistenceQueueDepth: 以异步模式保存流数据表时消息队列的最大深度（记录数量）。默认值为10,000,000。
 - maxMsgNumPerBlock: 发布消息时，每个消息块中最多可容纳的记录数量。默认值为1024。
 - maxPubQueueDepthPerSite: 发布节点消息队列的最大深度（记录数量）。默认值为10,000,000。
 
-对于订阅节点需要的配置参数：
+订阅节点的配置参数：
 
 - subPort: 订阅线程监听的端口号，默认值为0。只有指定该参数后，该节点才可作为订阅节点。
 - subExecutors: 订阅节点中消息处理线程的数量。默认值为0，表示解析消息线程也处理消息。
@@ -80,14 +83,14 @@ DolphinDB流数据模块采用发布-订阅-消费的模式。流数据首先注
 
 ### 2.1 流数据发布
 
-使用`streamTable`函数定义一个流数据表，向其写入数据即意味着发布数据。对每一个发布端，通常会有多个会话中的多个订阅端同时订阅，所以必须使用`share`命令将流数据表共享后才可发布流数据。不被共享的流数据表无法发布流数据。
+使用`streamTable`函数定义一个流数据表。实时数据写入该表后，向所有订阅端发布。由于通常有多个会话中的多个订阅端订阅同一个发布端，所以必须使用`share`命令将流数据表在所有会话中共享后才可发布流数据。未被共享的流数据表无法发布流数据。
 
 定义并共享流数据表pubTable：
 ```
 share streamTable(10000:0,`timestamp`temperature, [TIMESTAMP,DOUBLE]) as pubTable
 ```
 
-`streamTable`函数创建的流数据表是可以包含重复值的。如果要创建包含主键的流数据表，可以使用`keyedStreamTable`函数。
+`streamTable`函数创建的流数据表是可以包含重复记录的。如果要创建包含主键的流数据表，可以使用`keyedStreamTable`函数。包含主键的流数据表中，一旦写入某键值的数据，后续相同键值的数据不会写入此流数据表，将被丢弃。
 
 ```
 share keyedStreamTable(`timestamp, 10000:0,`timestamp`temperature, [TIMESTAMP,DOUBLE]) as pubTable
@@ -95,43 +98,41 @@ share keyedStreamTable(`timestamp, 10000:0,`timestamp`temperature, [TIMESTAMP,DO
 
 ### 2.2 流数据订阅
 
-订阅数据通过[`subscribeTable`](https://www.dolphindb.cn/cn/help/subscribeTable.html)函数来实现。
+订阅流数据通过[`subscribeTable`](https://www.dolphindb.cn/cn/help/subscribeTable.html)函数来实现。
 ```
 subscribeTable([server],tableName,[actionName],[offset=-1],handler,[msgAsTable=false],[batchSize=0],[throttle=1],[hash=-1],[reconnect=false],[filter],[persistOffset=false],[timeTrigger=false],[handlerNeedMsgId=false)
 ```
 参数说明：
 
-- 只有tableName和handler两个参数是必需的。其他所有参数都是可选参数。
+- 只有tableName和handler两个参数是必需的，其它所有参数均为可选参数。
 
 - server 为字符串，表示流数据所在服务器的别名或远程连接handle。如果未指定或者为空字符串，表示流数据所在服务器是本地实例。
 
-实际情况中，发布者与订阅者所在节点的关系有以下三种可能。下面的例子解释这三种情况下的server参数应当如何设置：
+实际情况中，发布者与订阅者所在节点的关系有以下三种可能。这三种情况下的server参数设置分别为：
 
-1. 发布者与订阅者是同一节点，均为本地实例：参数"server"不设置或使用空字符串。
+1. 发布者与订阅者是同一节点，均为本地实例：参数server不设置或使用空字符串。
 ```
 subscribeTable(tableName="pubTable", actionName="act1", offset=0, handler=subTable, msgAsTable=true)
 ```
-2. 发布者与订阅者是同一集群内的不同节点：参数"server"使用发布节点别名。
+2. 发布者与订阅者是同一集群内的不同节点：参数server使用发布节点别名。
 ```
 subscribeTable(server="NODE2", tableName="pubTable", actionName="act1", offset=0, handler=subTable, msgAsTable=true)
 ```
-3. 发布者与订阅者不在同一个集群内：参数"server"使用发布节点的远程连接handle。
+3. 发布者与订阅者不在同一个集群内：参数server使用发布节点的远程连接handle。
 ```
 pubNodeHandler=xdb("192.168.1.13",8891)
 subscribeTable(server=pubNodeHandler, tableName="pubTable", actionName="act1", offset=0, handler=subTable, msgAsTable=true)
 ```
 - tableName：被订阅的流数据表名。该表必须为共享的流数据表。
 ```
-share streamTable(10000:0,`ts`temp, [TIMESTAMP,DOUBLE]) as subTable
 subscribeTable(tableName="pubTable", actionName="act1", offset=0, handler=subTable, msgAsTable=true)
 ```
-- actionName：一个字符串，表示订阅任务的名称。同一份流数据可以被多项任务订阅消费，既可用于实时聚合运算，亦可存储到数据仓库供第三方应用做批处理。如果一个节点有多个订阅均订阅了同一张表，必须指定actionName。
+- actionName：一个字符串，表示订阅任务的名称。同一份流数据可以被多项任务订阅消费，既可用于实时运算，亦可存储到数据仓库供第三方应用做批处理。如果一个节点有多个订阅均订阅了同一张表，必须指定actionName。
 ```
-share streamTable(10000:0,`ts`temp, [TIMESTAMP,DOUBLE]) as subTable
 topic1 = subscribeTable(tableName="pubTable", actionName="realtimeAnalytics", offset=0, handler=subTable, msgAsTable=true)
 topic2 = subscribeTable(tableName="pubTable", actionName="saveToDataWarehouse", offset=0, handler=subTable, msgAsTable=true)
 ```
-`subscribeTable`函数的返回值是订阅主题，它是订阅表所在节点的别名、流数据表名称和订阅任务名称（如果指定了actionName）的组合，使用"/"分隔。如果订阅主题已经存在，函数将会抛出异常。若当前节点别名为NODE1，上述例子返回的两个topic内容如下:
+`subscribeTable`函数的返回值是订阅主题，它是订阅表所在节点的别名、流数据表名称和订阅任务名称（如果指定了actionName）的组合，使用"/"分隔。若当前节点别名为NODE1，上述例子返回的两个topic内容如下:
 
 topic1:
 ```
@@ -141,7 +142,9 @@ topic2:
 ```
 NODE1/pubTable/saveToDataWarehouse
 ```
-- offset：订阅任务从流数据表的哪一行开始。如果未指定或设为-1，订阅将会从未来的新数据开始。如果offset=-2，系统会自动获取持久化到磁盘上的offset，并从该位置开始订阅。offset的值永远与流数据表创建时的第一行对应，如果某些行因为内存限制被删除，在决定订阅开始的位置时，这些行仍然考虑在内。
+如果订阅主题已经存在，将抛出异常。
+
+- offset：订阅任务从流数据表的哪一行开始。如果未指定或设为-1，订阅将会从未来的新数据开始。如果offset=-2，系统会自动获取持久化到磁盘上的offset，并从该位置开始订阅。offset的值永远与流数据表创建时的第一行对应。如果某些行因为内存限制被删除，在决定订阅开始的位置时，这些行仍然考虑在内。
 
 下例说明offset的作用。向pubTable写入100行数据，建立两个订阅：
 ```
@@ -156,7 +159,7 @@ topic2 = subscribeTable(tableName="pubTable", actionName="act2", offset=50, hand
 ```
 从结果可以看到，subTable1没有数据，而subTable2有50条数据。当offset为-1时，只有当新数据进入发布表时才能订阅到数据。
 
-- handler：一元函数或数据表。若为函数，用于处理订阅数据，其唯一的参数是订阅的数据。订阅的数据可以以数据表或元组（订阅数据表的每个列是元组的一个元素）的形式注入handler。由于经常需要把订阅数据插入到数据表，为了方便使用，handler也可以是一个数据表，订阅数据可以直接插入到该表中。
+- handler：一元函数或数据表。若为函数，用于处理订阅数据，其唯一的参数是订阅的数据。订阅的数据可以以数据表或元组（订阅数据表的每个列是元组的一个元素）的形式注入handler。由于经常需要把订阅数据插入到数据表，为了方便使用，handler也可以是一个数据表，订阅数据直接插入到该表中。
 
 下例展示handler的两种用法。在act1订阅中，直接把订阅数据写入subTable1；在act2订阅中，订阅数据通过自定义函数myHandler进行过滤后写入subTable2。
 ```
@@ -175,7 +178,7 @@ vtimestamp = 1..10
 vtemp = 2.0 2.2 2.3 2.4 2.5 2.6 2.7 0.13 0.23 2.9
 tableInsert(pubTable,vtimestamp,vtemp)
 ```
-从结果可以看到pubTable写入10条数据，subTable1全部接收了，而subTable2接收到9条数据，因为myhandler过滤掉了vtemp = 0.13这一条数据。
+从结果可以看到写入pubTable10条数据，subTable1全部接收了；而subTable2接收到9条数据，因为myhandler过滤掉了vtemp = 0.13这一条数据。
 
 - msgAsTable：布尔值，表示订阅的数据以何种形式进入handler。若设为true，表示订阅的数据以table的形式注入handler，可使用SQL语句处理。默认值是false，表示订阅的数据是由列组成的元组。
 
@@ -219,9 +222,7 @@ print size(subTable1)
 
 - throttle：一个浮点数，表示继上次handler处理消息之后，若batchSize条件一直未达到，多久后再次处理消息。以秒为单位，默认值为1。如果没有指定batchSize，throttle即使指定，也不起作用。若throttle小于配置参数subThrottle/1000，throttle的效果等同于其被指定为subThrottle/1000。
 
-handler处理一条数据与批量处理多条（例如1000条）数据的耗时差别很小。若每一条数据注入handler时都要处理一次，在写入速度极高的情况下有可能导致数据消费能力慢于数据写入速度，不仅不能及时处理所有数据，而且会造成数据不断堆积在订阅端缓冲区而耗光内存。合理设置batchSize与throttle参数，可通过调整handler处理消息的频率以提升吞吐量。
-
-batchSize与throttle参数用于数据缓冲。当流数据的写入频率非常高，以致数据消费能力跟不上数据写入的速度时，需要在订阅端进行流量控制，否则订阅端缓冲区会堆积数据并很快耗光内存。可以根据订阅端的消费速度设定throttle参数，定时将数据导入订阅端，保障订阅端的缓冲区数据量稳定。
+handler处理一条数据与批量处理多条（例如1000条）数据的耗时差别很小。若每一条数据注入handler时都要处理一次，在写入速度极高的情况下有可能导致数据消费能力慢于数据写入速度，不仅不能及时处理所有数据，而且会造成数据不断堆积在订阅端缓冲区而耗光内存。合理设置batchSize与throttle参数，可通过调整handler处理消息的频率，以提升吞吐量。
 
 - hash：一个非负整数，指定某个订阅线程处理消息。如果没有指定该参数，系统会自动分配一个线程。若需要在多个订阅的处理过程中保持消息数据的同步，可以将多个订阅的hash值设置为相同，这样就能使用同一个线程来同步处理多个数据源，不会出现数据处理有先后而导致结果误差。
 
@@ -246,9 +247,9 @@ DolphinDB的流数据订阅提供了自动重连的功能。如果要启用自�
 
 ### 2.4 发布端数据过滤
 
-发布端可以过滤数据，只发布符合条件的数据。使用`setStreamTableFilterColumn`指定流数据表的过滤列，过滤列的值在filter中的数据会发布到订阅端，不在filter指定值中的数据不会发布。filter可以是值，范围(从1.30.3开始)，哈希(从1.30.3开始)。目前仅支持对一个列进行过滤。例如，发布端上的流数据表trades只发布symbol为IBM或GOOG的数据：
+发布端可以过滤数据，只发布符合条件的数据。使用`setStreamTableFilterColumn`指定流数据表的过滤列（目前仅支持对一个列进行过滤），过滤列的值在filter中的数据会发布到订阅端，不在filter指定值中的数据不会发布。有关filter参数的介绍请见2.2小节。
 
-值过滤用一个vector表示。
+下例中，值过滤的filter值是一个向量。发布端上的流数据表trades只发布symbol为IBM或GOOG的数据。
 
 ```
 share streamTable(10000:0,`time`symbol`price, [TIMESTAMP,SYMBOL,INT]) as trades
@@ -260,7 +261,7 @@ filter=symbol(`IBM`GOOG)
 subscribeTable(tableName="trades", actionName="trades_1", handler=append!{trades_1}, msgAsTable=true, filter=filter)
 ```
 
-范围过滤用一个pair表示，end值不包括。
+范围过滤的filter值是一个数据对：
 
 ```
 share streamTable(10000:0,`time`symbol`price, [TIMESTAMP,SYMBOL,INT]) as trades
@@ -270,7 +271,7 @@ trades_1=table(10000:0,`time`symbol`price, [TIMESTAMP,SYMBOL,INT])
 subscribeTable(tableName="trades", actionName="trades_1", handler=append!{trades_1}, msgAsTable=true, filter=1:100)
 ```
 
-哈希过滤用一个tuple表示，第一个元素是bucket的个数，第二个元素是一个scalar或pair，scalar表示bucket的索引（从零开始），pair表示bucket的索引的范围，end值不包括。
+哈希过滤的filter值是一个元组：
 
 ```
 share streamTable(10000:0,`time`symbol`price, [TIMESTAMP,SYMBOL,INT]) as trades
@@ -377,7 +378,7 @@ DolphinDB提供了`replay`函数，可以将历史数据按照时间顺序导入
 
 ## 4 流数据API
 
-流数据的消费者可能是DolphinDB本身的聚合引擎，也可能是第三方的消息队列或者第三方程序。DolphinDB提供了streaming API供第三方程序来订阅流数据。当有新数据进入时，API的订阅者能够及时的接收到通知，这使得DolphinDB的流数据框架可与第三方的应用进行深入的整合。
+流数据的消费者可能是DolphinDB内置的计算引擎，也可能是第三方的消息队列或者第三方程序。DolphinDB提供了streaming API供第三方程序来订阅流数据。当有新数据注入时，API的订阅者能够及时接收到通知，这使得DolphinDB的流数据框架可与第三方的应用进行深入的整合。
 
 ### 4.1 Java API
 
