@@ -59,6 +59,7 @@
     - [redash连接DolphinDB数据源的教程](data_interface_for_redash.md)
     - [DolphinDB整合前端chart组件展示数据教程](web_chart_integration.md)
     - [Grafana连接DolphinDB数据源](../../../grafana-datasource/blob/master/README_CN.md)
+    - [帆软报表软件连接DolphinDB数据源](FineReport_to_dolphindb.md)
     - [API交互协议](api_protocol.md)
     
 - 插件
@@ -95,6 +96,7 @@
     - [实时计算高频因子](hf_factor_streaming.md)
     - [DolphinDB教程：面板数据的处理](panel_data.md)
     - [金融高频因子的流批统一计算：DolphinDB响应式状态引擎](reactive_state_engine.md)
+    - [股票行情数据导入实例](stockdata_csv_import_demo.md)
 - 入门和测试
     - [DolphinDB入门：量化金融范例](quant_finance_examples.md)
     - [DolphinDB入门：物联网范例](iot_examples.md)

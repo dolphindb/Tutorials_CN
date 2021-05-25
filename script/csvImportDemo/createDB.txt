@@ -1,0 +1,22 @@
+login("admin","123456")
+
+def createDB(dbName,tableName){	
+	if(existsDatabase(dbName))
+		dropDatabase(dbName)
+	dbDate = database("", VALUE, 2020.01.01..2020.01.03)
+	dbSymbol=database("", HASH, [SYMBOL, 40])
+	db = database(dbName, COMPO, [dbDate, dbSymbol])	
+	
+	columns = `Symbol`Market`DateTime`Status`PreClose`Open`High`Low`Price`Volume`Amount`AskPrice1`AskPrice2`AskPrice3`AskPrice4`AskPrice5`AskPrice6`AskPrice7`AskPrice8`AskPrice9`AskPrice10`BidPrice1`BidPrice2`BidPrice3`BidPrice4`BidPrice5`BidPrice6`BidPrice7`BidPrice8`BidPrice9`BidPrice10`AskVolume1`AskVolume2`AskVolume3`AskVolume4`AskVolume5`AskVolume6`AskVolume7`AskVolume8`AskVolume9`AskVolume10`BidVolume1`BidVolume2`BidVolume3`BidVolume4`BidVolume5`BidVolume6`BidVolume7`BidVolume8`BidVolume9`BidVolume10`TickCount`BidOrderTotalVolume`AskOrderTotalVolume`AvgBidOrderPrice`AvgAskOrderPrice`LimitHighestPrice`LimitLowestPrice
+	type=[SYMBOL,SYMBOL,DATETIME,INT,DOUBLE,DOUBLE,DOUBLE,DOUBLE,DOUBLE,INT,DOUBLE,DOUBLE,DOUBLE,DOUBLE,DOUBLE,DOUBLE,DOUBLE,DOUBLE,DOUBLE,DOUBLE,DOUBLE,DOUBLE,DOUBLE,DOUBLE,DOUBLE,DOUBLE,DOUBLE,DOUBLE,DOUBLE,DOUBLE,DOUBLE,INT,INT,INT,INT,INT,INT,INT,INT,INT,INT,INT,INT,INT,INT,INT,INT,INT,INT,INT,INT,INT,INT,INT,DOUBLE,DOUBLE,DOUBLE,DOUBLE]
+	orderData = table(1:0, columns,type)
+	db.createPartitionedTable(orderData, tableName,`DateTime`Symbol)
+}
+
+dbName = "dfs://stocks_orderbook"
+tableName = "orderBook"
+createDB(dbName,tableName)
+
+orderBook=loadTable("dfs://stocks_orderbook",`orderBook)
+select top 10 * from orderBook
+select count(*) from loadTable("dfs://stocks_orderbook",`orderBook)
