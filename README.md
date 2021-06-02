@@ -43,6 +43,7 @@
     - [内存管理](memory_management.md)
     - [启动脚本教程](Startup.md)
     - [定时作业](scheduledJob.md)
+    - [使用Prometheus监控告警](DolphinDB_monitor.md)
 - API
     - [Python API使用教程](../../../api_python3/blob/master/README_CN.md)
     - [Java API使用教程](../../../api-java/blob/master/README_CN.md)
