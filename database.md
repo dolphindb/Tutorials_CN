@@ -88,6 +88,7 @@ select count(x) from pt;
 
 ![](images/database/range.png)
 
+范围分区创建后，可使用`addRangePartitions`函数来追加分区。细节参见用户手册。
 
 #### 3.2 哈希(HASH)分区
 
@@ -519,7 +520,7 @@ mr(ds=datasrc, mapFunc=writeDataTo{"dfs://db2","tb2"}, parallel=true)
 ```
 months=date(2010.01M..2021.01M)
 datasrc=repartitionDS(<select * from tb1>,`date,RANGE,months) //按月划分
-mr(ds=datasrc, mapFunc=writeDataTo{"dfs://db2","tb2"}, parallel=true)
+mr(ds=datasrc, mapFunc=writeDataTo{"dfs://db2","tb2"}, parallel=false)
 ```
 
 #### 6.2 复制DFS表
