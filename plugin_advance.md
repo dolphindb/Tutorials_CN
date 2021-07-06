@@ -203,9 +203,9 @@ ConstantSP subscribeTag(Heap *heap, vector<ConstantSP> &arguments) {
 
 #### 2.1.1 读取数据
 
-DolphinDB中的Vector有两种存储模式，一种是FastVector模式，数据存储在连续的内存块中；另一种是Big array模式，数据分段存储在多个不连续的内存中。一般而言，当Vector的大小超过1048576时，Vector会切换到Big array模式。因此大部分Vector都是Big array模式，数据存储在不连续的内存中，所以不建议直接使用数据的指针对数据进行操作，极容易出错。在编写插件时，最好使用以下介绍的几种接口对Vector中的数据进行读写。
+DolphinDB中的Vector是一个抽象的类，具有多种实现方式。最常见的是实现是常规数组（regular vector），数据存储在连续的内存块中。当使用Util::createVector函数创建一个Vector时，如果元素个数不超过1048576 （2^20) 时，返回的必定是连续存储的常规数组。为了避免由于内存碎片而找不到大块的连续内存，DolphinDB也提供了big array，数据分段存储在多个不连续的内存中，每段的元数个数是1048576 （2^20) 。除了上面常见的两种实现方式，还有诸如 repeating vector， sub vector等。
 
-下面以int类型为例，其他数据类型都有类似的接口：
+因此，要访问Vector的数据，除非明确知道Vector是FastVector模式（即isFastMode = true），否则不能直接使用数据的指针对数据进行操作。在编写插件时，最好使用以下介绍的几种接口对Vector中的数据进行读写。下面以int类型为例，其他数据类型都有类似的接口：
 
 ##### 2.1.1.1 int getInt(int index)
 
