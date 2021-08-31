@@ -20,15 +20,15 @@ controller => agent2 => 2 datanodes
 controller的配置文件
 ```bash
 $ cat controller.cfg
-localSite=10.5.0.5:8888:master
+$ localSite=10.5.0.5:8888:master
 ...
 ```
 agent配置文件，以agent1为例：
 ```bash
 $ cat agent1.cfg
-mode=agent
-localSite=10.5.0.2:8710:P1-agent,agent
-controllerSite=10.5.0.5:8888:master
+$ mode=agent
+$ localSite=10.5.0.2:8710:P1-agent,agent
+$ controllerSite=10.5.0.5:8888:master
 ```
 
 节点配置文件
@@ -62,7 +62,7 @@ $ docker-compose --version
 #### 1. 下载并编译 DophinDB docker集群部署包
 
 (1) 下载DolphinDB docker集群部署包
-  在Github可以[下载dolphindb docker部署包](docker/DolphinDB-Docker-Compose.zip)
+  在Github可以[下载dolphindb docker部署包](https://github.com/dolphindb/Tutorials_CN/blob/master/docker/DolphinDB-Docker-Compose.zip)
 
 (2) 生成DophinDB server 镜像文件
 
@@ -109,15 +109,16 @@ Creating ddbagent1     ... done
 
   通过上述步骤，已经完成了分布式集群的创建，启动和初始化工作，这里包含了一个controller容器和三个agent容器。 访问地址 http://localhost:8888/ 就可以访问集群管理web页面, 在集群管理界面全选并启动数据节点，最终界面如下：
 
-  ![image](images/docker/cluster_web.png?raw=true)
+  ![image](https://github.com/dolphindb/Tutorials_CN/blob/master/images/docker/cluster_web.png?raw=true)
 
 
 #### 4. 自定义docker集群
 
 如果需要对集群环境做一些自定义，请参考下表的信息修改对应的配置文件内容
-* 修改docker网络端口及IP配置，需修改`docker-compose.yml`文件，这里包含集群所有docker容器的配置及其启动参数
-* 需要自定义dolphindb集群本身的配置，修改 ./cfg/目录下各配置文件，简要介绍如下表，具体信息请参考[集群配置](https://www.dolphindb.cn/cn/help/index.html?ClusterSetup.html)
-  
+* 修改docker网络端口及IP配置，需修改`docker-compose.yml`文件，这里包含集群所有docker容器的配置及其启动参数。
+* 由于免费社区版license文件无法支持5个数据节点和1个控制器节点，请申请支持6个以上节点的企业版license，并将企业版 license 文件 dolphindb.lic 放到 ./cfg 文件目录下。
+* 需要自定义dolphindb集群本身的配置，修改 ./cfg/目录下各配置文件，简要介绍如下表，具体信息请参考[集群配置](https://www.dolphindb.cn/cn/help/DatabaseandDistributedComputing/Configuration/ClusterMode.html)
+
 文件名|简介|
   ---|---|
 controller.cfg|集群控制器的配置参数|
@@ -126,6 +127,7 @@ cluster.cfg|集群数据节点的配置参数|
 agent1.cfg|代理节点1配置参数|
 agent2.cfg|代理节点2配置参数|
 agent3.cfg|代理节点3配置参数|
+dolphindb.lic | 集群所有节点的企业版授权文件
 
 * 若需要新增容器及配置对应节点，需要修改如下几处
   * 参照 docker-compose.yml文件，增加容器ddbagentx, 容器配置信息可以参考其他agent的配置，在port和ip这里需要与其他容器错开，避免冲突。
@@ -160,3 +162,9 @@ apt-get install tzdata
 ```
 -v /etc:/dolphindb/etc 
 ```
+
+* docker启动后发现容器处于exit(1)状态，通过docker logs去查看容器信息报错
+```
+<ERROR> : standard_init_linux.go:219: exec user process caused: no such file or directory
+```
+解决方法：在Dockerbuild目录中的文件default_cmd 通过set ff查看，若得出fileformat=dos 请修改 set ff=unix
