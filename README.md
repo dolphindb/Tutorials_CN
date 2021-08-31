@@ -65,6 +65,7 @@
     
 - 插件
     - [插件开发教程](plugin_development_tutorial.md) 
+    - [插件开发深度解析](plugin_advance.md)
     - [AWS S3](../../../DolphinDBPlugin/blob/master/aws/README_CN.md)
     - [DolphinDB VSCode 插件](vscode_extension.md)
     - [Excel](../../..//excel-add-in)
