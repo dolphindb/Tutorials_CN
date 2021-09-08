@@ -15,7 +15,7 @@
     - [7.1 控制节点参数配置](#71-控制节点参数配置)
     - [7.2 增删数据节点](#72-增删数据节点)
     - [7.3 修改数据节点参数](#73-修改数据节点参数)
-    - [7.4 如何设置外网访问](#74-如何设置外网访问)
+    - [7.4 如何设置外网访问](#74-%E5%A6%82%E4%BD%95%E8%AE%BE%E7%BD%AE%E9%9B%86%E7%BE%A4%E7%AE%A1%E7%90%86%E5%99%A8%E9%80%9A%E8%BF%87%E5%A4%96%E7%BD%91%E8%AE%BF%E9%97%AE)
     - [7.5 设置数据卷](#75-设置数据卷)
 - [8 云部署](#8-云部署)
 
@@ -92,12 +92,13 @@ mkdir /DolphinDB/server/log
 ```txt
 localSite=10.1.1.7:8990:master
 localExecutors=3
-maxConnections=128
+maxConnections=512
 maxMemSize=16
 webWorkerNum=4
 workerNum=4
 dfsReplicationFactor=1
 dfsReplicaReliabilityLevel=0
+dataSync=1
 ```
 
 以下是对这些参数的解释
@@ -106,12 +107,13 @@ dfsReplicaReliabilityLevel=0
 |:------------- |:-------------|
 |localSite=10.1.1.7:8990:master|     节点局域网信息,格式为 IP地址:端口号:节点别名，所有字段都是必选项。|
 |localExecutors=3          |         本地执行者的数量。默认值是CPU的内核数量 - 1。|
-|maxConnections=128     |            最大向内连接数|
+|maxConnections=512     |            最大向内连接数|
 |maxMemSize=16          |            最大内存（GB）|
 |webWorkerNum=4              |       处理http请求的工作池的大小。默认值是1。|
 |workerNum=4        |                常规交互式作业的工作池大小。默认值是CPU的内核数量。|
 |dfsReplicationFactor=1         |    每个表分区或文件块的副本数量。默认值是2。|
 |dfsReplicaReliabilityLevel=0     |  多个副本是否可以保存在同一台物理服务器上。 0：是; 1：不。默认值是0。|
+|dataSync=1         |   数据库日志在事务提交前强制持久化到磁盘，cluster.cfg中chunkCacheEngineMemSize也需要配置。|
 
 #### 5.1.2 配置集群成员参数文件
 
@@ -133,14 +135,16 @@ localSite,mode
 
 #### 5.1.3 配置数据节点的参数文件
 
-在config目录下，创建cluster.cfg文件，并填写如下内容。cluster.cfg用于存放对集群中每个数据节点都适用的配置参数，用户可根据实际情况调整参数。
+在config目录下，创建cluster.cfg文件，并填写如下内容。cluster.cfg用于存放对集群中每个数据节点都适用的配置参数，用户可根据实际情况调整参数，每个参数的详细说明请参阅用户手册中[单实例参数配置](https://www.dolphindb.cn/cn/help/DatabaseandDistributedComputing/Configuration/StandaloneMode.html)。
 
 ```txt
-maxConnections=128
+maxConnections=512
 maxMemSize=32
 workerNum=8
 localExecutors=7
 webWorkerNum=2
+newValuePartitionPolicy=add
+chunkCacheEngineMemSize=1
 ```
 
 ### 5.2 配置代理节点
@@ -319,7 +323,7 @@ startDataNode(["P1-NODE1", "P2-NODE1","P3-NODE1","P5-NODE1"])
 4. 集群默认情况下是采用UDP发送心跳，**若发现agent节点进程已经启动了，但是集群web界面上显示不在线**，那就应该是集群网络不支持UDP包，需要将心跳机制改为TCP方式发送: 在agent.cfg和cluster.cfg文件中加上配置项lanCluster=0。
 5. **集群成员配置文件cluster.nodes第一行为空行**。查看log文件，如果log文件中出现错误信息"Failed to load the nodes file [XXXX/cluster.nodes] with error: The input file is empty."，表示cluster.nodes的第一行为空行，这种情况下只需将文件中的空行删除，再重新启动节点即可。
 6. **宏变量\<ALIAS>在明确节点的情况下使用无效**。查看配置文件cluster.cfg，若在明确了节点的情况下使用宏变量\<ALIAS>，如： P1-NODE1.persistenceDir = /hdd/hdd1/streamCache/\<ALIAS>, 则会导致该节点无法正常启动。这种情况下只需要把\<ALIAS>删除，替换成特定节点即可，如：P1-NODE1.persistenceDir = /hdd/hdd1/streamCache/P1-NODE1; 
-若想对所有节点使用宏变量, 则做如下修改：persistenceDir = /hdd/hdd1/streamCache/\<ALIAS>。 宏变量的具体使用可详情参照[DolphinDB用户手册](https://www.dolphindb.cn/cn/help/index.html?ClusterSetup1.html)
+若想对所有节点使用宏变量, 则做如下修改：persistenceDir = /hdd/hdd1/streamCache/\<ALIAS>。 宏变量的具体使用可详情参照[DolphinDB用户手册](https://www.dolphindb.cn/cn/help/DatabaseandDistributedComputing/Configuration/ClusterMode.html)
 
 ## 7. 基于Web的集群管理
 
@@ -327,7 +331,7 @@ startDataNode(["P1-NODE1", "P2-NODE1","P3-NODE1","P5-NODE1"])
 
 ### 7.1 控制节点参数配置
 
-点击"Controller Config"按钮会弹出一个控制界面，这里的localExectors, maxConnections, maxMemSize, webWorkerNum以及workerNum等参数是我们在3.1.1中创建controller.cfg时填写的。这些配置信息都可以在这个界面上更改，新的配置会在重启控制节点之后生效。注意如果改变控制节点的localSite参数值，一定要在所有agent.cfg中对controllerSite参数值应做相应修改，否则会造成集群无法正常运行。
+点击"Controller Config"按钮会弹出一个控制界面，这里的localExectors, maxConnections, maxMemSize, webWorkerNum以及workerNum等参数是我们在3.1.1中创建controller.cfg时填写的。这些配置信息都可以在这个界面上更改，新的配置会在重启控制节点之后生效。注意如果改变控制节点的localSite参数值，一定要在所有agent.cfg中对controllerSite参数值应做相应修改，否则会造成集群无法正常运行。对于高可用集群，建议通过web接口修改配置项，web端会自动同步到集群中的所有配置文件。
 
 ![controller配置](images/multi_controller_config.JPG)
 
@@ -425,5 +429,5 @@ DolphinDB集群可以部署在局域网内，也可以部署在私有云或公�
 
 更多详细信息，请参考DolphinDB帮助文档第10章
 
-- [中文](https://www.dolphindb.cn/cn/help/ClusterSetup.html)
-- [英文](http://www.dolphindb.com/help/ClusterSetup.html)
+- [中文](https://www.dolphindb.cn/cn/help/DatabaseandDistributedComputing/Configuration/index.html)
+- [英文](https://www.dolphindb.com/help/ClusterSetup1.html)

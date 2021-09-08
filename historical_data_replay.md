@@ -42,7 +42,7 @@ replay(inputTable, outputTable, `date, `time, 10)
 
 ### 使用data source的单表回放
 
-若数据表的行数过多，可使用`replayDS`函数将其划分为若干个小的数据源，再使用`replay`函数从磁盘中读取数据并回放。`replay`内部实现使用了[pipeline](https://www.dolphindb.cn/cn/help/pipeline.html)框架，取数据与输出分开执行。当`replayDS`函数的输入为数据源时，多块数据可以并行读取，以避免输出线程等待的情况。此例中并行度设置为2，表示有两个线程同时执行取数据的操作。
+若数据表的行数过多，可使用`replayDS`函数将其划分为若干个小的数据源，再使用`replay`函数从磁盘中读取数据并回放。`replay`内部实现使用了[pipeline](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/p/pipeline.html)框架，取数据与输出分开执行。当`replayDS`函数的输入为数据源时，多块数据可以并行读取，以避免输出线程等待的情况。此例中并行度设置为2，表示有两个线程同时执行取数据的操作。
 ```
 inputDS = replayDS(<select * from inputTable>, `date, `time, 08:00:00.000 + (1..10) * 3600000)
 replay(inputDS, outputTable, `date, `time, 1000, true, 2)
@@ -78,7 +78,7 @@ cancelConsoleJob(jobId)
 回放的数据以流数据形式存在，我们可以使用以下三种方式来订阅与消费这些数据：
 
 - 在DolphinDB中订阅，使用DolphinDB脚本自定义回调函数来消费流数据。
-- 在DolphinDB中订阅，使用内置的流计算引擎来处理流数据，譬如时间序列聚合引擎、横截面聚合引擎、异常检测引擎等。DolphinDB内置的聚合引擎可以对流数据进行实时聚合计算，使用简便且性能优异。在3.2中，我们使用横截面聚合引擎来处理回放的数据，并计算ETF的内在价值。横截面聚合引擎的具体用法参见[DolphinDB用户手册](https://www.dolphindb.cn/cn/help/createCrossSectionalAggregator.html)。
+- 在DolphinDB中订阅，使用内置的流计算引擎来处理流数据，譬如时间序列聚合引擎、横截面聚合引擎、异常检测引擎等。DolphinDB内置的聚合引擎可以对流数据进行实时聚合计算，使用简便且性能优异。在3.2中，我们使用横截面聚合引擎来处理回放的数据，并计算ETF的内在价值。横截面聚合引擎的具体用法参见[DolphinDB用户手册](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/c/createCrossSectionalAggregator.html)。
 - 第三方客户端通过DolphinDB的流数据API来订阅和消费数据。
 
 ## 3. 金融示例

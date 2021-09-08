@@ -12,8 +12,8 @@ DolphinDB 提供了全套的中英文使用手册及教程：
 
 DolphinDB 技术问答社区：
 - 思否SegmentFault: https://segmentfault.com/t/dolphindb
-
 - StackOverflow: https://stackoverflow.com/questions/tagged/dolphindb
+- DolphinDB问答社区：https://ask.dolphindb.net/
 
 ## 1. 安装系统
 
@@ -36,7 +36,7 @@ DolphinDB也支持使用 VS Code 插件等客户端来连接DolphinDB、编辑�
 
 ### 1.4 Python/Java/C# API（可选）
 
-DolphinDB提供Java，Python和C#的开发接口。安装步骤及使用请参考[用户手册](https://www.dolphindb.cn/cn/help/Chapter12ProgrammingAPIs.html)。
+DolphinDB提供Java，Python和C#的开发接口。安装步骤及使用请参考[用户手册](https://www.dolphindb.cn/cn/help/ProgrammingAPIs/ProgrammingAPIs.html)。
 
 ## 2. 配置
 

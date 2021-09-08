@@ -1,13 +1,13 @@
 ### 流数据横截面引擎
 
-DolphinDB提供流数据横截面聚合引擎，对实时流数据最新的截面数据进行计算。
+DolphinDB提供流数据横截面引擎，对实时流数据最新的截面数据进行计算。
 
 
 ### 设计
 
-DolphinDB database 横截面聚合引擎对实时数据中每组的最新数据做聚合运算，比如金融里对所有股票的最新交易量求聚合值，工业物联网里对一批设备的最新温度求聚合值等，都需要用到横截面引擎。
+DolphinDB database 横截面引擎对实时数据中每组的最新数据进行运算，比如金融里对所有股票的最新交易量求聚合值，工业物联网里对一批设备的最新温度求聚合值等，都需要用到横截面引擎。
 
-横截面聚合引擎包含两个部分，一是横截面数据表，二是计算引擎。横截面数据表保存所有分组的最新记录。计算引擎是一组聚合计算表达式以及触发器，系统会按照指定的规则触发对横截面数据表做聚合计算，计算结果会保存到指定的数据表中。
+横截面引擎包含两个部分，一是横截面数据表，二是计算引擎。横截面数据表保存所有分组的最新记录。计算引擎是一组聚合计算表达式以及触发器，系统会按照指定的规则触发对横截面数据表进行计算，计算结果会保存到指定的数据表中。
 
 
 ### createCrossSectionalAggregator函数
@@ -19,15 +19,15 @@ createCrossSectionalAggregator(name, [metrics], dummyTable, [outputTable], keyCo
 
 * 参数
 
-name是一个字符串，表示横截面聚合引擎的名称，是横截面聚合引擎的唯一标识。它可以包含字母，数字和下划线，但必须以字母开头。
+name是一个字符串，表示横截面引擎的名称，是横截面引擎的唯一标识。它可以包含字母，数字和下划线，但必须以字母开头。
 
-metrics是元代码。它可以是系统内置或用户自定义的函数，如<[sum(qty), avg(price)]>，可以对聚合结果使用表达式，如<[avg(price1)-avg(price2)]>，也可以对计算列进行聚合运算，如<[std(price1-price2)]>，也可以是一个函数返回多个指标，如自定义函数 func(price) , 则可以指定metrics为<[func(price) as ['res1','res2']> 。详情可参考[元编程](https://www.dolphindb.cn/cn/help/Metaprogramming.html)。metrics可以都是聚合表达式，也可以都是非聚合表达式，不能混合。如果是非聚合表达式，输出的记录数必须等于输入的记录数。
+metrics是元代码。它可以是系统内置或用户自定义的函数，如<[sum(qty), avg(price)]>，可以对结果使用表达式，如<[avg(price1)-avg(price2)]>，也可以对计算列进行运算，如<[std(price1-price2)]>，也可以是一个函数返回多个指标，如自定义函数 func(price) , 则可以指定metrics为<[func(price) as ['res1','res2']> 。详情可参考[元编程](https://www.dolphindb.cn/cn/help/Objects/Metaprogramming.html)。metrics可以都是聚合表达式，也可以都是非聚合表达式，不能混合。如果是非聚合表达式，输出的记录数必须等于输入的记录数。
 
 dummyTable是表对象，它可以不包含数据，但它的结构必须与订阅的流数据表相同。
 
 outputTable是表对象，用于保存计算结果。输出表的列数为metrics数量+1，第一列为TIMESTAMP类型，用于存放发生计算的时间戳，其他列的数据类型必须与metrics返回结果的数据类型一致。
 
-keyColumn是一个字符串，指定dummyTable的某列为横截面聚合引擎的key。横截面聚合引擎的每次计算，仅使用每个key对应的最新一行记录。
+keyColumn是一个字符串，指定dummyTable的某列为横截面引擎的key。横截面引擎的每次计算，仅使用每个key对应的最新一行记录。
 
 triggeringPattern是一个字符串，表示触发计算的方式。它可以是以下取值：
 - "perRow": 每插入一行数据触发一次计算
@@ -43,7 +43,7 @@ timeColumn是一个字符串。当useSystemTime=false时，指定订阅的流数
 
 * 详情
 
-返回一个表对象，向该表中写入数据意味着这些数据进入横截面聚合引擎进行计算。keyColumn指定列中的每一个key对应表中的唯一一行，如果新插入的数据中的key已经存在，那么将进行更新操作，如果key不存在，那么将在横截面聚合引擎表的末尾添加一行新的记录。因此，横截面聚合引擎中的数据总是每个key最新的数据。
+返回一个表对象，向该表中写入数据意味着这些数据进入横截面引擎进行计算。keyColumn指定列中的每一个key对应表中的唯一一行，如果新插入的数据中的key已经存在，那么将进行更新操作，如果key不存在，那么将在横截面引擎表的末尾添加一行新的记录。因此，横截面引擎中的数据总是每个key最新的数据。
 
 ### 示例
 
@@ -54,24 +54,24 @@ timeColumn是一个字符串。当useSystemTime=false时，指定订阅的流数
 
 trades表会随着时间推进不断积累各个股票从开盘到当前为止的交易数据。在交易数据持续写入的过程中，用户需要实时计算所有股票的最新成交量之最大值、最新成交金额之最大值，以及最新交易金额之和。
 
-* 在以下步骤中，使用横截面聚合引擎结合流数据订阅，以实现上述场景：
+* 在以下步骤中，使用横截面引擎结合流数据订阅，以实现上述场景：
 
     * 定义流数据表，以写入模拟交易数据。
     ```
     share streamTable(10:0,`time`sym`price`qty,[TIMESTAMP,SYMBOL,DOUBLE,INT]) as trades
     ```
     
-    * 定义结果表，以保存聚合引擎计算的结果。
+    * 定义结果表，以保存横截面引擎计算的结果。
     ```
     outputTable = table(10:0, `time`maxQty`maxDollarVolume`sumDollarVolume, [TIMESTAMP,INT,DOUBLE,DOUBLE])
     ```
     
-    * 创建横截面聚合引擎，指定表达式、输入表、结果表、分组列、计算频率。返回的对象 tradesCrossAggregator 为保存横截面数据的表。
+    * 创建横截面引擎，指定表达式、输入表、结果表、分组列、计算频率。返回的对象 tradesCrossAggregator 为保存横截面数据的表。
     ```
     tradesCrossAggregator=createCrossSectionalAggregator(name="CrossSectionalDemo", metrics=<[max(qty), max(price*qty), sum(price*qty)]>, dummyTable=trades, outputTable=outputTable, keyColumn=`sym, triggeringPattern=`perRow, useSystemTime=false, timeColumn=`time)
     ```
     
-    * 订阅流数据表，将新写入的流数据追加到横截面聚合引擎中。
+    * 订阅流数据表，将新写入的流数据追加到横截面引擎中。
     ```
     subscribeTable(tableName="trades", actionName="tradesCrossAggregator", offset=-1, handler=append!{tradesCrossAggregator}, msgAsTable=true)
     ```
@@ -123,7 +123,7 @@ select * from tradesCrossAggregator
    2000.10.08T01:01:01.004|A|73.6|82
    2000.10.08T01:01:01.005|B|223|59
 
-由于横截面引擎采用了"perRow"每行触发计算的频率，所以每向横截面表写入一行数据，聚合引擎都会进行一次计算，向结果表插入一条结果数据：
+由于横截面引擎采用了"perRow"每行触发计算的频率，所以每向横截面表写入一行数据，横截面引擎都会进行一次计算，向结果表插入一条结果数据：
 ```
 select * from outputTable
 ```
@@ -135,7 +135,7 @@ select * from outputTable
    2019.04.08T04:26:01.634 | 82 | 6035.2 | 8506.8
    2019.04.08T04:26:01.634 | 82 | 13157 | 19192.2
 
-在进行后续操作之前，我们首先取消以上订阅，并取消聚合引擎的调用，并删除数据表trades。
+在进行后续操作之前，我们首先取消以上订阅，并取消横截面引擎的调用，并删除数据表trades。
 ```
 unsubscribeTable(,`trades, "tradesCrossAggregator")
 dropAggregator("CrossSectionalDemo")
@@ -193,7 +193,7 @@ select * from tradesCrossAggregator
    2000.10.08T01:01:01.006 | A   | 102.4  | 120  |
    2000.10.08T01:01:01.007 | B   | 33.1   | 60  |
 
-由于分2次写入，在perBatch模式下，聚合引擎输出了2条记录：
+由于分2次写入，在perBatch模式下，横截面引擎输出了2条记录：
 ```
 select * from outputTable
 ```
@@ -206,34 +206,33 @@ select * from outputTable
    ```
    share streamTable(10:0,`time`sym`price`qty,[TIMESTAMP,SYMBOL,DOUBLE,INT]) as trades
    outputTable = table(1:0, `time`avgPrice`volume`dollarVolume`count, [TIMESTAMP,DOUBLE,INT,DOUBLE,INT])
-   tradesCrossAggregator=createCrossSectionalAggregator(name="tradesCrossAggregator", metrics=<[avg(price), sum(volume), sum(price*volume), count(price)]>, dummyTable=trades, outputTable=outputTable, keyColumn=`sym, triggeringPattern="interval", triggeringInterval=500)
+   tradesCrossAggregator=createCrossSectionalAggregator(name="tradesCrossAggregator", metrics=<[avg(price), sum(qty), sum(price*qty), count(price)]>, dummyTable=trades, outputTable=outputTable, keyColumn=`sym, triggeringPattern="interval", triggeringInterval=500)
    subscribeTable(tableName="trades", actionName="tradesStats", offset=-1, handler=append!{tradesCrossAggregator}, msgAsTable=true)
 
-   insert into trades3 values(2020.08.12T09:30:00.000, `A, 10, 20)
+   insert into trades values(2020.08.12T09:30:00.000, `A, 10, 20)
    sleep(500)
-   insert into trades3 values(2020.08.12T09:30:00.000 + 500, `B, 20, 10)
+   insert into trades values(2020.08.12T09:30:00.000 + 500, `B, 20, 10)
    sleep(500)
-   insert into trades3 values(2020.08.12T09:30:00.000 + 1000, `A, 10.1, 20)
+   insert into trades values(2020.08.12T09:30:00.000 + 1000, `A, 10.1, 20)
    sleep(1000)
-   insert into trades3 values(2020.08.12T09:30:00.000 + 2000, `B, 20.1, 30)
+   insert into trades values(2020.08.12T09:30:00.000 + 2000, `B, 20.1, 30)
    sleep(500)
-   insert into trades3 values(2020.08.12T09:30:00.000 + 2500, `B, 20.2, 40)
+   insert into trades values(2020.08.12T09:30:00.000 + 2500, `B, 20.2, 40)
    sleep(500)
-   insert into trades3 values(2020.08.12T09:30:00.000 + 3000, `A, 10.2, 20)
+   insert into trades values(2020.08.12T09:30:00.000 + 3000, `A, 10.2, 20)
 
    select * from outputTable;
    ```
+
    time|avgPrice|volume|dollarVolume|count
    ---|---|---|---|---|
-   2020.09.13T19:04:45.015 10 | 20 | 200 | 1
-   2020.09.13T19:04:45.529 15 | 30 | 400 | 2
-   2020.09.13T19:04:46.030 15.05 | 30 | 402 | 2
-   2020.09.13T19:04:46.531 15.05 | 30 | 402 | 2
-   2020.09.13T19:04:47.036 15.1 | 50 | 805 | 2
-   2020.09.13T19:04:47.551 15.15 | 60 | 1010 | 2
-   2020.09.13T19:04:48.065 15.2 | 60 | 1012 | 2
-   2020.09.13T19:04:48.567 15.2 | 60 | 1012 | 2
-   ......
+2021.07.27T10:54:00.303	| 10 | 20 | 200 | 1
+2021.07.27T10:54:00.818 | 15 | 30 | 400 | 2
+2021.07.27T10:54:01.331 | 15.05 | 30 | 402 | 2
+2021.07.27T10:54:02.358 | 15.1 | 50 | 805 | 2
+2021.07.27T10:54:02.871 | 15.15 | 60 | 1010 | 2
+2021.07.27T10:54:03.386 | 15.2 | 60 | 1012 | 2
+
 
    输出表的记录数会不断增长。这是因为triggeringPattern="interval"时，计算是按照系统时间定时触发，与是否有新数据进入无关。
 

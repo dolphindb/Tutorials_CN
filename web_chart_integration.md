@@ -96,7 +96,7 @@ conn.run("select avg(ec) as ec from iotTable group by second(time)", function(re
 ```
 代码运行的结果如图所示：
 
-![image](images/echart/1.png?raw=true)
+![image](https://github.com/dolphindb/Tutorials_CN/blob/master/images/echart/1.png?raw=true)
 
 * 完整的Echarts实现脚本如下，本例中需要引入jQuery库
 ```html
@@ -204,7 +204,7 @@ conn.run("select avg(ec) as ec from iotTable group by second(time)", function(re
 
 代码运行的结果：
 
-![image](images/echart/2.PNG?raw=true)
+![image](https://github.com/dolphindb/Tutorials_CN/blob/master/images/echart/2.PNG?raw=true)
 
 ### 5. 总结
 从上述示例可以了解，通过 DolphinDB database 的WebApi开发包，Echarts与HighCharts等组件与DolphinDB集成展示数据是非常方便的，其他前端chart组件与DolphinDB的集成，均可以参考本文方式实现。

@@ -273,7 +273,7 @@ print(s.loadTable("testDataFrame").toDF())
 
 ### 5 导入数据到DolphinDB服务器
 
-DolphinDB数据库根据存储方式可以分为3种类型：内存数据库、本地文件系统的数据库和分布式文件系统（DFS）中的数据库。DFS能够自动管理数据存储和备份，并且DolphinDB在DFS模式中性能达到最优。因此，推荐用户使用分布式文件系统，部署方式请参考[多服务器集群部署](multi_machine_cluster_deploy.md)。为简化起见，在本教程中也给出了本地文件系统数据库的例子。
+DolphinDB数据库根据存储方式可以分为3种类型：内存数据库、本地文件系统的数据库和分布式文件系统（DFS）中的数据库。DFS能够自动管理数据存储和备份，并且DolphinDB在DFS模式中性能达到最优。因此，推荐用户使用分布式文件系统，部署方式请参考[多服务器集群部署](https://github.com/dolphindb/Tutorials_CN/blob/master/multi_machine_cluster_deploy.md)。为简化起见，在本教程中也给出了本地文件系统数据库的例子。
 
 下面的例子中，我们使用了一个csv文件：[example.csv](data/example.csv)。
 
@@ -338,7 +338,7 @@ s.database('db', partitionType=keys.VALUE, partitions=['AMZN','NFLX', 'NVDA'], d
 s.run("db=database(WORK_DIR+'/valuedb', VALUE, ['AMZN','NFLX', 'NVDA'])")
 ```
 
-在DFS（分布式文件系统）创建分区数据库，只需把数据库的路径改成以`dfs://`开头。下面的例子需要在集群中执行。请参考教程[多服务器集群部署](multi_machine_cluster_deploy.md)配置集群。
+在DFS（分布式文件系统）创建分区数据库，只需把数据库的路径改成以`dfs://`开头。下面的例子需要在集群中执行。请参考教程[多服务器集群部署](https://github.com/dolphindb/Tutorials_CN/blob/master/multi_machine_cluster_deploy.md)配置集群。
 
 ```Python
 import dolphindb.settings as keys
@@ -1725,31 +1725,25 @@ s.subscribe(host, port, handler, tableName, actionName="", offset=-1, resub=Fals
 
 示例：
 
-请注意，发布节点需要配置maxPubConnections参数，具体请参照[DolphinDB流数据教程](streaming_tutorial.md)。
+请注意，发布节点需要配置maxPubConnections参数，具体请参照[DolphinDB流数据教程](https://github.com/dolphindb/Tutorials_CN/blob/master/streaming_tutorial.md)。
 
-在DolphinDB中创建共享的流数据表，指定进行过滤的列，并插入一些随机数据：
+在DolphinDB中创建共享的流数据表，指定进行过滤的列为sym，并为5个symbol各插入2条记录共10条记录：
 ```
 share streamTable(10000:0,`time`sym`price`id, [TIMESTAMP,SYMBOL,DOUBLE,INT]) as trades
 setStreamTableFilterColumn(trades, `sym)
-insert into trades values(take(now(), 10), rand(`ab`cd`ef`gh`ij, 10), rand(1000,10)/10.0, 1..10)
+insert into trades values(take(now(), 10), take(`000905`600001`300201`000908`600002, 10), rand(1000,10)/10.0, 1..10)
 ```
 
-在Python中订阅trades表：
+在Python中订阅trades表,设置filter为只接收symbol为000905的数据：
 ```Python
 def handler(lst):         
     print(lst)
 
-s.subscribe("192.168.1.103",8921,handler,"trades","action",0,False,np.array(['ab']))
+s.subscribe("192.168.1.103",8921,handler,"trades","action",0,False,np.array(['000905']))
 
 # output
-[numpy.datetime64('2019-10-16T11:49:57.769'), 'cd', 29.3, 1]
-[numpy.datetime64('2019-10-16T11:49:59.481'), 'ab', 61.8, 6]
-[numpy.datetime64('2019-10-16T11:49:59.481'), 'ab', 76.7, 7]
-[numpy.datetime64('2019-10-16T11:50:00.233'), 'gh', 27.2, 1]
-[numpy.datetime64('2019-10-16T11:50:01.521'), 'ab', 21.2, 1]
-[numpy.datetime64('2019-10-16T11:50:01.521'), 'ab', 37.6, 10]
-[numpy.datetime64('2019-10-16T11:50:02.217'), 'ab', 20.4, 1]
-[numpy.datetime64('2019-10-16T11:50:02.217'), 'ab', 26.7, 3]
+[numpy.datetime64('2020-09-24T12:05:53.029'), '000905', 48.3, 1]
+[numpy.datetime64('2020-09-24T12:05:53.029'), '000905', 75.4, 6]
 ```
 
 ### 1.3 获取订阅主题

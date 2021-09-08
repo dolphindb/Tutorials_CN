@@ -28,9 +28,9 @@ DolphinDB提供了多种灵活的数据导入方法，来帮助用户方便的�
 
 通过文件进行数据中转是比较通用化的一种数据迁移方式，方式简单易操作。DolphinDB提供了以下三个函数来载入文本文件：
 
-- [`loadText`](https://www.dolphindb.cn/cn/help/loadText.html): 将文本文件以 DolphinDB 数据表的形式读取到内存中。
-- [`ploadText`](https://www.dolphindb.cn/cn/help/ploadText.html): 将数据文件作为分区表并行加载到内存中。与`loadText`函数相比，速度更快。
-- [`loadTextEx`](https://www.dolphindb.cn/cn/help/loadTextEx.html): 把数据文件转换为DolphinDB数据库中的分布式表，然后将表的元数据加载到内存中。
+- [`loadText`](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/l/loadText.html): 将文本文件以 DolphinDB 数据表的形式读取到内存中。
+- [`ploadText`](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/p/ploadText.html): 将数据文件作为分区表并行加载到内存中。与`loadText`函数相比，速度更快。
+- [`loadTextEx`](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/l/loadTextEx.html): 把数据文件转换为DolphinDB数据库中的分布式表，然后将表的元数据加载到内存中。
 
 下面通过将 [candle_201801.csv](data/candle_201801.csv) 导入DolphinDB来演示`loadText`和`loadTextEx`的用法。
 
@@ -38,12 +38,12 @@ DolphinDB提供了多种灵活的数据导入方法，来帮助用户方便的�
 
 `loadText`函数有三个参数，第一个参数filename是文件名，第二个参数delimiter用于指定不同字段的分隔符，默认是","，第三个参数schema是用来指定导入后表的每个字段的数据类型，schema参数是一个数据表，格式示例如下：
 
-name|type
----|---
-timestamp|SECOND
-ID|INT
-qty|INT
-price|DOUBLE
+| name      | type   |
+| --------- | ------ |
+| timestamp | SECOND |
+| ID        | INT    |
+| qty       | INT    |
+| price     | DOUBLE |
 
 首先导入数据：
 
@@ -60,7 +60,7 @@ typeCol = `SYMBOL`SYMBOL`INT`DATE`DATE`INT`DOUBLE`DOUBLE`DOUBLE`DOUBLE`INT`DOUBL
 schemaTb = table(nameCol as name,typeCol as type);
 ```
 
-当表字段非常多的时候，写这样一个脚本费时费力，为了简化操作，DolphinDB提供了[`extractTextSchema`](https://www.dolphindb.cn/cn/help/extractTextSchema.html) 函数，可从文本文件中提取表的结构生成数据类型表。只需修改少数指定字段的数据类型，就可得到理想的数据类型表。
+当表字段非常多的时候，写这样一个脚本费时费力，为了简化操作，DolphinDB提供了[`extractTextSchema`](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/e/extractTextSchema.html) 函数，可从文本文件中提取表的结构生成数据类型表。只需修改少数指定字段的数据类型，就可得到理想的数据类型表。
 
 整合上述方法，可使用如下脚本以导入数据：
 
@@ -103,7 +103,7 @@ Time elapsed: 10685.838 ms
 
 ### 2.3. `loadTextEx`
 
-`loadText`函数总是把所有数据导入内存。当数据文件体积非常庞大时，服务器的内存很容易成为制约因素。DolphinDB提供的[`loadTextEx`](https://www.dolphindb.cn/cn/help/loadTextEx.html)函数可以较好的解决这个问题。它将一个大的文本文件分割成很多个小块，逐步加载到分布式数据表中。
+`loadText`函数总是把所有数据导入内存。当数据文件体积非常庞大时，服务器的内存很容易成为制约因素。DolphinDB提供的[`loadTextEx`](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/l/loadTextEx.html)函数可以较好的解决这个问题。它将一个大的文本文件分割成很多个小块，逐步加载到分布式数据表中。
 
 首先创建分布式数据库：
 
@@ -128,7 +128,7 @@ tb = database("dfs://dataImportCSVDB").loadTable("cycle")
 
 ## 3. 通过二进制文件导入
 
-对于二进制格式的文件，DolphinDB提供了2个函数用于导入：[`readRecord!`](https://www.dolphindb.cn/cn/help/readRecord.html)函数和[`loadRecord`](https://www.dolphindb.cn/cn/help/loadRecord.html)函数。二者的区别是，前者不支持导入字符串类型的数据，后者支持。下面通过2个例子分别介绍这两个函数的用法。
+对于二进制格式的文件，DolphinDB提供了2个函数用于导入：[`readRecord!`](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/r/readRecord!.html)函数和[`loadRecord`](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/l/loadRecord.html)函数。二者的区别是，前者不支持导入字符串类型的数据，后者支持。下面通过2个例子分别介绍这两个函数的用法。
 
 - `readRecord!`函数
 
@@ -140,7 +140,7 @@ tb = database("dfs://dataImportCSVDB").loadTable("cycle")
 tb=table(1000:0, `id`date`time`last`volume`value`ask1`ask_size1`bid1`bid_size1, [INT,INT,INT,FLOAT,INT,FLOAT,FLOAT,INT,FLOAT,INT])
 ```
 
-调用[`file`](https://www.dolphindb.cn/cn/help/file.html)函数打开文件，并通过`readRecord!`函数导入二进制文件，数据会被加载到tb表中。
+调用[`file`](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/f/file.html)函数打开文件，并通过`readRecord!`函数导入二进制文件，数据会被加载到tb表中。
 
 ```
 dataFilePath="/home/data/binSample.bin"
@@ -162,7 +162,7 @@ id date     time     last volume value ask1  ask_size1 bid1  bid_size1
 5  20190902 92349000 0    0      0     11.45 5100      11.45 5100
 ```
 
-date列和time列的数据为INT类型。可以使用[`temporalParse`](https://www.dolphindb.cn/cn/help/temporalParse.html)函数进行[日期和时间类型数据的格式](https://www.dolphindb.cn/cn/help/DataTimeParsingandFormat.html)转换，再使用`replaceColumn!`函数替换表中原有的列。
+date列和time列的数据为INT类型。可以使用[`temporalParse`](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/t/temporalParse.html)函数进行[日期和时间类型数据的格式](https://www.dolphindb.cn/cn/help/DataManipulation/TemporalObjects/ParsingandFormatofTemporalVariables.html)转换，再使用`replaceColumn!`函数替换表中原有的列。
 
 ```
 tb.replaceColumn!(`date, tb.date.string().temporalParse("yyyyMMdd"))
@@ -203,6 +203,7 @@ tb=select code,date,time,last,volume,value,ask1,ask_size1,bid1,bid_size1 from tm
 ```
 
 查看表内数据的前5行：
+
 ```
 select top 5 * from tb;
 
@@ -216,6 +217,7 @@ code      date     time     last volume value ask1  ask_size1 bid1  bid_size1
 ```
 
 处理日期和时间列的数据：
+
 ```
 tb.replaceColumn!(`date, tb.date.string().temporalParse("yyyyMMdd"))
 tb.replaceColumn!(`time, tb.time.format("000000000").temporalParse("HHmmssSSS"))
@@ -230,7 +232,7 @@ code      date       time         last volume value ask1  ask_size1 bid1  bid_si
 601177.SH 2019.09.02 09:23:49.000 0    0      0     11.45 5100      11.45 5100
 ```
 
-除了`readRecord!`和`loadRecord`函数之外，DolphinDB还提供了一些与二进制文件的处理相关的函数，例如[`writeRecord`](https://www.dolphindb.cn/cn/help/writeRecord.html)函数，用于将DolphinDB对象保存为二进制文件。具体请参考[用户手册](https://www.dolphindb.cn/cn/help/BinaryFileProcessing.html)。
+除了`readRecord!`和`loadRecord`函数之外，DolphinDB还提供了一些与二进制文件的处理相关的函数，例如[`writeRecord`](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/w/writeRecord.html)函数，用于将DolphinDB对象保存为二进制文件。具体请参考[用户手册](https://www.dolphindb.cn/cn/help/FileIO/BinaryFileProcessing.html)。
 
 ## 4. 通过HDF5接口导入
 
@@ -411,7 +413,7 @@ pt=db.createPartitionedTable(table(1000000:0,columns,types), `stockData, `tradin
 
 ### 6.2. 导入数据
 
-数据导入的具体过程是通过目录树，将所有的CSV文件读取并写入到分布式数据库表dfs://SAMPLE_TRDDB中。这其中会有一些细节问题。例如，CSV文件中保存的数据格式与DolphinDB内部的数据格式存在差异，比如time字段，原始数据文件里是以整数例如“9390100000”表示精确到毫秒的时间，如果直接读入会被识别成整数类型，而不是时间类型，所以这里需要用到数据转换函数`datetimeParse`结合格式化函数`format`在数据导入时进行转换。可采用以下脚本：
+数据导入的具体过程是通过目录树，将所有的CSV文件读取并写入到分布式数据库表dfs://SAMPLE_TRDDB 中。这其中会有一些细节问题。例如，CSV文件中保存的数据格式与DolphinDB内部的数据格式存在差异，比如time字段，原始数据文件里是以整数例如“9390100000”表示精确到毫秒的时间， 如果直接读入会被识别成整数类型，而不是时间类型，所以这里需要用到数据转换函数`datetimeParse`结合格式化函数`format`在数据导入时进行转换。可采用以下脚本：
 
 ```txt
 datetimeParse(format(time,"000000000"),"HHmmssSSS")
@@ -432,7 +434,7 @@ def loadCsvFromYearPath(path, dbPath, tableName){
 }
 ```
 
-然后通过[`rpc`](https://www.dolphindb.cn/cn/help/rpc.html)函数结合[`submitJob`](https://www.dolphindb.cn/cn/help/submitJob.html)函数把该函数提交到各节点去执行：
+然后通过[`rpc`](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/r/rpc.html)函数结合[`submitJob`](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/s/submitJob.html)函数把该函数提交到各节点去执行：
 
 ```txt
 nodesAlias="NODE" + string(1..4)

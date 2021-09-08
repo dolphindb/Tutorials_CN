@@ -96,7 +96,7 @@ script指令用来向DolphinDB发送脚本字符串，DolphinDB执行脚本并�
 长度(Byte) | 报文 | 说明 | 样本
 ---|---|---|---
 不固定|MSG| 如果请求类型为API2, 并且脚本中间有print等输出脚本,在返回报文包含MSG段 | MSG<br>"this is output message1"<br>MSG<br>"this is output message2"
-不固定| SESSIONID | 长度不固定，到空格为止  | API
+不固定| SESSIONID | 长度不固定，到空格为止  | 2247761467
 1| 空格| char(0x20) |
 1|大小端 | 1-小端，0-大端 | 1
 1| 换行符(LF) | char(0x10) |
@@ -147,7 +147,7 @@ variable指令用来向DolphinDB发送本地数据，DolphinDB会在Server端生
 ---|---|---|---
 3| 请求类型 | API | API
 1| 空格| char(0x20) |
-不固定|SESSIONID | 长度不固定，到空格为止  | 2247761467 或 638252939
+不固定|SESSIONID | 长度不固定，到空格为止  | 2247761467
 1| 空格| char(0x20) |
 2| 报文指令长度| 包含从“variable"到大小端标志为止的长度，如"variable\na,b\n2\n1" | 16
 1| 换行符 | char(0x10) |
@@ -169,6 +169,36 @@ variable指令用来向DolphinDB发送本地数据，DolphinDB会在Server端生
 1|大小端 | 1-小端，0-大端 | 1
 1| 换行符(LF) | char(0x10) |
 1| 执行成功否| 返回文本OK表示执行成功 | "OK"
+
+### 2.5.4 行为标识
+在 提交 script，function 报文时，在 "报文指令长度" 之后，增加"行为标识"报文来指示Server按照指定的要求来执行脚本或函数。
+
+行为标识以字符串方式传输。每一个标识用下划线_分隔，整个字符串的含义如下：
+
+标识名 | 标识范围 | 说明 | 样本
+---|---|---|---
+flag | (0，1，2，4，8，16)任意数字组的和 | 一组开关量标识，按位取值， 参考flag表格 | 4
+cancellable |0,1 | 任务是否可以取消 | 1
+priority | 0~8  |指定本任务优先级 | 8
+parallelism | 0~64 | 指定本任务并行度| 8
+rootId | 整数 | 根任务编号，内部使用，API中固定为空| 12
+fetchSize | | 指定分块返回的块大小| 10000
+offset | | API中固定为空|
+
+
+一个标准的行为标识字符串用"/ "开头，以换行符结束。如："/ 4_1_8_8__10000\n"。
+
+flag的含义如下：
+
+数位(从低位开始) |标识名 | 说明
+---|---|---
+0| isUrgent | 是否紧急任务。即使系统繁忙，isUrgent=1的任务会通过紧急通道得以执行。
+1| isSecondaryJob | API提交的任务，isSecondaryJob必须为0
+2| isAsync | 是否异步任务
+3| isPickle | 让服务端以picle协议返回数据，固定为0 
+4| isClearSessionMemory | 本次任务完成后
+5| isAPIClient | 内部使用，固定为0
+
 
 ## 3 数据报文
 

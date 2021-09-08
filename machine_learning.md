@@ -5,7 +5,7 @@ DolphinDB实现了一系列常用的机器学习算法，例如最小二乘回�
 - [1. 第一个例子：对小样本数据进行分类](#1-第一个例子对小样本数据进行分类)
 - [2. 分布式机器学习](#2-分布式机器学习)
 - [3. 使用PCA为数据降维](#3-使用pca为数据降维)
-- [4. 使用DolphinDB插件进行机器学习](#4-使用dolphindb插件进行机器学习)
+- [4. 使用DolphinDB插件进行机器学习](#4-%E7%BA%BF%E6%80%A7%E5%9B%9E%E5%BD%92%E4%BB%A5%E5%8F%8Aridgelassoelasticnet%E5%9B%9E%E5%BD%92)
 - [附录：DolphinDB机器学习函数](#附录dolphindb机器学习函数)
 
 ## 1. 第一个例子：对小样本数据进行分类
@@ -293,31 +293,31 @@ model = xgboost::train(Y, X, params, , model)
 
 函数名 | 类别 | 说明 | 是否支持分布式
 -------|------|------|----------------
-[adaBoostClassifier](http://dolphindb.cn/cn/help/adaBoostClassifier.html) | 分类 | AdaBoost分类 | 支持
-[adaBoostRegressor](http://dolphindb.cn/cn/help/adaBoostRegressor.html) | 回归 | AdaBoost回归 | 支持
-[elasticNet](http://dolphindb.cn/cn/help/elasticNet.html)|回归|ElasticNet回归|不支持
-[gaussianNB](http://dolphindb.cn/cn/help/gaussianNB.html) | 分类 | 高斯朴素贝叶斯 | 不支持
-[glm](http://dolphindb.cn/cn/help/glm.html) | 分类/回归 | 广义线性模型 | 支持
-[kmeans](http://dolphindb.cn/cn/help/kmeans.html) | 聚类 | K-均值 | 不支持
-[knn](http://dolphindb.cn/cn/help/knn.html) | 分类 | K-近邻 | 不支持
-[lasso](http://dolphindb.cn/cn/help/lasso.html)|回归|Lasso回归|不支持
-[logisticRegression](http://dolphindb.cn/cn/help/logisticRegression.html) | 分类 | 逻辑回归 | 支持
-[multinomialNB](http://dolphindb.cn/cn/help/multinomialNB.html) | 分类 | 多项式朴素贝叶斯 | 不支持
-[ols](http://dolphindb.cn/cn/help/logisticRegression.html) | 回归 | 最小二乘线性回归 | 不支持
-[olsEx](http://dolphindb.cn/cn/help/logisticRegression.html) | 回归 | 最小二乘线性回归 | 支持
-[pca](http://dolphindb.cn/cn/help/pca.html) | 降维 | 主成分分析 | 支持
-[randomForestClassifier](http://dolphindb.cn/cn/help/randomForestClassifier.html) | 分类 | 随机森林分类 | 支持
-[randomForestRegressor](http://dolphindb.cn/cn/help/randomForestRegressor.html) | 回归 | 随机森林回归 | 支持
-[ridge](https://www.dolphindb.cn/cn/help/ridge.html)|回归|Ridge回归|支持
+[adaBoostClassifier](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/a/adaBoostClassifier.html) | 分类 | AdaBoost分类 | 支持
+[adaBoostRegressor](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/a/adaBoostRegressor.html) | 回归 | AdaBoost回归 | 支持
+[elasticNet](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/e/elasticNet.html)|回归|ElasticNet回归|不支持
+[gaussianNB](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/g/gaussianNB.html) | 分类 | 高斯朴素贝叶斯 | 不支持
+[glm](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/g/glm.html) | 分类/回归 | 广义线性模型 | 支持
+[kmeans](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/k/kmeans.html) | 聚类 | K-均值 | 不支持
+[knn](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/k/knn.html) | 分类 | K-近邻 | 不支持
+[lasso](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/l/lasso.html)|回归|Lasso回归|不支持
+[logisticRegression](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/l/logisticRegression.html) | 分类 | 逻辑回归 | 支持
+[multinomialNB](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/m/multinomialNB.html) | 分类 | 多项式朴素贝叶斯 | 不支持
+[ols](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/o/ols.html) | 回归 | 最小二乘线性回归 | 不支持
+[olsEx](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/o/olsEx.html) | 回归 | 最小二乘线性回归 | 支持
+[pca](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/p/pca.html) | 降维 | 主成分分析 | 支持
+[randomForestClassifier](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/r/randomForestClassifier.html) | 分类 | 随机森林分类 | 支持
+[randomForestRegressor](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/r/randomForestRegressor.html) | 回归 | 随机森林回归 | 支持
+[ridge](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/r/ridge.html)|回归|Ridge回归|支持
 
 
 ### B. 机器学习工具函数
 
 函数名 | 说明
 -------|------
-[loadModel](http://dolphindb.cn/cn/help/loadModel.html) | 加载模型
-[saveModel](http://dolphindb.cn/cn/help/saveModel.html) | 保存模型
-[predict](http://dolphindb.cn/cn/help/predict.html) | 使用模型预测
+[loadModel](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/l/loadModel.html) | 加载模型
+[saveModel](https://www.dolphindb.cn/cn/help/FunctionsandCommands/CommandsReferences/s/saveModel.html) | 保存模型
+[predict](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/p/predict.html) | 使用模型预测
 
 ### C. 机器学习插件
 

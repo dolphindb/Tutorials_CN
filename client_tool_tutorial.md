@@ -168,7 +168,7 @@ VS Code 插件与GUI功能非常相似，优点是VS Code使用者无需安装�
 
 在编辑并运行脚本之前，需要先新增并选择一个数据节点作为运行脚本的服务器。新建并打开一个txt或dos文件，通过右键菜单可以增加、选择和移除DolphinDB Server。
 
-![image](images/VSCode/server.png?raw=true)
+![image](images/vscode/server.png?raw=true)
     
 #### 新增服务器
 
@@ -204,7 +204,7 @@ DolphinDB Notebook是DolphinDB服务器安装包自带的，基于网页的图�
 
 ### 3.1 启动
 
-DolphinDB Notebook通过是通过HTML+Javascript编写的Web前端。无需安装，在single模式下，启动DolphinDB服务器，只要在浏览器输入网址(默:htt://localhos:8848)即可访问。
+DolphinDB Notebook通过是通过HTML+Javascript编写的Web前端。无需安装，在single模式下，启动DolphinDB服务器，只要在浏览器输入网址(默:http://localhost:8848)即可访问。
 在集群模式下只要在浏览器输入controller节点的网址加端口号即可访问。 当出现无法访问Notebook的情况，需要查看以下几个方面：
 
 * 确保DolphinDB server的license没有过期

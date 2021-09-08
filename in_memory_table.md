@@ -7,10 +7,10 @@
     - [1.2 键值内存表](#12-键值内存表)
     - [1.3 索引内存表](#13-索引内存表)
     - [1.4 流数据表](#14-流数据表)
-    - [1.5 MVCC内存表](#15-MVCC内存表)
+    - [1.5 MVCC内存表](#15-mvcc%E5%86%85%E5%AD%98%E8%A1%A8)
 - [2. 共享内存表](#2-共享内存表)
     - [2.1 保证对所有会话可见](#21-保证对所有会话可见)
-    - [2.1 保证线程安全](#22-保证线程安全)
+    - [2.2 保证线程安全](#22-%E4%BF%9D%E8%AF%81%E7%BA%BF%E7%A8%8B%E5%AE%89%E5%85%A8)
 - [3. 分区内存表](#3-分区内存表)
     - [3.1 增加查询的并发性](#31-增加查询的并发性)
     - [3.2 增加写入的并发性](#32-增加写入的并发性)
@@ -73,7 +73,7 @@ t=table(sym,id,val);
 ```
 - 应用
 
-常规内存表是DolphinDB中应用最频繁的数据结构之一，仅次于数组。SQL语句的查询结果，分布式查询的中间结果都存储在常规内存表中。当系统内存不足时，该表并不会自动将数据溢出到磁盘，而是Out Of Memory异常。因此我们进行各种查询和计算时，要注意中间结果和最终结果的size。当某些中间结果不再需要时，请及时释放。关于常规内存表增删改查的各种用法，可以参考另一份教程[内存分区表加载和操作](https://github.com/dolphindb/Tutorials_CN/blob/master/partitioned_in_memory_table.md)第3节：内存表的数据处理。 
+常规内存表是DolphinDB中应用最频繁的数据结构之一，仅次于数组。SQL语句的查询结果，分布式查询的中间结果都存储在常规内存表中。当系统内存不足时，该表并不会自动将数据溢出到磁盘，而是Out Of Memory异常。因此我们进行各种查询和计算时，要注意中间结果和最终结果的size。当某些中间结果不再需要时，请及时释放。关于常规内存表增删改查的各种用法，可以参考另一份教程[内存分区表加载和操作](https://github.com/dolphindb/Tutorials_CN/blob/master/partitioned_in_memory_table.md#3-%E5%86%85%E5%AD%98%E8%A1%A8%E7%9A%84%E6%95%B0%E6%8D%AE%E5%A4%84%E7%90%86)第3节：内存表的数据处理。 
 
 ### 1.2 键值内存表
 
@@ -176,7 +176,7 @@ IBM B    10.01
 
 (1) 键值表对单行的更新和查询有非常高的效率，是数据缓存的理想选择。与Redis相比，DolphinDB中的键值内存表兼容SQL的所有操作，可以完成根据键值更新和查询以外的更为复杂的计算。
 
-(2) 键值表可作为时间序列聚合引擎的输出表，实时更新输出表的结果。具体请参考教程[在DolphinDB中计算K线](https://github.com/dolphindb/Tutorials_CN/blob/master/OHLC.md#22-%E5%AE%9E%E6%97%B6%E8%AE%A1%E7%AE%97k%E7%BA%BF)。
+(2) 键值表可作为时间序列聚合引擎的输出表，实时更新输出表的结果。具体请参考教程[在DolphinDB中计算K线](https://github.com/dolphindb/Tutorials_CN/blob/master/OHLC.md)。
 
 
 ### 1.3 索引内存表
@@ -278,7 +278,7 @@ tmp=table(sym, id, val)
 t=streamTable(tmp)
 ```
 
-流数据表也支持创建单个键值列，可以通过函数`keyedStreamTable`来创建键值流表。但与键值表的设计目的不同，键值流表的目的是为了在高可用场景（多个发布端同时写入）下，避免重复消息。通常key就是消息的ID。
+流数据表也支持创建键值列，可以通过函数`keyedStreamTable`来创建键值流表。但与键值表的设计目的不同，键值流表的目的是为了在高可用场景（多个发布端同时写入）下，避免重复消息。通常key就是消息的ID。
 
 - 数据操作特点
 
@@ -296,10 +296,10 @@ MVCC内存表存储了多个版本的数据，当多个用户同时对MVCC内存
 
 使用`mvccTable`函数创建MVCC内存表。例如：
 ```
-//创建空的流数据表
+//创建空的MVCC内存表
 t=mvccTable(1:0,`sym`id`val,[SYMBOL,INT,INT])
 
-//使用向量创建流数据表
+//使用向量创建MVCC内存表
 sym=`A`B`C`D`E
 id=5 4 3 2 1
 val=52 64 25 48 71
@@ -417,7 +417,7 @@ pt=db.createPartitionedTable(t,`pt,`id)
 ```
 kt=keyedTable(1:0,`id`val,[INT,INT])
 db=database("",RANGE,0 101 201 301)
-pkt=db.createPartitionedTable(t,`pkt,`id)
+pkt=db.createPartitionedTable(kt,`pkt,`id)
 ```
 类似的，可创建分区索引内存表。
 
@@ -552,7 +552,7 @@ job1=submitJob("write1","",writeData,pt,1..300,1000,1000)
 job2=submitJob("write2","",writeData,pt,1..300,1000,1000)
 ```
 
-上面的代码定义了两个写入线程，并且写入的分区相同，这样会造成线程不安全，可能会导致系统崩溃、数据错误等后果。为了保证每个分区数据的安全性和一致性，可将分区内存表共享，这样即可定义多个线程同时对相同分区分入。
+上面的代码定义了两个写入线程，并且写入的分区相同，这样会造成线程不安全，可能会导致系统崩溃、数据错误等后果。为了保证每个分区数据的安全性和一致性，可将分区内存表共享，这样即可定义多个线程同时对相同分区写入。
 ```
 share pt as spt
 job1=submitJob("write1","",writeData,spt,1..300,1000,1000)

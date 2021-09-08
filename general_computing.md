@@ -1,13 +1,14 @@
-# DolphinDB通用计算教程
-DolphinDB不仅可以分布式地存储数据，而且对分布式计算有良好支持。在DolphinDB中，用户可以用系统提供的通用分布式计算框架，通过脚本实现高效的分布式算法，而不需关注具体的底层实现。本文将对DolphinDB通用计算框架中的重要概念和相关函数作出详细解释，并提供丰富的具体使用场景和例子。
+# DolphinDB教程：通用计算
+
+DolphinDB database不仅可以分布式地存储数据，而且对分布式计算有良好支持。在DolphinDB中，用户可以用系统提供的通用分布式计算框架，通过脚本实现高效的分布式算法，而不需关注具体的底层实现。本文将对DolphinDB通用计算框架中的重要概念和相关函数作出详细解释，并提供丰富的具体使用场景和例子。
 
 ## 1. 数据源
 
-数据源(Data Source)是DolphinDB的通用计算框架中的基本概念。它是一种特殊类型的数据对象，是对数据的元描述。通过执行数据源，用户可以获得诸如表、矩阵、向量等数据实体。在DolphinDB的分布式计算框架中，轻量级的数据源对象而不是庞大的数据实体被传输到远程结点，以用于后续的计算，这大大减少了网络流量。
+数据源(data source)是DolphinDB的通用计算框架中的基本概念。它是一种特殊类型的数据对象，是对数据的元描述。通过执行数据源，用户可以获得诸如表、矩阵、向量等数据实体。在DolphinDB的分布式计算框架中，轻量级的数据源对象而不是庞大的数据实体被传输到远程节点，以用于后续的计算，这大大减少了网络流量。
 
-在DolphinDB中，用户常用`sqlDS`函数，基于一个SQL表达式产生数据源。这个函数并不直接对表进行查询，而是返回一个或多个SQL子查询的元语句，即数据源。之后，用户可以使用Map-Reduce框架，传入数据源和计算函数，将任务分发到每个数据源对应的结点，并行地完成计算，然后将结果汇总。
+在DolphinDB中，可使用`sqlDS`函数，基于一个SQL表达式产生数据源。这个函数并不直接对表进行查询，而是返回一个或多个SQL子查询的元语句，即数据源。之后，用户可以使用Map-Reduce框架，传入数据源和计算函数，将任务分发到每个数据源对应的节点，并行地完成计算，然后将结果汇总。
 
-关于几种常用的获得数据源的方法，本文的3.1, 3.2, 3.3, 3.4节中会详细介绍。
+关于几种常用的获得数据源的方法，本文的3.1至3.4节中会详细介绍。
 
 ## 2. Map-Reduce框架
 
@@ -15,9 +16,9 @@ Map-Reduce函数是DolphinDB通用分布式计算框架的核心功能。
 
 ### 2.1 `mr`函数
 
-DolphinDB的Map-Reduce函数`mr`的语法是`mr(ds, mapFunc, [reduceFunc], [finalFunc], [parallel=true])`，它可接受一组数据源和一个mapFunc函数作为参数。它会将计算任务分发到每个数据源所在的结点，通过mapFunc对每个数据源中的数据进行处理。可选参数reduceFunc会将mapFunc的返回值两两做计算，得到的结果再与第三个mapFunc的返回值计算，如此累积计算，将mapFunc的结果汇总。如果有M个map调用，reduce函数将被调用M-1次。可选参数finalFunc对reduceFunc的返回值做进一步处理。
+DolphinDB的Map-Reduce函数`mr`的语法是 mr(ds, mapFunc, [reduceFunc], [finalFunc], [parallel=true])，它可接受一组数据源和一个mapFunc函数作为参数。它会将计算任务分发到每个数据源所在的结点，通过mapFunc对每个数据源中的数据进行处理。可选参数reduceFunc会将mapFunc的返回值两两做计算，得到的结果再与第三个mapFunc的返回值计算，如此累积计算，将mapFunc的结果汇总。如果有M个map调用，reduce函数将被调用M-1次。可选参数finalFunc对reduceFunc的返回值做进一步处理。
 
-[官方文档](https://www.dolphindb.cn/cn/help/DistributedComputing1.html)中有一个通过`mr`执行分布式最小二乘线性回归的例子。本文通过以下例子，展示如何用一个`mr`调用实现对分布式表每个分区中的数据随机采样十分之一的功能：
+[官方文档](https://www.dolphindb.cn/cn/help/DatabaseandDistributedComputing/DistributedComputing.html)中有一个通过`mr`执行分布式最小二乘线性回归的例子。本文通过以下例子，展示如何用一个`mr`调用实现对分布式表每个分区中的数据随机采样十分之一的功能：
 
 ```
 // 创建数据库和DFS表
@@ -38,17 +39,17 @@ ds = sqlDS(<select * from t>)              // 创建数据源
 res = mr(ds, sampleMap, , unionAll)        // 执行计算
 ```
 
-在以上的例子中，用户自定义的sampleMap函数接受一个表（即数据源中的数据）作为参数，随机返回其中十分之一的行。本例的`mr`函数没有reduceFunc参数，因此将各个map函数的返回值放在一个元组中，传给finalFunc，即`unionAll`。`unionAll`将map函数返回的多张表合并成一个顺序分区的分布式表。
+在以上的例子中，用户自定义的sampleMap函数接受一个表（即数据源中的数据）作为参数，随机返回其中1/10的行。本例的`mr`函数没有reduceFunc参数，因此将各个map函数的返回值放在一个元组中，传给finalFunc，即`unionAll`。`unionAll`将map函数返回的多张表合并成一个顺序分区的分布式表。
 
 ### 2.2 `imr`函数
 
-DolphinDB database提供了基于Map-Reduce方法的迭代计算函数`imr`。相比`mr`，它能支持迭代计算，每次迭代使用上一次迭代的结果和输入数据集，因而能支持更多复杂算法的实现。迭代计算需要模型参数的初始值和终止标准。它的语法是`imr(ds, initValue, mapFunc, [reduceFunc], [finalFunc], terminateFunc, [carryover=false])`，其中initValue参数是第一次迭代的初值，mapFunc参数是一个函数，接受的参数包括数据源实体，和前一次迭代中最终函数的输出。对于第一次迭代，它是用户给出的初始值。`imr`的与`mr`函数中的类似。finalFunc函数接受两个参数，第一个参数是前一次迭代中最终函数的输出。对于第一次迭代，它是用户给出的初始值。第二个参数是调用reduce函数后的输出。terminateFunc参数用于判断迭代是否中止。它接受两个参数。第一个是前一次迭代中reduce函数的输出，第二个是当前迭代中reduce函数的输出。如果它返回true，迭代将会中止。carryover参数表示map函数调用是否生成一个传递给下一次map函数调用的对象。如果carryover为true，那么map函数有3个参数并且最后一个参数为携带的对象，同时map函数的输出结果是一个元组，最后一个元素为携带的对象。在第一次迭代中，携带的对象为NULL。
+DolphinDB提供了基于Map-Reduce方法的迭代计算函数`imr`。相比`mr`，它能支持迭代计算，每次迭代使用上一次迭代的结果和输入数据集，因而能支持更多复杂算法的实现。迭代计算需要模型参数的初始值和终止标准。它的语法是 imr(ds, initValue, mapFunc, [reduceFunc], [finalFunc], terminateFunc, [carryover=false])，其中initValue参数是第一次迭代的初值，mapFunc参数是一个函数，接受的参数包括数据源实体，和前一次迭代中最终函数的输出。对于第一次迭代，它是用户给出的初始值。`imr`的与`mr`函数中的类似。finalFunc函数接受两个参数，第一个参数是前一次迭代中最终函数的输出。对于第一次迭代，它是用户给出的初始值。第二个参数是调用reduce函数后的输出。terminateFunc参数用于判断迭代是否中止。它接受两个参数。第一个是前一次迭代中reduce函数的输出，第二个是当前迭代中reduce函数的输出。如果它返回true，迭代将会中止。carryover参数表示map函数调用是否生成一个传递给下一次map函数调用的对象。如果carryover为true，那么map函数有3个参数并且最后一个参数为携带的对象，同时map函数的输出结果是一个元组，最后一个元素为携带的对象。在第一次迭代中，携带的对象为NULL。
 
-[官方文档](https://www.dolphindb.cn/cn/help/DistributedComputing1.html)中有一个通过`imr`计算分布式数据的中位数的例子。本文将提供一个更加复杂的例子，即用牛顿法实现逻辑回归（Logistic Regression）的计算，展示`imr`在机器学习算法中的应用。
+[官方文档](https://www.dolphindb.cn/cn/help/DatabaseandDistributedComputing/DistributedComputing.html)中有一个通过`imr`计算分布式数据的中位数的例子。本文将提供一个更加复杂的例子，即用牛顿法实现逻辑回归（Logistic Regression）的计算，展示`imr`在机器学习算法中的应用。
 
 ```
 def myLrMap(t, lastFinal, yColName, xColNames, intercept) {
-	placeholder, placeholder, theta = lastFinal
+    placeholder, placeholder, theta = lastFinal
     if (intercept)
         x = matrix(t[xColNames], take(1.0, t.rows()))
     else
@@ -88,7 +89,7 @@ def myLr(ds, yColName, xColNames, intercept, initTheta, tol) {
 
 这个例子还可以通过数据源转换操作，进一步优化以提高性能，具体参见[3.6节](#36-数据源转换)。
 
-作为经常使用的分析工具，分布式逻辑回归已经在DolphinDB中作为内置函数实现。内置版本(`logisticRegression`)提供更多功能。
+作为经常使用的分析工具，分布式逻辑回归在DolphinDB中作为内置函数`logisticRegression`实现，并提供更多功能。
 
 ## 3. 数据源相关函数
 
@@ -96,7 +97,7 @@ DolphinDB提供了以下常用的方法获取数据源：
 
 ### 3.1 `sqlDS`函数
 
-`sqlDS`函数根据输入的SQL元代码创建一个数据源列表。 如果SQL查询中的数据表有n个分区，sqlDS会生成n个数据源。 如果SQL查询不包含任何分区表，sqlDS将返回只包含一个数据源的元组。
+`sqlDS`函数根据输入的SQL元代码创建一个数据源列表。 如果SQL查询中的数据表有n个分区，`sqlDS`会生成n个数据源。 如果SQL查询不包含任何分区表，`sqlDS`将返回只包含一个数据源的元组。
 
 `sqlDS`是将SQL表达式转换成数据源的高效方法。用户只需要提供SQL表达式，而不需要关注具体的数据分布，就能利用返回的数据源执行分布式算法。下面提供的例子，展示了利用`sqlDS`对DFS表中的数据执行`olsEx`分布式最小二乘回归的方法。
 
@@ -125,13 +126,13 @@ olsEx(ds, `y, `x)                   // 执行计算
 
 ```
 // 创建数据库
-deviceId = "device" + string(1..100000)
-db1 = database("", VALUE, 2019.06.01..2019.06.30)
-db2 = database("", HASH, INT:20)
-db = database("dfs://repartitionExample", COMPO, [db1, db2])
+deviceId = "device" + string(1..100000) 
+db1 = database("", VALUE, 2019.06.01..2019.06.30) 
+db2 = database("", HASH, SYMBOL:20) 
+db = database("dfs://repartitionExample", COMPO, [db1, db2]) 
 
 // 创建DFS表
-t = db.createPartitionedTable(table(100000:0, `deviceId`time`temperature, [SYMBOL,DATETIME,DOUBLE]), `tb, `deviceId`time)
+t = db.createPartitionedTable(table(100000:0, `deviceId`time`temperature, [SYMBOL,DATETIME,DOUBLE]), `tb, `time`deviceId)
 n = 3000000
 t.append!(table(rand(deviceId, n) as deviceId, 2019.06.01T00:00:00 + rand(86400 * 10, n) as time, 60 + norm(0.0, 5.0, n) as temperature))
 
@@ -147,7 +148,7 @@ res = mr(ds, def(t) { return select percentile(temperature, 95) from t group by 
 
 `textChunkDS`函数可以将一个文本文件分成若干个数据源，以便对一个文本文件所表示的数据执行分布式计算。它的语法是：textChunkDS(filename, chunkSize, [delimiter=','], [schema])。其中，filename, delimiter, schema这些参数与`loadText`函数的参数相同。而chunkSize参数表示每个数据源中数据的大小，单位为MB，可以取1到2047的整数。
 
-以下例子是官方文档中[`olsEx`例子](https://www.dolphindb.cn/cn/help/olsEx.html)的另一种实现。它通过`textChunkDS`函数从文本文件中生成若干数据源，每个数据源的大小为100MB，对生成的数据源经过转换后，执行`olsEx`函数，计算最小二乘参数：
+以下例子是官方文档中[`olsEx`例子](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/o/olsEx.html)的另一种实现。它通过`textChunkDS`函数从文本文件中生成若干数据源，每个数据源的大小为100MB，对生成的数据源经过转换后，执行`olsEx`函数，计算最小二乘参数：
 
 ```
 ds = textChunkDS("c:/DolphinDB/Data/USPrices.csv", 100)
@@ -199,7 +200,7 @@ sampleVar = mr(ds, varMap, +, varFinal)
 
 一个数据源对象还可以包含多个数据转换函数，用以进一步处理所检索到的数据。系统会依次执行这些数据转换函数，一个函数的输出作为下一个函数的输入（和唯一的输入）。
 
-将数据转换函数包含在数据源中，通常比在核心计算操作（即map函数）中对数据源进行转换更有效。如果检索到的数据仅需要一次计算时，没有性能差异，但它对于具有缓存数据对象的数据源的迭代计算会造成巨大的差异。如果转换操作在核心计算操作中，则每次迭代都需要执行转换; 如果转换操作在数据源中，则它们只被执行一次。`transDS!`函数提供了转换数据源的功能。
+将数据转换函数包含在数据源中，通常比在核心计算操作（即map函数）中对数据源进行转换更有效。如果检索到的数据仅需要一次计算时，没有性能差异，但它对于具有缓存数据对象的数据源的迭代计算会造成巨大的差异。如果转换操作在核心计算操作中，则每次迭代都需要执行转换；如果转换操作在数据源中，则它们只被执行一次。`transDS!`函数提供了转换数据源的功能。
 
 例如，执行迭代机器学习函数`randomForestRegressor`之前，用户可能需要手动填充数据的缺失值（当然，DolphinDB的随机森林算法已经内置了缺失值处理）。此时，可以用`transDS!`对数据源进行如下处理：对每一个特征列，用该列的平均值填充缺失值。假设表中的列x0, x1, x2, x3为自变量，列y为因变量，以下是实现方法：
 

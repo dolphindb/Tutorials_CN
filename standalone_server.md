@@ -13,6 +13,7 @@
 ## 1. 软件授权许可更新
 
 如果用户拿到企业版试用授权许可，只需用其替换如下文件即可。
+
 ```sh
 /DolphinDB/server/dolphindb.lic
 ```
@@ -170,9 +171,54 @@ Windows系统：
 dolphindb.exe -localSite localhost:8900:local8900 -maxMemSize 4
 ```
 
-更多DolphinDB配置参数请查看[集群配置](https://www.dolphindb.cn/cn/help/ClusterSetup1.html)。
+更多DolphinDB配置参数请查看[单实例配置](https://www.dolphindb.cn/cn/help/DatabaseandDistributedComputing/Configuration/StandaloneMode.html)。
 
-## 6. 更多详细信息，请参阅DolphinDB帮助文档
+## 6. server版本升级
+
+1. 正常关闭单节点。
+
+2. 备份旧版本的元数据文件。单节点元数据的默认存储目录：
+
+   ```sh
+   /DolphinDB/server/local8900/dfsMeta/
+   ```
+   ```sh
+   /DolphinDB/server/local8900/storage/CHUNK_METADATA/
+   ```
+   在linux上可在server目录执行以下命令备份单节点元数据：
+   ```sh
+   mkdir backup
+   cp -r local8900/dfsMeta/ backup/dfsMeta
+   cp -r local8900/storage/CHUNK_METADATA/ backup/CHUNK_METADATA
+   ```
+   
+>  注意元数据文件可能通过配置文件指定存储在其它目录，如果在默认路径没有找到上述文件，可以通过查询配置文件中的dfsMetaDir参数和chunkMetaDir参数确认元数据文件的存储目录。若配置中未指定dfsMetaDir参数和chunkMetaDir参数，但是配置了volumes参数，CHUNK_METADATA目录在相应的volumes参数指定的目录下。
+
+3. 下载需要更新版本的安装包。可以通过官网（[www.dolphindb.cn](http://www.dolphindb.cn/)）下载，在linux上可通过执行以下命令下载1.30.6版本的安装包： 
+
+   ```sh
+   wget https://www.dolphindb.cn/downloads/DolphinDB_Linux64_V1.30.6.zip
+   ```
+
+>  注意：上述命令中不同版本的号会有不同的文件名。
+
+4. 解压。在linux上可通过执行以下命令解压1.30.6版本的安装包至v1.30.6目录：
+
+   ```sh
+   unzip DolphinDB_Linux64_V1.30.6.zip -d v1.30.6
+   ```
+
+5. 拷贝解压后的server子目录下文件除config目录、data目录、log目录和dolphindb.cfg外的所有文件和子目录到旧版本安装目录server下覆盖同名文件。
+
+>  注意若有在旧版本的系统初始化脚本dolphindb.dos中添加脚本，请不要覆盖。旧版本的dolphindb.lic若是企业版license，也不要覆盖。
+
+6. 重新启动单节点，GUI连接该节点，执行以下命令查看版本信息，检查升级是否成功：
+
+   ```sh
+   version()
+   ```
+
+## 7. 更多详细信息，请参阅DolphinDB帮助文档
 
 - [中文](https://www.dolphindb.cn/cn/help/index.html)
 - [英文](http://dolphindb.com/help/)

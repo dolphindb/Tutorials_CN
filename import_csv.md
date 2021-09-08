@@ -2,10 +2,10 @@
 
 DolphinDB提供以下4个函数，将文本数据导入内存或数据库：
 
-- [`loadText`](https://www.dolphindb.cn/cn/help/loadText.html): 将文本文件导入为内存表。
-- [`ploadText`](https://www.dolphindb.cn/cn/help/ploadText.html): 将文本文件并行导入为分区内存表。与`loadText`函数相比，速度更快。
-- [`loadTextEx`](https://www.dolphindb.cn/cn/help/loadTextEx.html): 将文本文件导入数据库中，包括分布式数据库，本地磁盘数据库或内存数据库。
-- [`textChunkDS`](https://www.dolphindb.cn/cn/help/textChunkDS.html)：将文本文件划分为多个小数据源，再通过[`mr`](https://www.dolphindb.cn/cn/help/mr.html)函数进行灵活的数据处理。
+- [`loadText`](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/l/loadText.html): 将文本文件导入为内存表。
+- [`ploadText`](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/p/ploadText.html): 将文本文件并行导入为分区内存表。与`loadText`函数相比，速度更快。
+- [`loadTextEx`](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/l/loadTextEx.html): 将文本文件导入数据库中，包括分布式数据库，本地磁盘数据库或内存数据库。
+- [`textChunkDS`](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/t/textChunkDS.html)：将文本文件划分为多个小数据源，再通过[`mr`](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/m/mr.html)函数进行灵活的数据处理。
 
 DolphinDB的文本数据导入不仅灵活，功能丰富，而且速度非常快。DolphinDB与Clickhouse, MemSQL, Druid, Pandas等业界流行的系统相比，单线程导入的速度更快，最多可达一个数量级的优势；多线程并行导入的情况下，速度优势更加明显。
 
@@ -37,7 +37,7 @@ DolphinDB的文本数据导入不仅灵活，功能丰富，而且速度非常�
 
 > 请注意：1.20.0之前的版本不支持导入INT128, UUID和IPADDR这三种数据类型。如果在csv文件中包含这三种数据类型，请确保所用版本不低于1.20.0。
 
-[`loadText`](https://www.dolphindb.cn/cn/help/loadText.html)函数用于将数据导入DolphinDB内存表。下例调用`loadText`函数导入数据，并查看生成的数据表的结构。例子中涉及到的数据文件请参考[附录](#附录)。
+[`loadText`](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/l/loadText.html)函数用于将数据导入DolphinDB内存表。下例调用`loadText`函数导入数据，并查看生成的数据表的结构。例子中涉及到的数据文件请参考[附录](#附录)。
 
 ```
 dataFilePath="/home/data/candle_201801.csv"
@@ -58,7 +58,7 @@ symbol exchange cycle tradingDay date       time     open  high  low   close vol
 000001 SZSE     1     2018.01.02 2018.01.02 93500000 13.35 13.37 13.35 13.37 1601939 2.140652E7 1514856900000
 ```
 
-调用[`schema`](https://www.dolphindb.cn/cn/help/schema.html)函数查看表结构（字段名称、数据类型等信息）：
+调用[`schema`](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/s/schema.html)函数查看表结构（字段名称、数据类型等信息）：
 
 ```
 tmpTB.schema().colDefs;
@@ -104,7 +104,7 @@ price|DOUBLE
 
 ### 2.1 提取文本文件的schema
 
-[`extractTextSchema`](https://www.dolphindb.cn/cn/help/extractTextSchema.html)函数用于获取文本文件的schema，包括字段名称和数据类型等信息。
+[`extractTextSchema`](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/e/extractTextSchema.html)函数用于获取文本文件的schema，包括字段名称和数据类型等信息。
 
 例如，使用`extractTextSchema`函数得到本教程中示例文件的表结构：
 
@@ -152,7 +152,7 @@ tmpTB=loadText(filename=dataFilePath,schema=schemaTB);
 
 ### 2.3 指定日期和时间类型的格式
 
-对于日期列或时间列的数据，如果自动识别的数据类型不符合预期，不仅需要在schema的type列指定数据类型，还需要在format列中指定格式（用字符串表示），如"MM/dd/yyyy"。如何表示日期和时间格式请参考[日期和时间的调整及格式](https://www.dolphindb.cn/cn/help/DataTimeParsingandFormat.html)。
+对于日期列或时间列的数据，如果自动识别的数据类型不符合预期，不仅需要在schema的type列指定数据类型，还需要在format列中指定格式（用字符串表示），如"MM/dd/yyyy"。如何表示日期和时间格式请参考[日期和时间的调整及格式](https://www.dolphindb.cn/cn/help/DataManipulation/TemporalObjects/ParsingandFormatofTemporalVariables.html)。
 
 下面结合例子具体说明对日期和时间列指定数据类型的方法。
 
@@ -218,7 +218,7 @@ schemaTB=select * from schemaTB where name in `symbol`date`open`high`close`volum
 
 >请注意：
 >1. 列号从0开始。上例中第一列symbol列对应的列号是0。  
->2. 导入数据时不能改变各列的先后顺序。如果需要调整列的顺序，可以将数据文件加载后，再使用[`reorderColumns!`](https://www.dolphindb.cn/cn/help/reorderColumns.html)函数。
+>2. 导入数据时不能改变各列的先后顺序。如果需要调整列的顺序，可以将数据文件加载后，再使用[`reorderColumns!`](https://www.dolphindb.cn/cn/help/FunctionsandCommands/CommandsReferences/r/reorderColumns.html)函数。
 
 最后，使用`loadText`函数，并配置schema参数，导入文本文件中指定的列。
 
@@ -315,7 +315,7 @@ symbol exchange cycle tradingDay date       time      open  high  low   close vo
 
 ### 3.1 单个文件多线程载入内存
 
-[`ploadText`](https://www.dolphindb.cn/cn/help/ploadText.html)函数可将一个文本文件以多线程的方式载入内存。该函数与[`loadText`](https://www.dolphindb.cn/cn/help/loadText.html)函数的语法是一致的，区别在于，`ploadText`函数可以快速载入大型文件，并且生成内存分区表。它充分利用了多核CPU来并行载入文件，并行程度取决于服务器本身CPU核数量和节点的localExecutors配置。
+[`ploadText`](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/p/ploadText.html)函数可将一个文本文件以多线程的方式载入内存。该函数与[`loadText`](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/l/loadText.html)函数的语法是一致的，区别在于，`ploadText`函数可以快速载入大型文件，并且生成内存分区表。它充分利用了多核CPU来并行载入文件，并行程度取决于服务器本身CPU核数量和节点的localExecutors配置。
 
 下面比较`loadText`函数与`ploadText`函数导入同一个文件的性能。
 
@@ -344,7 +344,7 @@ Time elapsed: 2669.702 ms
 
 在大数据应用领域，数据导入往往不只是一个或两个文件的导入，而是数十个甚至数百个大型文件的批量导入。为了达到更好的导入性能，建议尽量以并行方式导入批量的数据文件。
 
-[`loadTextEx`](https://www.dolphindb.cn/cn/help/loadTextEx.html)函数可将文本文件导入指定的数据库中，包括分布式数据库，本地磁盘数据库或内存数据库。由于DolphinDB的分区表支持并发读写，因此可以支持多线程导入数据。
+[`loadTextEx`](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/l/loadTextEx.html)函数可将文本文件导入指定的数据库中，包括分布式数据库，本地磁盘数据库或内存数据库。由于DolphinDB的分区表支持并发读写，因此可以支持多线程导入数据。
 
 使用`loadTextEx`将文本数据导入到分布式数据库，具体实现为将数据先导入到内存，再由内存写入到数据库，这两个步骤由同一个函数完成，以保证高效率。
 
@@ -368,7 +368,7 @@ db=database(dbPath,VALUE,1..10000)
 tb=db.createPartitionedTable(trades,`tb,`id);
 ```
 
-DolphinDB的[`cut`](https://www.dolphindb.cn/cn/help/cut.html)函数可将一个向量中的元素分组。下面调用`cut`函数将待导入的文件路径进行分组，再调用[`submitJob`](https://www.dolphindb.cn/cn/help/submitJob.html)函数，为每个线程分配写入任务，批量导入数据。
+DolphinDB的[`cut`](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/c/cut.html)函数可将一个向量中的元素分组。下面调用`cut`函数将待导入的文件路径进行分组，再调用[`submitJob`](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/s/submitJob.html)函数，为每个线程分配写入任务，批量导入数据。
 
 ```
 def writeData(db,file){
@@ -382,7 +382,7 @@ for(x in dataFilePath.cut(100/parallelLevel)){
 
 > 请注意：DolphinDB的分区表不允许多个线程同时向一个分区写数据。上例中，每个文件中的分区列（id列）取值不同，因此不会造成多个线程写入同一个分区的情况。在设计分区表的并发读写时，请确保不会有多个线程同时写入同一分区。
 
-通过[`getRecentJobs`](https://www.dolphindb.cn/cn/help/getRecentJobs.html)函数可以取得当前本地节点上最近n个批处理作业的状态。使用select语句计算并行导入批量文件所需时间，得到在6核12超线程的CPU上耗时约1.59秒。
+通过[`getRecentJobs`](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/g/getRecentJobs.html)函数可以取得当前本地节点上最近n个批处理作业的状态。使用select语句计算并行导入批量文件所需时间，得到在6核12超线程的CPU上耗时约1.59秒。
 
 ```
 select max(endTime) - min(startTime) from getRecentJobs() where jobId like "loadData"+string(parallelLevel)+"%";
@@ -413,7 +413,7 @@ count
 
 ## 4. 导入数据库前的预处理
 
-在将数据导入数据库之前，若需要对数据进行预处理，例如转换日期和时间数据类型，填充空值等，可以在调用[`loadTextEx`](https://www.dolphindb.cn/cn/help/loadTextEx.html)函数时指定transform参数。tansform参数接受一个函数作为参数，并且要求该函数只能接受一个参数。函数的输入是一个未分区的内存表，输出也是一个未分区的内存表。需要注意的是，只有`loadTextEx`函数提供transform参数。
+在将数据导入数据库之前，若需要对数据进行预处理，例如转换日期和时间数据类型，填充空值等，可以在调用[`loadTextEx`](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/l/loadTextEx.html)函数时指定transform参数。tansform参数接受一个函数作为参数，并且要求该函数只能接受一个参数。函数的输入是一个未分区的内存表，输出也是一个未分区的内存表。需要注意的是，只有`loadTextEx`函数提供transform参数。
 
 ### 4.1 指定日期和时间数据的数据类型
 
@@ -498,7 +498,7 @@ symbol exchange cycle tradingDay date       time     open  high  low   close vol
 
 ### 4.2 填充空值 
 
-transform参数可调用DolphinDB的内置函数。当内置函数要求多个参数时，我们可以使用[部分应用](https://www.dolphindb.cn/cn/help/PartialApplication.html)将多参数函数转换为一个参数的函数。例如，调用[`nullFill!`](https://www.dolphindb.cn/cn/help/nullFill1.html)函数对文本文件中的空值进行填充。
+transform参数可调用DolphinDB的内置函数。当内置函数要求多个参数时，我们可以使用[部分应用](https://www.dolphindb.cn/cn/help/Functionalprogramming/PartialApplication.html)将多参数函数转换为一个参数的函数。例如，调用[`nullFill!`](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/n/nullFill!.html)函数对文本文件中的空值进行填充。
 
 ```
 db=database(dbPath,VALUE,2018.01.02..2018.01.30)
@@ -510,7 +510,7 @@ tmpTB=loadTextEx(dbHandle=db,tableName=`pt,partitionColumns=`date,filename=dataF
 
 DolphinDB支持使用Map-Reduce自定义数据导入，将数据按行进行划分，并将划分后的数据通过Map-Reduce导入到DolphinDB。
 
-可使用[`textChunkDS`](https://www.dolphindb.cn/cn/help/textChunkDS.html)函数将文件划分为多个小文件数据源，再通过[`mr`](https://www.dolphindb.cn/cn/help/mr.html)函数写入到数据库中。在调用`mr`将数据存入数据库前，用户还可进行灵活的数据处理，从而实现更复杂的导入需求。
+可使用[`textChunkDS`](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/t/textChunkDS.html)函数将文件划分为多个小文件数据源，再通过[`mr`](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/m/mr.html)函数写入到数据库中。在调用`mr`将数据存入数据库前，用户还可进行灵活的数据处理，从而实现更复杂的导入需求。
 
 ### 5.1 将文件中的股票和期货数据存储到两个不同的数据表
 
@@ -552,7 +552,7 @@ ds;
 (DataSource<readTableFromFileSegment, DataSource<readTableFromFileSegment, DataSource<readTableFromFileSegment, DataSource<readTableFromFileSegment)
 ```
 
-调用`mr`函数，指定`textChunkDS`函数结果为数据源，将文件导入到数据库中。由于map函数（由mapFunc参数指定）只接受一个表作为参数，这里我们使用[部分应用](https://www.dolphindb.cn/cn/help/PartialApplication.html)将多参数函数转换为一个参数的函数。
+调用`mr`函数，指定`textChunkDS`函数结果为数据源，将文件导入到数据库中。由于map函数（由mapFunc参数指定）只接受一个表作为参数，这里我们使用[部分应用](https://www.dolphindb.cn/cn/help/Functionalprogramming/PartialApplication.html)将多参数函数转换为一个参数的函数。
 
 ```
 mr(ds=ds, mapFunc=divideImport{,tb1,tb2}, parallel=false);
@@ -626,7 +626,7 @@ count
 
 ### 6.1 不同编码的数据的处理
 
-由于DolphinDB的字符串采用UTF-8编码，若加载的文件不是UTF-8编码，需在导入后进行转化。DolphinDB提供了[`convertEncode`](https://www.dolphindb.cn/cn/help/convertEncode.html)、[`fromUTF8`](https://www.dolphindb.cn/cn/help/fromUTF8.html)和[`toUTF8`](https://www.dolphindb.cn/cn/help/toUTF8.html)函数，用于导入数据后对字符串编码进行转换。
+由于DolphinDB的字符串采用UTF-8编码，若加载的文件不是UTF-8编码，需在导入后进行转化。DolphinDB提供了[`convertEncode`](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/c/convertEncode.html)、[`fromUTF8`](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/f/fromUTF8.html)和[`toUTF8`](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/t/toUTF8.html)函数，用于导入数据后对字符串编码进行转换。
 
 例如，使用`convertEncode`函数转换表tmpTB中的exchange列的编码：
 

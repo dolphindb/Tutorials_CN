@@ -175,7 +175,7 @@ addNode("172.18.0.14",8804,"node4");
 
 ```
 tb = database("dfs://scaleout_test_db").loadTable("scaleoutTB")
-tb.append!(table(1001..1500 as id,rand(`A`B`C,500) as name))
+tb.append!(table(1001..2000 as id,rand(`A`B`C,1000) as name))
 ```
 
 点击DFS Explorer并打开scaleout_test_db，可以看到数据已经分布到新添加的 node4 节点上。

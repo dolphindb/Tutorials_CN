@@ -4,7 +4,7 @@ DolphinDB database 提供了一系列函数，用于数据备份与恢复。数�
 
 ## 1. 备份
 
-DolphinDB提供了[`backup`](https://www.dolphindb.cn/cn/help/backup.html)函数对分布式数据库进行备份。备份是以分区为单位进行的，可对指定数据表的部分或全部分区进行备份，支持全量备份还是增量备份。
+DolphinDB提供了[`backup`](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/b/backup.html)函数对分布式数据库进行备份。备份是以分区为单位进行的，可对指定数据表的部分或全部分区进行备份，支持全量备份还是增量备份。
 
 备份需要指定存放备份文件的路径backupDir与需要备份的数据（用SQL语句表示）。备份后，系统会在`<backupDir>/<dbName>/<tbName>`目录下生成元数据文件_metaData.bin和数据文件<chunkID>.bin，每个分区备份为一个数据文件。
 
@@ -117,8 +117,8 @@ scheduleJob(`backupJob, "backupDB", backup{"/hdd/hdd1/backup/"+(today()-1).forma
 ## 2. 恢复
 
 DolphinDB提供两种数据恢复的方法：
-- 使用[`migrate`](https://www.dolphindb.cn/cn/help/migrate.html)函数
-- 使用[`restore`](https://www.dolphindb.cn/cn/help/restore.html)函数
+- 使用[`migrate`](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/m/migrate.html)函数
+- 使用[`restore`](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/r/restore.html)函数
 
 `retore`函数定义如下：
 
@@ -182,7 +182,7 @@ for(i in 2:31){
 
 ### 3.1 getBackupList
 
-[`getBackupList`](https://www.dolphindb.cn/cn/help/getBackupList.html)函数用来查看某个分布式表的所有备份信息，返回一张表，每个分区对应一行记录。函数定义如下：
+[`getBackupList`](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/g/getBackupList.html)函数用来查看某个分布式表的所有备份信息，返回一张表，每个分区对应一行记录。函数定义如下：
 
 getBackupList(backupDir, dbURL, tableName)
 
@@ -230,7 +230,7 @@ getBackupList("/hdd/hdd1/backup/", "dfs://ddb", "windTurbine")
 
 ### 3.2 getBackupMeta
 
-[`getBackupMeta`](https://www.dolphindb.cn/cn/help/getBackupMeta.html)函数用来查看某张表中某个分区的备份的信息，返回一个字典，包含schema，cid，path等信息。函数定义如下：
+[`getBackupMeta`](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/g/getBackupMeta.html)函数用来查看某张表中某个分区的备份的信息，返回一个字典，包含schema，cid，path等信息。函数定义如下：
 
 getBackupMeta(backupDir, dfsPath, tableName)
 
@@ -261,7 +261,7 @@ cid->10441
 ```
 ### 3.3 loadBackup
 
-[`loadBackup`](https://www.dolphindb.cn/cn/help/loadBackup.html)函数用于加载指定分布式表中某个分区的备份数据。函数定义如下：
+[`loadBackup`](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/l/loadBackup.html)函数用于加载指定分布式表中某个分区的备份数据。函数定义如下：
 
 loadBackup(backupDir, dfsPath, tableName)
 
@@ -285,7 +285,7 @@ loadBackup("/hdd/hdd1/backup/","dfs://ddb","/20200103/10","windTurbine")
 
 ## 4. 示例
 
-下面的例子创建了一个组合分区的数据库dfs://compoDB。
+下面的例子创建了一个组合分区的数据库dfs://compoDB 。
 
 ```
 n=1000000

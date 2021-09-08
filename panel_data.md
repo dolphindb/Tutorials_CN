@@ -20,7 +20,7 @@
         - [3.3.3 NULL值的处理](#333-null值的处理)
 - [4.面板数据处理方式的对比](#4-面板数据处理方式的对比)
     - [4.1 DolphinDB SQL 与 向量化函数处理面板数据的对比](#41-dolphindb-sql-与-向量化函数处理面板数据的对比)
-    - [4.2 DolphinDB 与 pandas处理面板数据的性能对比](#42-dolphindb-与-pandas处理面板数据的性能对比)
+    - [4.2 DolphinDB 与 pandas处理面板数据的性能对比](#42-dolphindb%E4%B8%8Epandas%E5%A4%84%E7%90%86%E9%9D%A2%E6%9D%BF%E6%95%B0%E6%8D%AE%E7%9A%84%E6%80%A7%E8%83%BD%E5%AF%B9%E6%AF%94)
 
 <!-- /TOC -->
 

@@ -18,8 +18,8 @@ DolphinDB流数据处理系统提供了多种方便的功能，例如：
 
 - [1 流程图及相关概念](#1-流程图及相关概念)
     - [1.1 流数据表](#11-流数据表)
-    - [1.2 发布和订阅](#12-发布和订阅)
-    - [1.3 流数据引擎](#13-流数据引擎)
+    - [1.2 发布和订阅](#12-%E5%8F%91%E5%B8%83%E4%B8%8E%E8%AE%A2%E9%98%85)
+    - [1.3 流数据引擎](#13-%E6%B5%81%E6%95%B0%E6%8D%AE%E8%AE%A1%E7%AE%97%E5%BC%95%E6%93%8E)
 - [2 核心功能](#2-核心功能)
     - [2.1 流数据发布](#21-流数据发布)
     - [2.2 流数据订阅](#22-流数据订阅)
@@ -28,7 +28,7 @@ DolphinDB流数据处理系统提供了多种方便的功能，例如：
     - [2.5 取消订阅](#25-取消订阅)
     - [2.6 流数据持久化](#26-流数据持久化)
 - [3 数据回放](#3-数据回放)
-- [4 流数据API](#4-流数据API)
+- [4 流数据API](#4-%E6%B5%81%E6%95%B0%E6%8D%AEapi)
     - [4.1 Java API](#41-java-api)
     - [4.2 Python API](#42-python-api)
     - [4.3 C++ API](#43-c-api)
@@ -58,7 +58,7 @@ DolphinDB流数据模块采用发布-订阅-消费的模式。流数据首先注
 
 ### 1.3 流数据计算引擎
 
-流数据计算引擎是专门用于处理流数据实时计算和分析的模块。DolphinDB提供[`createTimeSeriesEngine`](stream_aggregator.md), `createAnomalyDetectionEngine`, `createReactiveStateEngine`, `createCrossSectionalEngine `, `createSessionWindowEngine`等函数创建流数据计算引擎对流数据进行实时计算，并将计算结果持续输出到指定的数据表中。
+流数据计算引擎是专门用于处理流数据实时计算和分析的模块。DolphinDB提供`createTimeSeriesEngine`, `createAnomalyDetectionEngine`, `createReactiveStateEngine`, `createCrossSectionalEngine `, `createSessionWindowEngine`等函数创建流数据计算引擎对流数据进行实时计算，并将计算结果持续输出到指定的数据表中。
 
 ## 2 核心功能
 
@@ -98,7 +98,7 @@ share keyedStreamTable(`timestamp, 10000:0,`timestamp`temperature, [TIMESTAMP,DO
 
 ### 2.2 流数据订阅
 
-订阅流数据通过[`subscribeTable`](https://www.dolphindb.cn/cn/help/subscribeTable.html)函数来实现。
+订阅流数据通过[`subscribeTable`](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/s/subscribeTable.html)函数来实现。
 ```
 subscribeTable([server],tableName,[actionName],[offset=-1],handler,[msgAsTable=false],[batchSize=0],[throttle=1],[hash=-1],[reconnect=false],[filter],[persistOffset=false],[timeTrigger=false],[handlerNeedMsgId=false)
 ```
@@ -325,9 +325,9 @@ removeTopicOffset(topic)
 ```
 persistenceDir = /data/streamCache
 ```
-然后执行[`enableTableShareAndPersistence`](https://www.dolphindb.cn/cn/help/enableTableShareAndPersistence.html)命令。下面的示例将pubTable共享为sharedPubTable，并把sharedPubTable持久化到磁盘。其中参数cacheSize=1000000，asynWrite与compress默认值均为true，表示当流数据表数据量达到100万行时启用持久化，将其中50%的数据采用异步方式压缩保存到磁盘。
+然后执行[`enableTableShareAndPersistence`](https://www.dolphindb.cn/cn/help/FunctionsandCommands/CommandsReferences/e/enableTableShareAndPersistence.html)命令。下面的示例将pubTable共享为sharedPubTable，并把sharedPubTable持久化到磁盘。其中参数cacheSize=1000000，asynWrite与compress默认值均为true，表示当流数据表数据量达到100万行时启用持久化，将其中50%的数据采用异步方式压缩保存到磁盘。
 ```
-pudTable=streamTable(10000:0,`timestamp`temperature, [TIMESTAMP,DOUBLE])
+pubTable=streamTable(10000:0,`timestamp`temperature, [TIMESTAMP,DOUBLE])
 enableTableShareAndPersistence(table=pubTable, tableName=`sharedPubTable, cacheSize=1000000)
 ```
 
@@ -339,7 +339,7 @@ enableTableShareAndPersistence(table=pubTable, tableName=`sharedPubTable, cacheS
 ```
 clearTablePersistence(pubTable)
 ```
-关闭持久化，可以使用[`disableTablePersistence`](https://www.dolphindb.cn/cn/help/disableTablePersistence.html)命令：
+关闭持久化，可以使用[`disableTablePersistence`](https://www.dolphindb.cn/cn/help/FunctionsandCommands/CommandsReferences/d/disableTablePersistence.html)命令：
 ```
 disableTablePersistence(pubTable)
 ```
@@ -854,7 +854,7 @@ lastUpdate|最后一次接收数据时刻
 
 ![image](http://www.dolphindb.cn/git/images/streaming/subconn.png)
 
-这张表列出所有本节点订阅的所有发布节点的连接状态和有关接收消息的统计信息。
+这张表列出每个本地节点订阅的所有发布节点的连接状态和有关接收消息的统计信息。
 
 ### 5.3 persistWorkers表
 
@@ -945,7 +945,7 @@ act_getdata"。那么当订阅完成之后，用getStreamingStat().pubTables 查
 
 - 当有多个executor时，若每个executor处理不同的订阅，而且不同订阅的数据流的频率或者处理复杂度差异极大，容易导致低负载的executor资源闲置。通过设置subExecutorPooling=true，可以让所有executor作为一个共享线程池，共同处理所有订阅的消息。在这种共享池模式下，所有订阅的消息进入同一个队列，多个executor从队列中读取消息并行处理。需要指出，共享线程池处理流数据的一个副作用是不能保证消息按到达的时间顺序处理。当消息需要按照抵达时间顺序被处理时，不应开启此设置。系统默认采用哈希算法为每一个订阅分配一个executor。若需要保证两个流数据表的时序同步，可在订阅函数subscribeTable中对两个订阅使用相同的hash值，来指定用同一个线程来处理这两个订阅数据流。
 
-- 若流数据表启用同步持久化，那么磁盘的I/O可能会成为瓶颈。可参考2.4采用异步方式持久化数据，同时设置一个合理的持久化队列(maxPersistenceQueueDepth参数，默认值为1000万条消息)。也可使用SSD硬盘替换HDD硬盘以提高写入性能。
+- 若流数据表启用同步持久化，那么磁盘的I/O可能会成为瓶颈。可参考2.4小节采用异步方式持久化数据，同时设置一个合理的持久化队列(maxPersistenceQueueDepth参数，默认值为1000万条消息)。也可使用SSD硬盘替换HDD硬盘以提高写入性能。
 
 - 如果数据发布端(publisher)成为系统的瓶颈，譬如订阅的客户端太多可能导致发布瓶颈，可以采用以下两种处理办法。首先可以通过多级级联降低每一个发布节点的订阅数量，对延迟不敏感的应用可以订阅二级甚至三级的发布节点。其次可以调整部分参数来平衡延迟和吞吐量两个指标。参数maxMsgNumPerBlock设置批量发送消息时批的大小，默认值是1024。一般情况下，较大的批量值能提升吞吐量，但会增加网络延迟。
 

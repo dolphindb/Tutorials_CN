@@ -120,7 +120,7 @@ K线数据或相关的signal数据都是基于高精度的行情数据降低时�
 函数`loadOneFile`加载一个文件到内存表并返回。其实现步骤如下：
 * 加载一个csv文件的数据到内存表；
 * 把内存表的Symbol列变成market(市场代码)和Symbol（证券代码）2列；
-* 用[`eachPre`](https://www.dolphindb.cn/cn/help/eachPreP.html)函数把TotalVolume（累计成交量）和TotalAmount（累计成交额）处理为成交量和成交额；
+* 用[`eachPre`](https://www.dolphindb.cn/cn/help/Functionalprogramming/TemplateFunctions/eachPre.html)函数把TotalVolume（累计成交量）和TotalAmount（累计成交额）处理为成交量和成交额；
 
 注意：下面2行代码都能把累计成交量变成成交量，但第一行即调用`eachPre`的方式效率较高，第二行在用`deltas`计算后，为了补第一个元素的空值，调用了`nullFill!`进行空值填充，效率较低。
 ```

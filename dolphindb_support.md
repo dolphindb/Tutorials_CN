@@ -48,11 +48,12 @@ DolphinDB计算功能极其丰富，目前提供了近千个函数。用户手�
 - [插件](https://github.com/dolphindb/DolphinDBPlugin/issues)
 - [Server](https://github.com/dolphindb/DolphinDB/issues)
 
-在反馈问题时，请按[附录](#-附录)中提问模板的要求，尽量详细。提新需求时，请告诉我们您的应用场景，为什么现有功能不能满足需求，您想要DolphinDB提供什么样的功能。
+在反馈问题时，请按[附录](#附录)中提问模板的要求，尽量详细。提新需求时，请告诉我们您的应用场景，为什么现有功能不能满足需求，您想要DolphinDB提供什么样的功能。
 
 ## 3. 技术问答社区
 
 社区分中文社区与英文社区：
+- [DolphinDB问答社区](https://ask.dolphindb.net/)
 - [思否SegmentFault](https://segmentfault.com/t/dolphindb)
 - [StackOverflow](https://stackoverflow.com/questions/tagged/dolphindb)
  

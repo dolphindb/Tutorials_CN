@@ -36,7 +36,7 @@ streamingRaftGroups=2:DataNode1:DataNode3:DataNode5,3:DataNode2:DataNode4:DataNo
 
 ### 2.2 获取Raft组
 
-可使用[`getStreamingRaftGroups`](http://www.dolphindb.cn/cn/help/getStreamingRaftGroups.html)函数以获取与验证用户在集群配置的Raft组。
+可使用[`getStreamingRaftGroups`](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/g/getStreamingRaftGroups.html)函数以获取与验证用户在集群配置的Raft组。
 
 此函数只能获取当前数据节点上配置的Raft组。例如在上述例子中配置的DataNode1上运行`getStreamingRaftGroups()`，结果如下：
 
@@ -46,7 +46,7 @@ streamingRaftGroups=2:DataNode1:DataNode3:DataNode5,3:DataNode2:DataNode4:DataNo
 
 ### 2.3 获取Raft组的Leader
 
-在集群中配置Raft组后，每个Raft组会自动选出Leader，组中其他节点为Follower，由Leader为客户端提供流数据订阅服务。当Leader出现故障不可用时，系统会自动选举出新的Leader来提供流数据服务。获取指定raft组的Leader，可以调用函数[`getStreamingLeader`](http://www.dolphindb.cn/cn/help/getStreamingLeader.html)。函数语法如下：
+在集群中配置Raft组后，每个Raft组会自动选出Leader，组中其他节点为Follower，由Leader为客户端提供流数据订阅服务。当Leader出现故障不可用时，系统会自动选举出新的Leader来提供流数据服务。获取指定raft组的Leader，可以调用函数[`getStreamingLeader`](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/g/getStreamingLeader.html)。函数语法如下：
 ```
 getStreamingLeader(groupId)
 ```
@@ -64,7 +64,7 @@ leader=rpc(t.node[0],getStreamingLeader,t.id[0])
 
 ### 2.4 创建高可用流数据表
 
-创建高可用流数据表使用函数[`haStreamTable`](http://www.dolphindb.cn/cn/help/haStreamTable.html)。语法如下：
+创建高可用流数据表使用函数[`haStreamTable`](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/h/haStreamTable.html)。语法如下：
 ```
 haStreamTable(raftGroup, table, tableName, cacheLimit, [keyColumn], [retentionMinutes=1440])
 ```
@@ -85,13 +85,13 @@ haStreamTable(2,t1,"haDevSt",100000,"id")
 ```
 ### 2.5 删除高可用流数据表
 
-删除高可用流数据表可调用命令[`dropStreamTable`](http://www.dolphindb.cn/cn/help/dropStreamTable.html)。语法如下：
+删除高可用流数据表可调用命令[`dropStreamTable`](https://www.dolphindb.cn/cn/help/FunctionsandCommands/CommandsReferences/d/dropStreamTable.html)。语法如下：
 ```
 dropStreamTable(tableName)
 ```
 用户需要在取消所有订阅客户端后才能删除流数据表。
 
-注意：`dropStreamTable`也支持删除普通流表。普通流表还可以用[`clearTablePersistence`](http://www.dolphindb.cn/cn/help/clearTablePersistence.html)(objByName( tableName))（若有持久化）和[`undef`](http://www.dolphindb.cn/cn/help/undef.html)(tableName,SHARED)命令删除。
+注意：`dropStreamTable`也支持删除普通流表。普通流表还可以用[`clearTablePersistence`](https://www.dolphindb.cn/cn/help/FunctionsandCommands/CommandsReferences/c/clearTablePersistence.html)(objByName( tableName))（若有持久化）和[`undef`](https://www.dolphindb.cn/cn/help/FunctionsandCommands/CommandsReferences/u/undef.html)(tableName,SHARED)命令删除。
 
 ## 3. 生产者和消费者的高可用
 
@@ -109,8 +109,12 @@ conn.connect(host, port, "admin","123456", initScript, True, ["192.168.1.2:9921"
 
 ### 3.2 订阅流数据
 
-客户端只需订阅Raft组中任意一个数据节点上的高可用流数据表，并启用订阅的自动重连功能（即把[`subscribeTable`](http://www.dolphindb.cn/cn/help/subscribeTable.html)的reconnect参数设置为true）。Leader上的高可用流数据表会向订阅端发布数据。如果Raft组中的Leader宕机，系统会选举出新的Leader继续发布数据，客户端会自动切换订阅到新Leader上的高可用流数据表。
-下面的例子在Raft组2上创建了一个高可用流数据表haDevSt。然后在集群中的某个节点上执行`subscribeTable`，向Leader节点订阅haDevSt。`subscribeTable`的参数reconnect设为true。
+客户端只需订阅Raft组中任意一个数据节点上的高可用流数据表，并启用订阅的自动重连功能（即把[`subscribeTable`](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/s/subscribeTable.html)的reconnect参数设置为true）。Leader上的高可用流数据表会向订阅端发布数据。如果Raft组中的Leader宕机，系统会选举出新的Leader继续发布数据，客户端会自动切换订阅到新Leader上的高可用流数据表。
+
+同时针对高可用流数据表，`subscribeTable`提供了持久化保存最新一条已经处理过的订阅数据的偏移量的功能，以避免在重订阅时部分未处理的数据丢失，通过设置参数persistOffset=true可开启该功能。偏移量可以通过[getTopicProcessedOffset](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/g/getTopicProcessedOffset.html) 函数获取。
+
+下面的例子在Raft组2上创建了一个高可用流数据表haDevSt。然后在集群中的某个节点上执行`subscribeTable`，向Leader节点订阅haDevSt。`subscribeTable`的参数reconnect和persistOffset设为true。
+
 ```
 t1=table(1:0, ["id","source_address","source_port","destination_address","destination_port"], [STRING,INT,INT,INT,INT] )
 haStreamTable(2,t1,"haDevSt",100000,"id")
@@ -118,7 +122,7 @@ haStreamTable(2,t1,"haDevSt",100000,"id")
 t=select id,node from pnodeRun(getStreamingRaftGroups) where id =2
 def msgProc(msg){ //todo		
 }
-subscribeTable(server=t.node[0], tableName="haDevSt",  handler=msgProc{}, reconnect = true)
+subscribeTable(server=t.node[0], tableName="haDevSt",  handler=msgProc{}, reconnect=true, persistOffset=true)
 ```
 当流表启用高可用时，API客户端连接必须启用重连功能。目前JAVA API、C++ API和Python API已支持流数据消费者的高可用。其实现原理如下：
 - 客户端订阅时，保存raftGroup中所有节点的site（节点信息）。

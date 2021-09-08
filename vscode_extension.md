@@ -6,7 +6,7 @@ DolphinDB VS Code 插件提供如下功能：
 
 * 自动识别dos和txt后缀的文件
 * 连接DolphinDB Server
-* 编辑和指定DolphinDB脚本
+* 编辑和执行DolphinDB脚本
 * 观察变量
 
 ## 1. 下载安装插件

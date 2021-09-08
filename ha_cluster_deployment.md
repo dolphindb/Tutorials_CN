@@ -13,7 +13,7 @@ DolphinDB提供数据、元数据以及客户端的高可用方案，使得数�
 
 DolphinDB采用多副本机制，相同数据块的多个副本存储在不同的数据节点（data node）上。即使集群中某个或多个数据节点宕机，只要集群中还有至少1个副本可用，那么数据库就可以提供服务。多副本的数据一致性通过二阶段提交协议来实现。
 
-元数据存储在控制节点（conroller）上。为了保证元数据的高可用，DolphinDB采用Raft协议，通过构建多个控制节点来组成一个Raft组，只要宕机的控制节点少于半数，集群仍然可提供服务。
+元数据存储在控制节点（conroller）上。为了保证元数据的高可用，DolphinDB采用Raft协议，通过构建多个控制节点来组成一个Raft组，只要宕机的控制节点少于半数，集群仍然可提供服务。由于配置文件cluster.cfg和cluster.node由Raft组统一管理，建议通过web接口修改配置项，web端会自动同步到集群中的所有配置文件。
 
 DolphinDB API提供了自动重连和切换机制，如果当前连接的数据节点宕机，API会尝试重连，若重连失败就会自动切换连接到其他数据节点执行任务。切换数据节点对用户是透明的，用户不会感知到当前连接的节点已经切换。
 
@@ -32,7 +32,6 @@ DolphinDB API提供了自动重连和切换机制，如果当前连接的数据�
 ```
 dfsReplicationFactor=2
 ```
-P
 默认情况下，DolphinDB允许相同数据块的副本分布在同一台机器上。为了保证数据高可用，需要把相同数据块的副本分布在不同的机器上。可在controller.cfg添加以下配置项：
 
 ```
@@ -132,7 +131,7 @@ localSite,mode
 10.1.1.3:8900:controller3,controller
 10.1.1.1:8901:agent1,agent
 10.1.1.1:8911:datanode1,datanode
-10.1.1.1:8912:datanode2,datanode
+10.1.1.2:8912:datanode2,datanode
 ```
 
 (5) 为新的控制节点添加集群成员配置文件和节点配置文件
@@ -223,7 +222,7 @@ localSite,mode
 10.1.1.1:8901:agent1,agent
 10.1.1.7:8901:agent2,agent
 10.1.1.1:8911:datanode1,datanode
-10.1.1.1:8912:datanode2,datanode
+10.1.1.2:8912:datanode2,datanode
 ```
 
 把P1, P2和P3上的cluster.nodes修改为与P4的cluster.nodes相同。

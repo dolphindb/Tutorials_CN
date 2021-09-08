@@ -29,7 +29,7 @@ backup(backupDir,<select * from loadTable("dfs://db1","mt") where TradingDay > d
 backupDir = "/hdd/hdd1/backDir"
 backup(backupDir,<select col1,col2,col3 from loadTable("dfs://db1","mt")>)
 ```
-关于更灵活的sql元语句，请参考[DolphinDB元编程教程](https://2xdb.net/dolphindb/tutorials_cn/blob/master/meta_programming.md)。
+关于更灵活的sql元语句，请参考[DolphinDB元编程教程](https://dolphindb.net/dolphindb/tutorials_cn/blob/master/meta_programming.md)。
 
 ### 1.2 节点间数据文件同步
 如果需要同步的两个数据库不在同一台物理机器上，则需要同步二进制文件。DolphinDB支持shell命令，可利用操作系统提供的文件同步手段来同步目录，例如rsync或者scp命令。其中rsync是linux上的常用命令，只同步发生变化的文件，非常高效。

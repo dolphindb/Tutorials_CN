@@ -12,7 +12,7 @@ DolphinDB提供了功能强大的内存计算引擎，内置时间序列函数�
 
 ## 1. 历史数据K线计算
 
-使用历史数据计算K线，可使用DolphinDB的内置函数[`bar`](http://www.dolphindb.cn/cn/help/bar.html)，[`dailyAlignedBar`](http://www.dolphindb.cn/cn/help/dailyAlignedBar.html)，或[`wj`](http://www.dolphindb.cn/cn/help/windowjoin.html)。 
+使用历史数据计算K线，可使用DolphinDB的内置函数[`bar`](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/b/bar.html)，[`dailyAlignedBar`](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/d/dailyAlignedBar.html)，或[`wj`](https://www.dolphindb.cn/cn/help/SQLStatements/TableJoiners/windowjoin.html)。 
 
 ### 1.1 不指定K线窗口的起始时刻
 
@@ -105,9 +105,9 @@ sessionsStart = [daySession[0], nightSession[0]]
 OHLC = select first(price) as open, max(price) as high, min(price) as low, last(price) as close, sum(volume) as volume from trade group by symbol, dailyAlignedBar(timestamp, sessionsStart, barMinutes*60*1000) as barStart
 ```
 
-### 1.3 重叠K线窗口：使用`wj`函数
+### 1.3 重叠K线窗口
 
-以上例子中，K线窗口均不重叠。若要计算重叠K线窗口，可以使用`wj`函数。使用`wj`函数，可对左表中的每一行，在右表中截取一段窗口，进行计算。
+以上例子中，K线窗口均不重叠。若要计算重叠K线窗口，可以使用[`wj`](https://www.dolphindb.cn/cn/help/SQLStatements/TableJoiners/windowjoin.html)函数。`wj`函数对左表中的每一行，在右表中截取一段窗口，进行计算。
 
 **例子5** （每日两个交易时段，重叠的K线窗口）：模拟中国股票市场数据，每5分钟计算30分钟K线。
 ```
@@ -121,7 +121,7 @@ trade = table(take(sampleDate, n) as date,
 	rand(1000, n) as volume)
 ```
 
-首先生成窗口，并且用cross join来生成股票和交易窗口的组合。
+首先生成窗口，并且使用[`cj`](https://www.dolphindb.cn/cn/help/SQLStatements/TableJoiners/crossjoin.html)函数来生成股票和交易窗口的组合。
 ```
 barWindows = table(symbols as symbol).cj(table((09:30:00.000 + 0..23 * 300000).join(13:00:00.000 + 0..23 * 300000) as time))
 ```
@@ -157,7 +157,7 @@ group by symbol, bar(cumvol, volThreshold) as volBar
 
 ### 1.5 使用MapReduce函数加速
 
-若需从数据库中提取较大量级的历史数据，计算K线，然后存入数据库，可使用DolphinDB内置的Map-Reduce函数[`mr`](http://www.dolphindb.cn/cn/help/mr.html)进行数据的并行读取与计算。这种方法可以显著提高速度。
+若需从数据库中提取较大量级的历史数据，计算K线，然后存入数据库，可使用DolphinDB内置的Map-Reduce函数[`mr`](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/m/mr.html)进行数据的并行读取与计算。这种方法可以显著提高速度。
 
 本例使用美国股票市场的交易数据。原始数据存于"dfs://TAQ"数据库的"trades"表中。"dfs://TAQ"数据库采用复合分区：基于交易日期Date的值分区与基于股票代码Symbol的范围分区。
 
@@ -272,7 +272,7 @@ subscribeTable(tableName="Trade", actionName="act_tsAggr2", offset=0, handler=ap
 
 (2) 一条数据到达聚合引擎之后经过2\*updateTime（若2\*updateTime不足2秒，则设置为2秒），若其仍未参与计算，会触发一次计算。该次计算包括当时当前窗口内的所有数据。
 
-若进行分组计算，以上规则在每组之内应用。在使用updateTime参数时，step必须是updateTime的整数倍。必须使用[键值表](https://www.dolphindb.cn/cn/help/keyedTable.html)作为输出表。若未指定keyColumn参数，主键为timeColumn列；若指定了keyColumn参数，主键为timeColumn列和keyColumn列。有关updateTime参数更多细节，请参考[时序聚合引擎教程](https://2xdb.net/dolphindb/tutorials_cn/-/blob/master/stream_aggregator.md)
+若进行分组计算，以上规则在每组之内应用。在使用updateTime参数时，step必须是updateTime的整数倍。必须使用[键值表](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/k/keyedTable.html)作为输出表。若未指定keyColumn参数，主键为timeColumn列；若指定了keyColumn参数，主键为timeColumn列和keyColumn列。有关updateTime参数更多细节，请参考[时序聚合引擎教程](https://dolphindb.net/dolphindb/tutorials_cn/-/blob/master/stream_aggregator.md)
 
 例如，要计算1分钟窗口的K线，但当前1分钟的K线不希望等到窗口结束后再计算，而是希望新数据进入后最迟2秒钟就计算。可通过如下步骤实现。
 

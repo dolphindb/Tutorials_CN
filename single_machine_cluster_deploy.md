@@ -102,7 +102,7 @@ localSite,mode
 
 #### 3.1.3 配置数据节点参数文件
 
-在config目录下，创建cluster.cfg文件，可填写如下内容。用户可根据实际需要调整参数，每个参数的详细说明请参阅用户手册中[单实例参数配置](https://www.dolphindb.cn/cn/help/StandaloneSetup.html)。cluster.cfg的配置适用于集群中所有数据节点。
+在config目录下，创建cluster.cfg文件，可填写如下内容。用户可根据实际需要调整参数，每个参数的详细说明请参阅用户手册中[单实例参数配置](https://www.dolphindb.cn/cn/help/DatabaseandDistributedComputing/Configuration/StandaloneMode.html)。cluster.cfg的配置适用于集群中所有数据节点。
 
 
 ```txt
@@ -328,5 +328,5 @@ startDataNode(["DFS_NODE1", "DFS_NODE2","DFS_NODE3","DFS_NODE4"])
 
 ## 7. DolphinDB集群详细配置以及参数意义
 
-* [中文](http://www.dolphindb.cn/cn/help/Setup.html)
-* [英文](https://www.dolphindb.com/help/ClusterSetup.html)
+* [中文](https://www.dolphindb.cn/cn/help/DatabaseandDistributedComputing/Configuration/ClusterMode.html)
+* [英文](https://www.dolphindb.com/help/ClusterSetup1.html)

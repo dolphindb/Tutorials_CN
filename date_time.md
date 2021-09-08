@@ -1,16 +1,16 @@
 # DolphinDB日期/时间类型教程
 
 作为一个时序数据库，DolphinDB提供了丰富的时间/日期类型，并提供了大量内置函数进行高效的操作。
-- [1. DolphinDB中的日期和时间类型](#1-DolphinDB中的日期和时间类型)
-    - [1.1 DolphinDB时序数据类型](#11-DolphinDB时序数据类型)
-    - [1.2 时序数据在DolphinDB的内部表示](#12-时序数据在DolphinDB的内部表示)
-- [2. DolphinDB中时间序列对象类型转换及基本操作](#2-DolphinDB中时间序列对象类型转换及基本操作)
+- [1. 日期和时间类型](#1-日期和时间类型)
+    - [1.1 DolphinDB时序数据类型](#11-dolphindb%E6%97%B6%E5%BA%8F%E6%95%B0%E6%8D%AE%E7%B1%BB%E5%9E%8B)
+    - [1.2 时序数据在DolphinDB的内部表示](#12-%E6%97%B6%E5%BA%8F%E6%95%B0%E6%8D%AE%E5%9C%A8dolphindb%E7%9A%84%E5%86%85%E9%83%A8%E8%A1%A8%E7%A4%BA)
+- [2. 日期/时间对象类型转换及基本操作](#2-%E6%97%A5%E6%9C%9F%E6%97%B6%E9%97%B4%E5%AF%B9%E8%B1%A1%E7%B1%BB%E5%9E%8B%E8%BD%AC%E6%8D%A2%E5%8F%8A%E5%9F%BA%E6%9C%AC%E6%93%8D%E4%BD%9C)
     - [2.1 时序类型转换函数](#21-时序类型转换函数)
     - [2.2 时区转换函数](#22-时区转换函数)
     - [2.3 基本操作](#23-基本操作)
-    - [2.4 与DateOffset相关的函数](#24-与DateOffset相关的函数)
-    - [2.5 格式及调整](#25-格式及调整)
-- [3. DolphinDB Python API中日期和时间相关操作](#3-dolphindb-python-api中日期和时间相关操作)
+    - [2.4 与DateOffset相关的函数](#24-%E4%B8%8Edateoffset%E7%9B%B8%E5%85%B3%E7%9A%84%E5%87%BD%E6%95%B0)
+    - [2.5 解析和格式化](#25-解析和格式化)
+- [3. dolphindb-python-api中日期和时间相关操作](#3-dolphindb-python-api中日期和时间相关操作)
 
 ## 1. 日期和时间类型
 ### 1.1 DolphinDB时序数据类型
@@ -52,7 +52,7 @@ DolphinDB时序对象与内部整数的转换：
 在下面的例子中，给定一个整数1339594210008，表示DolphinDB中的TIMESTAMP，将其转换为DolphinDB中的TIMESTAMP对象：
 - 日期的计算：
 
-计算`1339594210008 / 86400000`可以得到从1970.01.01开始经过的天数15504。通过DolphinDB C++ API中头文件Util.h定义的静态函数`parseDate`，传入上面得到的天数，即可得到对应的年月日分别为2012，6和13。Java API中Util.java也定义了同样的函数。
+计算`1339594210008 / 86400000`可以得到从1970.01.01开始经过的天数15504。通过DolphinDB C++ API中头文件Util.h定义的静态函数`parseDate`，传入天数15504，即可得到对应的年月日分别为2012，6和13。Java API中Util.java也定义了同样的函数。
 
 - 时间的计算：
 
@@ -200,9 +200,9 @@ gmtime(2018.01.22 10:20:26);
 2018-2-6-13-30-10-001
 ```
 
-具体请参见 [DolphinDB日期和时间的调整及格式](http://www.dolphindb.cn/cn/help/index.html)。
+具体请参见 [DolphinDB日期和时间的调整及格式](https://www.dolphindb.cn/cn/help/DataManipulation/TemporalObjects/ParsingandFormatofTemporalVariables.html)。
 
-## 3. DolphinDB Python API中日期和时间相关操作
+## 3. dolphindb-python-api中日期和时间相关操作
 由于Python pandas中所有有关时间的数据类型均为datetime64, DolphinDB中的所有时间类型数据均会被转换为datetime64类型。
 MONTH类型，如2012.06M，会被转换为2012-06-01（即当月的第一天）。TIME, MINUTE, SECOND与NANOTIME类型不包含日期信息，转换时会自动添加1970-01-01，例如13:30m会被转换为1970-01-01 13:30:00。
 

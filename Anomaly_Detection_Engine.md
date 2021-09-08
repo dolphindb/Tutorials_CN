@@ -17,7 +17,7 @@ subscribeTable(, "sensor", "sensorAnomalyDetection", 0, append!{engine}, true)
 
 这里对异常处理引擎涉及到的一些概念做简要介绍：
 
-- 流数据表：DolphinDB database为流式数据提供的一种特定的表对象，提供流式数据的发布功能。通过`subscribeTable`函数，其他的节点或应用可以订阅和消费流数据。
+- 流数据表：DolphinDB 为流式数据提供的一种特定的表对象，提供流式数据的发布功能。通过`subscribeTable`函数，其他的节点或应用可以订阅和消费流数据。
 
 - 异常处理引擎数据源：为异常处理引擎提供"原料"的通道。`createAnomalyDetectionEngine`函数返回一个抽象表，向这个抽象表写入数据，就意味着数据进入异常处理引擎进行计算。
 
@@ -29,17 +29,17 @@ subscribeTable(, "sensor", "sensorAnomalyDetection", 0, append!{engine}, true)
 
 ## 2. 异常指标
 
-异常检测引擎中的指标均要求返回布尔值。一般是一个函数或一个表达式。当指标中包含聚合函数，必须指定窗口长度和计算的时间间隔，引擎每隔一段时间，在固定长度的移动窗口中计算指标。异常指标一般有以下三种类型：
+异常检测引擎中的指标均要求返回布尔值。一般是一个函数或一个表达式。当指标中包含聚合函数，必须指定窗口长度和计算的时间间隔，每隔一段时间，在固定长度的移动窗口中计算指标。异常指标一般有以下三种类型：
 
-- 只包含列名或非聚合函数，例如`qty > 10`, `lt(qty,  prev(qty))`。对于这类指标，异常检测引擎会对每一条收到的数据进行计算，判断是否符合指标并决定是否输出。
-- 所有出现的列名都在聚合函数的参数中，例如`avg(qty - price) > 10`, `percentile(qty, 90) < 100`, `sum(qty) > prev(sum(qty))`。对于这类指标，异常检测引擎只会在窗口发生移动时对数据进行聚合计算，和时间序列聚合引擎（Time Series Aggregator）类似。
-- 出现的列名中，既有作为聚合函数的参数的，又有不是聚合函数参数的，例如`avg(qty) > qty`, `le(med(qty), price)`。对于这类指标，异常检测引擎会在在窗口发生移动时对聚合列进行聚合计算，并在有数据到达时对每一条数据进行计算，其中聚合函数的返回值使用最近一个窗口的计算值。
+- 只包含列名或非聚合函数，例如`qty>10`, `lt(qty, prev(qty))`。对于这类指标，异常检测引擎会对每一条收到的数据进行计算，判断是否符合指标并决定是否输出。
+- 所有出现的列名都在聚合函数的参数中，例如`avg(qty-price)>10`, `percentile(qty, 90)<100`, `sum(qty)>prev(sum(qty))`。对于这类指标，异常检测引擎只会在窗口发生移动时对数据进行聚合计算，和时间序列聚合引擎（Time Series Aggregator）类似。
+- 出现的列名中，既有作为聚合函数的参数的，又有不是聚合函数参数的，例如`avg(qty) > qty`, `le(med(qty), price)`。对于这类指标，异常检测引擎会在在窗口发生移动时进行聚合计算。每一条数据到达时，使用最近一个窗口的聚合函数的返回值与非聚合函数参数的列进行计算。
 
 ## 3. 数据窗口  
 
-当异常指标中包含聚合函数时，用户必须指定数据窗口。流数据聚合计算是每隔一段时间，在固定长度的移动窗口中进行。窗口长度由参数`windowSize`设定；计算的时间间隔由参数`step`设定。
+当异常指标中包含聚合函数时，用户必须指定数据窗口。流数据聚合计算是每隔一段时间，在固定长度的移动窗口中进行。窗口长度由参数 windowSize 设定；计算的时间间隔由参数 step 设定。
 
-在有多组数据的情况下，若每组都根据各自第一条数据进入系统的时间来构造数据窗口的边界，则一般无法将各组的计算结果在相同数据窗口中进行对比。考虑到这一点，系统按照参数`step`值确定一个整型的规整尺度alignmentSize，以对各组第一个数据窗口的边界值进行规整处理。
+在有多组数据的情况下，若每组都根据各自第一条数据进入系统的时间来构造数据窗口的边界，则一般无法将各组的计算结果在相同数据窗口中进行对比。考虑到这一点，系统按照参数 step 值确定一个整型的规整尺度alignmentSize，以对各组第一个数据窗口的边界值进行规整处理。
 
 （1）当数据时间类型为MONTH时，会以第一条数据对应年份的1月作为窗口的上边界。
 
@@ -57,21 +57,55 @@ step | alignmentSize
 21~30|30
 31~60|60
 
+如果 roundTime = false, 对于step > 60, alignmentSize 都为60。 如果 roundTime = true，则alignmentSize取值规则如下表：
+
+| step      | alignmentSize  |
+| --------- | -------------- |
+| 61～120   | 120（2分钟）   |
+| 121~180   | 180（3分钟）   |
+| 181~300   | 300（5分钟）   |
+| 301~600   | 600（10分钟）  |
+| 601~900   | 900（15分钟）  |
+| 901~1200  | 1200（20分钟） |
+| 1201~1800 | 1800（30分钟） |
+| >1800     | 3600（1小时）  |
+
 （4）当数据时间精度为毫秒时，如TIMESTAMP或TIME类型，alignmentSize取值规则如下表：
 
-step | alignmentSize
----|---
-0~2 |2
-3~5 |5
-6~10 |10
-11~20 |20
-21~25 |25
-26~50|50
-51~100|100
-101~200|200
-201~250|250
-251~500|500
-501~1000|1000
+| step        | alignmentSize  |
+| ----------- | -------------- |
+| 0~2         | 2              |
+| 3~5         | 5              |
+| 6~10        | 10             |
+| 11~20       | 20             |
+| 21~25       | 25             |
+| 26~50       | 50             |
+| 51~100      | 100            |
+| 101~200     | 200            |
+| 201~250     | 250            |
+| 251~500     | 500            |
+| 501~1000    | 1000（1秒）    |
+| 1001~2000   | 2000（2秒）    |
+| 2001~3000   | 3000（3秒）    |
+| 3001~5000   | 5000（5秒）    |
+| 5001~10000  | 10000（10秒）  |
+| 10001~15000 | 15000（15秒）  |
+| 15001~20000 | 20000（20秒）  |
+| 20001~30000 | 30000（30秒）  |
+| 30001~60000 | 60000（1分钟） |
+
+如果 roundTime = false, 对于step > 60000, alignmentSize 都为60000。 如果 roundTime = true，则alignmentSize取值规则如下表：
+
+| step            | alignmentSize     |
+| --------------- | ----------------- |
+| 60001~120000    | 120000（2分钟）   |
+| 120001~180000   | 180000（3分钟）   |
+| 120001~300000   | 300000（5分钟）   |
+| 300001~600000   | 600000（10分钟）  |
+| 600001~900000   | 900000（15分钟）  |
+| 900001~1200000  | 1200000（20分钟） |
+| 1200001~1800000 | 1800000（30分钟） |
+| \>= 1800001     | 3600000（1小时）  |
 
 假设第一条数据时间的最小精度值为x，那么第一个数据窗口的左边界最小精度经过规整后为`x/alignmentSize\*alignmentSize`，其中`/`代表相除后取整。举例来说，若第一条数据时间为 2018.10.08T01:01:01.365，则x=365。若step=100，根据上表，alignmentSize=100，可得出规整后的第一个数据窗口左边界最小精度为365\100*100=300，因此规整后的第一个数据窗口范围为2018.10.08T01:01:01.300至 2018.10.08T01:01:01.400。
 
@@ -114,7 +148,7 @@ tempv = 59 66 57 60 63 51 53 52 56 55
 insert into sensor values(timev, tempv)
 ```
 
-查看流数据表`sensor`的内容：
+查看流数据表 sensor 的内容：
 
 time                    | temp
 -----------------------|----
@@ -130,7 +164,7 @@ time                    | temp
 2018.10.08T01:01:01.011|55
 
 
-再查看结果表`outputTable`：
+再查看结果表 outputTable ：
 
 time                   |anomalyType|anomalyString
 -----------------------|-----------|---------------------------------------------
@@ -143,9 +177,9 @@ time                   |anomalyType|anomalyString
 
 下面详细解释异常检测引擎的计算过程。为方便阅读，对时间的描述中省略相同的2018.10.08T01:01:01部分，只列出毫秒部分。
 
-（1）指标`temp > 65`只包含不作为函数参数的列`temp`，因此会在每条数据到达时计算。模拟数据中只有003时的温度满足检测异常的指标。
+（1）指标`temp > 65`只包含不作为函数参数的列temp，因此会在每条数据到达时计算。模拟数据中只有003时的温度满足检测异常的指标。
 
-（2）指标`temp > percentile(temp, 75)`中，`temp`列既作为聚合函数`percentile`的参数，又单独出现，因此会在每条数据到达时，将其中的`temp`与上一个窗口计算得到的`percentile(temp, 75)`比较。第一个窗口基于第一行数据的时间002进行对齐，对齐后窗口起始边界为000，第一个窗口是从000到002，只包含002一条记录，计算`percentile(temp, 75)`的结果是59，数据003到005与这个值比较，满足条件的有003和005。第二个窗口是从002到005，计算`percentile(temp, 75)`的结果是60，数据006到008与这个值比较，满足条件的有006。第三个窗口是从003到008，计算`percentile(temp, 75)`的结果是63，数据009到011与这个值比较，其中没有满足条件的行。最后一条数据011到达后，尚未触发新的窗口计算。
+（2）指标`temp > percentile(temp, 75)`中，temp列既作为聚合函数`percentile`的参数，又单独出现，因此会在每条数据到达时，将其中的`temp`与上一个窗口计算得到的`percentile(temp, 75)`比较。第一个窗口基于第一行数据的时间002进行对齐，对齐后窗口起始边界为000，第一个窗口是从000到002，只包含002一条记录，计算`percentile(temp, 75)`的结果是59，数据003到005与这个值比较，满足条件的有003和005。第二个窗口是从002到005，计算`percentile(temp, 75)`的结果是60，数据006到008与这个值比较，满足条件的有006。第三个窗口是从003到008，计算`percentile(temp, 75)`的结果是63，数据009到011与这个值比较，其中没有满足条件的行。最后一条数据011到达后，尚未触发新的窗口计算。
 
 （3）指标`abs((avg(temp) - prev(avg(temp))) / avg(temp)) > 0.01`中，`temp`只作为聚合函数`avg`的参数出现，因此只会在每次窗口计算时检查。类似上一个指标的分析，前三个窗口计算得到的`avg(temp)`分别为59, 60.5, 58.33，满足`abs((avg(temp) - prev(avg(temp))) / avg(temp)) > 0.01`的时间为第二个窗口和第三个窗口的计算时间006和009。
 
@@ -158,21 +192,70 @@ name    |user  |status |lastErrMsg |numGroups |numRows |numMetrics |metrics
 ------- |----- |------ |---------- |--------- |------- |---------- |--------------------
 engine1 |guest |OK     |           |0         |10      |3          |temp > 65, temp > percentile(temp, 75), abs((avg(temp) - prev(avg(temp))) / avg(temp)) > 0.01
 
-## 5. createAnomalyEngine函数介绍
+## 5. 快照机制
 
-**语法**
+快照机制可以用于系统出现异常之后，对引擎进行恢复。通过以下这个例子，可以理解snapshotDir和snapshotIntervalInMsgCount的作用。如果启用snapshot，引擎订阅流表时，handler需是appendMsg函数，需指定handlerNeedMsgId=true，用来记录快照的消息位置。
 
 ```
-createAnomalyDetectionEngine(name, metrics, dummyTable, outputTable, timeColumn, [keyColumn], [windowSize], [step], [garbageSize]) 
+WORK_DIR="/home/root/WORK_DIR"
+mkdir(WORK_DIR+"/snapshotDir")
+enableTableShareAndPersistence(table = streamTable(10000:0,`time`sym`price`qty, [TIMESTAMP,SYMBOL,DOUBLE,INT]) , tableName="trades", cacheSize=1000000)
+enableTableShareAndPersistence(table = streamTable(10000:0, `time`sym`type`metric, [TIMESTAMP,STRING,INT,STRING]), tableName = "output", cacheSize=1000000)
+go
+
+adengine = createAnomalyDetectionEngine(name="test", metrics=<[avg(qty)>1]>, dummyTable=trades, outputTable=output, timeColumn=`time, keyColumn=`sym, windowSize=10, step=10, snapshotDir=WORK_DIR+"/snapshotDir", snapshotIntervalInMsgCount=100)
+subscribeTable(server="", tableName="trades", actionName="adengine",offset= 0, handler=appendMsg{adengine}, msgAsTable=true, handlerNeedMsgId=true)
+
+def writeData(mutable t){
+do{
+batch = 10
+tmp = table(batch:batch, `time`sym`price`qty, [TIMESTAMP, SYMBOL, DOUBLE, DOUBLE])
+tmp[`time] = take(now(), batch)
+tmp[`sym] = "A"+string(1..batch)
+tmp[`price] = round(rand(100.0, batch), 2)
+tmp[`qty] = rand(10, batch)
+t.append!(tmp)
+sleep(1000)
+}while(true)
+}
+
+job1=submitJob("write", "", writeData, trades)
+//执行一段时间后重启server
+
+enableTableShareAndPersistence(table = streamTable(10000:0,`time`sym`price`qty, [TIMESTAMP,SYMBOL,DOUBLE,INT]) , tableName="trades", cacheSize=1000000)
+enableTableShareAndPersistence(table = streamTable(10000:0, `time`sym`type`metric, [TIMESTAMP,STRING,INT,STRING]), tableName = "output", cacheSize=1000000)
+
+select last(time) from output
+>2021.03.16T11:59:10.920
+
+select last(time) from trade
+>2021.03.16T11:59:13.916
+
+WORK_DIR="/home/root/WORK_DIR"
+adengine = createAnomalyDetectionEngine(name="test", metrics=<[avg(qty)>qty]>, dummyTable=trades, outputTable=output, timeColumn=`time, keyColumn=`sym, windowSize=10, step=10, snapshotDir=WORK_DIR+"/snapshotDir", snapshotIntervalInMsgCount=100)
+
+ofst = getSnapshotMsgId(adengine)
+print(ofst)
+>299
+
+select count(*) from trades
+>390
+
+//从第300条数据开始订阅
+subscribeTable(server="", tableName="trades", actionName="adengine",offset=ofst+1, handler=appendMsg{adengine}, msgAsTable=true, handlerNeedMsgId=true) 
+```
+
+## 6. createAnomalyEngine函数介绍
+
+**语法**
+```
+createAnomalyDetectionEngine(name, metrics, dummyTable, outputTable, timeColumn, [keyColumn], [windowSize], [step], [garbageSize], [snapshotDir],  [snapshotIntervalInMsgCount]) 
 ```
 
 **返回对象**
-
 `createAnomalyDetectionEngine`函数的作用是返回一个表对象，向该表写入数据意味着这些数据进入异常检测引擎进行计算。
 
 **参数**
-
-
 - name: 一个字符串，表示异常检测引擎的名称，是异常检测引擎的唯一标识。它可以包含字母，数字和下划线，但必须以字母开头。
 - metrics: 元代码。它的返回值必须是bool类型。它可以是函数或表达式，如<[qty > 5, eq(qty, price)]>。可以在其中使用系统内置或用户自定义的聚合函数（使用defg关键字定义），如<[sum(qty) > 5, lt(avg(price), price)]>。详情可参考元编程。
 - dummyTable: 表对象，它可以不包含数据，但它的结构必须与订阅的流数据表结构相同。
@@ -182,7 +265,11 @@ createAnomalyDetectionEngine(name, metrics, dummyTable, outputTable, timeColumn,
 - windowSize: 正整数。当metrics中包含聚合函数时，windowSize必须指定，表示用于聚合计算的数据窗口的长度。如果metrics中没有聚合函数，这个参数不起作用。
 - step: 正整数。当metrics中包含聚合函数时，step必须指定，表示计算的时间间隔。windowSize必须是step的整数倍，否则会抛出异常。如果metrics中没有聚合函数，这个参数不起作用。
 - garbageSize: 正整数。它是可选参数，默认值是50,000。如果没有指定keyColumn，当内存中历史数据的数量超过garbageSize时，系统会清理本次计算不需要的历史数据。如果指定了keyColumn，意味着需要分组计算时，内存清理是各分组独立进行的。当一个组的历史数据记录数超出garbageSize时，会清理该组不再需要的历史数据。若一个组的历史数据记录数未超出garbageSize，则该组数据不会被清理。如果metrics中没有聚合函数，这个参数不起作用。
+- roundTime: 布尔类型，可选参数，表示对时间精度为毫秒或者秒的边界值进行规整处理时，是否需要按分钟规整。默认值为true，具体可见3. 数据窗口中的alignmentSize取值规则。
+- snapshotDir: 字符串标量, 表示保存引擎快照的文件目录，可以用于系统出现异常之后，对引擎进行恢复。该目录必须存在，否则系统会提示异常。创建流数据引擎的时候，如果指定了snapshotDir，也会检查相应的快照是否存在。如果存在，会加载该快照，恢复引擎的状态。它是可选参数。
+
+- snapshotIntervalInMsgCount: 正整数。可选参数，表示保存引擎快照的消息间隔。
 
 ## 6.总结
 
-DolphinDB提供的异常检测引擎是一个轻量、使用方便的流数据引擎，它通过与流数据表合作来完成流数据的实时检测任务，能够满足物联网实时监控和预警的需求。
+DolphinDB database 提供的异常检测引擎是一个轻量、使用方便的流数据引擎，它通过与流数据表合作来完成流数据的实时检测任务，能够满足物联网实时监控和预警的需求。

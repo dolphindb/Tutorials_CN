@@ -1,18 +1,18 @@
 # 使用Prometheus监控告警
 
 DolphinDB提供了三种方式进行性能监控：
-* 使用内置函数,如[`getperf`](https://www.dolphindb.cn/cn/help/getPerf.html),[`getClusterPerf`](https://www.dolphindb.cn/cn/help/getClusterPerf.html)和[`getJobStat`](https://www.dolphindb.cn/cn/help/getJobStat.html)；
+* 使用内置函数,如[`getperf`](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/g/getPerf.html),[`getClusterPerf`](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/g/getClusterPerf.html)和[`getJobStat`](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/g/getJobStat.html)；
 * Web界面；
 * 通过第三方系统的API，如Prometheus、Grafana等。
 
-前两种方式的使用说明详见[用户手册](https://www.dolphindb.cn/cn/help/PerformanceMonitoring.html)，本文以使用Prometheus监控DolphinDB为例来详细说明第三种方法。
+前两种方式的使用说明详见[用户手册](https://www.dolphindb.cn/cn/help/SystemManagement/PerformanceMonitoring.html)，本文以使用Prometheus监控DolphinDB为例来详细说明第三种方法。
 
 Prometheus（普罗米修斯）是一款开源的监控和预警工具，起始是由SoundCloud公司开发的。2012年起成为社区开源项目，拥有非常活跃的开发人员和用户社区。为强调开源及独立维护，Prometheus于2016年加入了云原生云计算基金会（CNCF）。在本文中，以监控系统平均负载为例，先安装配置Prometheus和其Alertmanager组件，然后接入邮件报警，演示系统负载高时自动邮件报警的功能。用户可以参照此例，根据自己的实际需求来实现具体的运维方案。
 
 
 - [1. Prometheus metrics](#1-prometheus-metrics)
 - [2. 下载Prometheus](#2-下载prometheus)
-- [3. 安装及配置](#3-安装及配置)
+- [3. 安装及配置](#3%E5%AE%89%E8%A3%85%E5%8F%8A%E9%85%8D%E7%BD%AE)
   - [3.1 Prometheus安装及配置](#31-prometheus安装及配置)
   - [3.2 Alertmanager安装及配置](#32-alertmanager安装及配置)
   - [3.3 启动Prometheus和Alertmanager](#33-启动prometheus和alertmanager)

@@ -21,7 +21,7 @@ eval(a);
 
 （2）使用函数来创建各种表达式。常用的元编程函数包括`expr`, `parseExpr`, `partial`, `sqlCol`, `sqlColAlias`, `sql`, `eval`, `makeCall`。下面介绍这几个函数的用法。
 
-- [`expr`](https://www.dolphindb.cn/cn/help/expr.html)函数根据输入的对象、运算符或其他元代码生成元代码。例如：
+- [`expr`](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/e/expr.html)函数根据输入的对象、运算符或其他元代码生成元代码。例如：
 
 ```
 a=6
@@ -30,7 +30,7 @@ expr(a,+,1);
 < 6 + 1 >
 ```
 
-- [`parseExpr`](http://www.dolphindb.cn/cn/help/parseExpr.html)函数把字符串转换为元代码。例如：
+- [`parseExpr`](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/p/parseExpr.html)函数把字符串转换为元代码。例如：
 
 ```
 t=table(1 2 3 4 as id, 5 6 7 8 as value, `IBM`MSFT`IBM`GOOG as name)
@@ -42,7 +42,7 @@ id value name
 3  7     IBM
 ```
 
-- [`partial`](http://www.dolphindb.cn/cn/help/partital.html)函数固定一个函数的部分参数，产生一个参数较少的函数。例如：
+- [`partial`](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/p/partial.html)函数固定一个函数的部分参数，产生一个参数较少的函数。例如：
 
 ```
 partial(add,1)(2);
@@ -54,7 +54,7 @@ g(3);
 8
 ```
 
-- [`sqlCol`](https://www.dolphindb.cn/cn/help/sqlCol.html), [`sqlColAlias`](https://www.dolphindb.cn/cn/help/sqlColAlias.html)和[`sql`](https://www.dolphindb.cn/cn/help/sql1.html)函数用于动态生成SQL表达式。`sqlCol`函数将列名转换为可带有计算内容的表达式，`sqlColAlias`常用于生成计算列的元代码，`sql`函数可以动态地生成SQL语句。
+- [`sqlCol`](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/s/sqlCol.html), [`sqlColAlias`](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/s/sqlColAlias.html)和[`sql`](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/s/sql.html)函数用于动态生成SQL表达式。`sqlCol`函数将列名转换为可带有计算内容的表达式，`sqlColAlias`常用于生成计算列的元代码，`sql`函数可以动态地生成SQL语句。
 
 ```
 symbol = take(`GE,6) join take(`MSFT,6) join take(`F,6)
@@ -101,7 +101,7 @@ sql(select=sqlCol("*"), from=t1, groupBy=sqlCol(`symbol), groupFlag=0, limit=1);
 < select top 1 * from t1 context by symbol >
 ```
 
-- [`eval`](https://www.dolphindb.cn/cn/help/eval.html)函数执行元代码。例如：
+- [`eval`](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/e/eval.html)函数执行元代码。例如：
 
 ```
 a = <1 + 2 * 3>
@@ -120,7 +120,7 @@ MSFT 2017.01.04 4925
 //这里使用的t1是上一个例子中的t1
 ```
 
-- [`makeCall`](https://www.dolphindb.cn/cn/help/makeCall.html)函数根据指定的函数与参数生成元代码。
+- [`makeCall`](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/m/makeCall.html)函数根据指定的函数与参数生成元代码。
 
 例如，查询表t1时，把date列输出为字符串，并以类似于03/01/2017的形式显示：
 ```
