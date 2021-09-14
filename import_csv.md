@@ -723,4 +723,4 @@ id num
 附录
 --
 
-本教程的例子中使用的数据文件： [candle_201801.csv](https://github.com/dolphindb/Tutorials_CN/blob/master/data/candle_201801.csv)。
+本教程的例子中使用的数据文件： [candle_201801.csv](data/candle_201801.csv)。

@@ -45,30 +45,30 @@
     - [定时作业](scheduledJob.md)
     - [使用Prometheus监控告警](DolphinDB_monitor.md)
 - API
-    - [Python API使用教程](../../api_python3/blob/master/README_CN.md)
-    - [Java API使用教程](../../api-java/blob/master/README_CN.md)
-    - [Java API使用实例](../../api-java/blob/master/example/README_CN.md)
-    - [JDBC](../..//jdbc/blob/master/README_CN.md)
-    - [C# API使用教程](../../api-csharp/blob/master/README_CN.md)
-    - [C++ API使用教程](../../api-cplusplus/blob/master/README_CN.md)
+    - [Python API使用教程](../../../api_python3/blob/master/README_CN.md)
+    - [Java API使用教程](../../../api-java/blob/master/README_CN.md)
+    - [Java API使用实例](../../../api-java/blob/master/example/README_CN.md)
+    - [JDBC](../../../jdbc/blob/master/README_CN.md)
+    - [C# API使用教程](../../../api-csharp/blob/master/README_CN.md)
+    - [C++ API使用教程](../../../api-cplusplus/blob/master/README_CN.md)
     - [C++ API 数据读写指南](c%2B%2Bapi.md)
-    - [Go API使用教程](../../api-go/blob/master/README.md)
-    - [Go API使用实例](../../api-go/blob/master/example/README_CN.md)
-    - [R API使用教程](../../api-r/blob/master/README_CN.md)
-    - [Json API使用教程](../../api-json/blob/master/README_CN.md)
+    - [Go API使用教程](../../../api-go/blob/master/README.md)
+    - [Go API使用实例](../../../api-go/blob/master/example/README_CN.md)
+    - [R API使用教程](../../../api-r/blob/master/README_CN.md)
+    - [Json API使用教程](../../../api-json/blob/master/README_CN.md)
     - [NodeJS API使用教程](../../../api-nodejs/blob/master/README.md)
     - [redash连接DolphinDB数据源的教程](data_interface_for_redash.md)
     - [DolphinDB整合前端chart组件展示数据教程](web_chart_integration.md)
     - [Grafana连接DolphinDB数据源](../../../grafana-datasource/blob/master/README_CN.md)
     - [帆软报表软件连接DolphinDB数据源](FineReport_to_dolphindb.md)
     - [API交互协议](api_protocol.md)
-    
+
 - 插件
     - [插件开发教程](plugin_development_tutorial.md) 
     - [插件开发深度解析](plugin_advance.md)
     - [AWS S3](../../../DolphinDBPlugin/blob/master/aws/README_CN.md)
     - [DolphinDB VSCode 插件](vscode_extension.md)
-    - [Excel](../../..//excel-add-in)
+    - [Excel](../../../excel-add-in)
     - [HBase](../../../DolphinDBPlugin/blob/master/hbase/README.md)
     - [HDF5](../../../DolphinDBPlugin/blob/master/hdf5/README_CN.md)
     - [HDFS](../../../DolphinDBPlugin/blob/master/hdfs/README.md)
@@ -88,7 +88,7 @@
     - [SVM](../../../DolphinDBPlugin/blob/master/svm/README_CN.md)
     - [XGBoost](../../../DolphinDBPlugin/blob/master/xgboost/README_CN.md)
     - [ZLib](../../../DolphinDBPlugin/blob/master/zlib/README_CN.md)
-    
+
 - 模块
     - [技术分析(Technical Analysis)指标库](ta.md) 
 - 应用场景示例
@@ -108,6 +108,3 @@
     - [DolphinDB API性能基准测试报告](api_performance.md)
     - [金融市场高频数据应当如何管理 - DolphinDB与pickle的性能对比测试和分析](DolphinDB_pickle_comparison.md)
     - [DolphinDB集群水平扩展性能测试](Cluster_scale_out_performance_test.md)
-    
-    
-

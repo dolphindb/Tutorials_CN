@@ -354,7 +354,7 @@ def factorHandler(mutable historyDict, mutable factors, msg){
 
 ### 6.4 即时编译
 
-消息处理函数若逻辑较复杂，需要用到for循环，while循环和if-else等语句，无法使用向量化运算但又对运行速度有极高要求，可使用DolphinDB中的即时编译（JIT）功能，以显著提升性能。关于即时编译功能的更多介绍，请参考[DolphinDB即时编译教程](https://github.com/dolphindb/Tutorials_CN/blob/master/jit.md)。
+消息处理函数若逻辑较复杂，需要用到for循环，while循环和if-else等语句，无法使用向量化运算但又对运行速度有极高要求，可使用DolphinDB中的即时编译（JIT）功能，以显著提升性能。关于即时编译功能的更多介绍，请参考[DolphinDB即时编译教程](./jit.md)。
 
 下例中的因子，在每行数据中，需要使用前5档的报价及对应的盘口数据进行计算，且根据设定条件进行更进一步的计算。这个过 程无法向量化运算，可使用即时编译以提升性能。
 

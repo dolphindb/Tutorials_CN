@@ -45,7 +45,7 @@ nohup ./dolphindb -console 0 &
 
 `-console`默认是为 1，如果要设置为后台运行，必须要设置为0（`-console 0`)，否则系统运行一段时间后会自动退出。
 
-如果在Linux前台运行DolphinDB，可以通过命令行来执行DolphinDB代码；如果在Linux后台运行DolphinDB，不能通过命令行来执行DolphinDB代码，可以通过[GUI](http://www.dolphindb.cn/cn/gui/GUIGetStarted.html) 或[VS code插件](https://github.com/dolphindb/Tutorials_CN/blob/master/vscode_extension.md)等图形用户界面来执行代码。
+如果在Linux前台运行DolphinDB，可以通过命令行来执行DolphinDB代码；如果在Linux后台运行DolphinDB，不能通过命令行来执行DolphinDB代码，可以通过[GUI](http://www.dolphindb.cn/cn/gui/GUIGetStarted.html) 或[VS code插件](./vscode_extension.md)等图形用户界面来执行代码。
 
 - Windows系统
 
@@ -111,19 +111,19 @@ Windows环境中，双击 gui.bat 以启动GUI。
 
 点击菜单栏中的Server添加服务器或编辑服务器：
 
-![Sever](images/single_GUI_server.png)
+![Sever](./images/single_GUI_server.png)
 
-![AddSever](images/single_GUI_addserver.PNG)
+![AddSever](./images/single_GUI_addserver.PNG)
 
 在工具栏的右侧是一个下拉窗口，可以切换服务器：
 
-![SwitchSever](images/single_GUI_tool.png)
+![SwitchSever](./images/single_GUI_tool.png)
 
 ## 4. 通过DolphinDB GUI运行DolphinDB脚本
 
 在DolphinDB GUI视窗左侧项目导航栏，右键单击workspace，选择New Project新建项目，例如：Demo。
 
-![新建项目](images/single_GUI_newproject.PNG)
+![新建项目](./images/single_GUI_newproject.PNG)
 
 单击新建的项目左方的圆点以展开文件夹，右键单击scripts目录，并选择New File，输入新建脚本文件名，例如：demo.txt。
 
@@ -143,9 +143,9 @@ pt=loadTable("dfs://valuedb","pt")
 select top 100 * from pt
 ```
 
-点击工具栏中的 ![execute](images/execute.JPG) 按钮以运行脚本。下图展示了运行结果：
+点击工具栏中的 ![execute](./images/execute.JPG) 按钮以运行脚本。下图展示了运行结果：
 
-![运行结果](images/single_GUI.PNG)
+![运行结果](./images/single_GUI.PNG)
 
 默认情况下，数据文件保存在DolphinDB部署包/server/local8848目录下。若需要修改保存数据文件的目录，可设置volumes配置参数。
 

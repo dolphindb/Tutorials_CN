@@ -112,7 +112,7 @@ scheduleJob(`guestGetDfsjob, "dfs read", foo1, [12:00m, 21:03m, 21:45m], 2020.01
 ## 3.定时作业的序列化
 定时作业在创建后，系统会把创建用户（userID）、作业的ID、描述信息、起始时间、作业频率、作业的定义等持久化保存。存储路径为`<homeDir>/sysmgmt/jobEditlog.meta`。作业用一个DolphinDB的函数来表示。函数的定义包括了一系列语句，这些语句又会调用其他函数和一些全局类对象，譬如共享变量(shared variable)。共享变量序列化时用名称来表示。反序列化时，共享变量必须存在，否则会失败。作业函数或其依赖的函数根据是否经过编译可以分两类：经过编译的函数包括内置函数和插件函数和脚本函数包括自定义函数、函数视图和模块中的函数等。这两类函数的序列化方法有所不同，下面分别进行说明。
 ### 3.1 经过编译的函数的序列化
-对经过编译的函数的序列化，只序列化函数名称和模块名称。反序列化的时候，会在系统中搜索这些模块及函数，若搜索不到，就会失败。所以定时作业中若用到了插件函数，就需要在反序列化之前预先加载。系统与定时作业相关组件资源的初始化顺序依次是：系统级初始化脚本（dolphindb.dos），函数视图(function view)、用户级[启动脚本](https://github.com/dolphindb/Tutorials_CN/blob/master/Startup.md)（startup.dos）和定时作业。定时作业在启动脚本执行后加载。如下例所示，在作业函数jobDemo中用到了odbc插件：
+对经过编译的函数的序列化，只序列化函数名称和模块名称。反序列化的时候，会在系统中搜索这些模块及函数，若搜索不到，就会失败。所以定时作业中若用到了插件函数，就需要在反序列化之前预先加载。系统与定时作业相关组件资源的初始化顺序依次是：系统级初始化脚本（dolphindb.dos），函数视图(function view)、用户级[启动脚本](Startup.md)（startup.dos）和定时作业。定时作业在启动脚本执行后加载。如下例所示，在作业函数jobDemo中用到了odbc插件：
 ```
 use odbc
 def jobDemo(){
@@ -242,7 +242,7 @@ foo()
 - 作业函数引用了插件中的函数，但是作业加载前没有加载该插件。一般建议在用户的启动脚本中定义加载该插件。
 - 定时运行一个脚本文件，找不到依赖的函数。脚本文件必须包含依赖的自定义函数。
 - 创建定时作业的用户没有访问分布式数据库表的权限。授权该用户访问相应数据库的权限。
-- 在启动脚本中使用函数[scheduleJob](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/s/scheduleJob.html)、 [getScheduledJobs](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/g/getScheduledJobs.html)和[deleteScheduledJob](https://www.dolphindb.cn/cn/help/FunctionsandCommands/CommandsReferences/d/deleteScheduledJob.html)时抛出异常。节点启动时，定时作业的初始化在[启动脚本](https://github.com/dolphindb/Tutorials_CN/blob/master/Startup.md)之后，因此不能在启动脚本中使用跟定时作业相关的功能
+- 在启动脚本中使用函数[scheduleJob](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/s/scheduleJob.html)、 [getScheduledJobs](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/g/getScheduledJobs.html)和[deleteScheduledJob](https://www.dolphindb.cn/cn/help/FunctionsandCommands/CommandsReferences/d/deleteScheduledJob.html)时抛出异常。节点启动时，定时作业的初始化在[启动脚本](Startup.md)之后，因此不能在启动脚本中使用跟定时作业相关的功能
 
 在某些罕见的情况下，可能出现在系统重启时，发生定时作业加载失败，甚至导致系统无法启动的情况。尤其是版本升级的时候，内置函数、插件函数等函数接口可能会有变化从而导致作业无法加载，或者出现一些兼容性bug导致系统重启失败。因此，我们开发时需要保留定义定时作业的脚本。若因定时任务导致系统无法启动，可以先删除定时作业的序列化文件`<homeDir>/sysmgmt/jobEditlog.meta`，在系统重启后再重新创建这些定时作业。
 #### 后续功能开发

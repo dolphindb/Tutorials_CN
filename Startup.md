@@ -7,7 +7,7 @@ DolphinDB database从1.0版本开始，提供启动脚本功能。在启动脚�
 
 DolphinDB系统的启动流程如下图所示：
 
-![image](https://github.com/dolphindb/Tutorials_CN/blob/master/images/startup.png?raw=true)
+![image](./images/startup.png?raw=true)
 
 系统级初始化脚本是必需的，由设置参数init指定，默认脚本是版本发布目录中的dolphindb.dos。系统级初始化脚本中可定义系统级函数。这些函数对所有用户都可见，而且不能被覆盖，相当于DolphinDB内置函数。
 
@@ -81,7 +81,7 @@ loadPlugin("plugins/odbc/odbc.cfg")
 ```
 ## 4. 编写启动脚本
 
-编写启动脚本时，可以使用[`module`](https://github.com/dolphindb/Tutorials_CN/blob/master/module_tutorial.md)来声明和使用可重用模块，可以自定义函数，也可以使用分布式的功能。
+编写启动脚本时，可以使用[`module`](./module_tutorial.md)来声明和使用可重用模块，可以自定义函数，也可以使用分布式的功能。
 
 若需要调试启动脚本，可以在脚本中用[print](https://www.dolphindb.cn/cn/help/FunctionsandCommands/CommandsReferences/p/print.html)与[writeLog](https://www.dolphindb.cn/cn/help/FunctionsandCommands/CommandsReferences/w/writeLog.html)等函数打印日志。系统会把启动脚本运行情况输出到节点日志。
 

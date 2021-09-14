@@ -97,7 +97,7 @@ predicted = model.predict(wineTest)
 
 ### 2.1 数据预处理
 
-在本例中，原始数据中的空值，可以通过`ffill`函数填充；对原始数据求10天移动平均值和RSI后，结果的前10行将会是空值，需要去除。我们将用[`transDS!`](http://dolphindb.cn/cn/help/transDS.html)函数对原始数据应用预处理步骤。本例中，求RSI用到了DolphinDB的ta模块，具体用法参见[DolphinDBModules](https://github.com/dolphindb/DolphinDBModules).
+在本例中，原始数据中的空值，可以通过`ffill`函数填充；对原始数据求10天移动平均值和RSI后，结果的前10行将会是空值，需要去除。我们将用[`transDS!`](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/t/transDS!.html)函数对原始数据应用预处理步骤。本例中，求RSI用到了DolphinDB的ta模块，具体用法参见[DolphinDBModules](https://github.com/dolphindb/DolphinDBModules).
 
 ```
 use ta

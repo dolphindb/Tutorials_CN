@@ -17,7 +17,7 @@ DolphinDB采用多副本机制，相同数据块的多个副本存储在不同�
 
 DolphinDB API提供了自动重连和切换机制，如果当前连接的数据节点宕机，API会尝试重连，若重连失败就会自动切换连接到其他数据节点执行任务。切换数据节点对用户是透明的，用户不会感知到当前连接的节点已经切换。
 
-如果要使用高可用功能，请先部署DolphinDB集群。高可用功能仅在集群中支持，在单实例中不支持。集群部署请参考[多服务器集群部署教程](multi_machine_cluster_deploy.md)。
+如果要使用高可用功能，请先部署DolphinDB集群。高可用功能仅在集群中支持，在单实例中不支持。集群部署请参考[多服务器集群部署教程](./multi_machine_cluster_deploy.md)。
 
 ![images](images/ha_cluster/arc.png?raw=true)
 

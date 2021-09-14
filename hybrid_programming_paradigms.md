@@ -66,7 +66,7 @@ timer mavg(a, window);
 Time elapsed: 12.968 ms
 ```
 
-向量化编程也有其局限性。首先，不是所有的操作都可以用向量化计算来完成。在机器学习和统计分析中，在某些场景下，只能对逐行数据进行迭代处理，无法向量化计算。对于这种场景，可使用DolphinDB的JIT（即时编译）版本（参见[DolphinDB JIT教程](https://gitee.com/dolphindb/Tutorials_CN/blob/master/jit.md))，将用for语句编写的逐行处理代码在运行时动态编译成机器码执行，从而显著提升性能。
+向量化编程也有其局限性。首先，不是所有的操作都可以用向量化计算来完成。在机器学习和统计分析中，在某些场景下，只能对逐行数据进行迭代处理，无法向量化计算。对于这种场景，可使用DolphinDB的JIT（即时编译）版本（参见[DolphinDB JIT教程](./jit.md))，将用for语句编写的逐行处理代码在运行时动态编译成机器码执行，从而显著提升性能。
 
 其次，向量化计算通常要将整个向量全部加载到一段连续内存中，Matlab和R都有这样的要求。有时候因为内存碎片原因，无法找到大段的连续内存。DolphinDB针对内存碎片，特别引入了big array，可以将物理上不连续的内存块组成一个逻辑上连续的向量。系统是否采用big array是动态决定的，对用户透明。通常，对big array进行扫描，性能损耗对于连续内存而言，在1%~5%之间；对big array进行随机访问，性能损耗在20%~30%左右。在此方面，DolphinDB是以可以接受的少量性能损失来换取系统的更高可用性。
 
@@ -366,7 +366,7 @@ getWeekDays(2018.07.01 2018.08.01 2018.09.01 2018.10.01)
 
 ### 4.2 高阶函数(Higher Order Function)
 
-高阶函数是指可以接受另一个函数作为参数的函数。在DolphinDB中，高阶函数主要用作数据处理的模板函数，通常第一个参数是另外一个函数，用于具体的数据处理。譬如说，A对象有m个元素，B对象有n个元素，一种常见的处理模式是，A中的任意一个元素和B中的任意一个元素两两计算，最后产生一个m*n的矩阵。DolphinDB将这种数据处理模式抽象成一个高阶函数`cross`。DolphinDB提供了很多类似的模板函数，包括`all`，`any`，`each`，`loop`，`eachLeft`，`eachRight`，`eachPre`，`eachPost`，`accumulate`，`reduce`，`groupby`，`contextby`，`pivot`，`cross`，`moving`，`rolling`等。
+高阶函数是指可以接受另一个函数作为参数的函数。在DolphinDB中，高阶函数主要用作数据处理的模板函数，通常第一个参数是另外一个函数，用于具体的数据处理。譬如说，A对象有m个元素，B对象有n个元素，一种常见的处理模式是，A中的任意一个元素和B中的任意一个元素两两计算，最后产生一个m*n的矩阵。DolphinDB将这种数据处理模式抽象成一个高阶函数`cross`。DolphinDB提供了很多类似的高阶函数，包括`all`，`any`，`each`，`loop`，`eachLeft`，`eachRight`，`eachPre`，`eachPost`，`accumulate`，`reduce`，`groupby`，`contextby`，`pivot`，`cross`，`moving`，`rolling`等。
 
 下面的一个例子我们使用三个高阶函数，只用三行代码，根据股票日内tick级别的交易数据，计算出每两只股票之间的相关性。
 

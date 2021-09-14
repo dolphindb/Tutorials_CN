@@ -7,7 +7,7 @@ DolphinDB提供了一系列配置选项，方便用户进行配置，以充分�
 - 网络：maxConnections, maxConnectionPerSite, tcpNoDelay, maxFileHandles, enableHttps, maxPubConnections, maxSubConnections
 - 数据安全：dfsReplicationFactor, dataSync, dfsReplicaReliabilityLevel, dfsHAMode, streamingHAMode
 
-要熟悉系统的详细配置，首先需要了解集群搭建流程。DolphinDB集群的搭建请参考[单服务器集群部署](https://github.com/dolphindb/Tutorials_CN/blob/master/single_machine_cluster_deploy.md)或[多服务器集群部署](https://github.com/dolphindb/Tutorials_EN/blob/master/single_machine_cluster_deploy.md)。
+要熟悉系统的详细配置，首先需要了解集群搭建流程。DolphinDB集群的搭建请参考[单服务器集群部署](./single_machine_cluster_deploy.md)或[多服务器集群部署](./multi_machine_cluster_deploy.md)。
 
 ## 1. 概述
 
@@ -31,7 +31,7 @@ __网络__
 
 __数据安全__ 
 
-DolphinDB提供数据、元数据以及客户端的高可用方案。DolphinDB采用多副本机制，当数据库节点发生故障时，数据库依然可以正常运作，保证业务不会中断。提供控制节点高可用模式，通过构建多个控制节点来组成一个Raft组，只要宕机的控制节点少于半数，集群仍然可提供服务。DolphinDB API提供了自动重连和切换机制，在节点宕机，用户不需要干预的情况下，自动进行重连或者切换。细节可参考[DolphinDB高可用集群部署教程](https://github.com/dolphindb/Tutorials_CN/blob/master/ha_cluster_deployment.md)
+DolphinDB提供数据、元数据以及客户端的高可用方案。DolphinDB采用多副本机制，当数据库节点发生故障时，数据库依然可以正常运作，保证业务不会中断。提供控制节点高可用模式，通过构建多个控制节点来组成一个Raft组，只要宕机的控制节点少于半数，集群仍然可提供服务。DolphinDB API提供了自动重连和切换机制，在节点宕机，用户不需要干预的情况下，自动进行重连或者切换。细节可参考[DolphinDB高可用集群部署教程](./ha_cluster_deployment.md)
 
 DolphinDB的典型应用场景包括：作为分布式时序数据库，提供入库和查询功能；作为稳定的流数据发布中心，提供来自各种应用的订阅服务。下面分别介绍DolphinDB作为数据库和作为流数据发布中心的配置选项。
 
@@ -119,7 +119,7 @@ DolphinDB 系统记录多种类型的日志，有节点运行情况的日志，�
 
 * streamingHAMode: 默认不启用Raft mode，流节点的高可用模式。如果流数据节点有高可用要求，则需要配置该选项，启用高可用模式。
 
-> __注意__: 数据库的分区设计对查询的性能影响很大。若分区过大，会造成并行加载容易出现内存不足，从而造成操作系统频繁对内存和磁盘进行数据交换，大大降低降低性能。若分区过小，会造成系统中存在大量的子任务，导致节点间产生大量的通信和调度，并且还会频繁的访问磁盘上的小文件，也会明显降低性能。请参考[分区数据库教程](https://github.com/dolphindb/Tutorials_CN/blob/master/database.md)
+> __注意__: 数据库的分区设计对查询的性能影响很大。若分区过大，会造成并行加载容易出现内存不足，从而造成操作系统频繁对内存和磁盘进行数据交换，大大降低降低性能。若分区过小，会造成系统中存在大量的子任务，导致节点间产生大量的通信和调度，并且还会频繁的访问磁盘上的小文件，也会明显降低性能。请参考[分区数据库教程](./database.md)
 
 ## 3. 流计算模块高性能配置  
 
@@ -239,7 +239,7 @@ DolphinDB 系统记录多种类型的日志，有节点运行情况的日志，�
     - maxPubConnections=32：表示信息发布节点最多可连接的订阅节点数量。该节点发布表较多，可能有来自多个DlphinDB节点或其他客户端的订阅，因此设置为32。  
     - persistenceDir: 每个节点设置为一个单独的磁盘卷，这样持久化时可以并发写入。  
     发布队列深度、持久化线程数以及队列深度按照默认配置即可。  
-> 注意定义每张发布流表的持久化参数，enableTablePersistence，对性能和内存影响极大，每个参数应根据数据量和性能需求仔细评估配置，可参考3.1节。流数据性能调优的更多细节请参考教程[流数据教程](https://github.com/dolphindb/Tutorials_CN/blob/master/streaming_tutorial.md)
+> 注意定义每张发布流表的持久化参数，enableTablePersistence，对性能和内存影响极大，每个参数应根据数据量和性能需求仔细评估配置，可参考3.1节。流数据性能调优的更多细节请参考教程[流数据教程](./streaming_tutorial.md)
 
 订阅端可以是各种API客户端，或者DolphinDB server。如果是DolphinDB server作为订阅客户端，性能相关的主要参数为subExecutors, maxSubQueueDepth 与 maxSubConnections。subExecutors根据订阅表数量配置，其他两个参数可以采用默认值。
 
@@ -293,6 +293,6 @@ DolphinDB database提供了各种工具来监控集群的性能。包括控制�
 
 * `getMemoryStat()`: 从系统级查看本节点的内存使用量概述，包括分配的页数，空闲页数，分配的内存总大小，空闲的内存大小。
 
-更多细节请参考[内存管理教程](https://github.com/dolphindb/Tutorials_CN/blob/master/memory_management.md)。
+更多细节请参考[内存管理教程](./memory_management.md)。
 
 

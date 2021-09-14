@@ -38,7 +38,7 @@ DolphinDB作为一个高性能的分布式时序数据库，为工业物联网�
 
 4.2 服务器部署
 
-在本次demo里，为了使用分布式数据库，我们需要使用一个单机多节点集群，可以参考[单机多节点集群部署指南](https://github.com/dolphindb/Tutorials_CN/blob/master/single_machine_cluster_deploy.md)。这里我们配置了1个controller+1个agent+4个datanode的集群，下面列出主要的配置文件内容供参考：
+在本次demo里，为了使用分布式数据库，我们需要使用一个单机多节点集群，可以参考[单机多节点集群部署指南](./single_machine_cluster_deploy.md)。这里我们配置了1个controller+1个agent+4个datanode的集群，下面列出主要的配置文件内容供参考：
 
 cluster.nodes
 ```
@@ -61,7 +61,7 @@ node1.subPort=8085
 maxPubConnections=4
 newValuePartitionPolicy=add
 ```
-实际生产环境下，建议使用多物理机集群，可以参考 [多物理机集群部署指南](https://github.com/dolphindb/Tutorials_CN/blob/master/multi_machine_cluster_deploy.md)
+实际生产环境下，建议使用多物理机集群，可以参考 [多物理机集群部署指南](./multi_machine_cluster_deploy.md)
 
 4.3 实现步骤
 
@@ -93,8 +93,7 @@ demoAgg = createTimeSeriesAggregator(name="demoAgg", windowSize=60000, step=2000
 subscribeTable( tableName="sensorTemp", actionName="demoAgg", offset=-1, handler=append!{demoAgg}, msgAsTable=true)
 ```
 
-在DolphinDB Server端在对高频数据流做保存、分析的时候，Grafana前端程序每秒钟会轮询实时运算的结果，并刷新平均温度的趋势图。DolphinDB提供了Grafana_DolphinDB的datasource插件，关于Grafana的安装以及DolphinDB的插件配置请参考[Grafana配置教程](https://www.github.com/dolphindb/grafana-datasource/blob/master/README_CN.md)
-。
+在DolphinDB Server端在对高频数据流做保存、分析的时候，Grafana前端程序每秒钟会轮询实时运算的结果，并刷新平均温度的趋势图。DolphinDB提供了Grafana_DolphinDB的datasource插件，关于Grafana的安装以及DolphinDB的插件配置请参考[Grafana配置教程](https://www.github.com/dolphindb/grafana-datasource/blob/master/README_CN.md)。
 
 在完成grafana的基本配置之后，新增一个Graph Panel, 在Metrics tab里输入
 
@@ -103,7 +102,7 @@ select gmtime(time) as time, tempavg1, tempavg2, tempavg3 from sensorTempAvg whe
 ```
 这段脚本是选出1号设备实时运算得到的平均温度表
 
-![image](images/datasource.PNG)
+![image](./images/datasource.PNG)
 
 
 最后，启动数据模拟生成程序，生成模拟温度数据并写入流数据表

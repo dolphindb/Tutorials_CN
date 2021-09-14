@@ -430,4 +430,4 @@ DolphinDB集群可以部署在局域网内，也可以部署在私有云或公�
 更多详细信息，请参考DolphinDB帮助文档第10章
 
 - [中文](https://www.dolphindb.cn/cn/help/DatabaseandDistributedComputing/Configuration/index.html)
-- [英文](https://www.dolphindb.com/help/ClusterSetup1.html)
+- [英文](https://www.dolphindb.com/help/DatabaseandDistributedComputing/Configuration/index.html)

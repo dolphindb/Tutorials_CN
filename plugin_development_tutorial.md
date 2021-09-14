@@ -136,7 +136,7 @@ ConstantSP result = Util::createVector(DT_DOUBLE, size);
 ```
 
 <!--
-在DolphinDB中，一个向量可能是Fast vector，也可能是[bigarray](https://www.dolphindb.com/help/BigArray.html)，它们的实现机制不同，需要用`isFastMode`函数判断，分别处理：
+在DolphinDB中，一个向量可能是Fast vector，也可能是[bigarray](https://www.dolphindb.cn/cn/help/DataTypesandStructures/DataForms/Vector/BigArray.html)，它们的实现机制不同，需要用`isFastMode`函数判断，分别处理：
 
 ```
 VectorSP x = X;
@@ -363,7 +363,7 @@ double result = segments[index >> segmentSizeInBit][index & segmentMask];
 
 # 4 如何开发支持新的分布式算法的插件函数
 
-在 DolphinDB database 中，MapReduce是执行分布式算法的通用计算框架。DolphinDB提供了[mr](https://www.dolphindb.com/help/mr.html)函数和[imr](https://www.dolphindb.com/help/imr.html)函数，使用户能通过脚本实现分布式算法。在编写分布式算法的插件时，使用的同样是这两个函数。对通用计算的详细介绍，可以参考[通用计算教程](https://github.com/dolphindb/Tutorials_CN/blob/master/general_computing.md)。本章主要介绍如何用C\+\+语言编写自定义的map, reduce等函数，并调用`mr`和`imr`这两个函数，最终实现分布式计算。
+在 DolphinDB database 中，MapReduce是执行分布式算法的通用计算框架。DolphinDB提供了[mr](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/m/mr.html)函数和[imr](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/i/imr.html)函数，使用户能通过脚本实现分布式算法。在编写分布式算法的插件时，使用的同样是这两个函数。对通用计算的详细介绍，可以参考[通用计算教程](general_computing.md)。本章主要介绍如何用C\+\+语言编写自定义的map, reduce等函数，并调用`mr`和`imr`这两个函数，最终实现分布式计算。
 
 ## 4.1 分布式算法范例
 

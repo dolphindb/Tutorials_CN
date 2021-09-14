@@ -273,7 +273,7 @@ print(s.loadTable("testDataFrame").toDF())
 
 ### 5 导入数据到DolphinDB服务器
 
-DolphinDB数据库根据存储方式可以分为3种类型：内存数据库、本地文件系统的数据库和分布式文件系统（DFS）中的数据库。DFS能够自动管理数据存储和备份，并且DolphinDB在DFS模式中性能达到最优。因此，推荐用户使用分布式文件系统，部署方式请参考[多服务器集群部署](https://github.com/dolphindb/Tutorials_CN/blob/master/multi_machine_cluster_deploy.md)。为简化起见，在本教程中也给出了本地文件系统数据库的例子。
+DolphinDB数据库根据存储方式可以分为3种类型：内存数据库、本地文件系统的数据库和分布式文件系统（DFS）中的数据库。DFS能够自动管理数据存储和备份，并且DolphinDB在DFS模式中性能达到最优。因此，推荐用户使用分布式文件系统，部署方式请参考[多服务器集群部署](multi_machine_cluster_deploy.md)。为简化起见，在本教程中也给出了本地文件系统数据库的例子。
 
 下面的例子中，我们使用了一个csv文件：[example.csv](data/example.csv)。
 
@@ -338,7 +338,7 @@ s.database('db', partitionType=keys.VALUE, partitions=['AMZN','NFLX', 'NVDA'], d
 s.run("db=database(WORK_DIR+'/valuedb', VALUE, ['AMZN','NFLX', 'NVDA'])")
 ```
 
-在DFS（分布式文件系统）创建分区数据库，只需把数据库的路径改成以`dfs://`开头。下面的例子需要在集群中执行。请参考教程[多服务器集群部署](https://github.com/dolphindb/Tutorials_CN/blob/master/multi_machine_cluster_deploy.md)配置集群。
+在DFS（分布式文件系统）创建分区数据库，只需把数据库的路径改成以`dfs://`开头。下面的例子需要在集群中执行。请参考教程[多服务器集群部署](./multi_machine_cluster_deploy.md)配置集群。
 
 ```Python
 import dolphindb.settings as keys
@@ -347,7 +347,7 @@ s.database('db', partitionType=keys.VALUE, partitions=['AMZN','NFLX', 'NVDA'], d
 #equals to s.run("db=database('dfs://valuedb', VALUE, ['AMZN','NFLX', 'NVDA'])")
 ```
 
-除了值分区（VALUE），DolphinDB还支持顺序分区（SEQ）、哈希分区（HASH）、范围分区（RANGE）、列表分区（LIST）与组合分区（COMPO），具体请参见[database函数](https://www.dolphindb.cn/cn/help/database1.html)。
+除了值分区（VALUE），DolphinDB还支持顺序分区（SEQ）、哈希分区（HASH）、范围分区（RANGE）、列表分区（LIST）与组合分区（COMPO），具体请参见[database函数](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/d/database.html)。
 
 #### 5.2.2 创建分区表，并导入数据到表中
 
@@ -1725,7 +1725,7 @@ s.subscribe(host, port, handler, tableName, actionName="", offset=-1, resub=Fals
 
 示例：
 
-请注意，发布节点需要配置maxPubConnections参数，具体请参照[DolphinDB流数据教程](https://github.com/dolphindb/Tutorials_CN/blob/master/streaming_tutorial.md)。
+请注意，发布节点需要配置maxPubConnections参数，具体请参照[DolphinDB流数据教程](streaming_tutorial.md)。
 
 在DolphinDB中创建共享的流数据表，指定进行过滤的列为sym，并为5个symbol各插入2条记录共10条记录：
 ```
@@ -1782,7 +1782,7 @@ Event().wait()                  # 加在最后一行
 
 DolphinDB database 中计算实时K线的流程如下图所示：
 
-![avatar](images/K-line.png)
+![avatar](./images/K-line.png)
 
 实时数据供应商一般会提供基于Python、Java或其他常用语言的API的数据订阅服务。本例中使用Python来模拟接收市场数据，通过DolphinDB Python API写入流数据表中。DolphinDB的流数据时序聚合引擎(TimeSeriesAggregator)可以对实时数据按照指定的频率与移动窗口计算K线。
 

@@ -7,7 +7,7 @@ DolphinDB提供离线方式和在线方式实现不同集群间数据库的同�
 ## 1. 离线方式
 离线方式是指先把一个数据库中数据，通过`backup`函数备份到磁盘，然后将备份的数据同步到另一个数据库所在的物理机器上，再通过`restore`函数将数据从磁盘恢复到到数据库。如下所示：  
 
-![image](https://github.com/dolphindb/Tutorials_CN/raw/master/images/datasync/1.png)   
+![image](./images/datasync/1.png)   
 
 ### 1.1 数据备份
 通过backup函数将需要同步的数据表备份到磁盘上，备份以分区为单位。需要同步的数据可以用sql语句指定，如下：  
@@ -29,7 +29,7 @@ backup(backupDir,<select * from loadTable("dfs://db1","mt") where TradingDay > d
 backupDir = "/hdd/hdd1/backDir"
 backup(backupDir,<select col1,col2,col3 from loadTable("dfs://db1","mt")>)
 ```
-关于更灵活的sql元语句，请参考[DolphinDB元编程教程](https://dolphindb.net/dolphindb/tutorials_cn/blob/master/meta_programming.md)。
+关于更灵活的sql元语句，请参考[DolphinDB元编程教程](./meta_programming.md)。
 
 ### 1.2 节点间数据文件同步
 如果需要同步的两个数据库不在同一台物理机器上，则需要同步二进制文件。DolphinDB支持shell命令，可利用操作系统提供的文件同步手段来同步目录，例如rsync或者scp命令。其中rsync是linux上的常用命令，只同步发生变化的文件，非常高效。
@@ -47,7 +47,7 @@ shell(cmd)
 ```
 restore(restoreDir,"dfs://db1","mt","%",true,loadTable("dfs://db2","mt"))
 ```
-除了恢复所有数据，还可以根据条件恢复指定分区。详细参考教程[数据备份与恢复](https://github.com/dolphindb/Tutorials_CN/blob/master/restore-backup.md)。
+除了恢复所有数据，还可以根据条件恢复指定分区。详细参考教程[数据备份与恢复](./restore-backup.md)。
 
 ### 1.4 具体实例
 两个DolphinDB集群部署在不同的机器上。需要每天22:30，同步A集群上的数据库(db1，包括表mt)的所有当天数据到B集群上。数据库db1的分区类型为VALUE，按天分区，分区字段为Timestamp（类型为TIMESTAMP）。    
@@ -86,7 +86,7 @@ scheduleJob("syncDB","syncDB",syncDataBases{backupNodeIP,backupNodePort,backupDi
 
 在线方式要求两个集群同时在线，通过建立socket连接，从一个集群中读取数据并写入另一个集群。如下图所示:
 
-![image](https://github.com/dolphindb/Tutorials_CN/raw/master/images/datasync/2.png) 
+![image](./images/datasync/2.png) 
 
 
 ### 2.2 具体示例

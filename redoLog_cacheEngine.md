@@ -90,7 +90,7 @@ Raft是一种在分布式系统中用来维持多副本一致性的协议。在�
 DolphinDB中引入了Raft协议来完成元数据的高可用，即控制节点的高可用。DolphinDB中的控制节点上保存了分布式文件系统的元数据，如果控制节点宕机，则整个系统会处于不可用状态。
 而有了Raft支持的高可用以后，我们可以同时开启多个控制节点，保存相同的元数据信息，任意时刻只要大多数节点处于可用状态，整个系统就是可用的。
 
-关于元数据高可用，请参考[DolphinDB高可用集群部署教程](https://github.com/dolphindb/Tutorials_CN/blob/master/ha_cluster_deployment.md#3-%E5%85%83%E6%95%B0%E6%8D%AE%E9%AB%98%E5%8F%AF%E7%94%A8)。
+关于元数据高可用，请参考[DolphinDB高可用集群部署教程](./ha_cluster_deployment.md#3-%E5%85%83%E6%95%B0%E6%8D%AE%E9%AB%98%E5%8F%AF%E7%94%A8)。
 
 ## 5. 必须使用log的场景
 

@@ -157,7 +157,7 @@ system::log::fileLog::appendLog("mylog.txt", "test my log")
 
 DolphinDB GUI从0.99.2版本开始提供了远程同步模块的功能，具体用法如下图所示：
 
-![image](https://github.com/dolphindb/Tutorials_CN/raw/master/images/gui/module_sync.png)
+![image](./images/gui/module_sync.png)
 
 此操作会将modules目录下的所有文件和子目录同步到GUI连接的DolphinDB节点的[home]/modules目录下。同步完成后，就可以在远程服务器上执行use语句导入模块。
 

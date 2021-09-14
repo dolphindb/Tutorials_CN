@@ -44,17 +44,17 @@ DolphinDB提供Java，Python和C#的开发接口。安装步骤及使用请参�
 
 ### 2.1 独立服务器（单节点模式）
 
-作为一个独立的工作站或服务器使用，下载后即可使用，无需配置。详见[单节点部署教程](https://github.com/dolphindb/Tutorials_CN/blob/master/standalone_server.md)。
+作为一个独立的工作站或服务器使用，下载后即可使用，无需配置。详见[单节点部署教程](./standalone_server.md)。
 
 单节点模式拥有与集群模式相同的功能，区别在于单节点模式不支持扩展节点和高可用，而集群模式可以方便地扩展到多个服务器节点以及支持高可用。
 
 ### 2.2 单机集群搭建
 
-控制节点(controller)、代理节点（agent)、数据节点(data node)部署在同一个物理机器上。详见[单服务器集群部署](https://github.com/dolphindb/Tutorials_CN/blob/master/single_machine_cluster_deploy.md)。
+控制节点(controller)、代理节点（agent)、数据节点(data node)部署在同一个物理机器上。详见[单服务器集群部署](single_machine_cluster_deploy.md)。
 
 ### 2.3 多机集群搭建
 
-在多个物理机器上部署DolphinDB集群。详见[多服务器集群部署](https://github.com/dolphindb/Tutorials_CN/blob/master/multi_machine_cluster_deploy.md)。
+在多个物理机器上部署DolphinDB集群。详见[多服务器集群部署](./multi_machine_cluster_deploy.md)。
 
 ## 3. 使用系统
 
@@ -62,15 +62,15 @@ DolphinDB提供Java，Python和C#的开发接口。安装步骤及使用请参�
 
 - 客户端GUI提供了方便开发DolphinDB脚本的图形界面。详见[GUI帮助文档](https://www.dolphindb.cn/cn/gui/)。
 
-- 在DolphinDB中创建分区数据库和表。DolphinDB支持顺序、值、列表、区间、哈希以及复合分区，可灵活应对各类企业实际业务场景，详见[分区数据库教程](https://github.com/dolphindb/Tutorials_CN/blob/master/database.md)。
+- 在DolphinDB中创建分区数据库和表。DolphinDB支持顺序、值、列表、区间、哈希以及复合分区，可灵活应对各类企业实际业务场景，详见[分区数据库教程](./database.md)。
 
-- 使用DolphinDB流数据引擎进行实时数据处理与分析。详见[流数据教程](https://github.com/dolphindb/Tutorials_CN/blob/master/streaming_tutorial.md)与[流数据时序聚合引擎教程](https://github.com/dolphindb/Tutorials_CN/blob/master/stream_aggregator.md)。
+- 使用DolphinDB流数据引擎进行实时数据处理与分析。详见[流数据教程](streaming_tutorial.md)与[流数据时序聚合引擎教程](./stream_aggregator.md)。
 
 > 使用系统前建议先阅读：[量化金融范例](./quant_finance_examples.md)或[物联网范例](./iot_examples.md)。
 
 ## 4. 用户权限设置
 
-DolphinDB提供了完善、安全的权限管理机制，适用于企业级的不同应用场景，详见[权限管理和安全教程](https://github.com/dolphindb/Tutorials_CN/blob/master/ACL_and_Security.md)。
+DolphinDB提供了完善、安全的权限管理机制，适用于企业级的不同应用场景，详见[权限管理和安全教程](./ACL_and_Security.md)。
 
 ## 5. 常见错误原因
 

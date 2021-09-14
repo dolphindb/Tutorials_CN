@@ -7,7 +7,7 @@
 
 目前，越来越多的券商和私募开始采用高性能时序数据库DolphinDB来处理高频数据。DolphinDB采用列式存储，并提供多种灵活的分区机制，可充分利用集群中每个节点的资源。DolphinDB的大量内置函数对时序数据的处理和计算非常友好，解决了传统关系数据库或NoSQL数据库处理时序数据方面的局限性。使用DolphinDB处理高频数据，既可以保证查询与计算的超高性能，又可以提供数据管理、权限控制、并行计算、数据关联等数据库的优势。
 
-本文测试DolphinDB和pickle在数据读取方面的性能。与使用pickle文件存储相比，直接使用DolphinDB数据库，数据读取速度可最多可提升10倍以上；若为了考虑与现有Python系统的集成，使用DolphinDB提供的Python API读取数据，速度最多有2~3倍的提升。有关DolphinDB数据库在数据管理等方面的功能，读者可参考DolphinDB的在线[文档](https://www.dolphindb.cn/cn/help/index.html)或[教程](../README.md)。
+本文测试DolphinDB和pickle在数据读取方面的性能。与使用pickle文件存储相比，直接使用DolphinDB数据库，数据读取速度可最多可提升10倍以上；若为了考虑与现有Python系统的集成，使用DolphinDB提供的Python API读取数据，速度最多有2~3倍的提升。有关DolphinDB数据库在数据管理等方面的功能，读者可参考DolphinDB的在线[文档](https://www.dolphindb.cn/cn/help/index.html)或[教程](./README.md)。
 
 - [1. 测试场景和测试数据](#1-测试场景和测试数据)
 - [2. 测试环境](#2-测试环境)

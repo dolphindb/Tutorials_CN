@@ -329,4 +329,4 @@ startDataNode(["DFS_NODE1", "DFS_NODE2","DFS_NODE3","DFS_NODE4"])
 ## 7. DolphinDB集群详细配置以及参数意义
 
 * [中文](https://www.dolphindb.cn/cn/help/DatabaseandDistributedComputing/Configuration/ClusterMode.html)
-* [英文](https://www.dolphindb.com/help/ClusterSetup1.html)
+* [英文](https://www.dolphindb.com/help/DatabaseandDistributedComputing/Configuration/ClusterMode.html)

@@ -350,7 +350,7 @@ DolphinDB提供了标准协议的SQL查询接口，与第三方分析可视化�
 
 安装Grafana请参考[Grafana官网教程](http://docs.grafana.org/installation/)。安装后，若本机浏览器中可以打开http://localhost:3000/ ，说明Grafana安装成功，否则请检查3000这个端口是否被防火墙屏蔽或被其他应用占用。
 
-DolphinDB为了支持使用Grafana来实时展示时序数据，提供了Grafana的dolphindb-datasource插件，并且实现了对Grafana的HTTP数据接口，可以通过类SQL的查询脚本将DolphinDB的数据表以直观的方式展示在Grafana的Dashboard上。插件的下载与安装请参阅[插件教程](https://gitee.com/dolphindb/grafana-datasource/blob/master/README_CN.md)。
+DolphinDB为了支持使用Grafana来实时展示时序数据，提供了Grafana的dolphindb-datasource插件，并且实现了对Grafana的HTTP数据接口，可以通过类SQL的查询脚本将DolphinDB的数据表以直观的方式展示在Grafana的Dashboard上。插件的下载与安装请参阅[插件教程](https://github.com/dolphindb/grafana-datasource/blob/master/README_CN.md)。
 
 #### 1.5.2 显示数据
 
