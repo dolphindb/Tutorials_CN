@@ -1883,4 +1883,4 @@ Event().wait()
 ...
 ```
 
-也可通过[Grafana](https://github.com/dolphindb/grafana-datasource/blob/master/README_CN.md)等可视化系统来连接DolphinDB database，对输出表进行查询并将结果以图表方式展现。
+也可通过[Grafana](../../../grafana-datasource/blob/master/README_CN.md)等可视化系统来连接DolphinDB database，对输出表进行查询并将结果以图表方式展现。

@@ -960,4 +960,4 @@ act_getdata"。那么当订阅完成之后，用getStreamingStat().pubTables 查
 
 - 趋势监控：把新产生的数据附加到原有的数据上并以可视化图表的方式实时更新。
 
-很多数据可视化的平台都能支持流数据的实时监控，比如当前流行的开源数据可视化框架Grafana。DolphinDB database 已经实现了Grafana的服务端和客户端的接口，具体配置可以参考[grafana教程](https://github.com/dolphindb/grafana-datasource/blob/master/README_CN.md)
+很多数据可视化的平台都能支持流数据的实时监控，比如当前流行的开源数据可视化框架Grafana。DolphinDB database 已经实现了Grafana的服务端和客户端的接口，具体配置可以参考[grafana教程](../../../grafana-datasource/blob/master/README_CN.md)
