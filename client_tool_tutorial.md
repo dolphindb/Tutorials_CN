@@ -168,7 +168,7 @@ VS Code 插件与GUI功能非常相似，优点是VS Code使用者无需安装�
 
 在编辑并运行脚本之前，需要先新增并选择一个数据节点作为运行脚本的服务器。新建并打开一个txt或dos文件，通过右键菜单可以增加、选择和移除DolphinDB Server。
 
-![image](images/vscode/server.png?raw=true)
+![image](images/VSCode/server.png)
     
 #### 新增服务器
 
