@@ -1,6 +1,6 @@
 ##  基于Docker的集群部署教程
 
-Docker是一个开源的引擎，可以轻松的为任何应用创建一个轻量级的、可移植的、自给自足的容器。DolphinDB database提供了基于docker的分布式集群部署包，可以让用户方便快捷的部署DolphinDB分布式集群。
+Docker是一个开源的引擎，可以轻松的为任何应用创建一个轻量级的、可移植的、自给自足的容器。DolphinDB database提供了基于docker的分布式集群部署包，可以让用户方便快捷的部署DolphinDB分布式集群。DolphinDB服务器可部署在云端服务器上，云边端使用同一数据库，能更好地实现互相协同，云边端一体化。
 
 本文的目标是通过4个centos容器搭建一个5节点的多机集群，最终搭建好的集群情况如下:
 
@@ -133,7 +133,7 @@ dolphindb.lic | 集群所有节点的企业版授权文件
   * 参照 docker-compose.yml文件，增加容器ddbagentx, 容器配置信息可以参考其他agent的配置，在port和ip这里需要与其他容器错开，避免冲突。
   * 需要修改 ./cfg/cluster.nodes 增加新的agent和datanode信息
   * 增加一个./cfg/agentx.cfg与docker-compose.yml中volumes映射的代理节点配置文件相对应。
- 
+
 #### 5. 如何升级版本
 
 * 下载最新的server安装包，解压后，将server目录下dolphindb.lic文件删除
@@ -152,6 +152,7 @@ apt-get install tzdata
 
 * docker中获取机器指纹失败
   
+
 正式license需要校验服务器硬件信息，而docker中没有权限获取此信息，启动时日志中会报告异常：
 
 ```
