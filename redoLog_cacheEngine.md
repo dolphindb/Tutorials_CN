@@ -27,7 +27,7 @@ Redo Log会增加磁盘的负载，这是由于在数据文件以外额外写了
 
 如果是集群模式，Redo Log只需要在数据节点上配置，不涉及主节点，因为主节点上只存储DFS数据库的元数据，与Redo Log无关。
 
-- dataSync: 是否使用Redo Log功能。取值为1代表开启Redo Log；默认值为0，表示不启用该功能。
+- dataSync: 是否使用Redo Log功能，并强制刷盘。取值为1代表开启Redo Log，将redo log，数据和元数据强制刷盘；默认值为0，表示不启用该功能，由操作系统决定什么时候刷盘。
 - redoLogDir: Redo Log文件的存放位置。一般建议将该位置设置到SSD硬盘上以获取最佳的性能。默认在homeDir（由home参数决定）下的log/redoLog目录下。如果是集群模式，注意要分别设置不同数据节点的目录，避免使用相同目录，造成写入错误。
 - redoLogPurgeLimit: Redo Log文件占用的最大空间，单位为GB，默认值为4。当Redo Log文件大小超过该值时会自动开始回收。
 - redoLogPurgeInterval: Redo Log自动回收的周期，单位为秒，默认值为30，表示每30秒自动回收一次。
