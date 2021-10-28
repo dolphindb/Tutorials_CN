@@ -4,23 +4,26 @@ DolphinDB是一款高性能分布式时序数据库。与传统的关系数据�
 
 运行本教程中的代码例子前，请先根据第8节“本教程中流数据配置”进行流数据系统的配置。
 
-- [1. 概述](#1-概述)
-- [2. 无状态因子计算](#2-无状态因子计算)
-- [3. 滑动窗口因子计算](#3-滑动窗口因子计算)
-- [4. 状态因子计算](#4-状态因子计算)
-    - [4.1 基于内存表的状态因子计算](#41-%E4%BD%BF%E7%94%A8%E5%86%85%E5%AD%98%E8%A1%A8%E8%AE%A1%E7%AE%97%E7%8A%B6%E6%80%81%E5%9B%A0%E5%AD%90)
-    - [4.2 基于分区内存表的状态因子计算](#42-基于分区内存表的状态因子计算)
-    - [4.3 基于字典的状态因子计算](#43-基于字典的状态因子计算)
-- [5. 因子计算流水线](#5-因子计算流水线)
-- [6. 提高计算效率的方法](#6-提高计算效率的方法)
-    - [6.1 使用字典或分区内存表分组存储数据](#61-使用字典或分区内存表分组存储数据)
-    - [6.2 平衡延时和吞吐量](#62-平衡延时和吞吐量)
-    - [6.3 并行计算](#63-并行计算)
-    - [6.4 即时编译](#64-即时编译)
-- [7. 流计算调试](#7-%E6%B5%81%E8%AE%A1%E7%AE%97%E8%B0%83%E8%AF%95)
-    - [7.1 调试消息处理函数](#71-调试消息处理函数)
-    - [7.2 历史数据回测](#72-历史数据回测)
-- [8. 本教程中流数据配置](#8-本教程中流数据配置)
+- [DolphinDB教程：实时计算高频因子](#dolphindb教程实时计算高频因子)
+	- [1. 概述](#1-概述)
+	- [2. 无状态因子计算](#2-无状态因子计算)
+	- [3. 滑动窗口因子计算](#3-滑动窗口因子计算)
+	- [4. 状态因子计算](#4-状态因子计算)
+		- [4.1 使用内存表计算状态因子](#41-使用内存表计算状态因子)
+		- [4.2 基于分区内存表的状态因子计算](#42-基于分区内存表的状态因子计算)
+		- [4.3 基于字典的状态因子计算](#43-基于字典的状态因子计算)
+	- [5. 因子计算流水线](#5-因子计算流水线)
+	- [6. 提高计算效率的方法](#6-提高计算效率的方法)
+		- [6.1 使用字典或分区内存表分组存储数据](#61-使用字典或分区内存表分组存储数据)
+		- [6.2 平衡延时和吞吐量](#62-平衡延时和吞吐量)
+		- [6.3 并行计算](#63-并行计算)
+			- [6.3.1 使用订阅系统的线程池](#631-使用订阅系统的线程池)
+			- [6.3.2 使用全局的线程池](#632-使用全局的线程池)
+		- [6.4 即时编译](#64-即时编译)
+	- [7. 流计算调试](#7-流计算调试)
+		- [7.1 调试消息处理函数](#71-调试消息处理函数)
+		- [7.2 历史数据回测](#72-历史数据回测)
+	- [8. 本教程中流数据配置](#8-本教程中流数据配置)
 
 ## 1. 概述
 
@@ -134,6 +137,36 @@ replay(inputTables=tradesData, outputTables=Trade, dateColumn=`Datetime)
 ```
 select top 10 * from OHLC 
 ```
+响应式状态引擎支持一部分优化过的序列处理函数，因此除了通过定义函数calcVolume来将累计交易量转化为当前交易量以外，可以通过响应式状态引擎和时间序列聚合引擎串联来实现同样的效果：
+
+```
+tradesData = loadText(yourDIR + "sampleTrades2.csv")
+
+//定义流数据表Trade
+x=tradesData.schema().colDefs
+share streamTable(100:0, x.name, x.typeString) as Trade
+
+//定义OHLC输出表
+share streamTable(100:0, `datetime`symbol`open`high`low`close`volume`updatetime,[TIMESTAMP,SYMBOL,DOUBLE,DOUBLE,DOUBLE,DOUBLE,LONG,TIMESTAMP]) as OHLC
+
+//定义实时聚合引擎：每分钟计算过去5分钟K线
+tsAggrOHLC = createTimeSeriesAggregator(name="aggr_ohlc", windowSize=300000, step=60000, metrics=<[first(Price),max(Price),min(Price),last(Price),sum(Volume),now()]>, dummyTable=Trade, outputTable=OHLC, timeColumn=`Datetime, keyColumn=`Symbol)
+
+//定义响应式状态引擎：预处理Volume数据
+rsAggrOHLC = createReactiveStateEngine(name="calc_vol", metrics=<[Datetime, Price, deltas(Volume)]>, dummyTable=Trade, outputTable=tsAggrOHLC, keyColumn=`Symbol)
+
+//订阅流数据写入聚合引擎
+subscribeTable(tableName="Trade", actionName="minuteOHLC2", offset=0, handler=append!{rsAggrOHLC}, msgAsTable=true)
+
+replay(inputTables=tradesData, outputTables=Trade, dateColumn=`Datetime)
+```
+
+最后查看结果：
+
+```
+select top 10 * from OHLC 
+```
+
 ## 4. 状态因子计算
 
 有状态的因子，即因子的计算不仅用到当前数据，还会用到历史数据。实现状态因子的计算，一般包括这几个步骤：（1）保存本批次的消息数据到历史记录；（2）根据更新后的历史记录，计算因子，（3）将因子计算结果写入输出表中。如有必要，删除未来不再需要的的历史记录。
