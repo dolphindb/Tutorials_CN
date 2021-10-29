@@ -44,6 +44,7 @@
     - [启动脚本教程](Startup.md)
     - [定时作业](scheduledJob.md)
     - [使用Prometheus监控告警](DolphinDB_monitor.md)
+    - [如何正确定位节点宕机的原因](how_to_handle_crash.md)
 - API
     - [Python API使用教程](../../../api_python3/blob/master/README_CN.md)
     - [Java API使用教程](../../../api-java/blob/master/README_CN.md)
@@ -101,6 +102,7 @@
     - [DolphinDB教程：面板数据的处理](panel_data.md)
     - [金融高频因子的流批统一计算：DolphinDB响应式状态引擎](reactive_state_engine.md)
     - [股票行情数据导入实例](stockdata_csv_import_demo.md)
+    - [快照引擎](snapshot_engine.md)
 - 入门和测试
     - [DolphinDB入门：量化金融范例](quant_finance_examples.md)
     - [DolphinDB入门：物联网范例](iot_examples.md)
