@@ -20,6 +20,13 @@ DolphinDB系统的启动流程如下图所示：
 
 定时作业 (scheduled job) 在启动脚本执行后加载。因此定时作业中若用到了插件函数、共享表等，需要在启动脚本中预先加载或定义，否则定时作业的反序列化会失败。
 
+如果需要在系统启动时初始化某些定时作业相关的任务，只能在初始化定时任务模块完成后通过postStart脚本执行。postStart脚本文件路径由参数postStart指定。
+```
+if(getScheduledJobs().jobDesc.find("daily resub") == -1){
+	scheduleJob(jobId=`daily, jobDesc="daily resub", jobFunc=run{"/home/appadmin/server/resubJob.dos"}, scheduleTime=08:30m, startDate=2021.08.30, endDate=2023.12.01, frequency='D')	
+}
+```
+
 ## 2. 执行启动脚本
 
 启动脚本的配置参数为startup，参数值为启动脚本文件名，默认脚本为startup.dos。单机模式时在dolphindb.cfg中配置，集群模式时在cluster.cfg中配置。可配置绝对路径或相对路径。若配置了相对路径或者没有指定目录，系统会依次搜索本地节点的home目录、工作目录和可执行文件所在目录。
