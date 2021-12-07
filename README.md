@@ -30,6 +30,7 @@
     - [自定义聚合函数](udaf.md)
     - [矩阵计算](matrix.md)
     - [日期/时间类型](date_time.md)
+    - [DolphinDB窗口计算综述](window_cal.md)
 - 流计算
     - [流数据教程](streaming_tutorial.md)
     - [流数据时序聚合引擎](stream_aggregator.md)
@@ -45,6 +46,7 @@
     - [定时作业](scheduledJob.md)
     - [使用Prometheus监控告警](DolphinDB_monitor.md)
     - [如何正确定位节点宕机的原因](how_to_handle_crash.md)
+    - [从一次SQL查询的全过程看DolphinDB 的线程模型](thread_model_SQL.md)
 - API
     - [Python API使用教程](../../../api_python3/blob/master/README_CN.md)
     - [Java API使用教程](../../../api-java/blob/master/README_CN.md)
@@ -103,6 +105,7 @@
     - [金融高频因子的流批统一计算：DolphinDB响应式状态引擎](reactive_state_engine.md)
     - [股票行情数据导入实例](stockdata_csv_import_demo.md)
     - [快照引擎](snapshot_engine.md)
+    - [节点启动时的流计算自动订阅教程](streaming_auto_sub.md)
 - 入门和测试
     - [DolphinDB入门：量化金融范例](quant_finance_examples.md)
     - [DolphinDB入门：物联网范例](iot_examples.md)
