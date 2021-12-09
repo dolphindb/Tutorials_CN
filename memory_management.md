@@ -30,7 +30,7 @@ login("admin","123456")  //创建用户需要登陆admin
 createUser("user1","123456")
 login("user1","123456")
 v = 1..100000000
-sum(mem().blockSize - mem().freeSize) //输出内存占用结果
+sum(mem().allocatedBytes - mem().freeBytes) //输出内存占用结果
 ```
 结果为: 402,865,056，内存占用400MB左右，符合预期。
 
@@ -40,7 +40,7 @@ sum(mem().blockSize - mem().freeSize) //输出内存占用结果
 ```
 n = 10000000
 t = table(n:n,["tag1","tag2","tag3","tag4","tag5"],[INT,INT,INT,INT,INT])
-(mem().blockSize - mem().freeSize).sum()
+(mem().allocatedBytes - mem().freeBytes).sum()
 ```
 结果为：612,530,448，约600MB，符合预期。
 
@@ -81,14 +81,14 @@ DolphinDB采用列式存储，当用户对分布式表的数据进行查询时�
 示例4. 计算分区2019.01.01最大的tag1的值。该分区储存在node1上，可以在controller上通过函数`getClusterChunksStatus()`查看分区分布情况，而且由上面可知，每列约80MB。在node1上执行如下代码，并查看内存占用。
 ```
 select max(tag1) from loadTable(dbName,tableName) where day = 2019.01.01
-sum(mem().blockSize - mem().freeSize) 
+sum(mem().allocatedBytes - mem().freeBytes) 
 ```
 输出结果为84,267,136。我们只查询1个分区的一列数据，所以把该列数据全部加载到内存，其他的列不加载。
 
 示例5. 在node1 上查询 2019.01.01的前100条数据，并观察内存占用。
 ```
 select top 100 * from loadTable(dbName,tableName) where day = 2019.01.01
-sum(mem().blockSize - mem().freeSize)
+sum(mem().allocatedBytes - mem().freeBytes)
 ```
 输出结果为839,255,392。虽然我们只取100条数据，但是DolphinDB加载数据的最小单位是分区列，所以需要加载每个列的全部数据，也就是整个分区的全部数据，约800MB。
 
@@ -101,14 +101,14 @@ sum(mem().blockSize - mem().freeSize)
 示例6. 在node1上计算两个分区中tag1的最大值。其中分区2019.01.02数组存储在node1上，分区2019.01.03数据存储在node2上。
 ```
 select max(tag1) from loadTable(dbName,tableName) where day in [2019.01.02,2019.01.03]
-sum(mem().blockSize - mem().freeSize) 
+sum(mem().allocatedBytes - mem().freeBytes) 
 ```
 输出结果为84,284,096。在node2上用查看内存占用结果为84,250,624。每个节点存储的数据都为80M左右，也就是node1上存储了分区2019.01.02的数据，node2上存储了2019.01.03的数据。
 
 示例7. 在node1上查询分区2019.01.02和2019.01.03的所有数据，我们预期node1加载2019.01.02数据，node2加载2019.01.03的数据，都是800M左右，执行如下代码并观察内存。
 ```
 select top 100 * from loadTable(dbName,tableName) where day in [2019.01.02,2019.01.03]
-sum(mem().blockSize - mem().freeSize)
+sum(mem().allocatedBytes - mem().freeBytes)
 ```
 node1上输出结果为839,279,968。node2上输出结果为839,246,496。结果符合预期。
 
@@ -121,7 +121,7 @@ DolphinDB支持海量数据的并发查询。为了高效利用内存，对相�
 示例8. 打开两个GUI，分别连接node1和node2，查询分区2019.01.01的数据，该分区的数据存储在node1上。
 ```
 select * from loadTable(dbName,tableName) where date = 2019.01.01
-sum(mem().blockSize - mem().freeSize)
+sum(mem().allocatedBytes - mem().freeBytes)
 ```
 上面的代码不管执行几次，node1上内存显示一直是839,101,024，而node2上无内存占用。因为分区数据只存储在node1上，所以node1会加载所有数据，而node2不占用任何内存。
 
@@ -134,7 +134,7 @@ sum(mem().blockSize - mem().freeSize)
 days = chunksOfEightDays();
 for(d in days){
     select * from loadTable(dbName,tableName) where  = day
-    sum(mem().blockSize - mem().freeSize)
+    sum(mem().allocatedBytes - mem().freeBytes)
 }
 ```
 内存随着加载分区数的增加变化规律如下图所示：  
@@ -153,12 +153,12 @@ for(d in days){
 
 示例11. 当缓存数据接近用户设置的maxMemSize时，继续申请Session变量的内存空间，查看系统内存占用。此时先查看系统的内存使用：
 ```
-sum(mem().blockSize - mem().freeSize)
+sum(mem().allocatedBytes - mem().freeBytes)
 ```
 输出结果为7,550,138,448。内存占用超过7GB，而用户设置的最大内存使用量为8GB，此时我们继续申请4GB空间。
 ```
 v = 1..1000000000
-sum(mem().blockSize - mem().freeSize)
+sum(mem().allocatedBytes - mem().freeBytes)
 ```
 输出结果为8,196,073,856。约为8GB，也就是如果用户定义变量，也会触发缓存数据的内存回收，以保证有足够的内存提供给用户使用。
 
@@ -218,7 +218,7 @@ __MemLimit__：节点可使用的最大内存限制，即用户配置的maxMemSi
 
 #### 7.1.2 `mem()`函数监控某个节点内存占用
 
-`mem()`函数可以显示整个节点的内存分配和占用情况。该函数输出4列，其中列blockSize表示分配的内存块大小，freeSize表示剩余的内存块大小，通过sum(mem().blockSize - mem().freeSize) 得到节点所使用的总的内存大小。
+`mem()`函数可以显示整个节点的内存分配和占用情况。该函数输出4列，其中列blockSize表示分配的内存块大小，freeSize表示剩余的内存块大小，通过sum(mem().allocatedBytes - mem().freeBytes) 得到节点所使用的总的内存大小。
 
 #### 7.1.3 监控节点上不同session的内存占用  
 
