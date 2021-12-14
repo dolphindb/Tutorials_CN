@@ -79,7 +79,7 @@
     - [Kafka](../../../DolphinDBPlugin/blob/master/kafka/README.md)
     - [Matching Engine](../../../DolphinDBPlugin/blob/master/MatchingEngine/README.md)
     - [Matlab](../../../DolphinDBPlugin/blob/master/mat/README.md)
-    - [MongoDB](../../../DolphinDBPlugin/blob/master/mongodb/README_CN.md)
+    - [MongoDB](../../../DolphinDBPlugin/blob/master/mongodb/README.md)
     - [MQTT](../../../DolphinDBPlugin/blob/master/mqtt/README_CN.md)
     - [MSeed](../../../DolphinDBPlugin/blob/master/mseed/README.md)
     - [MySQL](../../../DolphinDBPlugin/blob/master/mysql/README_CN.md)
