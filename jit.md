@@ -336,9 +336,9 @@ f2()
 def foo(a, b) {
   c = a.dot(b)
   d = c.transpose()
-  e = d * 2.0
-  f = e / 3.0
-  g = e + f
+  h = d * 2.0
+  f = h / 3.0
+  g = h + f
   return g
 }
 
