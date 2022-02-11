@@ -54,6 +54,7 @@
     - [JDBC](../../../jdbc/blob/master/README_CN.md)
     - [C# API使用教程](../../../api-csharp/blob/master/README_CN.md)
     - [C++ API使用教程](../../../api-cplusplus/blob/master/README_CN.md)
+    - [用VS2017编译DolphinDB C++ API动态库](cpp_api_vs2017_tutorial.md)
     - [C++ API 数据读写指南](c%2B%2Bapi.md)
     - [Go API使用教程](../../../api-go/blob/master/README.md)
     - [Go API使用实例](../../../api-go/blob/master/example/README_CN.md)
