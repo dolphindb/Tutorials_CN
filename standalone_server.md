@@ -18,7 +18,7 @@
 /DolphinDB/server/dolphindb.lic
 ```
 
-如果用户没有申请企业版试用授权许可，可以直接使用程序包中的社区版试用授权许可。社区试用版指定了DolphinDB最大可用内存为4GB。
+如果用户没有申请企业版试用授权许可，可以直接使用程序包中的社区版试用授权许可。社区试用版指定DolphinDB单节点最大可用内存为8GB，有效期为20年。
 
 ## 2. 运行DolphinDB Server
 
@@ -159,16 +159,16 @@ select top 100 * from pt
 
 - 修改配置文件dolphindb.cfg。
 
-- 在命令行中启动节点时指定配置参数。例如，启动节点时指定端口号为8900，最大内存为4GB：
+- 在命令行中启动节点时指定配置参数。例如，启动节点时指定端口号为8900，最大内存为8GB：
 
 Linux系统：
 ```sh
-./dolphindb -localSite localhost:8900:local8900 -maxMemSize 4
+./dolphindb -localSite localhost:8900:local8900 -maxMemSize 8
 ```
 
 Windows系统：
 ```sh
-dolphindb.exe -localSite localhost:8900:local8900 -maxMemSize 4
+dolphindb.exe -localSite localhost:8900:local8900 -maxMemSize 8
 ```
 
 更多DolphinDB配置参数请查看[单实例配置](https://www.dolphindb.cn/cn/help/DatabaseandDistributedComputing/Configuration/StandaloneMode.html)。
