@@ -11,11 +11,11 @@ Kubernetes（简称 K8S）是一个开源的容器集群管理系统，可以实
       - [2.2.2 安装 DolphinDB 套件](#222-安装-dolphindb-套件)
     - [2.3 部署并连接 DolphinDB 集群](#23-部署并连接-dolphindb-集群)
       - [2.3.1 可视化界面](#231-可视化界面)
-      - [2.3.2 连接 DolphinDB 集群](#232-部署-dolphindb-集群)
+      - [2.3.2 部署 DolphinDB 集群](#232-部署-dolphindb-集群)
     - [2.4  升级 DolphinDB 集群](#24--升级-dolphindb-集群)
     - [2.5 销毁DolphinDB 集群](#25-销毁dolphindb-集群)
     - [2.6 卸载 DolphinDB 套件](#26-卸载-dolphindb-套件)
-  - [3. K8S 中配置 CoreDump](#3-K8S-中配置-coredump)
+  - [3. K8S 中配置 CoreDump](#3-k8s-中配置-coredump)
   - [4. 常见问题](#4-常见问题)
 
 ## 1. DolphinDB in Kubernetes 简介
@@ -402,7 +402,7 @@ echo "/data/ddb/core/core.%p"  | sudo tee /proc/sys/kernel/core_pattern
 
 其中 "`/data/ddb/core`" 为 core dump 文件在容器中的路径，若与当前宿主机的配置有冲突，可在部署 DolphinDB 套件时通过参数 `dolphindb.coreDumpDir` 自定义。
 
-### 4. 常见问题
+## 4. 常见问题
 
 * 创建集群后，如果 Pod 没有创建，则可以通过以下方式进行诊断：
 
