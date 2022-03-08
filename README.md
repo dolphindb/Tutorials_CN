@@ -108,6 +108,7 @@
     - [股票行情数据导入实例](stockdata_csv_import_demo.md)
     - [快照引擎](snapshot_engine.md)
     - [节点启动时的流计算自动订阅教程](streaming_auto_sub.md)
+    - [DolphinDB SQL案例教程](DolphinDB SQL Case Tutorial.md)
 - 入门和测试
     - [DolphinDB入门：量化金融范例](quant_finance_examples.md)
     - [DolphinDB入门：物联网范例](iot_examples.md)
