@@ -139,7 +139,7 @@ timer res2 = select SecurityID, DateTime
 each(eqObj, res1.values(), res2.values()) // true
 ```
 
-[each](#) 函数对表的每列分别通过 [eqObj](#) 比较，返回均为 true，说明优化前后返回的结果相同。但与优化前写法相比，优化后写法查询性能提升约4倍。这是因为，在 SQL 语句中，表连接的耗时远高于 where 子句中的过滤条件的耗时，因此在能够使用字典或 in 关键字的情况下应避免使用 join。
+each 函数对表的每列分别通过 eqObj 比较，返回均为 true，说明优化前后返回的结果相同。但与优化前写法相比，优化后写法查询性能提升约4倍。这是因为，在 SQL 语句中，表连接的耗时远高于 where 子句中的过滤条件的耗时，因此在能够使用字典或 in 关键字的情况下应避免使用 join。
 
 ### 2.2 分组数据过滤
 
@@ -303,7 +303,7 @@ timer t1 = select count(*) from snapshot
 
 ### **优化后**：
 
-使用 [date](#) 函数将 DateTime 字段转换为 DATE 类型，如下：
+使用 date 函数将 DateTime 字段转换为 DATE 类型，如下：
 
 ```
 timer t2 = select count(*) from snapshot 
@@ -723,7 +723,7 @@ timer {
 
 **查询耗时 76 ms。**
 
-上例中使用的 [interval](#) 函数只能在 group by 子句中使用，不能单独使用，缺失值的填充方式可以为：prev, post, linear, null, 具体数值和 none。
+上例中使用的 interval 函数只能在 group by 子句中使用，不能单独使用，缺失值的填充方式可以为：prev, post, linear, null, 具体数值和 none。
 
 ### 4.8 计算股票收益波动率
 
@@ -738,7 +738,7 @@ t = table(2011.11.01..2021.10.31 as date,
           rand([0.0573, -0.0231, 0.0765, 0.0174, -0.0025, 0.0267, 0.0304, -0.0143, -0.0256, 0.0412, 0.0810, -0.0159, 0.0058, -0.0107, -0.0090, 0.0209, -0.0053, 0.0317, -0.0117, 0.0123], N) as rate)
 ```
 
-使用 [interval](#) 函数对于日期按月分组，并计算标准差。其中，*fill* 类型为 prev，表示使用前一个值填充缺失值。
+使用 interval 函数对于日期按月分组，并计算标准差。其中，*fill* 类型为 prev，表示使用前一个值填充缺失值。
 
 ```
 timer res = select std(rate) from t group by code, interval(month(date), 1, "prev")
@@ -1023,7 +1023,7 @@ timer {
 
 **第一种优化写法：**
 
-自定义一个函数 getType，使用 [iff](#) 函数嵌套方式得到当前成交单子类型，然后使用 group by 对日期、股票、买卖方向、单子类型分组，并计算累计交易量、交易额。
+自定义一个函数 getType，使用 iff 函数嵌套方式得到当前成交单子类型，然后使用 group by 对日期、股票、买卖方向、单子类型分组，并计算累计交易量、交易额。
 
 ```
 def getType(amount) {
@@ -1132,7 +1132,7 @@ min_num = 10
 
 **优化前：**
 
-查询语句拼接为一个字符串，使用 [parseExpr](#) 函数将字符串解析为元代码，再使用 [eval](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/e/eval.html) 函数执行生成的元代码。
+查询语句拼接为一个字符串，使用 parseExpr 函数将字符串解析为元代码，再使用 [eval](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/e/eval.html) 函数执行生成的元代码。
 
 ```
 res = parseExpr("select " + avg + "(cal_variable) as FactorValue from t group by bar(TradeTime, " + min_num + "m) as minute_TradeTime, SecurityID, DataDate").eval()
@@ -1152,7 +1152,7 @@ res = sql(select = sqlCol("cal_variable", funcByName("avg"), "FactorValue"),
 
 **查询耗时 200 ms。**
 
-类似地，[sqlUpdate](#) 函数用于动态生成 SQL update 语句的元代码，[sqlDelete](#) 函数用于动态生成 SQL delete语句的元代码。
+类似地，sqlUpdate 函数用于动态生成 SQL update 语句的元代码，sqlDelete 函数用于动态生成 SQL delete语句的元代码。
 
 ### 5.2 动态生成 SQL 语句案例 2
 
