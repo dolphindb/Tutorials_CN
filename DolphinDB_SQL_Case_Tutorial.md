@@ -797,7 +797,7 @@ timer {
 
 **优化后：**
 
-使用 pivot by 子句根据时间、股票代码对于数据表重新排序，将时间作为行，股票代码作为列，然后使用[ffill[(https://dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/f/ffill.html) 函数填充 NULL 元素，使用 [avg](<https://dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/a/avg.html> ) 函数计算均值，最后 [rowSum](<https://dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/r/rowSum.html> ) 函数计算每个时间点的股票价值之和，仅需以下一行代码，即可实现上述所有步骤。示例如下：
+使用 pivot by 子句根据时间、股票代码对于数据表重新排序，将时间作为行，股票代码作为列，然后使用[ffill](<https://dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/f/ffill.html>) 函数填充 NULL 元素，使用 [avg](<https://dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/a/avg.html> ) 函数计算均值，最后 [rowSum](<https://dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/r/rowSum.html> ) 函数计算每个时间点的股票价值之和，仅需以下一行代码，即可实现上述所有步骤。示例如下：
 
 ```
 timer t2 = select rowSum(ffill(last(weightedPrice))) from ETF pivot by Time, Symbol
