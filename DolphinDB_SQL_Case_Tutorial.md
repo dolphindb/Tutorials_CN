@@ -6,24 +6,14 @@
 	- [1 测试环境说明](#1-测试环境说明)
 	- [2 条件过滤相关案例](#2-条件过滤相关案例)
 		- [2.1 where 条件子句使用 in 关键字](#21-where-条件子句使用-in-关键字)
-				- [**优化前：**](#优化前)
-				- [**优化后**：](#优化后)
 		- [2.2 分组数据过滤](#22-分组数据过滤)
-				- [**优化前**：](#优化前-1)
-				- [**优化后**：](#优化后-1)
 		- [2.3 where 条件子句使用逗号或 and](#23-where-条件子句使用逗号或-and)
 			- [2.3.1 过滤条件与序列无关](#231-过滤条件与序列无关)
 			- [2.3.2 过滤条件与序列有关](#232-过滤条件与序列有关)
 	- [3 分布式表相关案例](#3-分布式表相关案例)
 		- [3.1 分区剪枝](#31-分区剪枝)
-				- [**优化前**：](#优化前-2)
-				- [**优化后**：](#优化后-2)
 		- [3.2 group by 并行查询](#32-group-by-并行查询)
-				- [**优化前：**](#优化前-3)
-				- [**优化后**：](#优化后-3)
 		- [3.3 分组查询使用 map 关键字](#33-分组查询使用-map-关键字)
-				- [**优化前：**](#优化前-4)
-				- [**优化后**：](#优化后-4)
 	- [4 分组计算相关案例](#4-分组计算相关案例)
 		- [4.1 查询最新的 N 条记录](#41-查询最新的-n-条记录)
 		- [4.2 计算滑动 VWAP](#42-计算滑动-vwap)
@@ -120,7 +110,7 @@ t2 = table(SecurityIDs as SecurityID,
 
 
 
-##### **优化前：**
+**优化前：**
 
 将数据表 t1 与数据表 t2 根据 SecurityID 字段进行 left join，然后指定 where 条件进行过滤，示例如下：
 
@@ -136,7 +126,7 @@ timer res1 = select SecurityID, DateTime
 
 
 
-##### **优化后**：
+**优化后**：
 
 从数据表 t2 获取行业为 “Edu” 的股票代码向量，并使用 in 关键字指定条件范围，示例如下：
 
@@ -183,7 +173,7 @@ having 子句总是跟在 group by 或者 context by 后，用来将结果进行
 
 
 
-##### **优化前**：
+**优化前**：
 
 使用 context by 对股票分组，并根据 Volume 字段计算 75% 位置处的线性插值作为过滤条件的最小值，再根据 group by 对股票分组，并计算标准差，最后使用 order by 对于股票排序，示例如下：
 
@@ -201,7 +191,7 @@ timer select std(LastPx) as std from (
 
 
 
-##### **优化后**：
+**优化后**：
 
 使用 group by 对股票分组，aggrTopN 高阶函数选择交易量最大的 25% 的记录，并计算标准差。示例如下：
 
@@ -313,7 +303,7 @@ snapshot = loadTable("dfs://Level1", "Snapshot")
 
 
 
-##### **优化前**：
+**优化前**：
 
 where 条件子句根据日期过滤时，使用 [temporalFormat](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/t/temporalFormat.html) 函数对于日期进行格式转换，如下：
 
@@ -327,7 +317,7 @@ timer t1 = select count(*) from snapshot
 
 
 
-##### **优化后**：
+**优化后**：
 
 使用 [date](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/d/date.html) 函数将 DateTime 字段转换为 DATE 类型，如下：
 
@@ -384,7 +374,7 @@ snapshot = loadTable("dfs://Level1", "Snapshot")
 
 
 
-##### **优化前：**
+**优化前：**
 
 首先，筛选2020年06月01日09:30:00以后的数据，收盘价高于开盘价的记录，标志位设置为1；否则，标志位设置为0，将结果赋给一个内存表。然后，使用 group by 子句根据 SecurityID, DateTime, Flag 三个字段分组，并统计分组内 OfferPrice1 的记录数以及 Volume 的和，示例如下：
 
@@ -403,7 +393,7 @@ timer {
 
 
 
-##### **优化后**：
+**优化后**：
 
 不再引入中间内存表，直接从分布式表进行查询计算。示例如下：
 
@@ -440,7 +430,7 @@ each(eqObj, t1.values(), (select * from t2 order by SecurityID, Date, Flag).valu
 snapshot = loadTable("dfs://Level1", "Snapshot")
 ```
 
-##### **优化前：**
+**优化前：**
 
 ```
 timer result = select count(*) from snapshot group by SecurityID, bar(DateTime, 60)
@@ -450,7 +440,7 @@ timer result = select count(*) from snapshot group by SecurityID, bar(DateTime, 
 
 
 
-##### **优化后**：
+**优化后**：
 
 使用 map 关键字。
 
