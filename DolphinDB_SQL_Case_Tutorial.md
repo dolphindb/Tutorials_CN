@@ -310,7 +310,7 @@ timer t2 = select count(*) from snapshot
 		   where date(DateTime) between 2020.06.01 : 2020.06.02 group by SecurityID 
 ```
 
-查询耗时 92 ms。
+**查询耗时 92 ms。**
 
 ```
 each(eqObj, t1.values(), t2.values()) // true
