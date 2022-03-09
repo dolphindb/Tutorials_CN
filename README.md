@@ -31,7 +31,7 @@
     - [自定义聚合函数](udaf.md)
     - [矩阵计算](matrix.md)
     - [日期/时间类型](date_time.md)
-    - [DolphinDB窗口计算综述](window_cal.md)    - 
+    - [DolphinDB窗口计算综述](window_cal.md)    
     - [DolphinDB SQL案例教程](DolphinDB_SQL_Case_Tutorial.md)
 - 流计算
     - [流数据教程](streaming_tutorial.md)
