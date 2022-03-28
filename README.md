@@ -5,7 +5,7 @@
     - [单节点部署](standalone_server.md)
     - [单节点部署(嵌入式ARM版本)](ARM_standalone_deploy.md)
     - [单服务器集群部署](single_machine_cluster_deploy.md)
-    - [多服务器集群部署](multi_machine_cluster_deploy.md)
+    - [多服务器集群部署](multi_machine_cluster_deployment.md)
     - [基于Docker的集群部署教程](docker_deployment.md)
     - [基于K8s的集群部署教程](k8s_deployment.md)
     - [高可用集群部署教程](ha_cluster_deployment.md)
