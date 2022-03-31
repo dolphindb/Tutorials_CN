@@ -24,6 +24,7 @@
     - [内存表详解](in_memory_table.md)
 - 编程语言
     - [脚本语言的混合范式编程](hybrid_programming_paradigms.md)
+    - [函数化编程案例](functional_programming_cases.md)
     - [模块复用教程](module_tutorial.md)
     - [通用计算教程](general_computing.md)
     - [即时编译(JIT)教程](jit.md)
