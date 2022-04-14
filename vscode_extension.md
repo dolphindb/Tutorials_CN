@@ -64,7 +64,7 @@ https://marketplace.visualstudio.com/items?itemName=dolphindb.dolphindb-vscode
 
 注意：若修改了连接配置项，原连接会自动断开。
 
-![image](images/VSCode/1.png)
+![image](images/vscode/1.png)
 
 ### 新建脚本文件
 
