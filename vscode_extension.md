@@ -35,7 +35,7 @@ DolphinDB VSCode 插件，允许用户：
 
 点击 VSCode 左侧导航栏的 Extensions 图标，或者通过 `Ctrl+Shift+X` 快捷键打开插件安装窗口。在搜索框中输入 dolphindb，即可搜索到 dolphindb 插件，点击 Install 进行安装。具体方法可查看插件详情。
 
-![image](images/vscode/8.png?raw=true)
+![image](images/VSCode/8.png?raw=true)
 
 如果因为网络原因安装失败，需通过下方链接手动下载 后缀为 `.vsix` 的插件，击 `Version History` 下载最新的版本到本地，并将其拖到 VSCode 插件面板中。  
 https://marketplace.visualstudio.com/items?itemName=dolphindb.dolphindb-vscode
@@ -64,18 +64,18 @@ https://marketplace.visualstudio.com/items?itemName=dolphindb.dolphindb-vscode
 
 注意：若修改了连接配置项，原连接会自动断开。
 
-![image](images/vscode/1.png)
+![image](images/VSCode/1.png)
 
 ### 新建脚本文件
 
 - 如果脚本文件名后缀是 .dos ，插件会自动识别为 DolphinDB 语言。
 - 如果脚本文件名后缀非 .dos，比如是  .txt，则需要手动关联 DolphinDB 语言。方法如下：点击 VSCode 编辑器右下角状态栏的语言选择按钮，如下图：
   
-![image](images/vscode/2.png)
+![image](images/VSCode/2.png)
 
 在语言选择弹框中输入 dolphindb 后回车，即可切换当前文件关联的语言为 DolphinDB 语言。
   
-![image](images/vscode/3.png)
+![image](images/VSCode/3.png)
 
 ### 执行代码
 
@@ -100,25 +100,25 @@ VSCode 编辑器左侧面板资源管理器中展示了连接的会话，用户�
 
 - 变量导航条
   
-![image](images/vscode/4.png)
+![image](images/VSCode/4.png)
 
 **连接栏**：点击左侧圆形图标切换到对应的连接，点击右侧的链接图标可断开连接。
 
 **变量栏**：鼠标悬浮于对应变量，可查看该变量的值。变量（scalar 和 pair 类型除外）右侧有两个图标。点击第一个图标会将变量在浏览器中进行展示，且每次点击都会刷新变量值。点击第二个图标，会打开浏览器弹窗（请开启浏览器允许弹框功能）如下图，便于用户查看变量及观察变量前后的变化。
 
-![image](images/vscode/5.png)
+![image](images/VSCode/5.png)
 
 - 数据浏览器
 
 点击变量右侧的第一个图标可以打开一个公共的浏览器页面（localhost:8321）。可在该页面查看变量的内容。其他用户也可通过（ip:8321）查看对应 ip 用户代码执行的实时结果。
 
-![image](images/vscode/6.png)
+![image](images/VSCode/6.png)
 
 - 终端
 
 DolphinDB 脚本的执行结果会在终端显示：
 
-![image](images/vscode/7.png)
+![image](images/VSCode/7.png)
 
 执行结果的第一行显示代码的执行时间，会话对应的服务器别名。
 
