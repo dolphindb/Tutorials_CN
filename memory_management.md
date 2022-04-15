@@ -2,21 +2,21 @@
 
 DolphinDB是一款支持多用户多任务并发操作的高性能分布式时序数据库软件(distributed time-series database)。针对大数据的高效的内存管理是其性能优异的原因之一。本教程涉及的内存管理包括以下方面：   
 * __变量的内存管理__：为用户提供与回收编程环境所需内存。
-* __分布式表的缓存管理__：多个session共享分区表数据，以提高内存使用率。
+* __OLAP引擎分布式表的缓存管理__：系统自动将查询过的历史数据加载到读缓存，后续相关数据的查询将先从缓存中读取。多个会话共享分区表数据，以提高内存使用率。这里需要注意的是，TSDB引擎的分布式表有索引可快速查找，所以不缓存数据。
 * __流数据缓存__：流数据发送节点提供持久化和发送队列缓存，订阅节点提供接收数据队列缓存。
-* __DFS数据库写入缓存__：写入DFS的数据先写到WAL和缓存，通过批量写入提升吞吐量。
+* __分布式数据库写入缓存__：写入DFS的数据先写到WAL和缓存，通过批量写入提升吞吐量。
 
 ## 1. 内存管理机制
 
-DolphinDB向操作系统申请内存块，自行进行管理。当申请的内存块闲置时，系统会定期检查并释放。目前vector和table以及所有字符串的内存分配都已经纳入DolphinDB的内存管理系统。    
+DolphinDB向操作系统申请内存块，使用[TCMalloc](https://google.github.io/tcmalloc/)管理内存池。当申请的内存块闲置时，系统会定期检查并释放。目前vector和table以及所有字符串的内存分配都已经纳入DolphinDB的内存管理系统。    
 
-__通过参数maxMemSize设定节点的最大内存使用量__：该参数制定节点的最大可使用内存。如果设置太小，会严重限制集群的性能，如果设置太大，例如超过物理内存，可能会触发操作系统强制关闭进程。若机器内存为16GB，并且只部署1个节点，建议将该参数设置为12GB左右。
+__通过参数maxMemSize设定节点的最大内存使用量__：该参数制定节点的最大可使用内存。如果设置太小，会严重限制集群的性能，如果设置太大，例如超过物理内存，可能会触发操作系统强制关闭进程。建议各数据节点的最大内存使用量之和设置为机器可用内存的75%。例如机器内存为16GB，并且只部署1个节点，建议将该参数设置为12GB左右。
 
-__以512MB为单位向操作系统申请内存块__：当用户查询操作或者编程换进所需要内存时，DolphinDB会以512MB为单位向操作系统申请内存。如果操作系统无法提供大块的连续内存，则会尝试256MB，128MB等更小的内存块。
+__以512MB为单位向操作系统申请内存块__：当用户查询操作或编程环境需要内存时，DolphinDB会以512MB为单位向操作系统申请内存。如果操作系统无法提供大块的连续内存，则会尝试256MB，128MB等更小的内存块。
 
-__系统充分利用可用内存缓存数据库数据__：当节点的内存使用总量小于maxMemSize时，DolphinDB会尽可能多的缓存数据库分区数据，以便提升用户下次访问该数据块的速度。当内存不足时，系统自动会剔除部分缓存。
+__系统充分利用可用内存缓存数据库数据__：当节点的内存使用总量小于maxMemSize时，DolphinDB会尽可能多的缓存数据库分区数据，以便提升用户下次访问该数据块的速度。 当内存使用量超过 warningMemSize （以 GB 为单位,默认值为 maxMemSize 的75%）时，系统会自动清理部分数据库的缓存，以避免出现 OOM 异常。
 
-__每隔30秒扫描一次，空闲的内存块还给操作系统__：当用户使用释放内存中变量，或者使用函数`clearAllCache`释放缓存时，如果内存块完全空闲，则会整体还给操作系统，如果仍有小部分内存在使用，比如512MB的内存块中仍有10MB在使用，则不会归还操作系统。
+__每隔30秒扫描一次，空闲的内存块还给操作系统__：当用户释放内存中变量，或者使用函数`clearAllCache`释放缓存时，如果内存块完全空闲，则会整体还给操作系统，如果仍有小部分内存在使用，比如512MB的内存块中仍有10MB在使用，则不会归还操作系统。
 
 ## 2. 变量的内存管理
 
@@ -27,7 +27,7 @@ __每隔30秒扫描一次，空闲的内存块还给操作系统__：当用户�
 示例1. 创建vector变量
 ```
 login("admin","123456")  //创建用户需要登陆admin
-createUser("user1","123456")
+createUser("user1","123456") //若在数据节点上执行 rpc(getControllerAlias(),createUser{"user1","123456"}) 
 login("user1","123456")
 v = 1..100000000
 sum(mem().allocatedBytes - mem().freeBytes) //输出内存占用结果
@@ -56,23 +56,27 @@ undef(`v)
 ```
 v = NULL
 ```
+释放共享变量占用内存示例如下: 
+```
+undef("sharedTable", SHARED)
+```
 除了手动释放变量，当session关闭时，比如关闭GUI和其他API连接，都会触发对该session的所有内存进行回收。当通过web notebook连接时，10分钟内无操作，系统会关闭session，自动回收内存。
 
-## 3. 分布式表的缓存管理
+## 3. OLAP引擎分布式表的缓存管理
 
-DolphinDB对分布式表是以分区为单位管理的。分布式表的缓存是全局共享的，不同的session或读事务在大部分情况下，会看到同一份数据copy（版本可能会有所不同），这样极大的节省了内存的使用。
+DolphinDB对分布式表是以分区为单位管理的。系统自动将查询过的分区数据加载到读缓存，后续相关数据的查询将首先从缓存中读取。DolphinDB记录所有数据的版本号，通过版本机制系统可以快速确定是否需要为一个查询更新缓存。读缓存无需用户指定，系统自动进行管理，当内存不足时，系统自动踢出一部分缓存。
 
-历史数据库都是以分布式表的形式存在数据库中，用户平时查询操作也往往直接与分布式表交互。分布式表的内存管理有如下特点：
+历史数据库都是以分布式表的形式存在数据库中，用户平时查询操作也往往直接查询分布式表。分布式表的内存管理有如下特点：
 
 * 内存以分区列为单位进行管理。
 * 数据只加载到所在的节点，不会在节点间转移。
 * 多个用户访问相同分区时，使用同一份缓存。
-* 内存使用不超过maxMemSize情况下，尽量多缓存数据。
-* 缓存数据达到maxMemSize时，系统自动回收。
+* 内存使用不超过 maxMemSize 情况下，尽量多缓存数据。
+* 缓存数据达到 warningMemSize 时，系统开始自动回收。
 
-以下多个示例是基于以下集群：部署于2个节点，采用单副本模式。按天分30个区，每个分区1000万行，11列（1列DATE类型，1列INT类型，9列LONG类型），所以每个分区的每列(LONG类型）数据量为1000万行 * 8字节/列 = 80M，每个分区共1000万行 * 80字节/行 = 800M，整个表共3亿行，大小为24GB。
+以下多个示例是基于以下集群：部署于2个数据节点，采用单副本模式。按天分30个区，每个分区1000万行，11列（1列DATE类型，1列INT类型，9列LONG类型），所以每个分区的每列(LONG类型）数据量为1000万行 * 8字节/列 = 80M，每个分区共1000万行 * 80字节/行 = 800M，整个表共3亿行，大小为24GB。
 
-> 函数`clearAllCache()`可清空已经缓存的数据，下面的每次测试前，先用该函数清空节点上的所有缓存。
+> 函数`clearAllCache()`可清空已经缓存的数据。下面的每次测试前，先用`pnodeRun(clearAllCache)`清空节点上的所有缓存。
 
 ### 3.1 内存以分区列为单位进行管理
 
@@ -92,27 +96,27 @@ sum(mem().allocatedBytes - mem().freeBytes)
 ```
 输出结果为839,255,392。虽然我们只取100条数据，但是DolphinDB加载数据的最小单位是分区列，所以需要加载每个列的全部数据，也就是整个分区的全部数据，约800MB。
 
-> __注意：__ 合理分区以避免"out of memory"：DolphinDB是以分区为单位管理内存，因此内存的使用量跟分区关系密切。假如用户分区不均匀，导致某个分区数据量超大，甚至机器的全部内存都不足以容纳整个分区，那么当涉及到该分区的查询计算时，系统会抛出"out of memory"的异常。一般原则，如果用户设置maxMemSize=8，则每个分区常用的查询列之和为100-200MB为宜。如果表有10列常用查询字段，每列8字段，则每个分区约100-200万行。  
+> __注意：__ 合理分区以避免"out of memory"：DolphinDB以分区为单位管理内存，因此内存的使用量跟分区关系密切。假如分区不均匀，导致某个分区数据量超大，甚至机器的全部内存都不足以容纳整个分区，那么当涉及到该分区的查询计算时，系统会抛出"out of memory"的异常。一般原则，如果用户设置maxMemSize=8，则每个分区常用的查询列之和为100-200MB为宜。如果表有10列常用查询字段，每个字段8字节，则每个分区约100-200万行。  
 
 ### 3.2 数据只加载到所在的节点
 
 在数据量大的情况下，节点间转移数据是非常耗时的操作。DolphinDB的数据是分布式存储的，当执行计算任务时，把任务发送到数据所在的节点，而不是把数据转移到计算所在的节点，这样大大降低数据在节点间的转移，提升计算效率。
 
-示例6. 在node1上计算两个分区中tag1的最大值。其中分区2019.01.02数组存储在node1上，分区2019.01.03数据存储在node2上。
+示例6. 在node1上计算两个分区中tag1的最大值。其中分区2019.01.02的数据存储在node1上，分区2019.01.03的数据存储在node2上。
 ```
 select max(tag1) from loadTable(dbName,tableName) where day in [2019.01.02,2019.01.03]
 sum(mem().allocatedBytes - mem().freeBytes) 
 ```
-输出结果为84,284,096。在node2上用查看内存占用结果为84,250,624。每个节点存储的数据都为80M左右，也就是node1上存储了分区2019.01.02的数据，node2上存储了2019.01.03的数据。
+输出结果为84,284,096。在node2上查看内存占用为84,250,624字节。每个节点存储的数据都为80MB左右，也就是node1上存储了分区2019.01.02的数据，node2上仅存储了2019.01.03的数据。
 
-示例7. 在node1上查询分区2019.01.02和2019.01.03的所有数据，我们预期node1加载2019.01.02数据，node2加载2019.01.03的数据，都是800M左右，执行如下代码并观察内存。
+示例7. 在node1上查询分区2019.01.02和2019.01.03的所有数据，我们预期node1加载2019.01.02数据，node2加载2019.01.03的数据，都是800MB左右，执行如下代码并观察内存。
 ```
 select top 100 * from loadTable(dbName,tableName) where day in [2019.01.02,2019.01.03]
 sum(mem().allocatedBytes - mem().freeBytes)
 ```
-node1上输出结果为839,279,968。node2上输出结果为839,246,496。结果符合预期。
+node1上输出结果为839,279,968字节。node2上输出结果为839,246,496字节。结果符合预期。
 
-> __注意：__ 谨慎使用没有过滤条件的"select *"，因为这会将所有数据载入内存。在列数很多的时候尤其要注意该点，建议仅加载需要的列。若使用没有过滤条件的"select top 10 *"，会将第一个分区的所有数据载入内存。
+> __注意：__ 请谨慎使用没有过滤条件的"select *"，因为这会将所有数据载入内存。特别在列数很多的时候，建议仅加载需要的列。例如使用没有过滤条件的"select top 10 *"，会将第一个分区的所有数据载入内存。
 
 ### 3.3 多个用户访问相同分区时，使用同一份缓存
 
@@ -125,33 +129,38 @@ sum(mem().allocatedBytes - mem().freeBytes)
 ```
 上面的代码不管执行几次，node1上内存显示一直是839,101,024，而node2上无内存占用。因为分区数据只存储在node1上，所以node1会加载所有数据，而node2不占用任何内存。
 
-### 3.4 节点内存使用不超过maxMemSize情况下，尽量多缓存数据
+### 3.4 节点内存使用不超过 warningMemSize 情况下，尽量多缓存数据
 
-通常情况下，最近访问的数据往往更容易再次被访问，因此DolphinDB在内存允许的情况下（内存占用不超过用户设置的maxMemSize），尽量多缓存数据，来提升后续数据的访问效率。
+通常情况下，最近访问的数据往往更容易再次被访问，因此DolphinDB在内存允许的情况下（内存占用不超过用户设置的warningMemSize），尽量多缓存数据，来提升后续数据的访问效率。
  
-示例9. 数据节点设置的maxMemSize=8。连续加载9个分区，每个分区约800M，总内存占用约7.2GB，观察内存的变化趋势。
+示例9. 数据节点设置的maxMemSize=10,warningMemSize=8。连续加载9个分区，每个分区约800M，总内存占用约7.2GB，观察内存的变化趋势。
 ```
-days = chunksOfEightDays();
+dbPath =  right(dbName,strlen(dbName)-5)
+p = select top 9 * from rpc(getControllerAlias(),getClusterChunksStatus) 
+    where file like dbPath +"%" and replicas like "node1%" //这里节点1的别名为node1
+    order by file
+days = datetimeParse(t.file.substr(strlen(dbPath)+1,8),"yyyyMMdd")
 for(d in days){
-    select * from loadTable(dbName,tableName) where  = day
-    sum(mem().allocatedBytes - mem().freeBytes)
+    select * from loadTable(dbName,tableName) where  date= d
+    print sum(mem().allocatedBytes - mem().freeBytes)
 }
+
 ```
 内存随着加载分区数的增加变化规律如下图所示：  
 ![image](images/memory_managment/partition9.png?raw=true)  
 
-当遍历每个分区数据时，在内存使用量不超过maxMemSize的情况下，分区数据会全部缓存到内存中，以在用户下次访问时，直接从内存中提供数据，而不需要再次从磁盘加载。
+当遍历每个分区数据时，在内存使用量不超过warningMemSize的情况下，分区数据会全部缓存到内存中，以便用户下次访问时，直接从内存中读取数据，而不需要再次从磁盘加载。
 
-### 3.5 节点内存使用达到maxMemSize时，系统自动回收
+### 3.5 节点内存使用达到warningMemSize时，系统自动回收
 
-如果DolphinDB server使用的内存，没有超过用户设置的maxMemSize，则不会回收内存。当总的内存使用达到maxMemSize时，DolphinDB 会采用LRU的内存回收策略， 来腾出足够的内存给用户。
+如果DolphinDB server使用的内存，没有超过用户设置的warningMemSize，则不会回收内存。当总的内存使用达到warningMemSize时，DolphinDB 会采用LRU的内存回收策略， 来腾出足够的内存给用户。
 
-示例10. 上面用例只加载了8天的数据，此时我们继续共遍历15天数据，查看缓存达到maxMemSize时，内存的占用情况。如下图所示：  
+示例10. 上面用例只加载了9天的数据，此时我们继续共遍历15天数据，查看缓存达到warningMemSize时，内存的占用情况。如下图所示：  
 ![image](images/memory_managment/partiton15.png?raw=true)   
 
-如上图所示，当缓存的数据超过maxMemSize时，系统自动回收内存，总的内存使用量仍然小于用户设置的最大内存量8GB。
+如上图所示，当缓存的数据超过warningMemSize时，系统自动回收内存，总的内存使用量仍然小于用户设置的最大内存量8GB。
 
-示例11. 当缓存数据接近用户设置的maxMemSize时，继续申请Session变量的内存空间，查看系统内存占用。此时先查看系统的内存使用：
+示例11. 当缓存数据接近用户设置的warningMemSize时，继续申请Session变量的内存空间，查看系统内存占用。此时先查看系统的内存使用：
 ```
 sum(mem().allocatedBytes - mem().freeBytes)
 ```
@@ -168,30 +177,42 @@ sum(mem().allocatedBytes - mem().freeBytes)
 当订阅端收到数据后，先放入接受队列，然后用户定义的handler从接收队列中取数据并处理。如果handler处理缓慢，会导致接收队列有数据堆积，占用内存。如下图所示：  
 ![image](images/memory_managment/streaming.png?raw=true)
 
-流数据内存相关的配置选项：
-* __maxPersistenceQueueDepth__: 流表持久化队列的最大消息数。对于异步持久化的发布流表，先将数据放到持久化队列中，再异步持久化到磁盘上。该选项默认设置为1000万。在磁盘写入成为瓶颈时，队列会堆积数据。
+流数据内存相关的主要配置选项：
+* __maxPersistenceQueueDepth__: 发布节点流表持久化队列的最大消息数。对于异步持久化的发布流表，先将数据放到持久化队列中，再异步持久化到磁盘上。该选项默认设置为1000万。在磁盘写入成为瓶颈时，队列会堆积数据。
 
-* __maxPubQueueDepthPerSite__: 最大消息发布队列深度。针对某个订阅节点，发布节点建立一个消息发布队列，该队列中的消息发送到订阅端。默认值为1000万，当网络出现拥塞时，该发送队列会堆积数据。
+* __maxPubQueueDepthPerSite__: 发布节点最大消息发布队列深度。针对某个订阅节点，发布节点建立一个消息发布队列，该队列中的消息发送到订阅端。默认值为1000万，当网络出现拥塞时，该发送队列会堆积数据。
 
-* __maxSubQueueDepth__: 订阅节点上最大的每个订阅线程最大的可接收消息的队列深度。订阅的消息，会先放入订阅消息队列。默认设置为1000万，当handler处理速度较慢，不能及时处理订阅到的消息时，该队列会有数据堆积。
+* __maxSubQueueDepth__: 订阅节点上每个订阅线程最大的可接收消息的队列深度。订阅的消息，会先放入订阅消息队列。默认设置为1000万，当handler处理速度较慢，不能及时处理订阅到的消息时，该队列会有数据堆积。
 
-* __流表的capacity__：在函数`enableTablePersistence()`中第四个参数指定，该值表示流表中保存在内存中的最大行数，达到该值时，从内存中删除一半数据。当流数据节点中，流表比较多时，要整体合理设置该值，防止内存不足。
+* __流表的capacity__：由函数`enableTablePersistence()`中第四个参数指定，该值表示流表中保存在内存中的最大行数，达到该值时，从内存中删除一半数据。当流数据节点中，流表比较多时，要整体合理设置该值，防止内存不足。
 
-运行过程，可以通过函数`getStreamingStat()`来查看流表的大小以及各个队列的深度。  
+运行过程，可以通过函数`objs(true)`或`objs()`来查看流表占用内存占用大小，用`getStreamingStat()`来查看各个队列的深度。流计算引擎可能会占用较多内存，查看各引擎的内存使用量脚本举例如下：
+* getStreamEngineStat().TimeSeriesEngine.memoryUsed:时间序列引擎的内存使用量
+* getStreamEngineStat().CrossSectionalEngine .memoryUsed:横截面引擎的内存使用量  
+* getStreamEngineStat().AnomalyDetectionEngine .memoryUsed:异常监测引擎的内存使用量
+* getStreamEngineStat().ReactiveStreamEngine.memoryUsed:响应式状态引擎的内存使用量
+* getStreamEngineStat().AsofJoinEngine.memoryUsed:asof join引擎的内存使用量
+* getStreamEngineStat().EqualJoinEngine.memoryUsed:equal join引擎的内存使用量
+  
 
-## 5. 为写入DFS数据库提供缓存
+## 5. 为写入DFS数据库提供写入缓存
 
-DolphinDB为了提高读写的吞吐量和降低读写的延迟，采用先写入WAL和缓存的通用做法，等累积到一定数量时，批量写入。这样减少和磁盘文件的交互次数，提升写入性能，可提升写入速度30%以上。因此，也需要一定的内存空间来临时缓存这些数据，如下图所示：  
+DolphinDB为了提高读写的吞吐量和降低读写的延迟，采用先写入Redo log（预写式日志） 和Cache Engine（写入缓存）的通用做法，等累积到一定数量时，批量写入。这样减少和磁盘文件的交互次数，提升写入性能，可提升写入速度30%以上。因此，也需要一定的内存空间来临时缓存这些数据，如下图所示：  
 
 ![image](images/memory_managment/cacheEngine.png?raw=true)
 
 当事务t1，t2，t3都完成时，将三个事务的数据一次性写入到DFS的数据库磁盘上。Cache Engine空间一般推荐为maxMemSize的1/8~1/4，可根据最大内存和写入数据量适当调整。CacheEngine的大小可以通过配置参数chunkCacheEngineMemSize来配置。
 
-* __chunkCacheEngineMemSize__：指定cache engine的容量。cache engine开启后，写入数据时，系统会先把数据写入缓存，当缓存中的数据量达到chunkCacheEngineMemSize的30%时，才会写入磁盘。
+* __chunkCacheEngineMemSize__：指定OLAP存储引擎cache engine的容量。cache engine开启后，写入数据时，系统会先把数据写入缓存，当缓存中的数据量达到chunkCacheEngineMemSize的30%时，才会写入磁盘。
+* __TSDBCacheEngineSize__:设置 TSDB 存储引擎 Cache Engine 的容量（单位为GB），默认值为1。
+* __TSDBLevelFileIndexCacheSize__:设置 TSDB 存储引擎 levelfile 元数据内存占用空间上限。
+>  更多设置请参阅[Cache Engine与数据库日志](./redoLog_cacheEngine.md)
+ 
+写入过程中，可用`getCacheEngineMemSize()` 、`getTSDBCacheEngineSize`查看OLAP和TSDB引擎的Cache Engine占用内存情况,可用`getLevelFileIndexCacheStatus`获取所有 level file 文件的索引占用内存的情况。
 
 ## 6. 高效使用内存
 
-在企业的生产环境中，DolphinDB往往作为流数据中心以及历史数据仓库，为业务人员提供数据查询和计算。当用户较多时，不当的使用容易造成Server端内存耗尽，抛出"out of memory" 异常。可遵循以下建议，尽量避免内存的不合理使用。
+在企业的生产环境中，DolphinDB往往作为流数据处理中心以及历史数据仓库，为业务人员提供数据查询和计算。当用户较多时，不当的使用容易造成Server端内存耗尽，抛出"out of memory" 异常。可遵循以下建议，尽量避免内存的不合理使用。
 
 * __合理均匀分区__：DolphinDB是以分区为单位加载数据，因此，分区大小对内存影响巨大。合理均匀的分区，不管对内存使用还是对性能而言，都有积极的作用。因此，在创建数据库的时候，根据数据规模，合理规划分区大小。每个分区的常用字段数据量约100MB左右为宜。
    
@@ -246,14 +267,51 @@ DolphinDB是C++程序，本身需要一些基础的数据结构和内存开销�
 
 #### 7.2.3 查询时，报告"out of memory"  
 
-该异常往往是由于query所需的内存大于系统可提供的内存导致的。可能由以下原因导致:
+该异常往往是由于query所需的内存大于系统可提供的内存导致的。请先执行下列脚本查看所有数据节点内存使用情况，其中maxMemSize为配置的节点最大可用内存，memoryUsed为节点已使用内存，memoryAlloc为节点已分配内存。
+```
+select site, maxMemSize, memoryUsed, memoryAlloc from rpc(getControllerAlias(),getClusterPerf)
+```
+
+OOM一般可能由以下原因导致:
 - 查询没有加分区过滤条件或者条件太宽，导致单个query涉及的数据量太大。
+  
+  查询涉及多少分区可用`sqlDS`函数来判断，示例脚本如下：
+  ```
+  ds=sqlDS(<select * from loadTable("dfs://demo","sensor")>)
+  ds.size()
+  ```
 - 分区不均匀。可能某个分区过大，该分区的数据超过节点配置的最大内存。
+  
+  查询每个分区的大小可用`getTabletsMeta`函数，例如：
+  ```
+  getTabletsMeta("/demo/%", `sensor, true);
+  ```
+
 - 某个session持有大的变量，导致节点可用的内存很小。
+  
+  可以通过函数`getSessionMemoryStat()`查看各个session占用的内存大小。
+
+- 有节点被变量占用了太多的内存。
+  
+    可用下列脚本查看每个数据节点上定义的变量和占用的内存：
+    ```
+    pnodeRun(objs) //查询每个节点定义变量占用内存（非共享变量）
+    pnodeRun(objs{true}) //查询每个节点定义变量占用内存（共享变量）
+    ```
+- 流数据聚合计算引擎占用了大量内存。
+
+  用`getStreamingStat()`来查看发布、订阅各个队列的深度。用`getStreamEngineStat()`查看流计算引擎占用内存。
+  
 
 #### 7.2.4 查询时，DolphinDB进程退出,没有coredump产生   
 
-这种情况往往是由于给节点分配的内存超过系统物理内存的限制，操作系统把DolphinDB强制退出。Linux上可以通过操作系统的日志查看原因。
+这种情况往往是由于给节点分配的内存超过系统物理内存的限制，操作系统把DolphinDB强制关闭。Linux内核有个机制叫OOM killer(Out Of Memory killer)，该机制会监控那些占用内存过大，尤其是瞬间占用很大内存的进程，为防止内存耗尽而自动把该进程杀掉。排查OOM killer可用dmesg命令，示例如下：	
+
+```
+dmesg -T|grep dolphindb
+```
+
+若打印结果中出现了“Out of memory: Kill process”，说明DolphinDB使用的内存超过了操作系统所剩余的空闲内存，导致操作系统杀死了DolphinDB进程。解决这种问题的办法是：通过参数maxMemSize（单节点模式修改dolphindb.cfg，集群模式修改cluster.cfg）设定节点的最大内存使用量。需要合理设置该参数，设置太小会严重限制集群的性能；设置太大可能触发操作系统杀掉进程。若机器内存为16GB，并且只部署1个节点，建议将该参数设置为12GB左右。
 
 #### 7.2.5 执行`clearAllCache()`函数后，MemUsed没有明显降低   
 
