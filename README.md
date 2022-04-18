@@ -64,6 +64,7 @@
     - [R API使用教程](../../../api-r/blob/master/README_CN.md)
     - [Json API使用教程](../../../api-json/blob/master/README_CN.md)
     - [NodeJS API使用教程](../../../api-nodejs/blob/master/README.md)
+    - [JavaScript API使用教程](../../../api-javascript/blob/master/README.md)
     - [redash连接DolphinDB数据源的教程](data_interface_for_redash.md)
     - [DolphinDB整合前端chart组件展示数据教程](web_chart_integration.md)
     - [Grafana连接DolphinDB数据源](../../../grafana-datasource/blob/master/README_CN.md)
