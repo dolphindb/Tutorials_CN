@@ -37,7 +37,7 @@ DolphinDB VSCode 插件允许用户：
 
 点击 VSCode 左侧导航栏的 Extensions 图标，或者通过 `Ctrl+Shift+X` 快捷键打开插件安装窗口。在搜索框中输入 dolphindb，即可搜索到 dolphindb 插件，点击 Install 进行安装。具体方法可查看插件详情。
 
-![image](images/vscode/8.png?raw=true)
+![image](images/VSCode/8.png?raw=true)
 
 如果因为网络原因安装失败，需通过下方链接手动下载后缀为 `.vsix` 的插件，击 `Version History` 下载最新的版本到本地，并将其拖到 VSCode 插件面板中。  
 https://marketplace.visualstudio.com/items?itemName=dolphindb.dolphindb-vscode
@@ -74,17 +74,17 @@ https://marketplace.visualstudio.com/items?itemName=dolphindb.dolphindb-vscode
 - 如果脚本文件名后缀是 .dos ，插件会自动识别为 DolphinDB 语言。
 - 如果脚本文件名后缀非 .dos，比如是 .txt，则需要手动关联 DolphinDB 语言。方法如下：点击 VSCode 编辑器右下角状态栏的语言选择按钮，如下图：
 
-<img src=images/vscode/2.png width=80%>
+<img src=images/VSCode/2.png width=80%>
 
 在语言选择弹框中输入 dolphindb 后回车，即可切换当前文件关联的语言为 DolphinDB 语言。
 
-<img src=images/vscode/3.png width=80%>
+<img src=images/VSCode/3.png width=80%>
 
 #### 函数的自动补齐和文档实时浏览
 
 用户在 VSCode 编辑器输入函数时，将自动补齐函数名，且可展开函数的具体信息。将光标悬浮至对应函数可自动显示该函数对应的文档。
 
-![image](images/vscode/9.png)
+![image](images/VSCode/9.png)
 
 ### 执行代码
 
@@ -103,7 +103,7 @@ VSCode 编辑器左侧面板资源管理器中展示了连接的会话，用户�
 
 - 查看连接及变量
 
-![image](images/vscode/4.png)
+![image](images/VSCode/4.png)
 
 VSCode 左侧资源管理器下的 DOLPHINDB 资源，以树状形式展示了配置文件里的所有连接，以及连接内部的变量信息。
 
@@ -117,7 +117,7 @@ VSCode 中的变量可以在终端、左侧资源管理器以及浏览器中显�
 
 **终端**
 
-![image](images/vscode/7.png)
+![image](images/VSCode/7.png)
 
 执行结果的第一行显示代码的执行时间，会话对应的服务器别名。
 
@@ -129,7 +129,7 @@ VSCode 中的变量可以在终端、左侧资源管理器以及浏览器中显�
   
 **左侧资源管理器显示**
 
-![image](images/vscode/10.png)
+![image](images/VSCode/10.png)
 
 鼠标悬浮于资源管理器的变量上，便可查看该变量的具体内容。同终端打印变量的形式，资源管理器也以文本方式展示变量。
 
@@ -141,8 +141,8 @@ DolphinDB 提供配置项 `dolphindb.ports `，允许用户自行配置端口号
 
 浏览变量的方法为：点击变量右侧的查看变量图标，打开一个浏览器页面（localhost:port）。在该页面查看当前变量的数据结构。变量更新后，重新执行变量，或再次点击查看变量图标，可以刷新变量值。
 
-![image](images/vscode/6.png)
+![image](images/VSCode/6.png)
 
 点击在新窗口中查看变量图标，会打开浏览器弹窗（请开启浏览器允许弹框功能），便于用户同时查看多个变量及观察变量前后的变化（如下图）。
 
-![image](images/vscode/5.png)
+![image](images/VSCode/5.png)
