@@ -46,7 +46,7 @@ https://marketplace.visualstudio.com/items?itemName=dolphindb.dolphindb-vscode
 
 ### 编辑服务器连接配置
 
-点击菜单栏中的  `文件 > 首选项 > 键盘快捷方式` (`File > Preferences > Keyboard Shortcuts`)  或者按快捷键 `Ctrl + 逗号` 打开 VSCode 设置。在搜索框中输入 dolphindb，点击下方的 `在 settings.json 中编辑`，编辑 里面的 `dolphindb.connections` 配置项。  
+点击菜单栏中的  `文件 > 首选项 > 设置` (`File > Preferences > Settings`)  或者按快捷键 `Ctrl + 逗号` 打开 VSCode 设置。在搜索框中输入 dolphindb，点击下方的 `在 settings.json 中编辑`，编辑 里面的 `dolphindb.connections` 配置项。  
 `dolphindb.connections` 下的一个 `{...}` 对象，表示一个连接配置。用户可通过手动修改该对象，来创建或删除会话连接。每个对象包含6个属性，其中 `name` 和 `url` 是必填属性。需注意：不同的连接对象必须配置不同的 `name`。移动鼠标至属性名上，可查看属性的具体说明。  
 
 ```
