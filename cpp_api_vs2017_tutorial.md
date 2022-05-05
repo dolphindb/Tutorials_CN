@@ -138,7 +138,7 @@ DolphinDB api-cplusplus 项目也在 bin 子目录下提供了一个 SSL 库方�
 
 ## 4. 案例验证
 
-该案例的将[时序数据库DolphinDB和TimescaleDB 性能对比测试报告](https://zhuanlan.zhihu.com/p/56982951)中提到的[小数据集(4.2GB)](https://timescaledata.blob.core.windows.net/datasets/devices_big.tar.gz)导入到DolphinDB分布式数据表中。
+该案例的将[时序数据库DolphinDB和TimescaleDB 性能对比测试报告](https://zhuanlan.zhihu.com/p/56982951)中提到的[小数据集(4.2GB)](https://timescaledata.blob.core.windows.net/datasets/devices_big.tar.gz)导入到DolphinDB分布式数据表中。对不方便下载4.2GB数据集的用户，本文也准备了一个[样本文件](./data/devices_big_readings_samples.zip)供下载。
 
 程序的实现思路是利用开源软件 [rapidCsv](https://github.com/d99kris/rapidcsv) 读入csv文件，然后调用DolphinDB C++ API中的 [BatchTableWriter 对象](https://gitee.com/dolphindb/api-cplusplus/blob/master/README_CN.md#84-%E6%89%B9%E9%87%8F%E5%BC%82%E6%AD%A5%E5%86%99%E5%85%A5%E6%95%B0%E6%8D%AE)写入分布式表。
 
