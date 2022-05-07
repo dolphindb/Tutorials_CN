@@ -31,7 +31,7 @@ DolphinDB VSCode 插件允许用户：
 
 ## 安装和使用
 
-下载 DolphinDB 插件前，需要安装或升级 VSCode 到v1.66.0及以上版本（https://code.visualstudio.com/）。
+下载 DolphinDB 插件前，需要安装或升级 VSCode 到v1.66.0及以上版本  (https://code.visualstudio.com/)。
 
 ### 下载安装
 
