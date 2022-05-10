@@ -34,6 +34,7 @@
     - [日期/时间类型](date_time.md)
     - [DolphinDB窗口计算综述](window_cal.md)    
     - [DolphinDB SQL案例教程](DolphinDB_SQL_Case_Tutorial.md)
+    - [DolphinDB SQL执行计划教程](DolphinDB_Explain.md)
 - 流计算
     - [流数据教程](streaming_tutorial.md)
     - [流数据时序聚合引擎](stream_aggregator.md)
