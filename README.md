@@ -112,6 +112,7 @@
     - [股票行情数据导入实例](stockdata_csv_import_demo.md)
     - [快照引擎](snapshot_engine.md)
     - [节点启动时的流计算自动订阅教程](streaming_auto_sub.md)
+    - [DolphinDB机器学习在金融行业的应用：实时实际波动率预测](machine_learning_volatility.md)
 - 入门和测试
     - [DolphinDB入门：量化金融范例](quant_finance_examples.md)
     - [DolphinDB入门：物联网范例](iot_examples.md)

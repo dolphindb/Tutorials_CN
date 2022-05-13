@@ -54,7 +54,7 @@ DolphinDB提供Java，Python和C#的开发接口。安装步骤及使用请参�
 
 ### 2.3 多机集群搭建
 
-在多个物理机器上部署DolphinDB集群。详见[多服务器集群部署](./multi_machine_cluster_deploy.md)。
+在多个物理机器上部署DolphinDB集群。详见[多服务器集群部署](./multi_machine_cluster_deployment.md)。
 
 ## 3. 使用系统
 
