@@ -43,7 +43,7 @@ DolphinDB的[httpClient插件](https://github.com/dolphindb/DolphinDBPlugin/tree
 ```
 loadPlugin("<PluginDir>/httpClient/bin/linux64/PluginHttpClient.txt");
 ```
-
+<!--
 ### Windows
 
 需要有libPluginHttpClient.dll和PluginHttpClient.txt两个插件程序文件。
@@ -54,7 +54,7 @@ loadPlugin("<PluginDir>/httpClient/bin/linux64/PluginHttpClient.txt");
 ```
 loadPlugin("<PluginDir>/httpClient/bin/win64/PluginHttpClient.txt");
 ```
-
+-->
 ## 2. 三种外部消息平台的使用
 
 ### 2.1 企业微信消息通信的演示案例
