@@ -1,0 +1,58 @@
+/**
+createEngineSub.txt
+Script to register stream computing engine and subscribe the stream tables
+DolphinDB Inc.
+DolphinDB server version: 1.30.18 2022.05.09/2.00.6 2022.05.09
+Storage engine: OLAP
+Last modification time: 2022.05.12
+*/
+
+//real time calculation of minute index
+defg calCapitalFlow(Num, BSFlag, TradeQty, TradeAmount){
+	tempTable1 = table(Num as `Num, BSFlag as `BSFlag, TradeQty as `TradeQty, TradeAmount as `TradeAmount)
+	tempTable2 = select sum(TradeQty) as TradeQty, sum(TradeAmount) as TradeAmount from tempTable1 group by Num, BSFlag
+	BuySmallCount = exec count(*) from tempTable2 where TradeAmount<=40000 && BSFlag==`B
+	BuySmallQty = exec sum(TradeQty) from  tempTable2 where TradeAmount<=40000 && BSFlag==`B
+	BuySmallAmount = exec sum(TradeAmount) from  tempTable2 where TradeAmount<=40000 && BSFlag==`B
+	BuyMidCount = exec count(*) from tempTable2 where TradeAmount>40000 && TradeAmount<=200000 && BSFlag==`B
+	BuyMidQty = exec sum(TradeQty) from tempTable2 where TradeAmount>40000 && TradeAmount<=200000 && BSFlag==`B
+	BuyMidAmount = exec sum(TradeAmount) from tempTable2 where TradeAmount>40000 && TradeAmount<=200000 && BSFlag==`B
+	BuyBigCount = exec count(*) from tempTable2 where TradeAmount>200000 && TradeAmount<=1000000 && BSFlag==`B
+	BuyBigQty = exec sum(TradeQty) from tempTable2 where TradeAmount>200000 && TradeAmount<=1000000 && BSFlag==`B
+	BuyBigAmount = exec sum(TradeAmount) from tempTable2 where TradeAmount>200000 && TradeAmount<=1000000 && BSFlag==`B
+	BuySuperCount = exec count(*) from tempTable2 where TradeAmount>1000000 && BSFlag==`B
+	BuySuperQty = exec sum(TradeQty) from tempTable2 where TradeAmount>1000000 && BSFlag==`B
+	BuySuperAmount = exec sum(TradeAmount) from tempTable2 where TradeAmount>1000000 && BSFlag==`B
+	BuySumCount = exec count(*) from tempTable2 where BSFlag==`B
+	BuySumQty = exec sum(TradeQty) from tempTable2 where BSFlag==`B
+	BuySumAmount = exec sum(TradeAmount) from tempTable2 where BSFlag==`B
+	SellSmallCount = exec count(*) from tempTable2 where TradeAmount<=40000 && BSFlag==`S
+	SellSmallQty = exec sum(TradeQty) from  tempTable2 where TradeAmount<=40000 && BSFlag==`S
+	SellSmallAmount = exec sum(TradeAmount) from  tempTable2 where TradeAmount<=40000 && BSFlag==`S
+	SellMidCount = exec count(*) from tempTable2 where TradeAmount>40000 && TradeAmount<=200000 && BSFlag==`S
+	SellMidQty = exec sum(TradeQty) from tempTable2 where TradeAmount>40000 && TradeAmount<=200000 && BSFlag==`S
+	SellMidAmount = exec sum(TradeAmount) from tempTable2 where TradeAmount>40000 && TradeAmount<=200000 && BSFlag==`S
+	SellBigCount = exec count(*) from tempTable2 where TradeAmount>200000 && TradeAmount<=1000000 && BSFlag==`S
+	SellBigQty = exec sum(TradeQty) from tempTable2 where TradeAmount>200000 && TradeAmount<=1000000 && BSFlag==`S
+	SellBigAmount = exec sum(TradeAmount) from tempTable2 where TradeAmount>200000 && TradeAmount<=1000000 && BSFlag==`S
+	SellSuperCount = exec count(*) from tempTable2 where TradeAmount>1000000 && BSFlag==`S
+	SellSuperQty = exec sum(TradeQty) from tempTable2 where TradeAmount>1000000 && BSFlag==`S
+	SellSuperAmount = exec sum(TradeAmount) from tempTable2 where TradeAmount>1000000 && BSFlag==`S
+	SellSumCount = exec count(*) from tempTable2 where BSFlag==`S
+	SellSumQty = exec sum(TradeQty) from tempTable2 where BSFlag==`S
+	SellSumAmount = exec sum(TradeAmount) from tempTable2 where BSFlag==`S
+	return nullFill([BuySmallCount, BuySmallQty, BuySmallAmount, BuyMidCount, BuyMidQty, BuyMidAmount, BuyBigCount, BuyBigQty, BuyBigAmount, BuySuperCount, BuySuperQty, BuySuperAmount, BuySumCount, BuySumQty, BuySumAmount, SellSmallCount, SellSmallQty, SellSmallAmount, SellMidCount, SellMidQty, SellMidAmount, SellBigCount, SellBigQty, SellBigAmount, SellSuperCount, SellSuperQty, SellSuperAmount, SellSumCount, SellSumQty, SellSumAmount], 0)
+}
+//real time calculation of capitalFlow
+//calculation parallel, developers need to modify according to the development environment
+parallel = 3
+for(i in 1..parallel){
+	//create ReactiveStateEngine: tradeProcess
+	createReactiveStateEngine(name="tradeProcess"+string(i), metrics=[<TradeTime>, <iif(BuyNum>SellNum, BuyNum, SellNum)>, <TradeQty>, <TradeAmount>, <iif(BuyNum>SellNum, "B", "S")>], dummyTable=tradeOriginalStream, outputTable=tradeProcessStream, keyColumn="SecurityID")
+	subscribeTable(tableName="tradeOriginalStream", actionName="tradeProcess"+string(i), offset=-1, handler=getStreamEngine("tradeProcess"+string(i)), msgAsTable=true, hash=i-1, filter = (parallel, i-1), reconnect=true)
+	//create DailyTimeSeriesEngine: tradeTSAggr
+	createDailyTimeSeriesEngine(name="tradeTSAggr"+string(i), windowSize=60000, step=60000, metrics=[<calCapitalFlow(Num, BSFlag, TradeQty, TradeAmount) as `BuySmallCount`BuySmallQty`BuySmallAmount`BuyMidCount`BuyMidQty`BuyMidAmount`BuyBigCount`BuyBigQty`BuyBigAmount`BuySuperCount`BuySuperQty`BuySuperAmount`BuySumCount`BuySumQty`BuySumAmount`SellSmallCount`SellSmallQty`SellSmallAmount`SellMidCount`SellMidQty`SellMidAmount`SellBigCount`SellBigQty`SellBigAmount`SellSuperCount`SellSuperQty`SellSuperAmount`SellSumCount`SellSumQty`SellSumAmount>], dummyTable=tradeProcessStream, outputTable=capitalFlowStream, timeColumn="TradeTime", useSystemTime=false, keyColumn=`SecurityID, useWindowStartTime=true, forceTriggerTime=10000)
+	subscribeTable(tableName="tradeProcessStream", actionName="tradeTSAggr"+string(i), offset=-1, handler=getStreamEngine("tradeTSAggr"+string(i)), msgAsTable=true, batchSize=2000, throttle=1, hash=parallel+i-1, filter = (parallel, i-1), reconnect=true)
+}
+//real time data to database
+subscribeTable(tableName="tradeOriginalStream", actionName="tradeToDatabase", offset=-1, handler=loadTable("dfs://trade_stream", "trade"), msgAsTable=true, batchSize=20000, throttle=1, hash=6, reconnect=true)

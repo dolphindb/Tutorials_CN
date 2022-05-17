@@ -113,6 +113,7 @@
     - [快照引擎](snapshot_engine.md)
     - [节点启动时的流计算自动订阅教程](streaming_auto_sub.md)
     - [DolphinDB机器学习在金融行业的应用：实时实际波动率预测](machine_learning_volatility.md)
+    - [DolphinDB流计算在金融行业的应用：实时计算分钟资金流](streaming_capital_flow_minute.md)
 - 入门和测试
     - [DolphinDB入门：量化金融范例](quant_finance_examples.md)
     - [DolphinDB入门：物联网范例](iot_examples.md)

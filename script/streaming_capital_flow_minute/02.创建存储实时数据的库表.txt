@@ -1,0 +1,34 @@
+/**
+createDFSTable.txt
+Script to create database and table to store real-time data
+DolphinDB Inc.
+DolphinDB server version: 1.30.18 2022.05.09/2.00.6 2022.05.09
+Storage engine: OLAP
+Last modification time: 2022.05.12
+*/
+
+/**
+modified location: dbName, tbName
+*/
+dbName = "dfs://trade_stream"
+tbName = "trade"
+//login account
+login("admin", "123456")
+//create database and table
+if(existsDatabase(dbName)){
+	dropDatabase(dbName)
+}
+db1 = database(, VALUE, 2020.01.01..2022.01.01)
+db2 = database(, HASH, [SYMBOL, 5])
+db = database(dbName, COMPO, [db1, db2])
+schemaTable = table(
+	array(SYMBOL, 0) as SecurityID,
+	array(SYMBOL, 0) as Market,
+	array(TIMESTAMP, 0) as TradeTime,
+	array(DOUBLE, 0) as TradePrice,
+	array(INT, 0) as TradeQty,
+	array(DOUBLE, 0) as TradeAmount,
+	array(INT, 0) as BuyNum,
+	array(INT, 0) as SellNum
+)
+db.createPartitionedTable(table=schemaTable, tableName=tbName, partitionColumns=`TradeTime`SecurityID, compressMethods={TradeTime:"delta"})

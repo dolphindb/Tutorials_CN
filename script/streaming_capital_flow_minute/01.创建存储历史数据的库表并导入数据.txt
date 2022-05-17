@@ -1,0 +1,51 @@
+/**
+prepareData.txt
+Script to create database and table, then import history trade data
+DolphinDB Inc.
+DolphinDB server version: 1.30.18 2022.05.09/2.00.6 2022.05.09
+Storage engine: OLAP
+Last modification time: 2022.05.12
+*/
+
+/**
+Attention:
+1. The developer need to put the csv file in the path that the server can access in advance
+2. There are three parameters in the script that need to be modified according to the environment
+*/
+
+/**
+part1: create database and table to store the data
+modified location: csvDataPath, dbName, tbName
+*/
+csvDataPath = "/hdd/hdd9/data/streaming_capital_flow/20200102_SH_trade.csv"
+//csvDataPath = "/hdd/hdd9/data/streaming_capital_flow/trade600000.csv"
+dbName = "dfs://trade"
+tbName = "trade"
+//login account
+login("admin", "123456")
+//create database and table
+if(existsDatabase(dbName)){
+	dropDatabase(dbName)
+}
+db1 = database(, VALUE, 2020.01.01..2022.01.01)
+db2 = database(, HASH, [SYMBOL, 5])
+db = database(dbName, COMPO, [db1, db2])
+schemaTable = table(
+	array(SYMBOL, 0) as SecurityID,
+	array(SYMBOL, 0) as Market,
+	array(TIMESTAMP, 0) as TradeTime,
+	array(DOUBLE, 0) as TradePrice,
+	array(INT, 0) as TradeQty,
+	array(DOUBLE, 0) as TradeAmount,
+	array(INT, 0) as BuyNum,
+	array(INT, 0) as SellNum
+)
+db.createPartitionedTable(table=schemaTable, tableName=tbName, partitionColumns=`TradeTime`SecurityID, compressMethods={TradeTime:"delta"})
+go
+
+/**
+part2: load data
+*/
+trade = loadTable(dbName, tbName)
+schemaTable = table(trade.schema().colDefs.name as `name, trade.schema().colDefs.typeString as `type)
+loadTextEx(dbHandle=database(dbName), tableName=tbName, partitionColumns=`TradeTime`SecurityID, filename=csvDataPath, schema=schemaTable)
