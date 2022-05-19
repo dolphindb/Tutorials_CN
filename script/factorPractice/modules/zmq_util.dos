@@ -1,0 +1,15 @@
+module zmq_util
+
+
+def generate_zmq_pushing_function(zmq_subscriber_address){
+SignalSender=def (x) {
+ return x
+}
+pushing_socket = zmq::socket("ZMQ_PUB", SignalSender)
+zmq::connect(pushing_socket, zmq_subscriber_address)
+sleep(1000)
+print("zmq推送目的地址:",zmq_subscriber_address)
+zmq_pushing_wrapped_function=def (msg): zmq::send(pushing_socket, msg)//返回一个函数，此函数指向zmq_subscriber_address地址的zmq发送msg
+	
+return zmq_pushing_wrapped_function}
+

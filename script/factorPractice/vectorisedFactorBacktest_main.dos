@@ -1,0 +1,86 @@
+login("admin","123456");
+clearAllCache();
+undef all
+go;
+/*
+数据：
+6年，日频，原始数据384 MB
+打分
+耗时：
+11.8秒
+*/
+startDate=2010.01.01
+endDate=2015.12.31
+holdingDays=5
+groups=10
+timer{//计时执行
+	klineTable = loadTable("dfs://k_day_level", "k_day")
+	testKlineTable = select * from klineTable where startDate<=date(tradetime) <= endDate
+	//Step 1: Load the data file, clean the data by applying some filters on the data, and construct the momentum signal (past 12 months return skipping the most recent month) for each firm. Undefine table cnStocks to release the large amount of memory it occupies. 
+	/*
+	信号逻辑：
+	1.以收盘价增减，计算日收益率
+	2.连乘日收益率，得出累计收益率
+	3.以5天前累计收益率除以15天前累计收益率为signal值
+	*/
+
+	def loadPriceData(inData){
+		cnStocks_0 = select SecurityID,tradetime, close, vol, deltas(close)\close as RET from testKlineTable where weekday(tradetime) between 1:5, isValid(close), isValid(vol) context by SecurityID csort tradetime
+		cnStocks_1 = select SecurityID, tradetime, close, vol, RET,  cumprod(1+RET) as cumretIndex from cnStocks_0 context by SecurityID csort tradetime
+		priceData= select SecurityID, date(tradetime) as tradetime, close, vol, RET,  move(cumretIndex,5)\move(cumretIndex,15)-1 as signal from cnStocks_1 context by SecurityID csort tradetime
+		return priceData
+	}
+
+	priceData = loadPriceData(testKlineTable)
+
+	//Step 2: Generate the portfolios for the momentum strategy. 
+	def genTradables(indata){
+		return select tradetime, SecurityID, signal from indata where close>5, vol>0, isValid(signal) order by tradetime
+	}
+
+	tradables = genTradables(priceData)
+
+	// WtScheme 1:equal weight
+	/*
+	按交易日分组，对日内各股票分组按signal排序为rank，分为10组，顶组平均分配所有做多资金，底组平均分配所有做空资金，标记单方向所有资金的总和权重为1
+	*/
+	def formPortfolio(startDate, endDate, tradables, holdingDays, groups){
+		ports = select tradetime, SecurityID, rank(signal,,groups) as rank, count(SecurityID) as symCount, 0.0 as wt from tradables where startDate<=tradetime<=endDate context by tradetime having count(SecurityID)>=100
+		update ports set wt = -1.0\count(SecurityID)\holdingDays where rank=0 context by tradetime
+		update ports set wt = 1.0\count(SecurityID)\holdingDays where rank=groups-1 context by tradetime
+		return select SecurityID, tradetime as tranche, wt from ports where wt != 0 order by SecurityID, tradetime
+	}
+
+	ports = formPortfolio(startDate, endDate, tradables, holdingDays, groups)
+	dailyRtn = select tradetime, SecurityID, RET as dailyRet from priceData
+
+	//Step 3: Calculate the profit/loss for each stock in our portfolio in each of the subsequent holding period days. Close the position for a stock at the end of the holding period. 
+	/*
+	按股票的仓位权重，对股票的日收益率暴露，向量化计算股票的每日盈亏
+	*/
+	def calcStockPnL(ports, dailyRtn, holdingDays, endDate, lastDays){
+		ages = table(1..holdingDays as age)
+		dates = sort distinct ports.tranche
+		dateCount=dates.size()
+		dictDateIndex = dict(dates, 1..dateCount)
+		dictIndexDate = dict(1..dateCount, dates)
+		pos = select dictIndexDate[dictDateIndex[tranche]+age] as tradetime, SecurityID, tranche, age, take(0.0,size age) as ret, wt as expr, take(0.0,size age) as pnl from cj(ports,ages) where isValid(dictIndexDate[dictDateIndex[tranche]+age]), dictIndexDate[dictDateIndex[tranche]+age]<=min(lastDays[SecurityID], endDate)
+		update pos set ret = dailyRet from ej(pos, dailyRtn,`tradetime`SecurityID)
+		update pos set expr = expr*cumprod(1+ret) from pos context by SecurityID, tranche
+		update pos set pnl = expr*ret/(1+ret)
+		return pos
+	}
+
+	lastDaysTable = select max(tradetime) as tradetime from priceData group by SecurityID
+	lastDays = dict(lastDaysTable.SecurityID, lastDaysTable.tradetime)
+	undef(`priceData, VAR)
+	stockPnL = calcStockPnL(ports, dailyRtn, holdingDays, endDate, lastDays)
+	
+	//Step 4: Calculate portfolio profit/loss, and plot the cumulative return of the momentum strategy over time. 
+	/*
+	按每日盈亏计算总的盈亏，将总盈亏绘图
+	*/
+	portPnL = select sum(pnl) as pnl from stockPnL group by tradetime
+	portPnL = select * from portPnL order by tradetime;
+	plot(cumsum(portPnL.pnl) as cumulativeReturn,portPnL.tradetime, "Cumulative Returns of the Momentum Strategy")
+}

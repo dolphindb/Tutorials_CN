@@ -1,0 +1,28 @@
+module create_tick_table
+
+
+def tick_create_table(dfs_path,table_name,whether_tsdb)
+{
+//表已存在
+if (existsTable(dfs_path,table_name))
+{return}
+	
+schemaTable_tick = table(
+	array(SYMBOL, 0) as SecurityID,
+	array(DATETIME, 0) as TradeTime,
+	array(DOUBLE, 0) as TradePrice,
+	array(DOUBLE, 0) as TradeQty,
+	array(DOUBLE, 0) as TradeAmount,
+	array(INT, 0) as BuyNo,
+	array(INT, 0) as SellNo
+)
+
+db_tick=database(dfs_path)
+
+if(whether_tsdb)//tsdb
+{tick=createPartitionedTable(dbHandle=db_tick, table=schemaTable_tick, tableName=table_name, partitionColumns=`TradeTime`SecurityID, sortColumns=`SecurityID`TradeTime, keepDuplicates=ALL)}
+else//olap
+{
+tick=createPartitionedTable(dbHandle=db_tick, table=schemaTable_tick, tableName=table_name, partitionColumns=`TradeTime`SecurityID)}
+}
+

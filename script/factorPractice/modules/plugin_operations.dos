@@ -1,0 +1,11 @@
+module plugin_operations
+
+def load_plugin_config(插件配置文件){
+try{
+loadPlugin(插件配置文件)
+	}
+catch(ex){
+	print("load_plugin_config失败:")
+	print(ex)
+	}
+	}

@@ -1,0 +1,130 @@
+login("admin","123456");
+clearAllCache();
+undef(all);
+go;
+def unsubscribeAll(){
+	streamStat=getStreamingStat()//检查流状态
+	pubTables=streamStat["pubTables"]
+	unsubTablesDict=dict(pubTables.tableName,pubTables.actions)
+	for(eachTableName in unsubTablesDict.keys()){
+		print(eachTableName)
+		allActionsString=unsubTablesDict[eachTableName]
+		allActionsString=strReplace(allActionsString,"]","")
+		allActionsString=strReplace(allActionsString,"[","")
+		allActionNames=allActionsString.split(",")
+		for(eachActionName in allActionNames){
+			print(eachActionName)
+			try{
+				unsubscribeTable(tableName=eachTableName,actionName=eachActionName)
+				输出日志="共享表:"+eachTableName+",action:"+eachActionName+",已解除订阅"
+				print(输出日志)
+			}
+			catch(ex){
+				print("解除订阅失败:\r\n",ex)
+				print(eachTableName)
+				print(eachActionName)
+			}
+		}
+	}
+}
+def dropAllStreamEngines(){
+	engineStatus=getStreamEngineStat()
+	allCurrrentEngineTypes=engineStatus.keys()
+	for(eachEngineType in allCurrrentEngineTypes){
+		engineInfoTable=engineStatus[eachEngineType]
+		for (eachEngineName in engineInfoTable.name){
+			try{
+				dropStreamEngine(eachEngineName)
+				print("注销引擎",eachEngineName,"成功")
+			}
+			catch(ex){
+				print("注销引擎",eachEngineName,"失败:",ex)
+			}
+		}
+	}
+}
+def removeAllSharedTable(){
+	allSharedObjects=exec name from objs(true) where shared==true
+	for (eachSharedTable in allSharedObjects){
+		try{
+			dropStreamTable(eachSharedTable)
+			//undef(eachSharedTable,SHARED)
+			日志提示="共享表:"+eachSharedTable+",已析构"
+			print(日志提示)
+		}	
+		catch(ex){
+			日志提示="共享表:"+eachSharedTable+",析构失败,提示:"
+			print(日志提示,ex)		
+		}
+	}
+}
+
+def clearAllStreamStuff(){
+	unsubscribeAll()
+	dropAllStreamEngines()
+	removeAllSharedTable()
+}
+//执行流清理函数
+unsubscribeAll()//解除订阅
+dropAllStreamEngines()//删引擎
+removeAllSharedTable()//删流表
+go;
+//加载zmq消息队列插件
+def loadPluginConfig(插件配置文件){
+	try{
+		loadPlugin(插件配置文件)
+	}
+	catch(ex){
+		print("loadPluginConfig失败:")
+		print(ex)
+	}
+}
+//按zmq地址定义消息推送表
+def zmqPusherTable(zmqSubscriberAddress,schemaTable){
+	SignalSender=def (x) {
+		return x
+	}
+	pushingSocket = zmq::socket("ZMQ_PUB", SignalSender)
+	zmq::connect(pushingSocket, zmqSubscriberAddress)
+	pusher = zmq::createPusher(pushingSocket, schemaTable)
+	return pusher
+}
+
+//因子计算逻辑
+def sumDiff(x, y){
+	return (x-y)\(x+y)
+}
+@state
+def factor1(price){
+	ema_20=ema(price, 20)
+	ema_40=ema(price, 40)
+	sumDiff_1000=1000 * sumDiff(ema_20, ema_40)
+	finalFactor=ema(sumDiff_1000,10) -  ema(sumDiff_1000, 20)
+	return finalFactor
+}
+
+zmqPluginConfigFile="/hdd/hdd0/FactorPractice_1/server/plugins/zmq/PluginZmq.txt"
+loadPluginConfig(zmqPluginConfigFile)
+//快照表名
+dbPath="dfs://snapshot_SH_L2_TSDB"
+tableName="snapshot_SH_L2_TSDB"
+tableHandle=loadTable(dbPath,tableName)
+//快照数据结构
+snapshotSchema=table(1:0,["SecurityID","TradeTime","LastPx"], [SYMBOL,TIMESTAMP,DOUBLE])
+//输出到消息队列的表结构
+resultSchema=table(1:0,["SecurityID","TradeTime","factor"], [SYMBOL,TIMESTAMP,DOUBLE])
+
+//流表resultStream向zmq队列推送，使用时根据不同的zmq地址修改此字符串
+zmqSubscriberAddress="tcp://192.168.1.195:55556"	
+//生成一个逻辑表向上述地址发送zmq包
+pusherTable=zmqPusherTable(zmqSubscriberAddress,resultSchema)
+//创建流引擎
+demoEngine = createReactiveStateEngine(name="reactiveDemo", metrics=<[TradeTime,factor1(LastPx)]>, dummyTable=snapshotSchema, outputTable=pusherTable, keyColumn="SecurityID",keepOrder=true)
+//做半年的因子
+inputDS = replayDS(<select SecurityID, TradeTime, LastPx from tableHandle where date(TradeTime)<2020.07.01>, `TradeTime, `TradeTime)
+//inputDS = replayDS(<select SecurityID, TradeTime, LastPx from tableHandle>, `TradeTime, `TradeTime)//做全年的因子
+demoJobName="streamingFactorDemoJob"
+//提交job供执行，4并行度
+submitJob(demoJobName,"算因子全年",replay,inputDS,demoEngine, `TradeTime, `TradeTime, -1,false, 4)
+//直接执行
+//replay(inputDS,snapshotStreamInstance, `TradeTime, `TradeTime, -1,false, 4)

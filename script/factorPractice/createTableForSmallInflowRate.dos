@@ -1,0 +1,30 @@
+//大小单因子建表函数
+def createTableForSmallInflowRate(dfsPath,tableName){
+if (existsTable(dfsPath,tableName)){//如有数据，清空数据
+	factorTable=loadTable(dfsPath,tableName)
+	delete from factorTable
+	return factorTable
+}
+else{
+
+bothSideMergedSchema = table(
+array(SYMBOL, 0) as SecurityID,
+array(DATE, 0) as tradingDate,
+array(INT, 0) as SellNo,
+array(DATETIME, 0) as TradeTime,
+array(DOUBLE, 0) as TradeAmount,
+array(DOUBLE, 0) as totalSellTradeMoney,
+array(INT, 0) as sellSmallFlag,
+array(DOUBLE, 0) as prevTotalSellTradeMoney,
+array(INT, 0) as prevSellSmallFlag,
+array(INT, 0) as BuyNo,
+array(DOUBLE, 0) as totalBuyTradeMoney,
+array(INT, 0) as buySmallFlag,
+array(DOUBLE, 0) as prevTotalBuyTradeMoney,
+array(INT, 0) as prevBuySmallFlag)
+
+db=database(dfsPath)
+factorTable=createPartitionedTable(db,table=bothSideMergedSchema,tableName=tableName, partitionColumns=`TradeTime`SecurityID, sortColumns=`SecurityID`TradeTime, keepDuplicates=ALL)
+}
+return factorTable
+}

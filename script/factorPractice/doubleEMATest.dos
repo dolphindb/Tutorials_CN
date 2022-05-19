@@ -1,0 +1,28 @@
+def sum_diff(x, y){
+    return (x-y)\(x+y)
+}
+
+@state
+def factorDoubleEMA(price){
+    ema_2 = ema(price, 2)
+    ema_4 = ema(price, 4)
+    sum_diff_1000 = 1000 * sum_diff(ema_2, ema_4)
+    return ema(sum_diff_1000, 2) - ema(sum_diff_1000, 3)
+}
+
+@testing: case = "factorDoubleEMA_without_null"
+re = factorDoubleEMA(0.1 0.1 0.2 0.2 0.15 0.3 0.2 0.5 0.1 0.2)
+assert 1, eqObj(re, NULL NULL NULL NULL NULL 5.788743 -7.291889 7.031123 -24.039933 -16.766359, 6)
+
+@testing: case = "factorDoubleEMA_with_null"
+re = factorDoubleEMA(NULL 0.1 0.2 0.2 0.15 NULL 0.2 0.5 0.1 0.2)
+assert 1, eqObj(re, NULL NULL NULL NULL NULL NULL 63.641310 60.256608  8.156385 -0.134531, 6)
+
+@testing: case = "factorDoubleEMA_streaming"
+try{dropStreamEngine("factorDoubleEMA")}catch(ex){}
+input = table(take(1, 10) as id, 0.1 0.1 0.2 0.2 0.15 0.3 0.2 0.5 0.1 0.2 as price)
+out = table(10:0, `id`price, [INT,DOUBLE])
+rse = createReactiveStateEngine(name="factorDoubleEMA", metrics=<factorDoubleEMA(price)>, dummyTable=input, outputTable=out, keyColumn='id')
+rse.append!(input)
+assert 1, eqObj(out.price, NULL NULL NULL NULL NULL 5.788743 -7.291889 7.031123 -24.039933 -16.766359, 6)
+

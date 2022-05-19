@@ -1,0 +1,89 @@
+module stream_and_sub_mgt
+
+def unsubscribe_all(){
+stream_stat=getStreamingStat()//检查流状态
+pubTables=stream_stat["pubTables"]
+
+unsub_tables_dict=dict(pubTables.tableName,pubTables.actions)
+for(each_table_name in unsub_tables_dict.keys())
+{
+print(each_table_name)
+all_actions_string=unsub_tables_dict[each_table_name]
+all_actions_string=strReplace(all_actions_string,"]","")
+all_actions_string=strReplace(all_actions_string,"[","")
+all_action_names=all_actions_string.split(",")
+
+for(each_action_name in all_action_names)
+{
+print(each_action_name)
+	
+try{
+	unsubscribeTable(tableName=each_table_name,actionName=each_action_name)
+	输出日志="共享表:"+each_table_name+",action:"+each_action_name+",已解除订阅"
+	print(输出日志)
+	}
+catch(ex){print("解除订阅失败:\r\n",ex)
+print(each_table_name)
+print(each_action_name)
+}
+}
+}
+}
+
+def drop_all_stream_engines(){
+engine_status=getStreamEngineStat()
+all_currrent_engine_types=engine_status.keys()
+
+for(each_engine_type in all_currrent_engine_types){
+engine_info_table=engine_status[each_engine_type]
+for (each_engine_name in engine_info_table.name)
+{
+try{
+dropStreamEngine(each_engine_name)
+print("注销引擎",each_engine_name,"成功")
+}
+catch(ex){
+	print("注销引擎",each_engine_name,"失败:",ex)
+	}
+	}
+	}
+	}
+
+def remove_all_shared_table(){
+
+all_shared_objects=exec name from objs(true) where shared==true
+for (each_shared_table in all_shared_objects){
+try{
+dropStreamTable(each_shared_table)
+//undef(each_shared_table,SHARED)
+日志提示="共享表:"+each_shared_table+",已析构"
+print(日志提示)
+}	
+catch(ex){
+日志提示="共享表:"+each_shared_table+",析构失败,提示:"
+print(日志提示,ex)		
+}
+}
+}
+
+def print_stream_and_sub_status(){
+stream_stat=getStreamingStat()//读取流状态
+persistWorkers=stream_stat["persistWorkers"]
+print("persistWorkers表\r\n",persistWorkers)
+
+//展示流发布队列
+pubConns=stream_stat["pubConns"]
+print("pubConns表\r\n",pubConns)
+
+//展示流发布表
+pubTables=stream_stat["pubTables"]
+print("pubTables表\r\n",pubTables)
+
+//展示流订阅队列
+subConns=stream_stat["subConns"]
+print("subConns表\r\n",subConns)
+
+//展示流订阅线程
+subWorkers=stream_stat["subWorkers"]
+print("subWorkers表\r\n",subWorkers)
+}

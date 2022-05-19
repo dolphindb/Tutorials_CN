@@ -1,0 +1,38 @@
+//确认登录实例，清理缓存，清理之前本会话其他脚本的变量
+login("admin","123456");
+clearAllCache();
+go;
+def tickCreateDb(dfsPath){
+	if(existsDatabase(dfsPath)){
+		return 
+	}
+	dbTime = database('', VALUE, 2020.01.01..2021.01.05);
+	dbSymbol = database('', HASH, [SYMBOL, 20])
+	dbHandle = database(dfsPath, COMPO, [dbTime, dbSymbol],engine='TSDB')
+	return dbHandle
+}
+def tickCreateTable(dfsPath,tableName){
+	//表已存在
+	if (existsTable(dfsPath,tableName)){
+		/*
+		dbTick=database(dfsPath)
+		dbTick.dropTable(tableName)
+		*/
+		return
+	}
+	schemaTableTick = table(
+	array(SYMBOL, 0) as SecurityID,
+	array(DATE, 0) as tradingDate,
+	array(DATETIME, 0) as TradeTime,
+	array(DOUBLE, 0) as TradePrice,
+	array(DOUBLE, 0) as TradeQty,
+	array(DOUBLE, 0) as TradeAmount,
+	array(INT, 0) as BuyNo,
+	array(INT, 0) as SellNo)
+	dbTick=database(dfsPath)
+	tick=createPartitionedTable(dbHandle=dbTick, table=schemaTableTick, tableName=tableName, partitionColumns=`TradeTime`SecurityID, sortColumns=`SecurityID`TradeTime, keepDuplicates=ALL)
+}
+dbPath="dfs://tick_SH_L2_TSDB"
+tableName="tick_SH_L2_TSDB"
+tickCreateDb(dbPath)
+tickCreateTable(dbPath,tableName)

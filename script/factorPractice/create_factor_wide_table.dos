@@ -1,0 +1,20 @@
+//create databsae and table 
+login("admin","123456")
+def createFacterWideTable(){
+	dbName = "dfs://K_FACTOR_WIDE"
+	if(existsDatabase(dbName)){
+		dropDatabase(dbName)
+	}
+	
+	dbDate = database("", RANGE,  2000.01M + (0..30)*12)
+	dbSymbol=database("", VALUE, `factor1`factor2)
+	db = database(directory=dbName, partitionType=COMPO, partitionScheme=[dbDate,dbSymbol],engine="TSDB")
+	
+	baseColNames = `tradetime`factorname join ("sz"+lpad(string(000001..004000), 6, `0))
+	baseColType = ([TIMESTAMP,SYMBOL]).append!(take(DOUBLE,4000))
+	
+	mtable=table(1:0, baseColNames,baseColType);
+	min_factor = db.createPartitionedTable(table=mtable, tableName=`factor_k_wide, partitionColumns=`tradetime`factorname,sortColumns=`factorname`tradetime,compressMethods={tradetime:"delta"},keepDuplicates=LAST)
+}
+createFacterWideTable()
+

@@ -1,0 +1,25 @@
+login("admin","123456")
+dbName = "dfs://FACTOR_TSDB_DAY"
+if(existsDatabase(dbName)){
+	dropDatabase(dbName)
+}
+
+dbDate = database("", VALUE, 2020.01M + (0..1)*12)
+dbSymbol=database("", HASH, [SYMBOL, 10])
+db = database(directory=dbName, partitionType=COMPO, partitionScheme=[dbDate,dbSymbol],engine="TSDB")
+
+baseColNames = `daytime`factorname
+securityid_code_list= loadText("/hdd/hdd0/singleTSDB/data_year/securityid.csv")
+securityid_col_list= select 'st'+securityid as securityid from securityid_code_list 
+baseColNames.append!(securityid_col_list[`securityid])
+
+securityid_count=select count(*) from securityid_col_list
+baseColTypes = [DATE, SYMBOL]
+baseColTypes.append!(take(DOUBLE,securityid_count[`count][0]))
+
+
+if(existsTable(dbName, "day_factor"))
+	db.dropTable("day_factor")
+//创建因子分区表
+mtable=table(100:5, baseColNames,baseColTypes);
+day_factor = db.createPartitionedTable(table=mtable, tableName=`day_factor, partitionColumns=`daytime`factorname,sortColumns=`factorname`daytime,compressMethods={daytime:"delta"},keepDuplicates=ALL)

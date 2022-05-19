@@ -1,0 +1,39 @@
+module FactorCalc
+
+//generate the factor cacuclate sql
+def generate_factor_sql(factor_name,factor_col_list,start_date,end_date){
+    factor_str=concat(factor_name,'(')
+    for(col in factor_col_list){
+        factor_str=factor_str.concat(col).concat(',')
+    }
+    factor_str=substr(factor_str,0,factor_str.strlen()-1).concat(')')
+    factor_sql=parseExpr(factor_str)
+    whereConditions = [expr(sqlCol('tradetime'),>=,start_date),expr(sqlCol('tradetime'),<=,end_date)]
+    k_day=loadTable("dfs://k_day_level","k_day")
+
+    final_factor_sql=sql(select=(sqlCol(`securityid),sqlCol(`tradetime),sqlColAlias(factor_sql, factor_name)), from=k_day, where=whereConditions);
+    return final_factor_sql
+}
+// save the factor caculate result to factor  result table
+def calc_factor_single_and_savewide(factor_name,factors_basic_info,start_date,end_date){
+	factor_sql =generate_factor_sql(factor_name,factors_basic_info['factor_col_list'],start_date,end_date)
+	res=eval(factor_sql)
+
+             pivot_sql=sql(select=sqlCol(`fac2), from=res, groupBy=[sqlCol(`tradetime),sqlCol(`securityid)],groupFlag=2);
+	tmp =eval(pivot_sql)
+	
+	tmp[`factorname]=`fac2
+	reorderColumns!(tmp,`tradetime`factorname)
+	
+	dbName = "dfs://K_FACTOR_WIDE"
+	day_factor=loadTable(dbName,'factor_k_wide')
+	day_factor.upsert!(tmp,keyColNames=`tradetime`factorname)
+	
+	return true;	
+}
+// return factor calculate reuslt
+def calc_factor_single_and_return(factor_name,factors_basic_info,start_date,end_date){
+	factor_sql =generate_factor_sql(factor_name,factors_basic_info['factor_col_list'],start_date,end_date)
+	res=eval(factor_sql)
+	return res;	
+}

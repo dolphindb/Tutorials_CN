@@ -1,0 +1,110 @@
+login("admin","123456");
+clearAllCache();
+undef(all);
+go;
+
+//快照流表名
+snapshotSharedTableName="snapshotStream"
+//订阅action名
+actionName="factors"
+//解除潜在订阅关系
+try{
+	unsubscribeTable(tableName=snapshotSharedTableName,actionName=actionName)
+	logMsg="共享表:"+snapshotSharedTableName+",action:"+actionName+",已解除订阅"
+	print(logMsg)
+}
+catch(ex){
+	print("解除订阅失败:\r\n",ex)
+	print(snapshotSharedTableName)
+	print(actionName)
+}
+//注销之前创建的同名流表
+try{
+	dropStreamTable(snapshotSharedTableName)
+	logMsg="共享表:"+snapshotSharedTableName+",已析构"
+	print(logMsg)
+}	
+catch(ex){
+	logMsg="共享表:"+snapshotSharedTableName+",析构失败,提示:"
+	print(logMsg,ex)		
+}
+//如果之前定义过同名引擎，则注销
+engineName="doubleEmaFactorDemo"
+try{
+	dropStreamEngine(engineName)
+	print("注销引擎"+engineName+"成功")
+}
+catch(ex){
+	print("注销引擎"+engineName+"失败:",ex)
+}
+
+//创建流表函数
+def createEmptyStreamTableAsTargetTable(targetTable,streamSharedName,capacity){
+	targetSchema=targetTable.schema();
+	sch =select name, typeString as type from  targetSchema.colDefs
+	colName=sch.name
+	colType=sch.type
+	snapshotStreamTemp = streamTable(capacity:0, colName, colType)
+	enableTableShareAndPersistence(table=snapshotStreamTemp, tableName=streamSharedName, cacheSize=capacity)
+	return snapshotStreamTemp
+}
+
+//因子纵表建表函数
+def createTableForDoubleEmaFactor(dbPath,tableName){
+	if(existsTable(dbPath,tableName)){
+		return loadTable(dbPath,tableName)
+	}
+	db=database(dbPath)
+	factorSchema = table(
+	array(SYMBOL, 0) as SecurityID,
+	array(TIMESTAMP, 0) as TradeTime,
+	array(SYMBOL, 0) as factorName,
+	array(DOUBLE, 0) as val)
+	createPartitionedTable(db,table=factorSchema,tableName=tableName, partitionColumns=`TradeTime`SecurityID, sortColumns=`SecurityID`TradeTime, keepDuplicates=LAST)
+}
+
+//因子函数定义
+def sumDiff(x, y){
+	return (x-y)\(x+y)
+}
+@state
+def doubleEma(price){
+	ema_20=ema(price, 20)
+	ema_40=ema(price, 40)
+	sumDiff_1000=1000 * sumDiff(ema_20, ema_40)
+	finalFactor=ema(sumDiff_1000,10) -  ema(sumDiff_1000, 20)
+	return finalFactor
+}
+
+dbPath="dfs://snapshot_SH_L2_TSDB"
+tableName="snapshot_SH_L2_TSDB"
+tableHandle=loadTable(dbPath,tableName)
+
+snapshotDummyTable=select top 50 SecurityID,TradeTime, "doubleEma" as factorName, LastPx as val from tableHandle
+
+inputDummyTable = table(
+array(SYMBOL, 0) as SecurityID,
+array(TIMESTAMP, 0) as TradeTime,
+array(SYMBOL, 0) as factorName,
+array(DOUBLE, 0) as close)
+
+streamCapacity=800000
+snapshotStreamTable=createEmptyStreamTableAsTargetTable(inputDummyTable,snapshotSharedTableName,streamCapacity)
+//计算结果表(分区表，大数据量)
+dbPath="dfs://snapshot_SH_L2_TSDB"
+factorTableName="doubleEmaFactor"
+
+createTableForDoubleEmaFactor(dbPath,factorTableName)
+resultTable = loadTable(dbPath,factorTableName)
+//创建流引擎
+demoEngine = createReactiveStateEngine(name=engineName, metrics=<[TradeTime,factorName,doubleEma(close)]>, dummyTable=inputDummyTable, outputTable=resultTable, keyColumn="SecurityID")
+//demoEngine订阅snapshotStream流表
+subscribeTable(tableName=snapshotSharedTableName, actionName=actionName, handler=append!{demoEngine},msgAsTable=true)
+//创建播放数据源供replay函数历史回放；盘中的时候，改为行情数据直接写入snapshotStreamTable流表
+inputDS = replayDS(<select SecurityID, TradeTime,"doubleEma" as factorName, LastPx from tableHandle where date(TradeTime)<2020.07.01>, `TradeTime, `TradeTime)//做半年的因子
+demoJobName="streamingFactorDemoJob"
+//提交job供执行，4并行度
+submitJob(demoJobName,"snapshot因子半年",replay,inputDS,snapshotStreamTable, `TradeTime, `TradeTime, -1,false, 4)
+
+//上述job完成后可在结果表中查到计算结果
+select top 50 * from resultTable where val>0

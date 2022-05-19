@@ -1,0 +1,41 @@
+
+
+
+@state
+def alpha1TS(close){
+	return mimax(pow(iif(ratios(close) - 1 < 0, mstd(ratios(close) - 1, 20),close), 2.0), 5)
+}
+
+def alpha1Panel(close){
+	return rowRank(X=alpha1TS(close), percent=true) - 0.5
+}
+
+def cleanStreamEngine(){
+    try{	
+	    dropStreamEngine(`alpha1Parser0)
+	    dropStreamEngine(`alpha1Parser1)
+    }
+    catch(ex){
+	    print(ex)
+    }
+}
+
+def createStreamEngine(result){
+    cleanStreamEngine()
+    inputSchema = table(1:0, ["SecurityID","TradeTime","close"], [SYMBOL,TIMESTAMP,DOUBLE])
+   
+    metrics = <[SecurityID, alpha1Panel(close)]>
+    return streamEngineParser(name="alpha1Parser", metrics=metrics, dummyTable=inputSchema, outputTable=result, keyColumn="SecurityID", timeColumn=`tradetime, triggeringPattern='keyCount', triggeringInterval=4000)
+}
+
+//直接写入3个月的数据
+login(`admin,`123456)
+dbPath = "dfs://k_day_level"
+tableName = "k_day"
+tableHandle = loadTable(dbPath, tableName)
+input = select securityid, tradetime, close from tableHandle where date(tradetime) between 2010.01.01 : 2010.03.31 order by tradetime
+result = table(10000:0, ["TradeTime","SecurityID", "factor"], [TIMESTAMP,SYMBOL,DOUBLE])
+streamEngine = createStreamEngine(result)
+streamEngine.append!(input)
+
+//结果在result中查看

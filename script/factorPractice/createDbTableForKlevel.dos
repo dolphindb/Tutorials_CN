@@ -1,0 +1,21 @@
+//1.日线数据创建库表，如若已存在，则会drop已有的库重新建库建表。此处创建一个按年Range分区的数据库，每个分区压缩前大约100M
+login("admin","123456")
+if(existsDatabase("dfs://k_day_level")){
+	dropDatabase("dfs://k_day_level")
+}
+db = database("dfs://k_day_level", RANGE,  2000.01M + (0..30)*12 )
+
+t =table(1:0, `securityid`tradetime`open`close`high`low`vol`val`vwap, [SYMBOL,TIMESTAMP,DOUBLE,DOUBLE,DOUBLE,DOUBLE,INT,DOUBLE,DOUBLE])
+db.createPartitionedTable(t, `k_day, `tradetime)
+
+
+//2.k线数据创建库表，此处创建一个按月VALUE分区，按股票HASH的组合分区，每个分区压缩前大约500M
+login("admin","123456")
+if(existsDatabase("dfs://k_minute_level")){
+	dropDatabase("dfs://k_minute_level")
+}
+dbDate = database("", VALUE,2020.01M..2020.12M )
+dbSym= database("", HASH, [SYMBOL,3])
+db = database("dfs://k_minute_level", COMPO, [dbDate, dbSym])
+t =table(1:0, `securityid`tradetime`open`close`high`low`vol`val`vwap, [SYMBOL,TIMESTAMP,DOUBLE,DOUBLE,DOUBLE,DOUBLE,INT,DOUBLE,DOUBLE])
+db.createPartitionedTable(t, `k_minute, `tradetime`securityid)

@@ -1,0 +1,28 @@
+login("admin","123456");
+clearAllCache();
+undef(all);
+
+go;
+
+result_db_name="snapshot_SH_L2_TSDB"
+db_path="dfs://"+result_db_name
+table_name="act_factor"
+
+if (!existsTable(db_path,table_name)){
+
+db=database(db_path)
+
+factor_schema = table(
+	array(SYMBOL, 0) as SecurityID,
+	array(DATE, 0) as trading_date,
+	array(TIMESTAMP, 0) as TradeTime,
+	array(DOUBLE, 0) as factor
+)
+createPartitionedTable(db,table=factor_schema,tableName=table_name, partitionColumns=`TradeTime`SecurityID, sortColumns=`SecurityID`TradeTime, keepDuplicates=LAST)
+
+}//没有表，建表
+else{
+	factor_table=loadTable(db_path,table_name)
+	delete from factor_table
+	}//已有表，清空表内容
+

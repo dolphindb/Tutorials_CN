@@ -1,0 +1,89 @@
+login("admin","123456");
+clearAllCache();
+undef(all);
+go;
+tickPath="dfs://tick_SH_L2_TSDB"
+fakeTickTableName="tick_SH_L2_TSDB"
+def createRamTableAsTargetTable(targetTable){
+	targetSchema=targetTable.schema();
+	sch =select name, typeString as type from  targetSchema.colDefs
+	colName=sch.name
+	colType=sch.type
+	snapshotStreamTemp = table(10000:0, colName, colType)
+	return snapshotStreamTemp
+}
+//delete from fakeTsdbTable
+def formOneStockOneDay(SecurityID,tradingDate,yesterdayClose){
+	openMoment=09:30:00.000
+	closeMoment=15:00:00.000
+	oneDayTickCount=(closeMoment-openMoment)/1000//每天每股tick个数，每秒1个
+	//第二列，时刻，按范围造
+	timePartVec=(0..(oneDayTickCount-1))*1000+openMoment
+	tradetime=concatDateTime(tradingDate,timePartVec)
+	//第三列，成交价格，按范围造
+	rands=rand(2.0,oneDayTickCount)-1
+	coef=rands*0.1
+	targetCoef=1+coef
+	priceSeries=yesterdayClose*targetCoef
+	//第四列，成交手数，按p=0.5二项分布的右半边造
+	volumeRand=randBinomial(30,0.5,oneDayTickCount)-15//要正数的右半边
+	volumePool=volumeRand[volumeRand>0]//只取正数的
+	volumes=rand(volumePool,oneDayTickCount)//按手数池子取随机数
+	stockVolumes=volumes*100//手数*100=股数
+	//plot(volumes,tradetime,"testing")
+	sellSideOrderRefCount=oneDayTickCount/4 //卖单号张数
+	buySideOrderRefCount=sellSideOrderRefCount //买单号张数
+	allOrderPool=rand(1..oneDayTickCount,oneDayTickCount) //卖单号池子
+	modes=allOrderPool%2
+	oddNumbers=allOrderPool[bool(modes)]//奇数作为买单号池子
+	evenNumbers=allOrderPool[bool(modes==0)]//偶数作为买单号池子
+	buyOrderPool=oddNumbers
+	sellOrderPool=evenNumbers
+	randBuyNo=rand(buyOrderPool,oneDayTickCount)
+	randSellNo=rand(sellOrderPool,oneDayTickCount)
+	secVec=array(SYMBOL,oneDayTickCount)
+	secVec[:]=SecurityID
+	tradingDateVec=array(DATE,oneDayTickCount)
+	tradingDateVec[:]=tradingDate
+	onedayTable=table(
+	secVec as SecurityID,
+	tradingDateVec as tradingDate,
+	tradetime as TradeTime,
+	priceSeries as TradePrice,
+	stockVolumes as TradeQty,
+	priceSeries*stockVolumes as TradeAmount,
+	randBuyNo as BuyNo,
+	randSellNo as SellNo)
+	return onedayTable
+}
+def makeFakeTickPerStock(SecurityID){
+	tickPath="dfs://tick_SH_L2_TSDB"
+	fakeTickTableName="tick_SH_L2_TSDB"
+	fakeTsdbTable=loadTable(tickPath,fakeTickTableName)
+	//每股票全局
+	emptyTableInRam=createRamTableAsTargetTable(fakeTsdbTable)
+	startPrice=rand(150.0,1)[0]//单股票全年起点价
+	dateRange=2020.01.01..2020.01.20
+	//每天
+	for(tradingDate in dateRange){
+		//第二列，交易日，传入
+		todayTable=formOneStockOneDay(SecurityID,tradingDate,startPrice)
+		append!(emptyTableInRam,todayTable)
+		startPrice=last(todayTable.TradePrice)//更新收盘价给明天使用
+	}
+	append!(fakeTsdbTable,emptyTableInRam)
+}
+//第一列，传入
+//codeNum=string(1..100) //创造000001到002049的股票(因为job个数到达上线)
+codeNum=string(504..4000) //创造000001到002049的股票(因为job个数到达上线)
+//codeNum=string(2050..4000) //创造002049以上的股票
+testFill=lpad(codeNum,6,"0")
+for(SecurityID in testFill){
+	jobName="fill_tick_"+SecurityID
+	actionName=SecurityID
+	makeFakeTickPerStock(SecurityID)
+	submitJob(jobName,actionName,makeFakeTickPerStock,SecurityID)
+	print(jobName)
+	sleep(100)
+}
+//getRecentJobs()

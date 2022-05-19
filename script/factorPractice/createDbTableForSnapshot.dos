@@ -1,0 +1,38 @@
+//1. 普通快照数据建库建表，此处创建一个按天VALUE分区，股票HASH 20的数据库
+login("admin", "123456")
+dbName = "dfs://snapshot_SH_L2_TSDB"
+tbName = "snapshot_SH_L2_TSDB"
+
+if(existsDatabase(dbName)){
+	dropDatabase(dbName)
+}
+dbTime = database(, VALUE, 2021.01.01..2021.12.31)
+dbSymbol = database(, HASH, [SYMBOL, 20])
+//db = database(dbName, COMPO, [dbTime, dbSymbol])
+db = database(dbName, COMPO, [dbTime, dbSymbol], , 'TSDB')
+name = `SecurityID`TradeTime`PreClosePx`OpenPx`HighPx`LowPx`LastPx`TotalVolumeTrade`TotalValueTrade`InstrumentStatus`BidPrice0`BidPrice1`BidPrice2`BidPrice3`BidPrice4`BidPrice5`BidPrice6`BidPrice7`BidPrice8`BidPrice9`BidOrderQty0`BidOrderQty1`BidOrderQty2`BidOrderQty3`BidOrderQty4`BidOrderQty5`BidOrderQty6`BidOrderQty7`BidOrderQty8`BidOrderQty9`BidOrders0`BidOrders1`BidOrders2`BidOrders3`BidOrders4`BidOrders5`BidOrders6`BidOrders7`BidOrders8`BidOrders9`OfferPrice0`OfferPrice1`OfferPrice2`OfferPrice3`OfferPrice4`OfferPrice5`OfferPrice6`OfferPrice7`OfferPrice8`OfferPrice9`OfferOrderQty0`OfferOrderQty1`OfferOrderQty2`OfferOrderQty3`OfferOrderQty4`OfferOrderQty5`OfferOrderQty6`OfferOrderQty7`OfferOrderQty8`OfferOrderQty9`OfferOrders0`OfferOrders1`OfferOrders2`OfferOrders3`OfferOrders4`OfferOrders5`OfferOrders6`OfferOrders7`OfferOrders8`OfferOrders9`NumTrades`IOPV`TotalBidQty`TotalOfferQty`WeightedAvgBidPx`WeightedAvgOfferPx`TotalBidNumber`TotalOfferNumber`BidTradeMaxDuration`OfferTradeMaxDuration`NumBidOrders`NumOfferOrders`WithdrawBuyNumber`WithdrawBuyAmount`WithdrawBuyMoney`WithdrawSellNumber`WithdrawSellAmount`WithdrawSellMoney`ETFBuyNumber`ETFBuyAmount`ETFBuyMoney`ETFSellNumber`ETFSellAmount`ETFSellMoney
+type =`SYMBOL`TIMESTAMP`DOUBLE`DOUBLE`DOUBLE`DOUBLE`DOUBLE`INT`DOUBLE`SYMBOL`DOUBLE`DOUBLE`DOUBLE`DOUBLE`DOUBLE`DOUBLE`DOUBLE`DOUBLE`DOUBLE`DOUBLE`INT`INT`INT`INT`INT`INT`INT`INT`INT`INT`INT`INT`INT`INT`INT`INT`INT`INT`INT`INT`DOUBLE`DOUBLE`DOUBLE`DOUBLE`DOUBLE`DOUBLE`DOUBLE`DOUBLE`DOUBLE`DOUBLE`INT`INT`INT`INT`INT`INT`INT`INT`INT`INT`INT`INT`INT`INT`INT`INT`INT`INT`INT`INT`INT`DOUBLE`INT`INT`DOUBLE`DOUBLE`INT`INT`INT`INT`INT`INT`INT`INT`DOUBLE`INT`INT`DOUBLE`INT`INT`DOUBLE`INT`INT`DOUBLE
+tbTemp = table(1:0, name, type)
+db = database(dbName)
+createPartitionedTable(dbHandle=db, table=tbTemp, tableName=tbName, partitionColumns=`TradeTime`SecurityID, compressMethods={TradeTime:"delta"}, sortColumns = `SecurityID`TradeTime, keepDuplicates=LAST)
+//db.createPartitionedTable(tbTemp, `Snap, `TradeDate`SecurityID, compressMethods={TradeTime:"delta"}, sortColumns = `SecurityID`OrigTime, keepDuplicates=LAST)
+loadTable(dbName, tbName).schema()
+
+//2. 创建存储为arrayVector的库表，与普通表分区相同，只是将多档数据存储为一个字段的ArrayVector中。
+dbName = "dfs://LEVEL2_Snapshot_ArrayVector"
+if(existsDatabase(dbName)){
+	dropDatabase(dbName)
+}
+db1 = database("", VALUE, 2020.01.01..2020.12.31)
+db2 = database("", HASH, [SYMBOL, 20])
+db = database(dbName,  COMPO, [db1,db2], , 'TSDB')
+db = database("dfs://LEVEL2_Snapshot_ArrayVector")
+
+name = `SecurityID`TradeTime`PreClosePx`OpenPx`HighPx`LowPx`LastPx`TotalVolumeTrade`TotalValueTrade`InstrumentStatus`BidPrice`BidOrderQty`BidOrders`OfferPrice`OfferOrderQty`OfferOrders`NumTrades`IOPV`TotalBidQty`TotalOfferQty`WeightedAvgBidPx`WeightedAvgOfferPx`TotalBidNumber`TotalOfferNumber`BidTradeMaxDuration`OfferTradeMaxDuration`NumBidOrders`NumOfferOrders`WithdrawBuyNumber`WithdrawBuyAmount`WithdrawBuyMoney`WithdrawSellNumber`WithdrawSellAmount`WithdrawSellMoney`ETFBuyNumber`ETFBuyAmount`ETFBuyMoney`ETFSellNumber`ETFSellAmount`ETFSellMoney
+type =`SYMBOL`TIMESTAMP`DOUBLE`DOUBLE`DOUBLE`DOUBLE`DOUBLE`INT`DOUBLE`SYMBOL`DOUBLE`INT`INT`DOUBLE`INT`INT`INT`DOUBLE`INT`INT`DOUBLE`DOUBLE`INT`INT`INT`INT`INT`INT`INT`INT`DOUBLE`INT`INT`DOUBLE`INT`INT`DOUBLE`INT`INT`DOUBLE
+tbTemp = table(1:0, name, type)
+tbTemp.dropColumns!(`BidPrice`BidOrderQty`BidOrders`OfferPrice`OfferOrderQty`OfferOrders)
+tbTemp.addColumn(`BidPrice`BidOrderQty`BidOrders`OfferPrice`OfferOrderQty`OfferOrders, [DOUBLE[],INT[],INT[],DOUBLE[],INT[],INT[]])
+tbTemp.reorderColumns!(`SecurityID`TradeTime`PreClosePx`OpenPx`HighPx`LowPx`LastPx`TotalVolumeTrade`TotalValueTrade`InstrumentStatus`BidPrice`BidOrderQty`BidOrders`OfferPrice`OfferOrderQty`OfferOrders`NumTrades`IOPV`TotalBidQty`TotalOfferQty`WeightedAvgBidPx`WeightedAvgOfferPx`TotalBidNumber`TotalOfferNumber`BidTradeMaxDuration`OfferTradeMaxDuration`NumBidOrders`NumOfferOrders`WithdrawBuyNumber`WithdrawBuyAmount`WithdrawBuyMoney`WithdrawSellNumber`WithdrawSellAmount`WithdrawSellMoney`ETFBuyNumber`ETFBuyAmount`ETFBuyMoney`ETFSellNumber`ETFSellAmount`ETFSellMoney)
+
+db.createPartitionedTable(tbTemp, `Snap, `Tradetime`SecurityID, compressMethods={TradeTime:"delta"}, sortColumns = `SecurityID`Tradetime, keepDuplicates=LAST)

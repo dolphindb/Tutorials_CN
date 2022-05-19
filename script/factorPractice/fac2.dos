@@ -1,0 +1,6 @@
+basic_info = {'factor_col_list':['close', 'high']}
+
+def fac2(close,high){ 
+    return ema(close, 20)-ema(high, 20)
+}
+

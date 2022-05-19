@@ -1,0 +1,32 @@
+
+login("admin","123456")
+
+dropFunctionView(`simple_cal)
+def simple_cal(input,start_date, end_date){        
+        return select tradetime,securityid, open -close as factor_value from input where date(tradetime) between date(start_date): date(end_date) map
+        }
+addFunctionView(simple_cal)
+
+//save factor result method
+def write_in_wide_database(funcN,factorN,start_date, end_date){
+        input =loadTable("dfs://k_minute_level","k_minute")
+        res = funcByName(funcN)(input,start_date, end_date)
+        if(res.size()==0) return
+        pivot_res = select factor_value from res pivot by tradetime,securityid
+        pivot_res[`factorname]=string(factorN)
+        reorderColumns!(pivot_res,`tradetime`factorname)
+        res_t = loadTable("dfs://K_FACTOR_WIDE","factor_k_wide")
+        res_t.append!(pivot_res)
+}
+
+func_table = table(take(`simple_cal,20) as func_name, string(1..20) as factorname, 2020.01.01..2020.01.20 as start_date,2020.01.02..2020.01.21 as end_date)
+//
+for (i in 0..(size(func_table)-1)){
+        funcN=func_table[`func_name][i]
+        factorN=func_table[`factorname][i]
+        start_date =func_table[`start_date][i]
+        end_date=func_table[`end_date][i]
+        submitJob("submitjob_"+funcN+factorN, "write_in_wide_database"+funcN+factorN+start_date, write_in_wide_database,funcN,factorN,start_date, end_date)
+ }
+ t=getRecentJobs()
+ select * from t where jobId like '%submitjob_%'
