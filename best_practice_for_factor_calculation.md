@@ -97,7 +97,7 @@ DolphinDB 自带的数据回放和流式增量计算引擎可以方便地解决�
 
 逐笔成交是交易所公布买卖双方具体成交的每一笔数据，每3秒发布一次，每次包含这3秒内的所有成交记录。每一笔成交撮合，都由买方和卖方的一笔具体委托组成。上述数据样例采用字段 BuyNo 和 SellNo 标注买卖双方的委托单号，其它关键字段分别为： SecurityID（标的物代码），TradeTime（成交时刻），TradePrice（成交价格），TradeQty（本笔成交量）和 TradeAmount（本笔成交金额）。
 
-每个交易日的原始数据量在 3 GB 上下。根据上表的分区机制进行建库建表，点击查看对应脚本：[逐笔成交数据建库建表完整代码](script/factorPractice/appendix_2.1_createTickDbAndTable_main.dos)。
+每个交易日的原始数据量在 8 GB 上下。根据上表的分区机制进行建库建表，点击查看对应脚本：[逐笔成交数据建库建表完整代码](script/factorPractice/appendix_2.1_createTickDbAndTable_main.dos)。
 
 
 ### 2.2 快照数据
@@ -603,7 +603,7 @@ OLAP引擎是纯列式存储，不适合表过宽，在列数超过80以后，�
 
 从比对结果来看，宽表 TSDB 模式的写入速度是纵表 OLAP 的4倍，纵表 TSDB 的5倍，存储空间上宽表 TSDB 和 OLAP 纵表相近，均约为 TSDB 纵表的三分之二，压缩比上纵表 OLAP 最优，纵表 TSDB 次之，宽表 TSDB 最差。这是因为首先实际产生的数据字节上，纵表模式是宽表模式的三倍，这决定了宽表 TSDB 的的写入速度最优，磁盘使用空间最优，也导致了宽表 TSDB 模式的压缩比会相对差一些，另外模拟数据随机性很多大，也影响了 TSDB 引擎宽表得数据压缩；其次 TSDB 引擎会进行数据排序，生成索引，所以同样是纵表，TSDB 引擎在存储空间、存储速度、压缩比方面都要略逊于 OLAP 引擎。     
 
-具体存储脚本参考[因子数据存储模拟脚本](script/factorPractice/factor_data_simulation_script.zip)。
+具体脚本参考因子数据存储模拟脚本（从[此处](script/factorPractice)下载 factor_data_simulation_script.zip 文件）。
 
 
 ### 5.2 因子查询
@@ -1047,9 +1047,9 @@ scheduleJob(jobId=`daily, jobDesc="Daily Job 1", jobFunc=bacthExeCute, scheduleT
 
 ## 附录
 
-[章节附件2.1 逐笔数据建库建表](script/factorPractice/appendix_2.1_createTickDbAndTable_main.dos)  
+[章节附件2.1 逐笔数据建库建表](script/factorPractice/appendix_2.1_createTickDbAndTable_main.dos)
 
-[章节附件2.2 快照数据建库建表](script/factorPractice/appendix_2.2_createSnapshotDbAndTable_main.dos)  
+[章节附件2.2 快照数据建库建表](script/factorPractice/appendix_2.2_createSnapshotDbAndTable_main.dos)
 
 [章节附件2.3 k线数据建库建表](script/factorPractice/appendix_2.3_createTableKMinute_main.dos) 
 
