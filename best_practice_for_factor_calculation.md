@@ -1,58 +1,44 @@
-# 基于DolphinDB的因子计算最佳实践
+# 基于DolphinDB的因子计算最佳实践 <!-- omit in toc -->
 
 因子挖掘是量化交易的基础。除传统的基本面因子外，从中高频行情数据中挖掘有价值的因子，并进一步建模和回测以构建交易系统，是一个量化团队的必经之路。金融或者量化金融是一个高度市场化、多方机构高度博弈的领域。因子的有效时间会随着博弈程度的加剧而缩短，如何使用更加高效的工具和流程，更快的找到新的有效的因子，是每一个交易团队必须面对的问题。
 
 近年来，DolphinDB 越来越成为国内乃至国际上大量基金（私募和公募）、资管机构、券商自营团队进行因子挖掘的利器。基于大量客户的反馈，我们特撰写此白皮书，**总结使用 DolphinDB 进行因子挖掘的最佳实践。**
 
-- [基于DolphinDB的因子计算最佳实践](#基于dolphindb的因子计算最佳实践)
-  - [1. 概述](#1-概述)
-  - [2. 测试数据集](#2-测试数据集)
-    - [2.1 逐笔成交数据](#21-逐笔成交数据)
-    - [2.2 快照数据](#22-快照数据)
-    - [2.3 分钟K数据](#23-分钟k数据)
-  - [3. 投研阶段的因子计算](#3-投研阶段的因子计算)
-    - [3.1 面板数据模式](#31-面板数据模式)
-    - [3.2 SQL模式](#32-sql模式)
-    - [3.3 不同频率的因子开发举例](#33-不同频率的因子开发举例)
-      - [3.3.1 分钟级和日级数据](#331-分钟级和日级数据)
-      - [3.3.2 基于快照数据的有状态因子计算](#332-基于快照数据的有状态因子计算)
-      - [3.3.3 快照数据的多档赋权无状态因子计算](#333-快照数据的多档赋权无状态因子计算)
-      - [3.3.4 基于快照数据的分钟聚合](#334-基于快照数据的分钟聚合)
-      - [3.3.5 逐笔数据](#335-逐笔数据)
-  - [4. 生产环境的流式因子计算](#4-生产环境的流式因子计算)
-    - [4.1 流式增量计算](#41-流式增量计算)
-      - [4.1.1 主买成交量占比因子的流式处理](#411-主买成交量占比因子的流式处理)
-      - [4.1.2 大小单的流式处理](#412-大小单的流式处理)
-      - [4.1.3 复杂因子Alpha #1流式计算的快捷实现](#413-复杂因子alpha-1流式计算的快捷实现)
-    - [4.2 数据回放](#42-数据回放)
-    - [4.3 对接交易系统](#43-对接交易系统)
-  - [5. 因子的存储和查询](#5-因子的存储和查询)
-    - [5.1 因子存储](#51-因子存储)
-    - [5.2 因子查询](#52-因子查询)
-    - [5.3 在线获取面板数据](#53-在线获取面板数据)
-  - [6. 因子回测和建模](#6-因子回测和建模)
-    - [6.1 因子回测](#61-因子回测)
-    - [6.2 因子相关性分析](#62-因子相关性分析)
-    - [6.3 多因子建模](#63-多因子建模)
-  - [7. 因子计算的工程化](#7-因子计算的工程化)
-    - [7.1 代码管理](#71-代码管理)
-    - [7.2 单元测试](#72-单元测试)
-    - [7.3 并行计算](#73-并行计算)
-      - [7.3.1 分布式SQL](#731-分布式sql)
-      - [7.3.2 map reduce](#732-map-reduce)
-      - [7.3.3 通过submitJob提交任务](#733-通过submitjob提交任务)
-    - [7.4 内存管理](#74-内存管理)
-    - [7.5 权限管理](#75-权限管理)
-    - [7.6 任务管理](#76-任务管理)
-      - [7.6.1 全量计算](#761-全量计算)
-      - [7.6.2 因子运维管理](#762-因子运维管理)
-  - [8. 实际案例](#8-实际案例)
-    - [8.1 日频因子](#81-日频因子)
-    - [8.2 分钟频因子](#82-分钟频因子)
-    - [8.3 快照因子](#83-快照因子)
-    - [8.4 逐笔因子](#84-逐笔因子)
-  - [9. 总结](#9-总结)
-  - [附录](#附录)
+- [1. 概述](#1-概述)
+- [2. 测试数据集](#2-测试数据集)
+  - [2.1 逐笔成交数据](#21-逐笔成交数据)
+  - [2.2 快照数据](#22-快照数据)
+  - [2.3 分钟K数据](#23-分钟k数据)
+- [3. 投研阶段的因子计算](#3-投研阶段的因子计算)
+  - [3.1 面板数据模式](#31-面板数据模式)
+  - [3.2 SQL模式](#32-sql模式)
+  - [3.3 不同频率的因子开发举例](#33-不同频率的因子开发举例)
+- [4. 生产环境的流式因子计算](#4-生产环境的流式因子计算)
+  - [4.1 流式增量计算](#41-流式增量计算)
+  - [4.2 数据回放](#42-数据回放)
+  - [4.3 对接交易系统](#43-对接交易系统)
+- [5. 因子的存储和查询](#5-因子的存储和查询)
+  - [5.1 因子存储](#51-因子存储)
+  - [5.2 因子查询](#52-因子查询)
+  - [5.3 在线获取面板数据](#53-在线获取面板数据)
+- [6. 因子回测和建模](#6-因子回测和建模)
+  - [6.1 因子回测](#61-因子回测)
+  - [6.2 因子相关性分析](#62-因子相关性分析)
+  - [6.3 多因子建模](#63-多因子建模)
+- [7. 因子计算的工程化](#7-因子计算的工程化)
+  - [7.1 代码管理](#71-代码管理)
+  - [7.2 单元测试](#72-单元测试)
+  - [7.3 并行计算](#73-并行计算)
+  - [7.4 内存管理](#74-内存管理)
+  - [7.5 权限管理](#75-权限管理)
+  - [7.6 任务管理](#76-任务管理)
+- [8. 实际案例](#8-实际案例)
+  - [8.1 日频因子](#81-日频因子)
+  - [8.2 分钟频因子](#82-分钟频因子)
+  - [8.3 快照因子](#83-快照因子)
+  - [8.4 逐笔因子](#84-逐笔因子)
+- [9. 总结](#9-总结)
+- [附录](#附录)
 
 ## 1. 概述
 交易团队用于因子挖掘的常见技术栈有几个大的类别:
@@ -239,7 +225,7 @@ alpha98DDBSql = alpha98SQL(input)
 
 不同频率数据的因子，有着不同的特点。本章节将分别举例分钟频、日频、快照、逐笔数据的特点因子，阐述不同频率数据计算因子的最佳实践。
 
-#### 3.3.1 分钟级和日级数据
+#### 3.3.1 分钟级和日级数据 <!-- omit in toc -->
 
 日级数据的计算，通常是涉及多个截面的复杂计算，在[`3.1 面板数据模式`](#31-面板数据模式)中已展现。对于稍简单的计算，则与分钟级数据的因子相像。
 
@@ -260,7 +246,7 @@ tradetime  securityid factorname    val
 2020.01.02 000050     dayReturnSkew 10.6186
 ```
 
-#### 3.3.2 基于快照数据的有状态因子计算
+#### 3.3.2 基于快照数据的有状态因子计算 <!-- omit in toc -->
 
 有状态的因子，意为因子的计算需要基于之前的计算结果，如一般的滑动窗口计算，聚合计算等，都是有状态的因子计算。
 
@@ -289,7 +275,7 @@ TradeTime               SecurityID factorname val
 ...
 ```
 
-#### 3.3.3 快照数据的多档赋权无状态因子计算
+#### 3.3.3 快照数据的多档赋权无状态因子计算 <!-- omit in toc -->
 
 计算Level 2的多档快照数据，传统的方式是将多档量价数据存储成为多个列, 再将多档挂单或者报价用 matrix 转换与权重做计算。
 更推荐的做法是，将多档数据存储为 array vector，仍旧可以用原来的自定义函数，但是资源消耗包括效率都有提升。
@@ -330,7 +316,7 @@ TradeTime               SecurityID factorname val
 ...
 ```
 
-#### 3.3.4 基于快照数据的分钟聚合
+#### 3.3.4 基于快照数据的分钟聚合 <!-- omit in toc -->
 
 投研中经常需要基于快照数据聚合分钟线的 OHLC ，下例就是这一场景中的通用做法：
 
@@ -339,7 +325,7 @@ TradeTime               SecurityID factorname val
 tick_aggr = select first(LastPx) as open, max(LastPx) as high, min(LastPx) as low, last(LastPx) as close, sum(totalvolumetrade) as vol,sum(lastpx*totalvolumetrade) as val,wavg(lastpx, totalvolumetrade) as vwap from loadTable("dfs://LEVEL2_Snapshot_ArrayVector","Snap") where date(TradeTime) <= 2020.01.30 and date(TradeTime) >= 2020.01.01 group by SecurityID, bar(TradeTime,1m) 
 ```
 
-#### 3.3.5 逐笔数据
+#### 3.3.5 逐笔数据 <!-- omit in toc -->
 
 逐笔数据量较大，一般会针对成交量等字段进行计算，下面的例子计算了每天主买成交量占全部成交量的比例，同样使用 SQL 模式，发挥库内并行计算的优势，并使用 csort 语句用来对组内数据按照时间顺序排序：
 
@@ -372,7 +358,7 @@ DolphinDB 流计算解决方案的核心部件是流计算引擎和流数据表�
 
 金融方面的原始数据和计算指标，在时间上通常有延续性的关系。以最简单的五周期移动均线 `mavg(close,5)` 为例，当新一个周期的数据传入模型时，可以将之前最远的第五周期值从 sum 中减出，再把最新一个周期的值加入 sum ，这样就不必每个周期只更新一个值时都重算一遍 sum 。这种增量计算是流计算的核心，可以大大降低实时计算的延时。DolphinDB内置了大量量化金融中需要用到的基本算子，并为这些算子实现了高效的增量算法。不仅如此，DolphinDB还支持自定义函数的增量实现。在前一章节中，部分自定义的因子函数加了修饰符 `@state` ，表示该函数支持增量计算。
 
-#### 4.1.1 主买成交量占比因子的流式处理
+#### 4.1.1 主买成交量占比因子的流式处理 <!-- omit in toc -->
 
 [第三章3.3.5](#335-逐笔数据)的逐笔数据因子的例子展示了主买成交量占比因子（buyTradeRatio）的批量实现方式。这儿我们演示如何使用响应式状态引擎（reactive state engine）来实现该因子的流式增量计算。
 
@@ -406,7 +392,7 @@ SecurityID TradeTime           Factor
 
 从这个例子可以看出，在DolphinDB中实现因子的流式增量计算非常简单。如果在投研阶段，已经用我们推荐的方式自定义了一个因子函数，在生产阶段只要程序性的创建一个流式计算引擎即可实现目标。这也是为什么我们一再强调，自定义的因子函数必须使用规范的接口，而且只包含核心的因子逻辑，不用考虑并行计算等问题。
 
-#### 4.1.2 大小单的流式处理
+#### 4.1.2 大小单的流式处理 <!-- omit in toc -->
 
 资金流分析是逐笔委托数据的一个重要应用场景。在实时处理逐笔数据时，大小单的统计是资金流分析的一个具体应用。大小单在一定程度上能反映主力、散户的动向。但在实时场景中，大小单的生成有很多难点：（1） 大小单的计算涉及历史状态，如若不能实现增量计算，当计算下午的数据时，可能需要回溯有关这笔订单上午的数据，效率会非常低下。 （2）计算涉及至少两个阶段。在第一阶段需要根据订单分组，根据订单的累计成交量判断大小单，在第二阶段要根据股票来分组，统计每个股票的大小单数量及金额。
 
@@ -460,7 +446,7 @@ SecurityID TradeTime smallBuyOrderAmount smallSellOrderAmount totalOrderAmount f
 000155     2020.01.01T09:30:03 30000               150000               150000           -0.8
 ```
 
-#### 4.1.3 复杂因子Alpha #1流式计算的快捷实现
+#### 4.1.3 复杂因子Alpha #1流式计算的快捷实现 <!-- omit in toc -->
 
 从前一个大小单的例子可以看到，有些因子的流式实现比较复杂，需要创建多个引擎进行流水线处理来完成。完全用手工的方式来创建多个引擎其实是一件耗时的工作。如果输入的指标计算只涉及一个分组键，DolphinDB提供了一个解析引擎[`streamEngineParser`](https://www.dolphindb.cn/cn/help/200/FunctionsandCommands/FunctionReferences/s/streamEngineParser.html)来解决此问题。下面我们以第三章3.1面板数据模式的alpha #1因子为例，展示`streamEngineParser`的使用方法。完整代码参考[Alpha #1流式计算](script/factorPractice/appendix_4.1.3_StreamComputationOfAlpha1Factor_main.dos)。以下为核心代码。
 
@@ -506,7 +492,7 @@ inputDS = replayDS(<select SecurityID, TradeTime, LastPx from tableHandle where 
 
 ### 4.3 对接交易系统
 
-DolphinDB 本身具有多种常用编程语言的API，包括C++, java, javascript, c#, python, go等。使用这些语言的程序，都可以调用该语言的 DolphinDB 接口，订阅到 DolphinDB 服务器的流数据。本例提供一个简单的[python接口订阅流数据](script/factorPractice/zmq_and_python_external_example/appendix_4.3.1.1_python_callback_handler_subscribing_stream_main.py)样例。
+DolphinDB 本身具有多种常用编程语言的API，包括C++, java, javascript, c#, python, go等。使用这些语言的程序，都可以调用该语言的 DolphinDB 接口，订阅到 DolphinDB 服务器的流数据。本例提供一个简单的[python接口订阅流数据](script/factorPractice/appendix_4.3.1_python_callback_handler_subscribing_stream_main.py)样例。
 
 DolphinDB-Python API订阅流数据例子：
 
@@ -520,7 +506,7 @@ handler=python_callback_handler,#此处传入python端要接收消息的回调�
 
 DolphinDB向ZMQ消息队列推送流数据代码样例：
 
-1.首先启动下游的ZMQ数据消费程序，作为监听端(ZeroMQ消息队列的服务端)，完整代码见[章节附件4.3.2 向ZMQ推送流数据](script/factorPractice/zmq_and_python_external_example/appendix_4.3.2.1_zmq_consuming_ddb_stream_main.py)
+1.首先启动下游的ZMQ数据消费程序，作为监听端(ZeroMQ消息队列的服务端)，完整代码见[章节附件4.3.2 向ZMQ推送流数据](script/factorPractice/appendix_4.3.2_zmq_consuming_ddb_stream_main.py)
 
 ```
 zmq_context = Context()
@@ -535,7 +521,7 @@ asyncio.run(loop_runner())
 
 2.启动因子数据的流处理计算和发布
 
-在外部消费ZMQ消息的程序启动后，DolphinDB端要启动流计算，并开始对外发布计算结果。以下是[DolphinDB端的代码](script/factorPractice/appendix_4.3_streamComputationOfDoubleEmaFactorPublishingOnZMQ_main.dos)。输出结果表之前的所有代码部分，和[4.2中流处理计算doubleEma因子](#42-数据回放)例子的一致，故下例代码中不再赘述。
+在外部消费ZMQ消息的程序启动后，DolphinDB端要启动流计算，并开始对外发布计算结果。以下是[DolphinDB端的代码](script/factorPractice/appendix_4.3.3_streamComputationOfDoubleEmaFactorPublishingOnZMQ_main.dos)。输出结果表之前的所有代码部分，和[4.2中流处理计算doubleEma因子](#42-数据回放)例子的一致，故下例代码中不再赘述。
 
 ```
 resultSchema=table(1:0,["SecurityID","TradeTime","factor"], [SYMBOL,TIMESTAMP,DOUBLE])//输出到消息队列的表结构
@@ -603,7 +589,7 @@ OLAP引擎是纯列式存储，不适合表过宽，在列数超过80以后，�
 
 从比对结果来看，宽表 TSDB 模式的写入速度是纵表 OLAP 的4倍，纵表 TSDB 的5倍，存储空间上宽表 TSDB 和 OLAP 纵表相近，均约为 TSDB 纵表的三分之二，压缩比上纵表 OLAP 最优，纵表 TSDB 次之，宽表 TSDB 最差。这是因为首先实际产生的数据字节上，纵表模式是宽表模式的三倍，这决定了宽表 TSDB 的的写入速度最优，磁盘使用空间最优，也导致了宽表 TSDB 模式的压缩比会相对差一些，另外模拟数据随机性很多大，也影响了 TSDB 引擎宽表得数据压缩；其次 TSDB 引擎会进行数据排序，生成索引，所以同样是纵表，TSDB 引擎在存储空间、存储速度、压缩比方面都要略逊于 OLAP 引擎。     
 
-具体脚本参考因子数据存储模拟脚本（从[此处](script/factorPractice)下载 factor_data_simulation_script.zip 文件）。
+具体存储脚本参考[因子数据存储模拟脚本](script/factorPractice/appendix_5.1_factorDataSimulation.zip)。
 
 
 ### 5.2 因子查询
@@ -616,7 +602,7 @@ OLAP引擎是纯列式存储，不适合表过宽，在列数超过80以后，�
 | 宽表| TSDB| 4000 | 200 |一年 |分钟级| 12,942,800 |32012 |385.8 |月(VALUE分区)+因子(HASH分区)|
 
 
-下面我们通过多个角度的查询测试来比对这三种存储方式的查询性能。[因子查询测试脚本](script/factorPractice/factor_query_test_script.dos) 
+下面我们通过多个角度的查询测试来比对这三种存储方式的查询性能。[因子查询测试脚本](script/factorPractice/appendix_5.2_factorQueryTest.dos)
 
 * 查询1个因子1只股票指定时间点数据
 
@@ -743,7 +729,7 @@ wide_tsdb_factor_year=select * from tsdb_wide_min_factor where factorname in ('f
 
 得到分配持仓权重后，再与持仓股票的日收益率做矩阵乘法，最后按天相加，可得整个投资组合的回报率变化曲线。
 
-完整实例代码参考：[向量化因子回测完整代码](script/factorPractice/vectorisedFactorBacktest_main.dos)
+完整实例代码参考：[向量化因子回测完整代码](script/factorPractice/appendix_6.1_vectorisedFactorBacktest_main.dos)
 
 
 ### 6.2 因子相关性分析
@@ -799,7 +785,7 @@ corrMatrix = result.corr.matrix().avg().reshape(size(distinct(day_data.factornam
 - assert语句，判断结果是否符合预期。
 - eqObj等函数，用于测试结果是否符合预期。
 
-下面通过对因子函数factorDoubleEMA的测试来展示单元测试的撰写。全部代码请点击这儿[查看](script/factorPractice/doubleEMATest.dos)。下面的代码展示了三个测试cases，两个用于批处理，一个用于流计算处理。
+下面通过对因子函数factorDoubleEMA的测试来展示单元测试的撰写。全部代码请点击这儿[查看](script/factorPractice/appendix_7.2_doubleEMATest.dos)。下面的代码展示了三个测试cases，两个用于批处理，一个用于流计算处理。
 
 ```
 @testing: case = "factorDoubleEMA_without_null"
@@ -831,7 +817,7 @@ assert 1, eqObj(out.price, NULL NULL NULL NULL NULL 5.788743 -7.291889 7.031123 
 
 下面我们讨论前三种方法在因子的并行计算中的应用。
 
-#### 7.3.1 分布式SQL
+#### 7.3.1 分布式SQL <!-- omit in toc -->
 
 分布式SQL的第一个应用是计算无状态的因子。对于无状态的因子，即计算本身可能只涉及单条记录内一个或者几个字段。这样的计算可以利用分布式表的机制，在各分区内并行计算。
 
@@ -849,7 +835,7 @@ resWeight =  select TradeTime, SecurityID, `mathWghtSkew as factorname, mathWght
 minReturn = select `dayReturnSkew as factorname, dayReturnSkew(close) as val from loadTable("dfs://k_minute_level", "k_minute") where date(tradetime) between 2020.01.02 : 2020.01.31 group by date(tradetime) as tradetime, securityid map
 ```
 
-#### 7.3.2 map reduce
+#### 7.3.2 map reduce <!-- omit in toc -->
 
 当用户不想根据分区做并行计算时，可以通过mr函数自定义做并行计算。
 
@@ -868,7 +854,7 @@ def factorDoubleEMAMap(table){
 res = mr(ds,factorDoubleEMAMap,,unionAll)
 ```
 
-#### 7.3.3 通过submitJob提交任务
+#### 7.3.3 通过submitJob提交任务 <!-- omit in toc -->
 
 之前的两种并行计算都是在前台执行的，并行度是由参数 `localExecutors` 设置。而有些作业可能很大，或者用户不想影响前台使用，此时可以通过 `submitJob` 提交任务。submitJob的并行度由 `maxBatchJobWorker` 参数设置。由于后台作业之间是独立的，通常不需要返回到前端的任务都推荐用后台提交 `submitJob` 的形式。
 
@@ -941,7 +927,7 @@ grant("group1name", TABLE_READ, "dfs://db1/pt1")
 
 DolphinDB 本身并不直接支持表内数据级的权限控制，但是通过DolphinDB本身灵活的权限控制，我们可以通过其他方式来实现表内数据级的权限控制。   
 这里我们可以通过对用户授予functionview 权限 VIEW_EXEC 这种方式来实现表内数据级的权限控制。   
-完整代码参考：[章节附件7.5.3 因子表权限控制](script/factorPractice/factor_table_data_level_controll.dos)。通过这份代码，用户"u1"虽然没有表的读权限，但是可以获得表内factor1因子的数据。
+完整代码参考：[章节附件7.5.3 因子表权限控制](script/factorPractice/appendix_7.5.3_factorTableControll.dos)。通过这份代码，用户"u1"虽然没有表的读权限，但是可以获得表内factor1因子的数据。
 
 ```
 //创建用户u1,我们想授予u1 只能读取因子factor1的权限
@@ -969,7 +955,7 @@ factor1_tab=getFactor1Table()
 - (2) 通过 [submitJob](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/s/submitJob.html)   提交一个Job来执行。   
 - (3) 通过 [scheduleJob](scheduledJob.md)   提交一个定时任务来进行周期性的执行。
 
-#### 7.6.1 全量计算
+#### 7.6.1 全量计算 <!-- omit in toc -->
 
 因子的全量跑批任务，通常是系统初始化因子数据时的一次性任务，或者较长周期进行一次的任务，这类任务可以通过单次触发或者定时任务(scheduleJob)的方式进行管理。  
 
@@ -991,7 +977,7 @@ scheduleJob(jobId=`daily, jobDesc="Daily Job 1", jobFunc=bacthExeCute, scheduleT
 ```
 
 
-#### 7.6.2 因子运维管理
+#### 7.6.2 因子运维管理 <!-- omit in toc -->
 
 在因子研发过程中，当碰到因子算法、参数调整的情况，我们会需要对该因子进行重新计算，同时需要将计算的新的因子数据更新到数据库中，对于因子更新的频率通常我们有两种方式： 
 
@@ -1013,7 +999,7 @@ scheduleJob(jobId=`daily, jobDesc="Daily Job 1", jobFunc=bacthExeCute, scheduleT
 
 日频的数据，一般是由逐笔数据或者其他高频数据聚合而成。日频的数据量不大，在日频数据上经常会计算一些动量因子，或者一些复杂的需要观察长期数据的因子。因此在分区考虑上，建议按年分区即可。在因子计算上，日频因子通常会涉及时间和股票多个维度，因此建议用面板模式计算。当然也可以根据不同存储模式，选择不同的计算模式。
 
-在[章节附件8.1 日频因子全流程代码汇总](script/factorPractice/case1_daily.dos)中，模拟了 10 年 4000 只股票的数据，总数据量压缩前大约为 1 GB。代码中会展现上述教程中所涉及日频因子的最佳实践，因子包括 Alpha 1、Alpha 98 ，以及不同计算方式（面板或者SQL模式）写入单值模型、多值模型的最佳实践。
+在[章节附件8.1 日频因子全流程代码汇总](script/factorPractice/appendix_8.1_case1_daily.dos)中，模拟了 10 年 4000 只股票的数据，总数据量压缩前大约为 1 GB。代码中会展现上述教程中所涉及日频因子的最佳实践，因子包括 Alpha 1、Alpha 98 ，以及不同计算方式（面板或者SQL模式）写入单值模型、多值模型的最佳实践。
 
 
 
@@ -1022,20 +1008,20 @@ scheduleJob(jobId=`daily, jobDesc="Daily Job 1", jobFunc=bacthExeCute, scheduleT
 
 分钟频的数据，一般是从逐笔数据或快照数据合成而来。分钟频的数据相比日频的数据较大，在分区设计上建议按月VALUE分区，股票HASH的组合分区。在分钟频的数据上，一般会计算日内的收益率等因子。对于这类因子，建议使用SQL的方式以字段作为参数。很多时候，会将投研的因子，在每日收盘之后，增量做所有因子的计算，此时，也需要对于每日增量的因子做工程化管理。建议将所有此类因子用维度表做一个维护，用定时作业将这些因子批量做计算。
 
-在[章节附件8.2 分钟频因子全流程代码汇总](script/factorPractice/case2_minute.dos)中，模拟了一年4000只股票的数据，总数据量压缩前大约20GB。其中，会展现上述教程中所有涉及分钟频率的因子的最佳实践，因子包括日内收益偏度因子，factorDoubleEMA等因子，，后续将因子写入单值模型、多值模型的全过程，以及每日增量计算所有因子的工程化最佳实践。
+在[章节附件8.2 分钟频因子全流程代码汇总](script/factorPractice/appendix_8.2_case2_minute.dos)中，模拟了一年4000只股票的数据，总数据量压缩前大约20GB。其中，会展现上述教程中所有涉及分钟频率的因子的最佳实践，因子包括日内收益偏度因子，factorDoubleEMA等因子，，后续将因子写入单值模型、多值模型的全过程，以及每日增量计算所有因子的工程化最佳实践。
 
 
 ### 8.3 快照因子
 
 快照数据，一般指3s一条的多档数据。在实际生产中，往往会根据这样的数据产生实时的因子，或根据多档报价、成交量计算，或根据重要字段做计算。这一类因子，推荐使用字段名作为自定义函数的参数。除此之外，由于快照数据的多档的特殊性，普通存储会占用很大的空间，故在存储模式上，我们也推荐将多档数据存为ArrayVector的形式。如此一来，既能节省磁盘空间，又能使代码简洁，省去选取多个重复字段的困扰。
 
-在[章节附件8.3 快照因子全流程代码汇总](script/factorPractice/case3_snapshot.dos)中，模拟数据生成了20天快照数据，并将其存储为了普通快照数据和ArrayVector快照数据两种。代码中也展示了对于有状态因子flow和无状态因子权重偏度的在流批一体中的最佳实践。
+在[章节附件8.3 快照因子全流程代码汇总](script/factorPractice/appendix_8.3_case3_snapshot.dos)中，模拟数据生成了20天快照数据，并将其存储为了普通快照数据和ArrayVector快照数据两种。代码中也展示了对于有状态因子flow和无状态因子权重偏度的在流批一体中的最佳实践。
 
 ### 8.4 逐笔因子
 
 逐笔成交数据，是交易所提供的最详细的每一笔撮合成交数据。每3秒发布一次，每次提供这3秒内的所有撮合记录。涉及逐笔成交数据的因子都是高频因子，推荐调试建模阶段可以在小数据量上使用批处理计算。一旦模型定型，就可以用批处理中同样的计算代码，迁移到流计算中实时处理(这就是所谓的批流一体)，比批处理方式节省内存，同时实时性也更高，模型迭代也更快。
 
-在[章节附件8.4 逐笔因子全流程代码汇总](script/factorPractice/case4_streamTick.dos)中，会展现上述教程中所有涉及逐笔成交数据的因子计算、流计算。
+在[章节附件8.4 逐笔因子全流程代码汇总](script/factorPractice/appendix_8.4_case4_streamTick.dos)中，会展现上述教程中所有涉及逐笔成交数据的因子计算、流计算。
 
 ## 9. 总结
 用DolphinDB来进行因子的计算时，可选择面板和SQL两种方式来封装因子的核心逻辑。面板方式使用矩阵来计算因子，实现思路非常简练；而SQL方式要求投研人员使用向量化的思路进行因子开发。无论哪种方式，DolphinDB均支持批流一体的实现。DolphinDB内置了相关性和回归分析等计算工具，可分析因子的有效性，可对多因子建模。
@@ -1059,28 +1045,28 @@ scheduleJob(jobId=`daily, jobDesc="Daily Job 1", jobFunc=bacthExeCute, scheduleT
 
 [章节附件4.2 流计算doubleEma因子](script/factorPractice/appendix_4.2_streamComputationOfDoubleEmaFactor_main.dos)
 
-[章节附件4.3.1 python接口订阅流数据](script/factorPractice/zmq_and_python_external_example/appendix_4.3.1.1_python_callback_handler_subscribing_stream_main.py)
+[章节附件4.3.1 python接口订阅流数据](script/factorPractice/appendix_4.3.1_python_callback_handler_subscribing_stream_main.py)
 
-[章节附件4.3.2 通过ZMQ消息队列收取DolphinDB推送来的流数据](script/factorPractice/zmq_and_python_external_example/appendix_4.3.2.1_zmq_consuming_ddb_stream_main.py)
+[章节附件4.3.2 通过ZMQ消息队列收取DolphinDB推送来的流数据](script/factorPractice/appendix_4.3.2_zmq_consuming_ddb_stream_main.py)
 
-[章节附件4.3.3 流计算因子结果推送到外部ZMQ消息队列](script/factorPractice/appendix_4.3_streamComputationOfDoubleEmaFactorPublishingOnZMQ_main.dos)
+[章节附件4.3.3 流计算因子结果推送到外部ZMQ消息队列](script/factorPractice/appendix_4.3.3_streamComputationOfDoubleEmaFactorPublishingOnZMQ_main.dos)
 
-[章节附件5.1 因子存储模拟测试:](script/factorPractice/factor_data_simulation_script.zip)
+[章节附件5.1 因子存储模拟测试:](script/factorPractice/appendix_5.1_factorDataSimulation.zip)
 
-[章节附件5.2, 5.3 因子查询测试脚本 :](script/factorPractice/factor_query_test_script.dos)
+[章节附件5.2, 5.3 因子查询测试脚本 :](script/factorPractice/appendix_5.2_factorQueryTest.dos)
 
-[章节附件6.1 因子向量化回测](script/factorPractice/vectorisedFactorBacktest_main.dos)
+[章节附件6.1 因子向量化回测](script/factorPractice/appendix_6.1_vectorisedFactorBacktest_main.dos)
 
-[章节附件7.2 单元测试](script/factorPractice/doubleEMATest.dos)
+[章节附件7.2 单元测试](script/factorPractice/appendix_7.2_doubleEMATest.dos)
 
-[章节附件7.5.3 因子表权限控制](script/factorPractice/factor_table_data_level_controll.dos)
+[章节附件7.5.3 因子表权限控制](script/factorPractice/appendix_7.5.3_factorTableControll.dos)
 
-[章节附件8.1 日频因子全流程代码汇总](script/factorPractice/case1_daily.dos)
+[章节附件8.1 日频因子全流程代码汇总](script/factorPractice/appendix_8.1_case1_daily.dos)
 
-[章节附件8.2 分钟频因子全流程代码汇总](script/factorPractice/case2_minute.dos)
+[章节附件8.2 分钟频因子全流程代码汇总](script/factorPractice/appendix_8.2_case2_minute.dos)
 
-[章节附件8.3 快照因子全流程代码汇总](script/factorPractice/case3_snapshot.dos)
+[章节附件8.3 快照因子全流程代码汇总](script/factorPractice/appendix_8.3_case3_snapshot.dos)
 
-[章节附件8.4 逐笔因子全流程代码汇总](script/factorPractice/case4_streamTick.dos)
+[章节附件8.4 逐笔因子全流程代码汇总](script/factorPractice/appendix_8.4_case4_streamTick.dos)
 
 [所有代码附件目录](script/factorPractice)

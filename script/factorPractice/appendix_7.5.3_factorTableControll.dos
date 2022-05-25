@@ -1,0 +1,31 @@
+login(`admin, `123456);
+
+//创建表pt1 ,并简单模拟因子数据
+n=10000
+FACTOR_NAME= take(`factor1`factor2`factor3`factor4,n)
+FACTOR_VALUE=rand(10.0,n)
+t1=table(FACTOR_NAME, FACTOR_VALUE)
+
+db=database("dfs://db1", HASH,  [SYMBOL, 2]);
+pt1 = db.createPartitionedTable(t1, `factor, `FACTOR_NAME)
+pt1.append!(t1)
+
+
+//创建用户u1,我们想授予u1 只能读取因子factor1的权限
+createUser(`u1, "111111")
+//定义只取因子的函数
+def getFactor1Table(){
+    t =select * from loadTable("dfs://db1","factor") where factor_name=`factor1;
+    return t;
+}
+//将函数保存到系统中
+addFunctionView( getFactor1Table)
+//将该函数权限授予用户u1
+grant("u1", VIEW_EXEC, "getFactor1Table");
+//注意新授予的权限，用户需要重新登录才能加载
+
+
+//切换用户
+login(`u1, `111111);
+//通过函数获得factor1 因子的数据
+factor1_tab =  getFactor1Table()

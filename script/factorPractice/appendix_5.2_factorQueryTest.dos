@@ -1,0 +1,50 @@
+
+login("admin","123456")
+
+olap_min_factor=loadTable("dfs://MIN_FACTOR_OLAP",'min_factor')
+tsdb_min_factor=loadTable("dfs://MIN_FACTOR_TSDB",'min_factor')
+tsdb_wide_min_factor=loadTable("dfs://MIN_FACTOR_TSDB_WIDE",'min_factor')
+
+
+pnodeRun(clearAllCache)
+
+//查询1个因子1支股票指定时间点数据
+timer c=select * from olap_min_factor where tradetime=2020.01.01T09:25:00.000 and symbol=`sz000050 and factorcode=`f0042
+timer c=select * from tsdb_min_factor where tradetime=2020.01.01T09:25:00.000 and symbol=`sz000050 and factorcode=`f0001
+timer c= select mtime,factorname,sz000050 from tsdb_wide_min_factor where mtime=2020.01.01T09:25:00.000 ,factorname=`f0001
+
+// 查询1个因子1只股票一年分钟级数据
+timer c=select * from olap_min_factor where factorcode=`f0059 and symbol=`sz000001
+timer c=select * from tsdb_min_factor where factorcode=`f0059 and symbol=`sz003000
+timer c=select  mtime,factorname,sz003000 from tsdb_wide_min_factor where factorname=`f0059 
+
+//查询1个因子全市场股票一年分钟级数据
+timer c=select * from olap_min_factor where factorcode=`f0001
+timer c=select * from tsdb_min_factor where factorcode=`f0001
+timer c=select * from tsdb_wide_min_factor where factorname =`f0001
+
+//查询3个因子全市场股票一年分钟级数据
+timer c=select * from olap_min_factor where factorcode in ('f0001','f0002','f0003')
+timer c=select * from tsdb_min_factor where factorcode in ('f0001','f0002','f0003')
+timer c=select * from tsdb_wide_min_factor where factorname in ('f0001','f0002','f0003')
+
+//查询一只股票全部因子一年的分钟级数据
+timer c=select  * from olap_min_factor where symbol=`sz000001
+timer c=select  * from tsdb_min_factor where symbol=`sz000001
+timer c=select  mtime,factorname,sz000001 from tsdb_wide_min_factor
+
+
+//1个因子全市场股票一年分钟级面板数据
+
+timer olap_factor_year_pivot=select val from olap_min_factor where factorcode=`f0002 pivot by tradetime,symbol 
+timer tsdb_factor_year_pivot=select val from tsdb_min_factor where factorcode=`f0002 pivot by tradetime,symbol 
+timer tsdb_factor_year_wide=select * from tsdb_wide_min_factor where factorname =`f0001
+
+//3个因子全市场股票一年分钟级面板数据
+timer olap_factor_year_pivot=select val from olap_min_factor where factorcode in ('f0001','f0002','f0003') pivot by tradetime,symbol ,factorcode
+timer tsdb_factor_year_pivot=select val from tsdb_min_factor where factorcode in ('f0001','f0002','f0003') pivot by tradetime,symbol ,factorcode
+timer tsdb_factor_year_wide=select * from tsdb_wide_min_factor where factorname in ('f0001','f0002','f0003')
+
+
+
+
