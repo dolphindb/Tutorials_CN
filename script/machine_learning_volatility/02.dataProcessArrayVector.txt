@@ -43,7 +43,7 @@ tableName = "snapshot_SH_L2_TSDB_ArrayVector"
 snapshot = loadTable(dbName, tableName)
 stockList=`601318`600519`600036`600276`601166`600030`600887`600016`601328`601288`600000`600585`601398`600031`601668`600048`601888`600837`601601`601012`603259`601688`600309`601988`601211`600009`600104`600690`601818`600703`600028`601088`600050`601628`601857`601186`600547`601989`601336`600196`603993`601138`601066`601236`601319`603160`600588`601816`601658`600745
 //define function to process data with matrix operation
-defg featureEnginee(bidPrice,bidQty,offerPrice,offerQty){
+defg featureEngine(bidPrice,bidQty,offerPrice,offerQty){
 	bas = offerPrice[0]\bidPrice[0]-1
 	wap = (bidPrice[0]*offerQty[0] + offerPrice[0]*bidQty[0])\(bidQty[0]+offerQty[0])
 	di = (bidQty-offerQty)\(bidQty+offerQty)
@@ -57,7 +57,7 @@ defg featureEnginee(bidPrice,bidQty,offerPrice,offerQty){
 }
 //SQL for level2 snapshot data processing
 result = select
-		featureEnginee(BidPrice,BidOrderQty,OfferPrice,OfferOrderQty) as `BAS`DI0`DI1`DI2`DI3`DI4`DI5`DI6`DI7`DI8`DI9`Press`RV
+		featureEngine(BidPrice,BidOrderQty,OfferPrice,OfferOrderQty) as `BAS`DI0`DI1`DI2`DI3`DI4`DI5`DI6`DI7`DI8`DI9`Press`RV
 	from snapshot
 	where date(TradeTime) between 2020.01.01 : 2020.12.31, SecurityID in stockList, (time(TradeTime) between 09:30:00.000 : 11:29:59.999) || (time(TradeTime) between 13:00:00.000 : 14:56:59.999)
 	group by SecurityID, interval( TradeTime, 10m, "none" ) as TradeTime map

@@ -43,7 +43,7 @@ tableName = "snapshot_SH_L2_OLAP"
 snapshot = loadTable(dbName, tableName)
 stockList=`601318`600519`600036`600276`601166`600030`600887`600016`601328`601288`600000`600585`601398`600031`601668`600048`601888`600837`601601`601012`603259`601688`600309`601988`601211`600009`600104`600690`601818`600703`600028`601088`600050`601628`601857`601186`600547`601989`601336`600196`603993`601138`601066`601236`601319`603160`600588`601816`601658`600745
 //define function to process data with matrix operation
-defg featureEnginee(bidPrice,bidQty,offerPrice,offerQty){
+defg featureEngine(bidPrice,bidQty,offerPrice,offerQty){
 	bas = offerPrice[0]\bidPrice[0]-1
 	wap = (bidPrice[0]*offerQty[0] + offerPrice[0]*bidQty[0])\(bidQty[0]+offerQty[0])
 	di = (bidQty-offerQty)\(bidQty+offerQty)
@@ -57,7 +57,7 @@ defg featureEnginee(bidPrice,bidQty,offerPrice,offerQty){
 }
 //SQL for level2 snapshot data processing
 result = select
-		featureEnginee(
+		featureEngine(
 		matrix(BidPrice0,BidPrice1,BidPrice2,BidPrice3,BidPrice4,BidPrice5,BidPrice6,BidPrice7,BidPrice8,BidPrice9),
 		matrix(BidOrderQty0,BidOrderQty1,BidOrderQty2,BidOrderQty3,BidOrderQty4,BidOrderQty5,BidOrderQty6,BidOrderQty7,BidOrderQty8,BidOrderQty9),
 		matrix(OfferPrice0,OfferPrice1,OfferPrice2,OfferPrice3,OfferPrice4,OfferPrice5,OfferPrice6,OfferPrice7,OfferPrice8,OfferPrice9),

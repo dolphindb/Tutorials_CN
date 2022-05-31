@@ -46,7 +46,7 @@ share streamTable(100000:0 , `TradeTime`SecurityID`PredictRV`CostTime, `TIMESTAM
 go
 
 //define function to process data with matrix operation
-defg featureEnginee(bidPrice,bidQty,offerPrice,offerQty){
+defg featureEngine(bidPrice,bidQty,offerPrice,offerQty){
 	bas = offerPrice[0]\bidPrice[0]-1
 	wap = (bidPrice[0]*offerQty[0] + offerPrice[0]*bidQty[0])\(bidQty[0]+offerQty[0])
 	di = (bidQty-offerQty)\(bidQty+offerQty)
@@ -58,7 +58,7 @@ defg featureEnginee(bidPrice,bidQty,offerPrice,offerQty){
 	rv=std(log(wap)-log(prev(wap)))*sqrt(24*252*size(wap))
 	return avg(bas),avg(di[0]),avg(di[1]),avg(di[2]),avg(di[3]),avg(di[4]),avg(di[5]),avg(di[6]),avg(di[7]),avg(di[8]),avg(di[9]),avg(press),rv
 }
-metrics=<featureEnginee(
+metrics=<featureEngine(
 	matrix(BidPrice0,BidPrice1,BidPrice2,BidPrice3,BidPrice4,BidPrice5,BidPrice6,BidPrice7,BidPrice8,BidPrice9),
 	matrix(BidOrderQty0,BidOrderQty1,BidOrderQty2,BidOrderQty3,BidOrderQty4,BidOrderQty5,BidOrderQty6,BidOrderQty7,BidOrderQty8,BidOrderQty9),
 	matrix(OfferPrice0,OfferPrice1,OfferPrice2,OfferPrice3,OfferPrice4,OfferPrice5,OfferPrice6,OfferPrice7,OfferPrice8,OfferPrice9),

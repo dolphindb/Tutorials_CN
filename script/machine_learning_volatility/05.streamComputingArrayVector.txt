@@ -46,7 +46,7 @@ share streamTable(100000:0 , `TradeTime`SecurityID`PredictRV`CostTime, `TIMESTAM
 go
 
 //define function to process data with matrix operation
-defg featureEnginee(bidPrice,bidQty,offerPrice,offerQty){
+defg featureEngine(bidPrice,bidQty,offerPrice,offerQty){
 	bas = offerPrice[0]\bidPrice[0]-1
 	wap = (bidPrice[0]*offerQty[0] + offerPrice[0]*bidQty[0])\(bidQty[0]+offerQty[0])
 	di = (bidQty-offerQty)\(bidQty+offerQty)
@@ -58,7 +58,7 @@ defg featureEnginee(bidPrice,bidQty,offerPrice,offerQty){
 	rv=std(log(wap)-log(prev(wap)))*sqrt(24*252*size(wap))
 	return avg(bas),avg(di[0]),avg(di[1]),avg(di[2]),avg(di[3]),avg(di[4]),avg(di[5]),avg(di[6]),avg(di[7]),avg(di[8]),avg(di[9]),avg(press),rv
 }
-metrics=<featureEnginee(BidPrice,BidOrderQty,OfferPrice,OfferOrderQty) as `BAS`DI0`DI1`DI2`DI3`DI4`DI5`DI6`DI7`DI8`DI9`Press`RV>
+metrics=<featureEngine(BidPrice,BidOrderQty,OfferPrice,OfferOrderQty) as `BAS`DI0`DI1`DI2`DI3`DI4`DI5`DI6`DI7`DI8`DI9`Press`RV>
 //register stream computing engine
 createTimeSeriesEngine(name="aggrFeatures10min", windowSize=600000, step=60000, metrics=metrics, dummyTable=snapshotStream, outputTable=aggrFeatures10min, timeColumn=`TradeTime, useWindowStartTime=true, keyColumn=`SecurityID)
 //subscribe data
