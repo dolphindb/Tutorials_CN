@@ -4,7 +4,7 @@ Script to create database and table to store real-time data
 DolphinDB Inc.
 DolphinDB server version: 1.30.18 2022.05.09/2.00.6 2022.05.09
 Storage engine: OLAP
-Last modification time: 2022.05.12
+Last modification time: 2022.05.30
 */
 
 /**

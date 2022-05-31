@@ -3,7 +3,7 @@ createStreamTB.txt
 Script to create stream tables for publishing
 DolphinDB Inc.
 DolphinDB server version: 1.30.18 2022.05.09/2.00.6 2022.05.09
-Last modification time: 2022.05.12
+Last modification time: 2022.05.30
 */
 
 // clean up environment
@@ -41,8 +41,8 @@ undef("tradeProcessStreamTemp")
 go
 setStreamTableFilterColumn(tradeProcessStream, `SecurityID)
 //create stream table: capitalFlow
-colName = `TradeTime`SecurityID`BuySmallCount`BuySmallQty`BuySmallAmount`BuyMidCount`BuyMidQty`BuyMidAmount`BuyBigCount`BuyBigQty`BuyBigAmount`BuySuperCount`BuySuperQty`BuySuperAmount`BuySumCount`BuySumQty`BuySumAmount`SellSmallCount`SellSmallQty`SellSmallAmount`SellMidCount`SellMidQty`SellMidAmount`SellBigCount`SellBigQty`SellBigAmount`SellSuperCount`SellSuperQty`SellSuperAmount`SellSumCount`SellSumQty`SellSumAmount
-colType =  `TIMESTAMP`SYMBOL`INT`LONG`DOUBLE`INT`LONG`DOUBLE`INT`LONG`DOUBLE`INT`LONG`DOUBLE`INT`LONG`DOUBLE`INT`LONG`DOUBLE`INT`LONG`DOUBLE`INT`LONG`DOUBLE`INT`LONG`DOUBLE`INT`LONG`DOUBLE
+colName = `TradeTime`SecurityID`BuySmallAmount`BuyBigAmount`SellSmallAmount`SellBigAmount
+colType =  `TIMESTAMP`SYMBOL`DOUBLE`DOUBLE`DOUBLE`DOUBLE
 capitalFlowStreamTemp = streamTable(1000000:0, colName, colType)
 try{ enableTableShareAndPersistence(table=capitalFlowStreamTemp, tableName="capitalFlowStream", asynWrite=true, compress=true, cacheSize=1000000, retentionMinutes=1440, flushMode=0, preCache=10000) } catch(ex){ print(ex) }
 undef("capitalFlowStreamTemp")

@@ -4,7 +4,7 @@ Script to create database and table, then import history trade data
 DolphinDB Inc.
 DolphinDB server version: 1.30.18 2022.05.09/2.00.6 2022.05.09
 Storage engine: OLAP
-Last modification time: 2022.05.12
+Last modification time: 2022.05.30
 */
 
 /**
@@ -18,7 +18,6 @@ part1: create database and table to store the data
 modified location: csvDataPath, dbName, tbName
 */
 csvDataPath = "/hdd/hdd9/data/streaming_capital_flow/20200102_SH_trade.csv"
-//csvDataPath = "/hdd/hdd9/data/streaming_capital_flow/trade600000.csv"
 dbName = "dfs://trade"
 tbName = "trade"
 //login account

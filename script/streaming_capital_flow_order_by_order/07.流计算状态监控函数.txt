@@ -3,7 +3,7 @@ streamStateQuery.txt
 Script to query stream compute state
 DolphinDB Inc.
 DolphinDB server version: 1.30.18 2022.05.09/2.00.6 2022.05.09
-Last modification time: 2022.05.12
+Last modification time: 2022.05.30
 */
 
 //query register subscription information
@@ -18,5 +18,5 @@ getStreamingStat().subWorkers
 //query register stream computing engine
 getStreamEngineStat()
 
-//query register stream computing engine, the type is TimeSeriesEngine
-getStreamEngineStat().TimeSeriesEngine
+//query register stream computing engine, the type is DailyTimeSeriesEngine
+getStreamEngineStat().DailyTimeSeriesEngine

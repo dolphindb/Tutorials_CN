@@ -1,0 +1,12 @@
+/**
+replay.txt
+Script to replay history data
+DolphinDB Inc.
+DolphinDB server version: 1.30.18 2022.05.09/2.00.6 2022.05.09
+Last modification time: 2022.05.30
+*/
+
+//replay history data
+t = select * from loadTable("dfs://trade", "trade") where time(TradeTime) between 09:30:00.000 : 15:00:00.000 order by TradeTime, SecurityID
+submitJob("replay_trade", "trade",  replay{t, tradeOriginalStream, `TradeTime, `TradeTime, 100000, true, 1})
+getRecentJobs()

@@ -3,7 +3,7 @@
 DolphinDB python api version: 1.30.17.2
 python version: 3.7.8
 DolphinDB server version:1.30.18 or 2.00.5
-last modification time: 2022.05.12
+last modification time: 2022.05.30
 last modification developer: DolpinDB
 """
 import dolphindb as ddb
