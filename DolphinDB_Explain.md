@@ -14,7 +14,7 @@
       - [3.1.2 子查询](#312-子查询)
     - [3.2 where](#32-where)
     - [3.3 map](#33-map)
-      - [3.3.1 分区剪枝  (？？？此小节文字与脚本都要重新跑过，有修改？？？)](#331-分区剪枝--此小节文字与脚本都要重新跑过有修改)
+      - [3.3.1 分区剪枝](#331-分区剪枝)
       - [3.3.2 使用分区字段减少耗时](#332-使用分区字段减少耗时)
       - [3.3.3 optimize场景优化](#333-optimize场景优化)
     - [3.4 reduce](#34-reduce)
@@ -528,7 +528,7 @@ select [HINT_EXPLAIN] * from loadTable("dfs://valuedb1",`pt) where ( (06:30:00<=
 
 `map`阶段将任务分发给各个节点执行，执行计划展示了涉及的分区数、获取数据的行数、耗时、具体执行的SQL等信息。若SQL语句进行了优化，`map`部分会包含`optimize`部分，或者`map`部分被`optimize`部分取代。
 
-#### 3.3.1 分区剪枝  (？？？此小节文字与脚本都要重新跑过，有修改？？？)
+#### 3.3.1 分区剪枝
 
 对于分布式查询，我们可以通过观察`map`的`partitions`来检查SQL涉及的分区数量是否与预期涉及的分区数量一致。如果执行计划中分区的数量与总分区数量一致，表示该SQL语句没有触发分区剪枝，遍历了所有的分区，此时参考用户手册关于[分区剪枝](https://www.dolphindb.cn/cn/help/200/DatabaseandDistributedComputing/DatabaseOperations/Queries.html?highlight=%E5%89%AA%E6%9E%9D)的部分，可以对SQL语句进行优化。
 
