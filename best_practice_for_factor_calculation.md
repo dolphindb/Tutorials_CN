@@ -67,7 +67,7 @@ DolphinDB 自带的数据回放和流式增量计算引擎可以方便地解决�
 本文基于国内 A 股市场各个频率的数据来演示 DolphinDB 计算和规划因子库存储的方案。根据批量因子计算、实时因子计算、多因子建模、因子库存储规划、因子计算工程化等各个场景的实操演练，以及针对不同方案的对比分析，本文总结出了在 DolphinDB 中进行因子计算的最佳实践。
 
 ## 2. 测试数据集
-本文的因子计算基于三类国内 A 股行情数据集：逐笔数据、快照数据和 K 线数据（分钟 K 线和日 K 线）。快照数据以两种形式存储：（1）各挡数据分别存储为一列；（2）用 [array vector](https://www.dolphindb.cn/cn/help/200/DataTypesandStructures/DataForms/Vector/arrayVector.html) 将所有档位的数据存储为一列。
+本文的因子计算基于三类国内 A 股行情数据集：逐笔数据、快照数据和 K 线数据（分钟 K 线和日 K 线）。快照数据以两种形式存储：（1）各档数据分别存储为一列；（2）用 [array vector](https://www.dolphindb.cn/cn/help/200/DataTypesandStructures/DataForms/Vector/arrayVector.html) 将所有档位的数据存储为一列。
 
 | 数据集|简称|代码样例中的分区数据库路径|代码样例中的表名|分区机制|
 | :-----| :-----| ----: | ----: |----: |
