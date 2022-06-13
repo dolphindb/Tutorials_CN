@@ -68,7 +68,7 @@
     - [JavaScript API使用教程](../../../api-javascript/blob/master/README.md)
     - [redash连接DolphinDB数据源的教程](data_interface_for_redash.md)
     - [DolphinDB整合前端chart组件展示数据教程](web_chart_integration.md)
-    - [Grafana连接DolphinDB数据源](../../../grafana-datasource/blob/master/README_CN.md)
+    - [Grafana连接DolphinDB数据源](../../../grafana-datasource/blob/master/README.zh.md)
     - [帆软报表软件连接DolphinDB数据源](FineReport_to_dolphindb.md)
     - [API交互协议](api_protocol.md)
 
@@ -100,6 +100,7 @@
 
 - 模块
     - [技术分析(Technical Analysis)指标库](ta.md) 
+    - [mytt (My麦语言 T通达信 T同花顺)指标库](../../../DolphinDBModules/blob/master/mytt/README.md)
 - 应用场景示例
     - [DolphinDB在工业物联网的应用](iot_demo.md)
     - [加密货币逐笔交易数据回放](../../../applications/blob/master/cryptocurr_replay/README.md)
