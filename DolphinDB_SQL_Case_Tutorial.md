@@ -921,8 +921,7 @@ t = table(take(`id1`id2`id3, N) as id,
 timePeriod = 2021.01.01T00:00:00.000 : 2021.01.01T01:00:00.000
 timer result = select sum(rowSum) as v from (
     		   select rowSum(ffill(avg(value))) from t 
-    		   where id in `id1`id2`id3, time 
-    		   between timePeriod 
+    		   where id in `id1`id2`id3, time between timePeriod 
     		   pivot by bar(time, 60000) as minute, id) 
     		   group by interval(minute, 1m, "prev") as minute
 
