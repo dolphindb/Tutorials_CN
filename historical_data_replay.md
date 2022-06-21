@@ -154,7 +154,7 @@ weights[`GOOG] = 0.5
 ```
 setStreamTableFilterColumn(outQuotes, `symbol)
 outputTable = table(1:0, `time`etf, [TIMESTAMP,DOUBLE])
-tradesCrossAggregator=createCrossSectionalAggregator("etfvalue", <[etfVal{weights}(symbol, ofr)]>, quotes, outputTable, `symbol, `perBatch)
+tradesCrossAggregator=createCrossSectionalAggregator("etfvalue", <[etfVal{weights}(symbol, ofr)]>, outQuotes, outputTable, `symbol, `perBatch)
 subscribeTable(tableName="outQuotes", actionName="tradesCrossAggregator", offset=-1, handler=append!{tradesCrossAggregator}, msgAsTable=true, filter=`AAPL`IBM`MSFT`NTES`AMZN`GOOG) 
 ```
 
