@@ -1,0 +1,40 @@
+login(`admin,`123456)
+//data preparation
+//swap_rate，IR came from China Foreign Exchange Trade System on December 14
+swap_rate = table(take(2021.12.14,19) as Date, take(16:30m, 19) as timeminute, take(`USD.CNY,19) as currencyPair, `ON`TN`SN`1W`2W`3W`1M`2M`3M`4M`5M`6M`9M`1Y`18M`2Y`3Y`4Y`5Y as termToMaturity, 3.95 3.92 3.91 27.5 54.9 133 182.5 333.5 453.5 594.5 721 848 1227 1597 2169.04 2750 3705 4750 5750 as swapRate_Pips,  6.3617 6.3621 6.3629 6.3653 6.368 6.3758 6.3808 6.3959 6.4079 6.422 6.4346 6.4473 6.482 6.5222 6.5794 6.6375 6.733 6.8375 6.9375 as exchangeRate, 2021.12.15 2021.12.16 2021.12.17 2021.12.23 2021.12.30 2022.01.06 2022.01.18 2022.02.16 2022.03.16 2022.04.18 2022.05.16 2022.06.16 2022.09.16 2022.12.16 2023.06.16 2023.12.18 2024.12.16 2025.12.16 2026.12.16 as maturityDate)
+
+IR_swap = table(`6M`9M`1Y`2Y`3Y`4Y`5Y`7Y`10Y as Maturity, 2.4695 2.4700 2.4975 2.6259 2.7732 2.9154 3.0675 3.2011 3.3800 as buying_rate, 2.5048 2.5000 2.5338 2.6863 2.8180 2.9618 3.0838 3.2714 3.4333 as average_rate,  2.5402 2.5300 2.5700 2.7466 2.8629 3.0082 3.1000 3.3417 3.4865 as selling_rate)
+
+//contract data Simulation: (n stands for the number of contracts)
+def contractSimulate(n){
+	contract_no = 1..n
+	contract_date = 2021.08.01+rand(1..60,n)
+	trade_date = contract_date+1
+	maturity_date =temporalAdd(contract_date,1y)
+	buy_sell =take(`sell,n)
+	period = take(`1Y,n)
+	near_leg_currency = take(`USD,n)
+	near_leg_amount = take(10000000,n)
+	near_leg_spot_rate =6+ norm(0.5,0.2,n)
+	far_leg_currency = take(`USD,n)
+	far_leg_spot_rate = 6.1+ norm(0.5,0.2,n)
+	return table(contract_no, contract_date, trade_date, maturity_date, buy_sell, period, near_leg_currency, near_leg_amount, near_leg_spot_rate, far_leg_currency, far_leg_spot_rate)
+}
+
+n=1000000
+fx_contract = contractSimulate(n)
+
+//caluation logic for optimal implementation
+def valuationSQL(exchangeRate,maturity_date, maturityDate, next_maturityDate, next_exchangeRate, far_leg_spot_rate, selling_rate, next_selling_rate,today, near_leg_amount){
+	return (exchangeRate + (maturity_date - maturityDate)\ (next_maturityDate-maturityDate) * (next_exchangeRate - exchangeRate) - far_leg_spot_rate) * exp(-(selling_rate +  (maturity_date - maturityDate)\ (next_maturityDate-maturityDate) * (next_selling_rate - selling_rate))\100 * (maturity_date-today)\365) * near_leg_amount
+}
+
+//sql  //461.619 ms
+timer{
+	today = 2021.12.14
+	tmp = select * from ej(swap_rate,IR_swap,`termToMaturity, `Maturity) where Date = today
+	res_aj=aj(fx_contract,tmp, `maturity_date, `maturityDate)
+	res_wj=wj(res_aj,tmp, 0d:366d,<[first(termToMaturity) as next_termToMaturity, first(exchangeRate) as next_exchangeRate, first(maturityDate) as next_maturityDate,first(buying_rate) as next_buying_rate, first(average_rate) as next_average_rate, first(selling_rate) as next_selling_rate]>, `maturity_date, `maturityDate)
+	
+	result = select contract_no,contract_date,trade_date,maturity_date,buy_sell, period, near_leg_currency, near_leg_amount, near_leg_spot_rate, far_leg_currency, far_leg_spot_rate, valuationSQL(exchangeRate,maturity_date, maturityDate, next_maturityDate, next_exchangeRate, far_leg_spot_rate, selling_rate, next_selling_rate,today, near_leg_amount) as valuation from res_wj
+}

@@ -118,6 +118,7 @@
     - [基于DolphinDB的因子计算最佳实践](best_practice_for_factor_calculation.md)
     - [SQL优化案例：深度不平衡、买卖压力指标、波动率计算](sql_performance_optimization_wap_di_rv.md)
     - [DolphinDB流计算在金融行业的应用：实时计算日累计逐单资金流](streaming_capital_flow_daily.md)
+    - [SQL优化案例：外汇掉期估值计算](FxSwapValuation.md)
 - 入门和测试
     - [DolphinDB入门：量化金融范例](quant_finance_examples.md)
     - [DolphinDB入门：物联网范例](iot_examples.md)
