@@ -103,13 +103,11 @@ def writeInDayByYear(numOfYear){
 	}
 }
 
+//1.分钟建库建表
+createMinuteDbTable("dfs://k_minute_level","k_minute")
 
-
-//1. 分钟数据建库建表，按月VALUE分区，按股票HASH 3的组合分区
-createSnapshotDbTable("dfs://snapshot_SH_L2_TSDB", "snapshot_SH_L2_TSDB")
-
-//2. 日线数据建库建表，按年VALUE分区
-createSnapshotArrayVectorDbTable("dfs://LEVEL2_Snapshot_ArrayVector", "Snap")
+//2.日频建库建表
+createDayDbTable("dfs://k_day_level","k_day")
 
 //3. 分别模拟写入数据
 writeInMinuteByMonth(12)

@@ -374,7 +374,7 @@ factors = <[TradeTime, buyTradeRatio(BuyNo, SellNo, TradeQty)]>
 demoEngine = createReactiveStateEngine(name="demo", metrics=factors, dummyTable=tickStream, outputTable=result, keyColumn="SecurityID")
 ```
 
-上述代码创建了一个名为demo的响应式状态引擎，SecurityID作为分组键，输入的消息格式同内存表tickStrea。需要计算的指标定义在factors中，其中1个是输入表中的原始字段TradeTime，另一个是我们需要计算的因子的函数表示。输出到内存表result，除了在factors中定义的指标外，输出结果还会添加分组键。请注意，自定义的因子函数跟批计算中的完全一致！创建完引擎之后，我们即可往引擎中插入几条数据，并观察计算结果。
+上述代码创建了一个名为demo的响应式状态引擎，SecurityID作为分组键，输入的消息格式同内存表tickStream。需要计算的指标定义在factors中，其中1个是输入表中的原始字段TradeTime，另一个是我们需要计算的因子的函数表示。输出到内存表result，除了在factors中定义的指标外，输出结果还会添加分组键。请注意，自定义的因子函数跟批计算中的完全一致！创建完引擎之后，我们即可往引擎中插入几条数据，并观察计算结果。
 
 ```
 insert into demoEngine values(`000155, 2020.01.01T09:30:00, 30.85, 100, 3085, 4951, 0)
