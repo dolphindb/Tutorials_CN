@@ -132,7 +132,7 @@ OOM 一般可能由以下原因导致:
   ds=sqlDS(<select * from loadTable("dfs://demo","sensor")>)
   ds.size()
   ```
-  为避免这个问题，参见本文档的[第2节下的DolphinDB按照分区进行数据检索](#2-高效使用内存) ， 更详细的说明请参考教程 [SQL 案例分区剪枝](https://github.com/dolphindb/Tutorials_CN/blob/master/DolphinDB_SQL_Case_Tutorial.md#31-分区剪枝)
+  为避免这个问题，参见本文档的[第2节下的DolphinDB按照分区进行数据检索](#2-高效使用内存) ， 更详细的说明请参考教程 [SQL 案例分区剪枝](../编程语言/DolphinDB_SQL_Case_Tutorial.md#31-分区剪枝)
 
 - 写入缓存占用了大量内存。
 
@@ -148,7 +148,7 @@ OOM 一般可能由以下原因导致:
   ```
   getTabletsMeta("/demo/%", `sensor, true);
   ```
-  为避免这个问题， 参见[分区设计注意事项](https://github.com/dolphindb/Tutorials_CN/blob/master/database.md#4-分区设计注意事项)。
+  为避免这个问题， 参见[分区设计注意事项](../数据库/database.md#4-分区设计注意事项)。
 
 - 某个 session 持有大的变量，导致节点可用的内存很小。
 
@@ -438,7 +438,7 @@ Cache Engine 需根据系统配置和实际场景合理设置。若设置过小�
 默认情况下，OLAP 存储引擎是不开启 Redo Log 的，即写入事务不会进行缓存，直接进行刷盘。若需要缓存事务进行批量刷盘，则需要通过 chunkCacheEngineMemSize 为 OLAP 指定 Cache Engine 的容量，且指定 dataSync=1 启用 Redo Log。下图示意了开启 Cache Engine 和 Redo Log 后事务的写入流程：事务先写入 Redo Log 和 Cache Engine。达到 cache engine 的刷盘条件后，三个事务的数据将被一次性写入到DFS的数据库上。
 ![image](../images/memory_managment/cacheEngine.png?raw=true)
 
-Cache Engine 空间一般推荐设置为 maxMemSize 的1/8~1/4。chunkCacheEngineMemSize 不是一个刚性的限制，其实际内存占用可能会高于设置的值 ;  根据经验，cacheEngine 不建议设置超过 32G 以上的值， 否则会造成 Redo Log 回收慢和内存占用过高的问题; 更多设置请参阅 [Cache Engine与数据库日志](https://github.com/dolphindb/Tutorials_CN/blob/master/redoLog_cacheEngine.md)。
+Cache Engine 空间一般推荐设置为 maxMemSize 的1/8~1/4。chunkCacheEngineMemSize 不是一个刚性的限制，其实际内存占用可能会高于设置的值 ;  根据经验，cacheEngine 不建议设置超过 32G 以上的值， 否则会造成 Redo Log 回收慢和内存占用过高的问题; 更多设置请参阅 [Cache Engine与数据库日志](../数据库/redoLog_cacheEngine.md)。
 
 写入过程中，可用 `getCacheEngineMemSize()` 查看 OLAP 引擎的 Cache Engine 占用内存情况。
 

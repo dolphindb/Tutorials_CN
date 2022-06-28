@@ -87,7 +87,7 @@ loadPlugin("<PluginDir>/httpClient/bin/win64/PluginHttpClient.txt");
 
 这里使用httpClient插件中的函数httpGet(url,params,timeout,headers)。当前步骤不需要添加http请求头，只填写前面3个参数。
 
-* url只需要填写'https://qyapi.weixin.qq.com/cgi-bin/gettoken',  后面的corpid和corpsecret参数通过httpGet方法中的param参数就可以补充完整。
+* url只需要填写'https://qyapi.weixin.qq.com/cgi-bin/gettoken' , 后面的corpid和corpsecret参数通过httpGet方法中的param参数就可以补充完整。
 * param是一个键值对都是string的字典。 参数corpid的值(ID)为企业ID，corpsecret的值(SECRET)为对应应用的凭证密钥，两个值都需要以字符串的形式加入到param中。
 * timeout为超时时间，单位为毫秒，数据类型为整型。达到超时时间后`httpGet`会直接返回，无论是否收到http应答报文。因为这是一个远程网络请求，超时时间最好设置为1000毫秒或以上。
 
@@ -227,7 +227,7 @@ ERRCODE=body.errcode;
 
 > 请注意，相较于http协议的get方法，post方法的参数都是放在请求正文中的，httpPost方法的param参数是填写在http报文中的正文部分。在这里，我们需要自行补充完整url。
 
-* url需要填写'https://qyapi.weixin.qq.com/cgi-bin/appchat/create?access_token=ACCESS_TOKEN'。access_token的值(ACCESS_TOKEN)由第二个步骤获得。
+* url需要填写'https://qyapi.weixin.qq.com/cgi-bin/appchat/create?access_token=ACCESS_TOKEN' 。access_token的值(ACCESS_TOKEN)由第二个步骤获得。
 * param填写上面的json格式，每一个参数值都需要更替为实际参数。
     * name：群聊名字。
     * owner：群主id。

@@ -326,7 +326,7 @@ select code, date, moving(top_5_close,(volume, close), 20) from t context by cod
  ```
 
 在做数据分析的时候，还会经常用到窗口嵌套窗口的操作。
-举一个更复杂的例子：在做 [101 Formulaic Alphas](http://www.followingthetrend.com/?mdocs-file=3424)中98号因子计算的时候，DolphinDB可以运用窗口嵌套窗口的方法，将原本在C#中需要几百行的代码，简化成几行代码，且计算性能也有接近三个数量级的提升。
+举一个更复杂的例子：在做 [101 Formulaic Alphas](https://arxiv.org/ftp/arxiv/papers/1601/1601.00991.pdf)中98号因子计算的时候，DolphinDB可以运用窗口嵌套窗口的方法，将原本在C#中需要几百行的代码，简化成几行代码，且计算性能也有接近三个数量级的提升。
 trade表有需要可以自行模拟数据，或用sample数据[CNTRADE](../data/window_cal/CNTRADE.csv)。
 
 ```

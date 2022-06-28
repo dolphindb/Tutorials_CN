@@ -197,7 +197,7 @@ DolphinDB Notebook是DolphinDB服务器安装包自带的，基于网页的图�
 
 ### 3.1 启动
 
-DolphinDB Notebook通过是通过HTML+Javascript编写的Web前端。在single node模式下，启动DolphinDB服务器，只要在浏览器输入网址(默认为 http://localhost:8848)即可访问。在集群模式下只要在浏览器输入controller节点的网址加端口号即可访问。 
+DolphinDB Notebook通过是通过HTML+Javascript编写的Web前端。在single node模式下，启动DolphinDB服务器，只要在浏览器输入网址(默认为 http://localhost:8848 )即可访问。在集群模式下只要在浏览器输入controller节点的网址加端口号即可访问。 
 
 若无法访问Notebook，需要查看以下几个方面：
 

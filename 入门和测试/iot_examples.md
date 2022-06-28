@@ -240,7 +240,7 @@ schema=table(
 ```
 login(`admin, `123456)
 ```
-登录后使用函数[`changePwd`](https://www.dolphindb.cn/cn/help/FunctionsandCommands/CommandsReferences/changePwd.html)修改密码。更多权限管理细节，请参阅[权限管理和安全](./ACL_and_Security.md)。
+登录后使用函数[`changePwd`](https://www.dolphindb.cn/cn/help/FunctionsandCommands/CommandsReferences/changePwd.html)修改密码。更多权限管理细节，请参阅[权限管理和安全](../系统管理/ACL_and_Security.md)。
 
 - 库表创建后，可使用函数`getAllDBs()`显示当前所有数据库，使用函数[`schema`](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/s/schema.html)显示某个表或某个数据库的结构信息。例如查询上述`dfs://iot`数据库的设备分区信息可用如下代码：
 ```
@@ -364,7 +364,7 @@ DolphinDB提供了标准协议的SQL查询接口，与第三方分析可视化�
 
 安装Grafana请参考[Grafana官网教程](http://docs.grafana.org/installation/)。安装后，若本机浏览器中可以打开http://localhost:3000/ ，说明Grafana安装成功，否则请检查3000这个端口是否被防火墙屏蔽或被其他应用占用。
 
-DolphinDB为了支持使用Grafana来实时展示时序数据，提供了Grafana的dolphindb-datasource插件，并且实现了对Grafana的HTTP数据接口，可以通过类SQL的查询脚本将DolphinDB的数据表以直观的方式展示在Grafana的Dashboard上。插件的下载与安装请参阅[插件教程](../../../../grafana-datasource/blob/master/README_CN.md)。
+DolphinDB为了支持使用Grafana来实时展示时序数据，提供了Grafana的dolphindb-datasource插件，并且实现了对Grafana的HTTP数据接口，可以通过类SQL的查询脚本将DolphinDB的数据表以直观的方式展示在Grafana的Dashboard上。插件的下载与安装请参阅[插件教程](https://gitee.com/dolphindb/grafana-datasource)。
 
 #### 1.5.2 显示数据
 
@@ -1233,7 +1233,7 @@ DolphinDB支持高可用，多个元数据节点和多个数据副本之间保�
 
 ### 6.1 数据高可用测试
 
-要使用数据高可用功能，至少需要2台物理服务器部署DolphinDB集群,每台部署2个数据节点。集群部署请参考[多服务器集群部署教程](../安装和部署/multi_machine_cluster_deploy.md)。其中副本的个数在controller.cfg中配置。例如，把副本数设置为2：
+要使用数据高可用功能，至少需要2台物理服务器部署DolphinDB集群,每台部署2个数据节点。集群部署请参考[多服务器集群部署教程](../安装和部署/multi_machine_cluster_deployment.md)。其中副本的个数在controller.cfg中配置。例如，把副本数设置为2：
 ```
 dfsReplicationFactor=2
 ```

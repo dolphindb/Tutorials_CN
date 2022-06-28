@@ -169,7 +169,7 @@ select date, symbol,  ret, rank(ret, false) + 1 as rank from trades where isVali
 select date, symbol, ret from trades where isValid(ret) context by date having rank(ret, false) < 10;
 ```
 
-下面我们以一个更为复杂的实际例子演示context by子句如何高效的解决面板数据问题。一篇论文 [101 Formulaic Alphas](http://www.followingthetrend.com/?mdocs-file=3424)介绍了华尔街的顶级量化对冲基金WorldQuant所使用的101个量化Alpha因子。某基金公司用C#来计算这些因子，其中代表性的98号因子既用到了纵向时间序列数据的多个指标的嵌套，又用到了横向截面数据的排序信息，实现使用了几百行代码。使用中国股市3000多个股票10年近9百万行的历史数据，计算98号Alpha因子耗时约30分钟。而改用DolphinDB实现，如下图所示只用了4行核心代码，耗时仅2秒钟，达到了接近三个数量级的性能提升。
+下面我们以一个更为复杂的实际例子演示context by子句如何高效的解决面板数据问题。一篇论文 [101 Formulaic Alphas](https://arxiv.org/ftp/arxiv/papers/1601/1601.00991.pdf)介绍了华尔街的顶级量化对冲基金WorldQuant所使用的101个量化Alpha因子。某基金公司用C#来计算这些因子，其中代表性的98号因子既用到了纵向时间序列数据的多个指标的嵌套，又用到了横向截面数据的排序信息，实现使用了几百行代码。使用中国股市3000多个股票10年近9百万行的历史数据，计算98号Alpha因子耗时约30分钟。而改用DolphinDB实现，如下图所示只用了4行核心代码，耗时仅2秒钟，达到了接近三个数量级的性能提升。
 
 ```
 def alpha98(stock){

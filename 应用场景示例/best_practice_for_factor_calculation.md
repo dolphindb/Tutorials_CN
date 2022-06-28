@@ -360,7 +360,7 @@ DolphinDB 流计算解决方案的核心部件是流计算引擎和流数据表�
 
 #### 4.1.1 主买成交量占比因子的流式处理 <!-- omit in toc -->
 
-[第三章3.3.5](#335-逐笔数据)的逐笔数据因子的例子展示了主买成交量占比因子（buyTradeRatio）的批量实现方式。这儿我们演示如何使用响应式状态引擎（reactive state engine）来实现该因子的流式增量计算。
+[第三章3.3.5](#335-逐笔数据)的逐笔数据因子的例子展示了主买成交量占比因子（buyTradeRatio）的批量实现方式。以下代码演示如何使用响应式状态引擎（reactive state engine）来实现该因子的流式增量计算。
 
 ```
 @state
@@ -465,7 +465,7 @@ result = table(10000:0, ["TradeTime","SecurityID", "factor"], [TIMESTAMP,SYMBOL,
 metrics = <[SecurityID, alpha1Panel(close)]>
 streamEngine = streamEngineParser(name="alpha1Parser", metrics=metrics, dummyTable=inputSchema, outputTable=result, keyColumn="SecurityID", timeColumn=`tradetime, triggeringPattern='keyCount', triggeringInterval=4000)
 ```
-因子alpha1实际上包含了时间序列处理和横截面处理，需要响应式状态引擎和横截面引擎串联来处理才能完成。但这儿我们仅仅使用了streamEngineParser就创建了全部引擎，大大简化了创建过程。
+因子alpha1实际上包含了时间序列处理和横截面处理，需要响应式状态引擎和横截面引擎串联来处理才能完成。但以上代码仅仅使用了streamEngineParser就创建了全部引擎，大大简化了创建过程。
 
 
 前面三个例子展示了DolphinDB如何通过流计算引擎实现因子在生产环境中的增量计算。值得注意的是，流式计算时直接使用了投研阶段生成的核心因子代码，这很好的解决了传统金融分析面临的批流一体问题。在传统的研究框架下，用户往往需要对同一个因子计算逻辑写两套代码，一套用于在历史数据上建模、回测，另外一套专门处理盘中传入的实时数据。这是因为数据传入程序的形状(机制)不统一，又甚至是编程语言也无法统一。比如研究分析使用了 python 或者 R，在 python 或 R 的研究程序确定模型和参数后，生产交易的程序必须用 C++ 再实现这套模型，才能保证交易时的执行效率。在两套代码完成后，还要再校验它们计算出来的结果是否一致。这样的业务流程毫无疑问加重了研究员和程序员们的负担，也让基金经理们没法更快地让新交易思路迭代上线。在DolphinDB的流式计算中，实时行情订阅、行情数据收录、交易实时计算、盘后研究建模，全都用同一套代码完成，保证在历史回放和生产交易当中数据完全一致。
@@ -785,7 +785,7 @@ corrMatrix = result.corr.matrix().avg().reshape(size(distinct(day_data.factornam
 - assert语句，判断结果是否符合预期。
 - eqObj等函数，用于测试结果是否符合预期。
 
-下面通过对因子函数factorDoubleEMA的测试来展示单元测试的撰写。全部代码请点击这儿[查看](../script/factorPractice/appendix_7.2_doubleEMATest.dos)。下面的代码展示了三个测试cases，两个用于批处理，一个用于流计算处理。
+下面通过对因子函数factorDoubleEMA的测试来展示单元测试的撰写。全部代码请点击[脚本](../script/factorPractice/appendix_7.2_doubleEMATest.dos)。下面的代码展示了三个测试cases，两个用于批处理，一个用于流计算处理。
 
 ```
 @testing: case = "factorDoubleEMA_without_null"

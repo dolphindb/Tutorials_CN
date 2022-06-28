@@ -323,5 +323,5 @@ model = xgboost::train(Y, X, params, , model)
 
 | 插件名                                      | 类别    | 说明             |
 | ---------------------------------------- | ----- | -------------- |
-| [XGBoost](https://github.com/dolphindb/DolphinDBPlugin/tree/master/XGBoost) | 分类/回归 | 基于XGBoost的梯度提升 |
-| [svm](https://github.com/dolphindb/DolphinDBPlugin/tree/master/svm) | 分类/回归 | 基于libsvm的支持向量机 |
+| [XGBoost](https://github.com/dolphindb/DolphinDBPlugin/blob/master/xgboost/README_CN.md) | 分类/回归 | 基于XGBoost的梯度提升 |
+| [svm](https://github.com/dolphindb/DolphinDBPlugin/blob/master/svm/README_CN.md) | 分类/回归 | 基于libsvm的支持向量机 |

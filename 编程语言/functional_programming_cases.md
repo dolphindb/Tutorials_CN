@@ -285,7 +285,7 @@ hushen_daily_line=db.createPartitionedTable(table(100000000:0,columns1,type1),`h
 ```
 > 上面的表是按照 [日线行情](https://waditu.com/document/2?doc_id=27) 里的结构说明定义的。
 
-定义好表结构后，如需获取对应的数据，可前往 [Tushare](https://tushare.pro/document/1?doc_id=39) 平台注册账户，获取 TOKEN，然后参考 [案例脚本](.../script/getTushareDailyLine.py) 进行数据导入操作。本案例使用 DolphinDB 的 [Python API](https://gitee.com/dolphindb/api_python3/blob/master/README_CN.md) 获取数据，用户也可参考 Tushare 的说明文档的说明文档使用其它语言或库。本例使用 2008 年到 2017 年的日线行情进行说明。
+定义好表结构后，如需获取对应的数据，可前往 [Tushare](https://tushare.pro/document/1?doc_id=39) 平台注册账户，获取 TOKEN，然后参考 [案例脚本](../script/getTushareDailyLine.py) 进行数据导入操作。本案例使用 DolphinDB 的 [Python API](https://gitee.com/dolphindb/api_python3/blob/master/README_CN.md) 获取数据，用户也可参考 Tushare 的说明文档的说明文档使用其它语言或库。本例使用 2008 年到 2017 年的日线行情进行说明。
 
 在计算两两相关性时，首先使用 exec + pivot by 生成股票回报率矩阵:
 
@@ -548,7 +548,7 @@ update t set signal = moving(rangeTest, [close, downAvgPrice, upAvgPrice], 21)
 t=table(rand("d"+string(1..n),n) as ts_code, nanotimestamp(2008.01.10+1..n) as trade_date, rand(n,n) as open, rand(n,n) as high, rand(n,n) as low, rand(n,n) as close, rand(n,n) as pre_close, rand(n,n) as change, rand(n,n) as pct_change, rand(n,n) as vol, rand(n,n) as amount, rand(n,n) as downAvgPrice, rand(n,n) as upAvgPrice, rand(1 0,n) as singna)
 ```
 
-rolling 和 moving 类似，都将函数运算符应用到滑动窗口，进行窗口计算。两者也有细微区别： [`rolling`]((https://www.dolphindb.cn/cn/help/Functionalprogramming/TemplateFunctions/rolling.html?highlight=rolling)) 可以指定步长 step，moving 的步长为 1；且两者对空值的处理也不相同。详情可参考 [rolling 的空值处理](https://gitee.com/dolphindb/Tutorials_CN/blob/master/window_cal.md#52-rolling%E7%9A%84%E7%A9%BA%E5%80%BC%E5%A4%84%E7%90%86)。
+rolling 和 moving 类似，都将函数运算符应用到滑动窗口，进行窗口计算。两者也有细微区别： [`rolling`]((https://www.dolphindb.cn/cn/help/Functionalprogramming/TemplateFunctions/rolling.html?highlight=rolling)) 可以指定步长 step，moving 的步长为 1；且两者对空值的处理也不相同。详情可参考 [rolling 的空值处理](../应用场景示例/window_cal.md#52-rolling%E7%9A%84%E7%A9%BA%E5%80%BC%E5%A4%84%E7%90%86)。
 
 
 #### 3.4.2 moving(sum) 和 msum 性能差距
@@ -1000,7 +1000,7 @@ timer mr(ds, saveMinuteQuote, +)
 
 DolphinDB 的消息处理函数必须是单目函数，其唯一的参数就是当前的消息。要保存历史状态并在消息处理函数中计算历史数据，可以通过部分应用实现：对于多参数的消息处理函数，保留一个参数用于接收消息，固化其它所有的参数，用于保存历史状态。这些固化参数只对消息处理函数可见，不受其他应用的影响。
 
-历史状态可保存在内存表，字典或分区内存表中。本例将使用 DolphinDB[流计算引擎](../流计算/streaming_tutorial.md) 来处理 [报价数据](https://www.dolphindb.cn/downloads/tutorial/hfFactorsSampleData.zip) 通过字典保存历史状态并计算因子。如需通过内存表或分布式内存表保存历史状态，可以参考 [实时计算高频因子](./hf_factor_streaming.md)。
+历史状态可保存在内存表，字典或分区内存表中。本例将使用 DolphinDB[流计算引擎](../流计算/streaming_tutorial.md) 来处理 [报价数据](https://www.dolphindb.cn/downloads/tutorial/hfFactorsSampleData.zip) 通过字典保存历史状态并计算因子。如需通过内存表或分布式内存表保存历史状态，可以参考 [实时计算高频因子](../应用场景示例/hf_factor_streaming.md)。
 
 
 定义状态因子：计算当前第一档卖价 (askPrice1) 与 30 个报价前的第一档卖价的比值。

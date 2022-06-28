@@ -7,7 +7,7 @@ DolphinDB提供了一系列配置选项，方便用户进行配置，以充分�
 - 网络：maxConnections, maxConnectionPerSite, tcpNoDelay, maxFileHandles, enableHttps, maxPubConnections, maxSubConnections
 - 数据安全：dfsReplicationFactor, dataSync, dfsReplicaReliabilityLevel, dfsHAMode, streamingHAMode
 
-要熟悉系统的详细配置，首先需要了解集群搭建流程。DolphinDB集群的搭建请参考[单服务器集群部署](../安装和部署/single_machine_cluster_deploy.md)或[多服务器集群部署](./multi_machine_cluster_deploy.md)。
+要熟悉系统的详细配置，首先需要了解集群搭建流程。DolphinDB集群的搭建请参考[单服务器集群部署](../安装和部署/single_machine_cluster_deploy.md)或[多服务器集群部署](../安装和部署/multi_machine_cluster_deployment.md)。
 
 ## 1. 概述
 

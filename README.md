@@ -33,8 +33,7 @@
     - [元编程教程](编程语言/meta_programming.md)
     - [自定义聚合函数](编程语言/udaf.md)
     - [矩阵计算](编程语言/matrix.md)
-    - [日期/时间类型](编程语言/date_time.md)
-    - [DolphinDB窗口计算综述](编程语言/window_cal.md)    
+    - [日期/时间类型](编程语言/date_time.md) 
     - [DolphinDB SQL案例教程](编程语言/DolphinDB_SQL_Case_Tutorial.md)
     - [DolphinDB SQL执行计划教程](编程语言/DolphinDB_Explain.md)
 - 流计算
@@ -115,6 +114,7 @@
     - [股票行情数据导入实例](应用场景示例/stockdata_csv_import_demo.md)
     - [快照引擎](应用场景示例/snapshot_engine.md)
     - [节点启动时的流计算自动订阅教程](应用场景示例/streaming_auto_sub.md)
+    - [DolphinDB窗口计算综述](应用场景示例/window_cal.md)   
     - [DolphinDB机器学习在金融行业的应用：实时实际波动率预测](应用场景示例/machine_learning_volatility.md)
     - [DolphinDB流计算在金融行业的应用：实时计算分钟资金流](应用场景示例/streaming_capital_flow_order_by_order.md)
     - [基于DolphinDB的因子计算最佳实践](应用场景示例/best_practice_for_factor_calculation.md)
