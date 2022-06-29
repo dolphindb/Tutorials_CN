@@ -1,8 +1,8 @@
 ## DolphinDB 教程
 
-### 安装和部署
-    #### [安装使用指南](安装和部署/dolphindb_user_guide.md)
-    #### [单节点部署](安装和部署/standalone_server.md)
+- 安装和部署
+    - [安装使用指南](安装和部署/dolphindb_user_guide.md)
+    - [单节点部署](安装和部署/standalone_server.md)
     - [单节点部署(嵌入式ARM版本)](安装和部署/ARM_standalone_deploy.md)
     - [DolphinDB 单节点基本操作入门教程](安装和部署/Single_Node_Tutorial.md)
     - [单服务器集群部署](安装和部署/single_machine_cluster_deploy.md)
@@ -14,9 +14,9 @@
     - [如何扩展集群节点和存储](安装和部署/scale_out_cluster.md)
     - [DolphinDB客户端软件教程](安装和部署/client_tool_tutorial.md)
     - [DolphinDB技术支持攻略](安装和部署/dolphindb_support.md)
-### 数据库
-    #### [分区数据库设计和操作](数据库/database.md)
-    #### [数据导入教程](数据库/import_data.md)
+- 数据库
+    - [分区数据库设计和操作](数据库/database.md)
+    - [数据导入教程](数据库/import_data.md)
     - [数据备份恢复教程](数据库/restore-backup.md)
     - [动态增加字段和计算指标](数据库/add_column.md)
     - [内存表数据加载与操作](数据库/partitioned_in_memory_table.md)
