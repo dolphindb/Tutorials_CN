@@ -245,7 +245,7 @@ select count(*) from trades
 subscribeTable(server="", tableName="trades", actionName="adengine",offset=ofst+1, handler=appendMsg{adengine}, msgAsTable=true, handlerNeedMsgId=true) 
 ```
 
-## 6. createAnomalyEngine函数介绍
+## 6. createAnomalyDetectionEngine函数介绍
 
 **语法**
 ```
