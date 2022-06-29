@@ -82,7 +82,7 @@
     - [HBase](../../../DolphinDBPlugin/blob/master/hbase/README.md)
     - [HDF5](../../../DolphinDBPlugin/blob/master/hdf5/README_CN.md)
     - [HDFS](../../../DolphinDBPlugin/blob/master/hdfs/README.md)
-    - [HttpClient](send_messages_external_systems.md)
+    - [HttpClient](插件/send_messages_external_systems.md)
     - [Kafka](../../../DolphinDBPlugin/blob/master/kafka/README.md)
     - [Matching Engine](../../../DolphinDBPlugin/blob/master/MatchingEngine/README.md)
     - [Matlab](../../../DolphinDBPlugin/blob/master/mat/README.md)
