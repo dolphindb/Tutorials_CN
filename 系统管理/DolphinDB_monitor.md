@@ -24,30 +24,30 @@ DolphinDB为需要监控的服务产生相应的metrics（指标），Prometheus
 
 |指标|	类型|	含义|
 |----|----|----|
-|cumMsgLatency|	Gauge |累计消息延时|
-|lastMsgLatency | Gauge |前一消息延时|
-|lastMinuteNetworkRecv |	Gauge |前一分钟网络接收字节数	|
-|maxLast10QueryTime  | Gauge |前10个完成的查询执行所耗费时间的最大值	|
-|lastMinuteNetworkSend| Gauge |前一分钟网络发送字节数|
-|diskWriteRate| Gauge |磁盘写速率|
-|networkSendRate| Gauge |网络发送速率|
-|memoryUsed| Gauge |	节点使用的内存|
-|jobLoad| Gauge |作业负载|
-|medLast10QueryTime  | Gauge |前10个完成的查询执行所耗费时间的中间值|
-|cpuUsage  | Gauge |CPU使用率|
-|memoryAlloc   | Gauge |节点中DolphinDB当前内存池的容量|
-|medLast100QueryTime  | Gauge |前100个完成的查询执行所耗费时间的中间值|
-|avgLoad |	Gauge |平均负载|
-|runningJobs  | Gauge |正在执行中的作业和任务数|
-|maxLast100QueryTime |	Gauge |前100个完成的查询执行所耗费时间的最大值|
-|networkRecvRate  | Gauge |网络接收速率|
-|maxRunningQueryTime | Gauge |当前正在执行的查询的耗费时间的最大值|
-|diskCapacity| Gauge |磁盘容量|
-|queuedJobs| Gauge |队列中的作业和任务数|
-|diskFreeSpace| Gauge |磁盘剩余空间|
-|diskReadRate| Gauge |磁盘读速率|
-|lastMinuteWriteVolume| Gauge |前一分钟写磁盘容量|
-|lastMinuteReadVolume| Gauge |前一分钟读磁盘容量|
+|cpuUsage  | Gauge |CPU使用率（单位：无）|
+|memoryUsed| Gauge |	节点使用的内存（单位：字节）|
+|memoryAlloc   | Gauge |节点中DolphinDB当前内存池的容量（单位：字节）|
+|diskCapacity| Gauge |磁盘容量（单位：字节）|
+|diskFreeSpace| Gauge |磁盘剩余空间（单位：字节）|
+|lastMinuteWriteVolume| Gauge |前一分钟写磁盘容量(单位：字节)|
+|lastMinuteReadVolume| Gauge |前一分钟读磁盘容量（单位：字节）|
+|lastMinuteNetworkRecv |	Gauge |前一分钟网络接收字节数（单位：字节）	|
+|lastMinuteNetworkSend| Gauge |前一分钟网络发送字节数（单位：字节）|
+|diskReadRate| Gauge |磁盘读速率（单位：字节/秒）|
+|diskWriteRate| Gauge |磁盘写速率（单位：字节/秒）|
+|networkSendRate| Gauge |网络发送速率（单位：字节/秒）|
+|networkRecvRate  | Gauge |网络接收速率（单位：字节/秒）|
+|cumMsgLatency|	Gauge |累计消息延时（单位：毫秒）|
+|lastMsgLatency | Gauge |前一消息延时（单位：毫秒）|
+|maxLast10QueryTime  | Gauge |前10个完成的查询执行所耗费时间的最大值（单位：毫秒） |
+|medLast10QueryTime  | Gauge |前10个完成的查询执行所耗费时间的中间值（单位：毫秒） |
+|medLast100QueryTime  | Gauge |前100个完成的查询执行所耗费时间的中间值（单位：毫秒）|
+|maxLast100QueryTime |	Gauge |前100个完成的查询执行所耗费时间的最大值（单位：毫秒 |
+|maxRunningQueryTime | Gauge |当前正在执行的查询的耗费时间的最大值（单位：毫秒）|
+|avgLoad |	Gauge |平均负载（单位：无）|
+|jobLoad| Gauge |作业负载（单位：无）|
+|runningJobs  | Gauge |正在执行中的作业和任务数（单位：无）|
+|queuedJobs| Gauge |队列中的作业和任务数（单位：无）|
 
 注意这些Metrics也可以通过http://ip:port/metrics 来查看。例如，本机单节点，监听在8848端口的DolphinDB，可以通过http://127.0.0.1:8848/metrics 来查看相关数据。
 
