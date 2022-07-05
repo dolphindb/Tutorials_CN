@@ -137,7 +137,7 @@ VSCode 中的变量可以在终端、左侧资源管理器、VSCode 下方的 DO
 
 **VSCode 下方的 DOLPHINDB 面板**
 
-![image](../images/VSCode/ddbPanel.png)
+![image](images/VSCode/ddbPanel.png)
 
 选择 VSCode 下方的 DOLPHINDB 数据查看面板，可以以表格的形式展示向量、矩阵、表等数据结构。
 
