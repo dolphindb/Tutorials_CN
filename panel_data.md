@@ -644,7 +644,7 @@ withNullFill(add, s1, s2, 0);
 ```
 alpha_098 = (rank(decay_linear(correlation(((high_0+low_0+open_0+close_0)*0.25), sum(mean(volume_0,5), 26.4719), 4.58418), 7.18088)) -rank(decay_linear(ts_rank(ts_argmin(correlation(rank(open_0), rank(mean(volume_0,15)), 20.8187), 8.62571),6.95668), 8.07206)))
 ```
-为了更好的对比各个处理方式之间的差异，我们选择了一年的股票每日数据，涉及的原始数据量约为 100 万条。如需数据请参考 [模拟数据脚本](../script/panel_data/panelDataDailySimulate.dos)。
+为了更好的对比各个处理方式之间的差异，我们选择了一年的股票每日数据，涉及的原始数据量约为 100 万条。如需数据请参考 [模拟数据脚本](./script/panel_data/panelDataDailySimulate.dos)。
 
 以下是脚本测试所需要的数据, 输入数据为包含以下字段的 table：
 
@@ -662,7 +662,7 @@ alpha_098 = (rank(decay_linear(correlation(((high_0+low_0+open_0+close_0)*0.25),
 
 ### 4.1 DolphinDB SQL 与向量化函数处理面板数据的对比
 
-下例分别使用 DolphinDB SQL 语句和矩阵来实现计算 Alpha98 因子。全部 DolphinDB 脚本请参考 [DolphinDB 实现 98 号因子脚本](../script/panel_data/alpha98InDDB.dos)。
+下例分别使用 DolphinDB SQL 语句和矩阵来实现计算 Alpha98 因子。全部 DolphinDB 脚本请参考 [DolphinDB 实现 98 号因子脚本](./script/panel_data/alpha98InDDB.dos)。
 
 
 *  DolphinDB SQL 语句实现 Alpha98 因子计算的脚本如下：
@@ -713,7 +713,7 @@ timer res = alphaPanel98(vwap, open, vol)
 
 ### 4.2 DolphinDB 与 pandas 处理面板数据的性能对比：
 
-pandas 实现 alpha98 因子的部分脚本如下，完整脚本请参考 [python 中实现 98 号因子脚本](../script/panel_data/alpha98InPython.py)：
+pandas 实现 alpha98 因子的部分脚本如下，完整脚本请参考 [python 中实现 98 号因子脚本](./script/panel_data/alpha98InPython.py)：
 
 ```
 def myrank(x):
@@ -747,8 +747,8 @@ DolphinDB 内置了许多与时序数据相关的函数，并进行了优化，�
 
 ## 5. 附录
 
-[模拟数据脚本](../script/panel_data/panelDataDailySimulate.dos)
+[模拟数据脚本](./script/panel_data/panelDataDailySimulate.dos)
 
-[DolphinDB 实现 98 号因子脚本](../script/panel_data/alpha98InDDB.dos)
+[DolphinDB 实现 98 号因子脚本](./script/panel_data/alpha98InDDB.dos)
 
-[Python 实现 98 号因子脚本](../script/panel_data/alpha98InPython.py)
+[Python 实现 98 号因子脚本](./script/panel_data/alpha98InPython.py)
