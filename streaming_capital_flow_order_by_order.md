@@ -136,7 +136,7 @@ lanCluster=0
 
 > 配置参数persistenceDir需要开发人员根据实际环境配置。
 
-单节点部署教程：[单节点部署](../安装和部署/standalone_server.md)
+单节点部署教程：[单节点部署](./standalone_server.md)
 
 ### 2.3 DolphinDB client开发环境
 

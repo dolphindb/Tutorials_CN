@@ -2,7 +2,7 @@
 
 波动率是衡量价格在给定时间内上下波动的程度。在股指期货实时交易的场景中，如果能够快速、准确地预测未来一段时间的波动率，对交易者及时采取有效的风险防范和监控手段具有重要意义。本教程受 [Kaggle](https://www.kaggle.com) 的[Optiver Realized Volatility Prediction 竞赛项目](https://www.kaggle.com/competitions/optiver-realized-volatility-prediction/overview/description)的启发，完全基于 DolphinDB 时序数据库，实现了中国股市全市场高频快照数据的存储、数据预处理、模型构建和实时波动率预测的应用场景开发。
 
-本教程使用上证 50 成分股 2020 年的 level2 快照数据，构建频率为 10 分钟的高频交易特征（价差、深度不平衡指标、加权平均价格、买卖压力指标、实际波动率）作为模型输入，将未来 10 分钟的波动率作为模型输出，利用 DolphinDB 内置机器学习框架中支持分布式计算的 [adaBoostRegressor](../应用场景示例/machine_learning.md#附录dolphindb机器学习函数) 算法构建回归模型，使用根均方百分比误差（Root Mean Square Percentage Error, RMSPE）作为评价指标，最终实现了测试集 RMSPE=1.701 的拟合效果，下图展示了中信建投部分波动率预测结果。本教程示例代码必须在 **1.30.18** 及以上版本和 **2.00.6** 及以上版本的 DolphinDB server 上运行。
+本教程使用上证 50 成分股 2020 年的 level2 快照数据，构建频率为 10 分钟的高频交易特征（价差、深度不平衡指标、加权平均价格、买卖压力指标、实际波动率）作为模型输入，将未来 10 分钟的波动率作为模型输出，利用 DolphinDB 内置机器学习框架中支持分布式计算的 [adaBoostRegressor](./machine_learning.md#附录dolphindb机器学习函数) 算法构建回归模型，使用根均方百分比误差（Root Mean Square Percentage Error, RMSPE）作为评价指标，最终实现了测试集 RMSPE=1.701 的拟合效果，下图展示了中信建投部分波动率预测结果。本教程示例代码必须在 **1.30.18** 及以上版本和 **2.00.6** 及以上版本的 DolphinDB server 上运行。
 
 ![](./images/machine_learning_volatility/601066.png)
 
@@ -44,7 +44,7 @@
 
 ## 2. 数据预处理
 
-2020 年上交所所有证券的 Snapshot 数据已经提前导入至 DolphinDB 数据库中，一共约 28.75 亿条快照数据，导入方法见 [股票行情数据导入实例](../应用场景示例/stockdata_csv_import_demo.md)，一共 174 列。
+2020 年上交所所有证券的 Snapshot 数据已经提前导入至 DolphinDB 数据库中，一共约 28.75 亿条快照数据，导入方法见 [股票行情数据导入实例](./stockdata_csv_import_demo.md)，一共 174 列。
 
 ### 2.1 数据样本选择
 
@@ -151,7 +151,7 @@ TSDB 存储引擎作为 DolphinDB2.00 新特性，其下创建的分布式表的
 
 [模型构建和训练代码](./script/machine_learning_volatility/03.modelBuildingTraining.txt)
 
-[机器学习模型](../应用场景示例/machine_learning.md#%E9%99%84%E5%BD%95dolphindb%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0%E5%87%BD%E6%95%B0) 选择 [adaBoostRegressor](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/a/adaBoostRegressor.html)
+[机器学习模型](./machine_learning.md#%E9%99%84%E5%BD%95dolphindb%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0%E5%87%BD%E6%95%B0) 选择 [adaBoostRegressor](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/a/adaBoostRegressor.html)
 
 评价指标：根均方百分比误差（Root Mean Square Percentage Error, RMSPE）
 

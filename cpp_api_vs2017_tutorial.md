@@ -207,7 +207,7 @@ schema=table(1:0,`time`device_id`battery_level`battery_status`battery_temperatur
 
 运行前需要在本地部署一个 DolphinDB server，并用上述建库建表脚本先创建 `dfs://iot/readings`。
 
-在普通的台式机上，部署 [DolphinDB 单节点模式](../安装和部署/standalone_server.md)，采用社区版默认配置，导入上述数据集（1200万条记录），约耗时2分钟。
+在普通的台式机上，部署 [DolphinDB 单节点模式](./standalone_server.md)，采用社区版默认配置，导入上述数据集（1200万条记录），约耗时2分钟。
 
 在此过程中如果遇到如下问题：
 

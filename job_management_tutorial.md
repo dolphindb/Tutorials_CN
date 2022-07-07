@@ -46,7 +46,7 @@ NODE_1	guest	12c0be95-e1...	unknown	unknown	4	    2           2020.03.07T20:42:0
 - 通过[`scheduleJob`](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/s/scheduleJob.html)函数提交的[**定时作业**](https://www.dolphindb.cn/cn/help/SystemManagement/ScheduleJobs.html)。
 - 流数据作业。
 
-对于定时作业和流数据作业，可分别参阅[定时作业教程](./scheduledJob.md)和[流数据教程](../流计算/streaming_tutorial.md)了解详情。下面详细讲述批处理作业。
+对于定时作业和流数据作业，可分别参阅[定时作业教程](./scheduledJob.md)和[流数据教程](./streaming_tutorial.md)了解详情。下面详细讲述批处理作业。
 
 ### 2.1 批处理作业的创建
 
