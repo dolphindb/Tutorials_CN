@@ -1,0 +1,19 @@
+/**
+cleanEnvironment.txt
+Script to clean up environment
+DolphinDB Inc.
+DolphinDB server version: 2.00.6 2022.05.31
+Last modification time: 2022.07.07
+*/
+
+// clean up environment
+def cleanEnvironment(){
+	try { unsubscribeTable(tableName="messageStream", actionName="tradeJoinSnapshot") } catch(ex) { print(ex) }
+	try { unsubscribeTable(tableName="messageStream", actionName="sendMsgToKafka") } catch(ex) { print(ex) }
+	try { dropStreamTable(`messageStream) } catch(ex) { print(ex) }
+	try { dropStreamTable(`prevailingQuotes) } catch(ex) { print(ex) }
+	try { dropStreamEngine(`tradeJoinSnapshot) } catch(ex) { print(ex) }
+	try { dropStreamEngine(`streamFilter) } catch(ex) { print(ex) }
+	undef all
+}
+cleanEnvironment()

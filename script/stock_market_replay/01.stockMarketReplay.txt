@@ -1,0 +1,47 @@
+/**
+stcokMarketReplay.txt
+Script to replay stock market data
+DolphinDB Inc.
+DolphinDB server version: 2.00.6 2022.05.31
+Storage engine: TSDB
+Last modification time: 2022.07.07
+*/
+
+//login account
+login("admin", "123456")
+
+//create stream table: messageStream
+def createStreamTableFunc(){
+	colName = `msgTime`msgType`msgBody
+	colType = [TIMESTAMP,SYMBOL, BLOB]
+	messageTemp = streamTable(1000000:0, colName, colType)
+	enableTableShareAndPersistence(table=messageTemp, tableName="messageStream", asynWrite=true, compress=true, cacheSize=1000000, retentionMinutes=1440, flushMode=0, preCache=10000)
+	messageTemp = NULL
+}
+createStreamTableFunc()
+go
+
+//replay history data
+def replayStockMarketData(){
+	timeRS = cutPoints(09:15:00.000..15:00:00.000, 100)
+	orderDS = replayDS(sqlObj=<select * from loadTable("dfs://order", "order") where Date = 2020.12.31>, dateColumn=`Date, timeColumn=`Time, timeRepartitionSchema=timeRS)
+	tradeDS = replayDS(sqlObj=<select * from loadTable("dfs://trade", "trade") where Date = 2020.12.31>, dateColumn=`Date, timeColumn=`Time, timeRepartitionSchema=timeRS)
+	snapshotDS = replayDS(sqlObj=<select * from loadTable("dfs://snapshot", "snapshot") where Date =2020.12.31>, dateColumn=`Date, timeColumn=`Time, timeRepartitionSchema=timeRS)
+	inputDict = dict(["order", "trade", "snapshot"], [orderDS, tradeDS, snapshotDS])
+	
+	submitJob("replay", "replay stock market", replay, inputDict, messageStream, `Date, `Time, , , 3)
+}
+replayStockMarketData()
+
+getRecentJobs()
+
+////load text and replay memory table
+//def loadTextAndReplay(){
+//	orderTable= loadText("/yourDataPath/replayData/order.csv")
+//	tradeTable = loadText("/yourDataPath/replayData/trade.csv")
+//	snapshotTable = loadText("/yourDataPath/replayData/snapshot.csv")
+//	inputDict = dict(["order", "trade", "snapshot"], [orderTable, tradeTable, snapshotTable])
+//	
+//	submitJob("replay", "replay memory table", replay, inputDict, messageStream, `Date, `Time, , , 1)
+//}
+//loadCSVAndReplay()
