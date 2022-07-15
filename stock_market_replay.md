@@ -20,7 +20,7 @@ tradeDS = replayDS(sqlObj=<select * from loadTable("dfs://trade", "trade") where
 replay(inputTables=tradeDS, outputTables=tradeStream, dateColumn=`Date, timeColumn=`Time, replayRate=10000, absoluteRate=true)
 ```
 
-以上脚本将数据库 "dfs://trade" 中的 "trade" 表中 2020 年 12 月 31 日的数据以每秒 1 万条的速度注入目标表 tradeStream 中。回放过程实际上首先会将输入数据按时间排序，再将排序后的数据一批一批地写入目标表，每批的大小取决于回放速度，一批的大小最小为 1s 内的数据。更多关于 replay、replayDS 函数的介绍可以参考 [DolphinDB 历史数据回放教程](https://gitee.com/dolphindb/Tutorials_CN/blob/master/historical_data_replay.md)。
+以上脚本将数据库 "dfs://trade" 中的 "trade" 表中 2020 年 12 月 31 日的数据以每秒 1 万条的速度注入目标表 tradeStream 中。更多关于 replay、replayDS 函数的介绍可以参考 [DolphinDB 历史数据回放教程](https://gitee.com/dolphindb/Tutorials_CN/blob/master/historical_data_replay.md)、[replay用户手册](https://www.dolphindb.cn/cn/help/200/FunctionsandCommands/FunctionReferences/r/replay.html?highlight=replay)、[replayDS用户手册](https://www.dolphindb.cn/cn/help/200/FunctionsandCommands/FunctionReferences/r/replayDS.html?highlight=replayds)。
 
 但是，单表回放并不能满足所有的回放要求。因为在实践中，一个领域问题往往需要多个不同类型的消息协作，例如金融领域的行情数据包括逐笔委托、逐笔成交、快照等，为了更好地模拟实际交易中的实时数据流，通常需要将以上三类数据同时进行回放，这时便提出了多表回放的需求。
 
@@ -39,7 +39,7 @@ snapshotDS = replayDS(sqlObj=<select * from loadTable("dfs://snapshot", "snapsho
 replay(inputTables=[orderDS, tradeDS, snapshotDS], outputTables=[orderStream, tradeStream, snapshotStream], dateColumn=`Date, timeColumn=`Time, replayRate=10000, absoluteRate=true)
 ```
 
-以上脚本将三个数据库表中的历史数据分别注入三个目标表中。在多对多的模式中，各表排序后的数据在单个线程中被一批一批地写入各个目标表，因此能够保证每批数据之间的先后顺序。但是考虑到一批数据最小为 1s 内的数据，如果原始数据的时间精度到毫秒级别，那么不同表的在同一秒内的两条数据写入目标表的顺序则可能和数据中的时间字段的先后关系不一致。此外下游如果由三个处理线程分别对三个目标表进行订阅与消费，也很难保证表与表之间的数据被处理的顺序关系。因此，多对多回放不能保证整体上最严格的时序。
+以上脚本将三个数据库表中的历史数据分别注入三个目标表中。在多对多的模式中，不同表的在同一秒内的两条数据写入目标表的顺序则可能和数据中的时间字段的先后关系不一致。此外下游如果由三个处理线程分别对三个目标表进行订阅与消费，也很难保证表与表之间的数据被处理的顺序关系。因此，多对多回放不能保证整体上最严格的时序。
 
 在实践中，一个领域中不同类型的消息是有先后顺序的，比如股票的逐笔成交和逐笔委托，所以在对多个数据源回放时会有保持每条数据之间的严格的先后顺序的需求，为此我们需要解决以下问题：
 
@@ -167,9 +167,9 @@ select * from loadTable("dfs://order", "order") where Date = 2020.12.31, 09:15:0
 若没有可作为数据源的数据库，也可以通过加载 csv 文件至内存中进行回放来快速体验本教程，附录中的数据文件提供了 100 支股票的某日完整行情数据，全部数据在内存中约占 700M。以下脚本需要修改 loadText 的路径为实际的 csv 文本数据存储路径。
 
 ```python
-orderDS = loadText("/yourDataPath/replayData/order.csv")
-tradeDS = loadText("/yourDataPath/replayData/trade.csv")
-snapshotDS = loadText("/yourDataPath/replayData/snapshot.csv")
+orderDS = select * from loadText("/yourDataPath/replayData/order.csv") order by Time
+tradeDS = select * from loadText("/yourDataPath/replayData/trade.csv") order by Time
+snapshotDS = select * from loadText("/yourDataPath/replayData/snapshot.csv") order by Time
 inputDict = dict(["order", "trade", "snapshot"], [orderDS, tradeDS, snapshotDS])
 
 submitJob("replay", "replay text", replay, inputDict, messageStream, `Date, `Time, , , 1)
@@ -386,7 +386,7 @@ listenport 参数为单线程客户端的订阅端口号，设置 C++ 程序所�
 - 内存：64GB
 - OS：64 位 CentOS Linux 7 (Core)
 
-**DolphinDB server 部署 **
+**DolphinDB server 部署**
 
 - server 版本：2.00.6
 - server 部署模式：单节点
@@ -416,7 +416,7 @@ lanCluster=0
 
 单节点部署教程：[单节点部署](https://gitee.com/dolphindb/Tutorials_CN/blob/master/standalone_server.md)
 
-**DolphinDB client 开发环境 **
+**DolphinDB client 开发环境**
 
 - CPU 类型：Intel(R) Core(TM) i7-7700 CPU @ 3.60GHz   3.60 GHz
 - 逻辑 CPU 总数：8
@@ -426,7 +426,7 @@ lanCluster=0
 
 DolphinDB GUI 安装教程：[GUI 教程](https://www.dolphindb.cn/cn/gui/index.html)
 
-**DolphinDB Kafka 插件安装 **
+**DolphinDB Kafka 插件安装**
 
 - Kafka 插件版本：release200
 
@@ -434,7 +434,7 @@ DolphinDB GUI 安装教程：[GUI 教程](https://www.dolphindb.cn/cn/gui/index.
 
 Kafka 插件教程：[Kafka 插件教程](https://gitee.com/dolphindb/DolphinDBPlugin/blob/master/kafka/README.md)
 
-**Kafka server 部署 **
+**Kafka server 部署**
 
 - zookeeper 版本：3.4.6
 - Kafka 版本：2.12-2.6.2
@@ -445,7 +445,7 @@ Kafka 插件教程：[Kafka 插件教程](https://gitee.com/dolphindb/DolphinDBP
 ./bin/kafka-topics.sh --create --zookeeper localhost:2181 --replication-factor 1 --partitions 4 --topic topic-message
 ```
 
-**DolphinDB C++ API 安装 **
+**DolphinDB C++ API 安装**
 
 - C++ API 版本：release200
 
@@ -459,17 +459,21 @@ C++ API 教程：[C++ API 教程](https://gitee.com/dolphindb/api-cplusplus)
 
 ## 附录
 
-[01. 股票行情回放. txt](script/stock_market_replay/01.stockMarketReplay.txt)
+[01.股票行情回放.txt](script/stock_market_replay/01.stockMarketReplay.txt)
 
-[02. 消费场景 1: 计算个股交易成本_asofJoin 实现. txt](script/stock_market_replay/02.calTradeCost_asofJoin.txt)
+[02.消费场景1：计算个股交易成本 _asofJoin 实现.txt](script/stock_market_replay/02.calTradeCost_asofJoin.txt)
 
-[03. 消费场景 1: 计算个股交易成本_lookUpJoin 实现. txt](script/stock_market_replay/03.calTradeCost_lookUpJoin.txt)
+[03.消费场景1：计算个股交易成本 _lookUpJoin 实现.txt](script/stock_market_replay/03.calTradeCost_lookUpJoin.txt)
 
-[04. 消费场景 2: 实时推送 Kafka.txt](script/stock_market_replay/04.publishToKafka.txt)
+[04.消费场景2：实时推送 Kafka.txt](script/stock_market_replay/04.publishToKafka.txt)
 
-[05. 消费场景 3:C++API 实时订阅. cpp](script/stock_market_replay/05.subscribe.cpp)
+[05.消费场景3：C++API 实时订阅.cpp](script/stock_market_replay/05.subscribe.cpp)
 
-[06. 清理环境. txt](script/stock_market_replay/06.cleanEnvironment.txt)
+[06.清理环境.txt](script/stock_market_replay/06.cleanEnvironment.txt)
 
-[样例数据](data/stock_market_replay/data.zip)
+[样例数据：order.csv](data/stock_market_replay/order.zip)
+
+[样例数据：snapshot.csv](data/stock_market_replay/snapshot.zip)
+
+[样例数据：trade.csv](data/stock_market_replay/trade.zip)
 

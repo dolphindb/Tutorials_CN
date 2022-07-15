@@ -37,9 +37,9 @@ getRecentJobs()
 
 ////load text and replay memory table
 //def loadTextAndReplay(){
-//	orderTable= loadText("/yourDataPath/replayData/order.csv")
-//	tradeTable = loadText("/yourDataPath/replayData/trade.csv")
-//	snapshotTable = loadText("/yourDataPath/replayData/snapshot.csv")
+//	orderTable= select * from loadText("/yourDataPath/replayData/order.csv") order by Time
+//	tradeTable = select * from loadText("/yourDataPath/replayData/trade.csv") order by Time
+//	snapshotTable = select * from loadText("/yourDataPath/replayData/snapshot.csv") order by Time
 //	inputDict = dict(["order", "trade", "snapshot"], [orderTable, tradeTable, snapshotTable])
 //	
 //	submitJob("replay", "replay memory table", replay, inputDict, messageStream, `Date, `Time, , , 1)
