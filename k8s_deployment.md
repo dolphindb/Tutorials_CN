@@ -13,7 +13,7 @@ Kubernetes（简称 K8S）是一个开源的容器集群管理系统，可以实
       - [2.3.1 可视化界面](#231-可视化界面)
       - [2.3.2 部署 DolphinDB 集群](#232-部署-dolphindb-集群)
     - [2.4  升级 DolphinDB 集群](#24--升级-dolphindb-集群)
-    - [2.5 销毁DolphinDB 集群](#25-销毁dolphindb-集群)
+    - [2.5 销毁 DolphinDB 集群](#25-销毁-dolphindb-集群)
     - [2.6 卸载 DolphinDB 套件](#26-卸载-dolphindb-套件)
   - [3. K8S 中配置 CoreDump](#3-k8s-中配置-coredump)
   - [4. 常见问题](#4-常见问题)
@@ -110,19 +110,17 @@ $ kubectl version
 -  已安装 [Helm](https://helm.sh/docs/intro/install/)
 -  配置 CoreDump 参考 [3. K8S 中配置 CoreDump](#3-K8S-中配置-coredump)
 
-验证是否安装成功见[2.1 创建 Kubernetes 集群](#21-创建-kubernetes-集群)，本文下面介绍部署步骤：
-
+验证是否安装成功见[2.1 创建 Kubernetes 集群](#21-创建-kubernetes-集群)，本文下面介绍部署步骤。
+<!--
 1. 部署[Local path provisioner](https://github.com/rancher/local-path-provisioner)；
+2. 部署 DolphinDB 套件。
+-->
+#### 2.2.1 部署 Local Path Provisioner
+
+Local Path Povisioner 可以在 Kubernetes 环境中作为本机路径的 CSI，使用节点的本机路径来动态分配持久化存储。本节将介绍具体实现方法。
 
 > 注意：
 > "Local path provisioner"只是提供了 storageclass ，用于创建 pvc ,如果用户使用其他类型的 sci ,则不需要部署,可以作为没有 sci 的用户的参考项
-
-
-2. 部署 DolphinDB 套件。
-
-#### 2.2.1 部署 Local Path Provisioner
-
-Local Path Povisioner 可以在 Kubernetes 环境中作为本机路径的 CSI ，使用节点的本机路径来动态分配持久化存储。本节将介绍具体实现方法。
 
 • 从 github 上下载 local-path-provisioner 安装文件：
 
@@ -211,7 +209,7 @@ TEST SUITE: None
 
 - `-ndolphindb --create-namespace`：将 DolphinDB 套件部署在名为 "dolphindb" 的 namespace 中，如果名为 "dolphindb" 的 namespace 不存在，则创建
 - `$licensePath`：DolphinDB License 的存放路径
-- `global.serviceType=NodePort, dolphindb-webserver.nodePortIP`：DolphinDB 套件在 Kubernetes 环境中提供的服务类型。ClusterIP：仅在 Kubernetes 环境内部访问；NodePort：通过主机端口可在 Kubernetes 环境内/外部访问；LoadBalancer：通过 Kubernetes 环境中的负载均衡供 Kubernetes 环境内/外部访问。示例选择的是NodePort类型,假设您需要 LoadBalancer 类型，需要修改参数。
+- `global.serviceType=NodePort, dolphindb-webserver.nodePortIP`：DolphinDB 套件在 Kubernetes 环境中提供的服务类型。ClusterIP：仅在 Kubernetes 环境内部访问；NodePort：通过主机端口可在 Kubernetes 环境内/外部访问；LoadBalancer：通过 Kubernetes 环境中的负载均衡供 Kubernetes 环境内/外部访问。<!--示例选择的是NodePort类型,假设您需要 LoadBalancer 类型，需要修改参数。-->
 - `global.version`: DolphinDB 套件版本号为[`v1.0.0`](https://hub.docker.com/r/dolphindb/dolphindb-operator/tags)。
 
 > 注意：
@@ -222,12 +220,10 @@ TEST SUITE: None
 
 | **参数**                                   | **说明**                                                     |
 | ------------------------------------------ | ------------------------------------------------------------ |
-| `global.registry`                          | 用户的镜像仓库，如设置为""，则默认从 dockerhub 拉取镜像。    |
-| `global.repository`                        | DolphinDB 的镜像仓库名称，非必要无需修改。                   |
+| `global.registry`                          | DolphinDB 镜像所在的 docker 注册服务器。默认为官方的 Docker Hub。 |
+| `global.repository`                        | DolphinDB 所在的镜像仓库名称，非必要无需修改。                   |
 | `global.storageClass`                      | DolphinDB 使用的持久化存储的存储类，不指定则使用默认存储类。 |
-| `global.serviceType`                       | DolphinDB 套件在 Kubernetes 环境中提供的服务类型。ClusterIP：仅在 Kubernetes 环境内部访问；NodePort：通过主机端口可在 Kubernetes 环境内/外部访问；LoadBalancer：通过 Kubernetes 环境中的负载均衡供 Kubernetes 环境内/外部访问。 |
 | `global.serviceAccount`                    | DolphinDB 套件的 rbac 资源名称，非必要无需修改。             |
-| `global.version`                           | DolphinDB 套件版本名称。                                     |
 | `global.allNamespace`                      | DolphinDB 是否在所有 namespace 生效。true: DolphinDB 可在部署在所有 namespace 并接受其管理；false: DolphinDB 仅在部署在当前 namespace 并接受其管理。 |
 | `dolphindb-operator.replicaCount`          | DolphinDB 套件中 dolphindb-operator 组件的副本数。           |
 | `dolphindb-operator.imageTag`              | DolphinDB 套件中 dolphindb-operator 组件的版本号，不指定时与 `global.version` 保持一致。 |
@@ -340,7 +336,7 @@ http://$nodeIP:$NodePort/dolphindb-cloud
 
 ![image-20220112171813273](./images/k8s_deployment/k8s-deployment-5.png)
 
-如图所示，控制节点的 IP 和 PORT 为 `192.168.100.10:31598`，数据节点的 IP 和 PORT 为 `192.168.100.10:31236`。
+如图所示，控制节点的 IP 和 PORT 为 `192.168.100.10:31598`，数据节点的 IP 和 PORT 为 `192.168.100.10:31236`。对于刚启动的集群，如果要连接数据节点，需要先连接 controller，通过集群管理器[开启数据节点](https://gitee.com/dolphindb/Tutorials_CN/blob/master/single_machine_cluster_deploy.md#336-%E5%90%AF%E5%8A%A8%E6%95%B0%E6%8D%AE%E8%8A%82%E7%82%B9)。
 
 > 注意：
 >
@@ -366,7 +362,7 @@ $ kubectl edit ddb -ndolphindb
 >
 > 通过 web 升级 DolphinDB 的接口正在开发中。
 
-### 2.5 销毁DolphinDB 集群
+### 2.5 销毁 DolphinDB 集群
 
 若需要销毁 Kubernetes 集群，可参考 [2.1 创建 Kubernetes 集群](#21-创建-kubernetes-集群)，具体销毁方法取决于其创建方式。本节仅介绍如何销毁 DolphindDB 集群，具体操作方法如下：
 
@@ -394,7 +390,7 @@ $ helm uninstall dolphindb-mgr-ndolphindb
 
 ## 3. K8S 中配置 CoreDump
 
-当 DolphinDB 发生 core dump 时，系统会终止当前进程并生成 core dump 文件。在 Kubernetes 环境中，需要在 DolphinDB 容器运行的宿主机上执行以下命令来启用 core dump，如需了解更多 core dump 信息，参阅[DolphinDB Crash](./how_to_handle_crash.md)中第三节。
+开启 core dump 后，当某个节点崩溃时，系统会终止当前进程并生成 core dump 文件，，以帮助技术人员分析解决问题。在 Kubernetes 环境中，需要在 DolphinDB 容器运行的宿主机上执行以下命令来启用 core dump，如需了解更多 core dump 信息，参阅[DolphinDB Crash](https://gitee.com/dolphindb/Tutorials_CN/blob/master/how_to_handle_crash.md)中第三节。
 
 ```
 echo "/data/ddb/core/core.%p"  | sudo tee /proc/sys/kernel/core_pattern
