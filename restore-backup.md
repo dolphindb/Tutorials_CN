@@ -4,9 +4,9 @@ DolphinDB database 提供了一系列函数，用于数据备份与恢复。数�
 
 ## 1. 备份
 
-DolphinDB提供了[`backup`](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/b/backup.html)函数对分布式数据库进行备份。备份是以分区为单位进行的，可对指定数据表的部分或全部分区进行备份，支持全量备份还是增量备份。
+DolphinDB提供了[`backup`](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/b/backup.html)函数对分布式数据库进行备份。备份是以分区为单位进行的，可对指定数据表的部分或全部分区进行备份，支持全量备份或增量备份。
 
-备份需要指定存放备份文件的路径backupDir与需要备份的数据（用SQL语句表示）。备份后，系统会在`<backupDir>/<dbName>/<tbName>`目录下生成元数据文件_metaData.bin和数据文件<chunkID>.bin，每个分区备份为一个数据文件。
+备份需要指定存放备份文件的路径 backupDir 与需要备份的数据（用 SQL 语句表示）。备份后，系统会在 `<backupDir>/<dbName>/<tbName>` 目录下生成元数据文件 _metaData.bin 和数据文件 <chunkID>.bin，每个分区备份为一个数据文件。
 
 
 下例说明如何备份数据库。
@@ -20,12 +20,12 @@ db2 = database("",VALUE,1..10)
 db = database("dfs://ddb",COMPO,[db1,db2])
 db.createPartitionedTable(tableSchema,"windTurbine",`insertDate`wntId)
 ```
-* 写入2020.01.01~2020.01.03三天的数据后，备份前2天的数据，代码如下，其中parallel参数表示是否进行并行备份，是DolphinDB 1.10.13/1.20.3版本新增的功能：
+* 写入2020.01.01~2020.01.03三天的数据后，备份前2天的数据，代码如下，其中 parallel 参数表示是否进行并行备份，是 DolphinDB 1.10.13/1.20.3 版本新增的功能：
 ```
 backup(backupDir="/hdd/hdd1/backup/",sqlObj=<select * from loadTable("dfs://ddb","windTurbine") where insertDate<=2020.01.02T23:59:59 >,parallel=true)
 
 ```
-执行后返回结果20，说明备份了20个分区的数据。登录服务器，用tree命令列出目录的内容如下：
+执行后返回结果20，说明备份了20个分区的数据。登录服务器，用 tree 命令列出目录的内容如下：
 ```
 [dolphindb@localhost backup]$ tree /hdd/hdd1/backup/ -L 3 -t
 /hdd/hdd1/backup/
@@ -56,14 +56,14 @@ backup(backupDir="/hdd/hdd1/backup/",sqlObj=<select * from loadTable("dfs://ddb"
 
 2 directories, 22 files
 ```
-从中可以看到，备份目录下根据数据库名和表名生成了2层子目录ddb/windTurbine，在其下还有20个分区数据文件和1个元数据文件_metaData。
+从中可以看到，备份目录下根据数据库名和表名生成了2层子目录 ddb/windTurbine，在其下还有20个分区数据文件和1个元数据文件 _metaData。
 
 * 增量备份
 ```
 backup(backupDir="/hdd/hdd1/backup/",sqlObj=<select *  from loadTable("dfs://ddb","windTurbine") >,force=false,parallel=true)
 
 ```
-执行后返回结果10，说明备份了10个分区的数据。登录服务器，用tree命令列出目录的内容如下：
+执行后返回结果10，说明备份了10个分区的数据。登录服务器，用 tree 命令列出目录的内容如下：
 ```
 [xjqian@localhost windTurbine]$ tree /hdd/hdd1/backup/ -L 3 -t
 /hdd/hdd1/backup/
@@ -105,7 +105,7 @@ backup(backupDir="/hdd/hdd1/backup/",sqlObj=<select *  from loadTable("dfs://ddb
 2 directories, 32 files
 
 ```
-可以看到数据文件比之前多了10个，恰好是2020年6月3日的完整数据。
+可以看到数据文件比之前多了10个，恰好是2020年1月3日的完整数据。
 
 * 每天备份
 
@@ -120,35 +120,13 @@ DolphinDB提供两种数据恢复的方法：
 - 使用[`migrate`](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/m/migrate.html)函数
 - 使用[`restore`](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/r/restore.html)函数
 
-`retore`函数定义如下：
-
-restore(backupDir, dbPath, tableName, partitionStr, [force=false], [outputTable])
-
-- backupDir: 字符串, 表示备份的根目录。
-- dbPath: 字符串, 分布式数据库的路径，如dfs://demo。
-- tableName: 字符串, 表示要恢复的表的名称。
-- partitionStr: 字符串，表示想要恢复的分区的路径。分区路径可以包含通配符，%表示恢复已备份的所有分区，%2019%GOOG%表示所有路径中包含2019和GOOG的备份都要恢复。
-- force: 布尔值，表示是否强制恢复。默认是为false，只有当前元数据与备份数据不一致时，才会恢复。
-- outputTable: 分布式表，该表的结构必须与要恢复的表结构一致。如果没有指定outputTable，恢复后的数据会存放到原表；如果指定了outputTable，恢复后的数据会存放到该表中，而原数据表保持不变。
-
-`migrate`函数定义如下：
-
-migrate(backupDir, [backupDBPath], [backupTableName], [newDBPath=backupDBPath], [newTableName=backupTableName])
-
-- backupDir是字符串，表示存放已备份数据的目录。
-- backupDBPath是字符串，表示已备份的数据库的名称。
-- backupTableName是字符串，表示已备份的表的名称。
-- newDBPath是字符串，表示新数据库的名称。如果没有指定，默认值为backupDBPath。
-- newTableName是字符串，表示新表的名称。如果没有指定，默认值为backupTableName。
-
-从中可以看到两者的区别：
-- `migrate`函数以表为单位恢复，可以批量恢复多个表的全部数据；而`restore`函数以分区为单位恢复，每次恢复一个表中部分或全部分区的数据。
-- 使用`migrate`函数时，用户无需创建新数据库，系统会自动创建新数据库；而`restore`函数需要用户先建库建表，而且数据库名称必须与备份的分布式数据库的名称一致。
+`migrate` 函数以表为单位恢复，可以批量恢复多个表的全部数据；而 `restore` 函数以分区为单位恢复，每次恢复一个表中部分或全部分区的数据。
+使用 `migrate` 函数时，用户无需创建新数据库，系统会自动创建新数据库；而 `restore` 函数需要用户先建库建表，而且数据库名称必须与备份的分布式数据库的名称一致。
 
 下面的例子恢复2020年1月份的数据到原表，其中备份文件是上一小节的定时作业按天生成：
 ```
 day=2020.01.01
-for(i in 1:31){
+for(i in 1..31){
 	path="/hdd/hdd1/backup/"+temporalFormat(day, "yyyyMMdd") + "/";
 	day=datetimeAdd(day,1,`d)
 	if(!exists(path)) continue;
@@ -157,7 +135,7 @@ for(i in 1:31){
 }
 ```
 
-下面的例子把2020年1月份的数据恢复到一个新的数据库 dfs://db1 和表 equip，其中先用`migrate`恢复第一天的数据，然后用`migrate`把剩余备份数据恢复到临时表，再导入equip：
+下面的例子把2020年1月份的数据恢复到一个新的数据库 dfs://db1 和表 equip，其中先用 `migrate` 恢复第一天的数据，然后用 `migrate` 把剩余备份数据恢复到临时表，再导入 equip：
 ```
 migrate("/hdd/hdd1/backup/20200101/","dfs://ddb","windTurbine","dfs://db1","equip")
 day=2020.01.02
@@ -182,13 +160,7 @@ for(i in 2:31){
 
 ### 3.1 getBackupList
 
-[`getBackupList`](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/g/getBackupList.html)函数用来查看某个分布式表的所有备份信息，返回一张表，每个分区对应一行记录。函数定义如下：
-
-getBackupList(backupDir, dbURL, tableName)
-
-- backupDir: 字符串, 表示备份的根目录。
-- dbPath: 字符串, 分布式数据库路径，如"dfs://demo"。
-- tableName: 字符串, 表示要查看的表的名称。
+[`getBackupList`](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/g/getBackupList.html)函数用来查看某个分布式表的所有备份信息，返回一张表，每个分区对应一行记录。
 
 比如对上节备份的数据，运行：
 ```
@@ -230,14 +202,7 @@ getBackupList("/hdd/hdd1/backup/", "dfs://ddb", "windTurbine")
 
 ### 3.2 getBackupMeta
 
-[`getBackupMeta`](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/g/getBackupMeta.html)函数用来查看某张表中某个分区的备份的信息，返回一个字典，包含schema，cid，path等信息。函数定义如下：
-
-getBackupMeta(backupDir, dfsPath, tableName)
-
-- backupDir: 字符串, 表示备份的根目录。
-- dfsPath: 字符串，分布式数据库路径，例如"dfs://demo"。
-- partition：字符串，表示分区信息，例如 "/20190101/GOOG"。
-- tableName: 字符串, 表示要查看的表的名称。
+[`getBackupMeta`](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/g/getBackupMeta.html)函数用来查看某张表中某个分区的备份的信息，返回一个字典，包含schema，cid，path等信息。
 
 示例如下：
 ```
@@ -261,14 +226,7 @@ cid->10441
 ```
 ### 3.3 loadBackup
 
-[`loadBackup`](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/l/loadBackup.html)函数用于加载指定分布式表中某个分区的备份数据。函数定义如下：
-
-loadBackup(backupDir, dfsPath, tableName)
-
-- backupDir: 字符串, 表示备份的根目录。
-- dfsPath: 字符串，表示分布式数据库路径，例如"dfs://demo"。
-- partition：字符串，表示分区信息，例如 "/20190101/GOOG"。
-- tableName: 字符串, 表示要查看的表的名称。
+[`loadBackup`](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/l/loadBackup.html)函数用于加载指定分布式表中某个分区的备份数据。
 
 ```
 loadBackup("/hdd/hdd1/backup/","dfs://ddb","/20200103/10","windTurbine")
@@ -285,7 +243,7 @@ loadBackup("/hdd/hdd1/backup/","dfs://ddb","/20200103/10","windTurbine")
 
 ## 4. 示例
 
-下面的例子创建了一个组合分区的数据库dfs://compoDB 。
+下面的例子创建了一个组合分区的数据库 dfs://compoDB。
 
 ```
 n=1000000
@@ -302,29 +260,37 @@ pt = db.createPartitionedTable(t, `pt, `date`ID)
 pt.append!(t);
 ```
 
-备份表pt的所有数据：
+备份表 pt 的所有数据：
 ```
 backup("/home/DolphinDB/backup",<select * from loadTable("dfs://compoDB","pt")>,true);
 ```
 
-SQL元代码中可以添加where条件。例如，备份date>2017.08.10的数据。
+SQL 元代码中可以添加 where 条件。例如，备份 date>2017.08.10 的数据。
 ```
 backup("/home/DolphinDB/backup",<select * from loadTable("dfs://compoDB","pt") where date>2017.08.10>,true);
 ```
 
-查看表pt的备份信息：
+查看表 pt 的备份信息：
 ```
 getBackupList("/home/DolphinDB/backup","dfs://compoDB","pt");
 ```
 
-查看20120810/0_50分区的备份信息：
+查看 20120810/0_50 分区的备份信息：
 ```
 getBackupMeta("/home/DolphinDB/backup","dfs://compoDB","/20170810/0_50","pt");
 ```
 
-查看20120810/0_50分区的备份数据：
+加载 20120810/0_50 分区的备份数据到内存：
 ```
 loadBackup("/home/DolphinDB/backup","dfs://compoDB","/20170810/0_50","pt");
+```
+请注意，如用户使用1.30.16/2.00.4及以上版本创建数据库，可以使用以下代码在查看及加载备份数据时指定参数 partition。
+
+```
+list=getBackupList("/home/DolphinDB/backup","dfs://compoDB","pt").chunkPath;
+path=list[0][regexFind(list[0],"/20170807/0_50"):]
+getBackupMeta("/home/DolphinDB/backup","dfs://compoDB", path, "pt");
+loadBackup("/home/DolphinDB/backup","dfs://compoDB", path, "pt");
 ```
 
 把所有数据恢复到原表：
@@ -332,12 +298,12 @@ loadBackup("/home/DolphinDB/backup","dfs://compoDB","/20170810/0_50","pt");
 restore("/home/DolphinDB/backup","dfs://compoDB","pt","%",true);
 ```
 
-在数据库 dfs://compoDB 中创建一个与pt结构相同的表temp：
+在数据库 dfs://compoDB 中创建一个与pt结构相同的表 temp：
 ```
 temp=db.createPartitionedTable(t, `temp, `date`ID);
 ```
 
-把pt中2017.08.10的数据恢复到temp中：
+把 pt 中2017.08.10的数据恢复到 temp 中：
 ```
 restore("/home/DolphinDB/backup","dfs://compoDB","pt","%20170810%",true,temp);
 ```
