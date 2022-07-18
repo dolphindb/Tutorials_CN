@@ -390,7 +390,7 @@ $ helm uninstall dolphindb-mgr-ndolphindb
 
 ## 3. K8S 中配置 CoreDump
 
-开启 core dump 后，当某个节点崩溃时，系统会终止当前进程并生成 core dump 文件，，以帮助技术人员分析解决问题。在 Kubernetes 环境中，需要在 DolphinDB 容器运行的宿主机上执行以下命令来启用 core dump，如需了解更多 core dump 信息，参阅[DolphinDB Crash](https://gitee.com/dolphindb/Tutorials_CN/blob/master/how_to_handle_crash.md)中第三节。
+开启 core dump 后，当某个节点崩溃时，系统会终止当前进程并生成 core dump 文件，以帮助技术人员分析解决问题。在 Kubernetes 环境中，需要在 DolphinDB 容器运行的宿主机上执行以下命令来启用 core dump，如需了解更多 core dump 信息，参阅[DolphinDB Crash](https://gitee.com/dolphindb/Tutorials_CN/blob/master/how_to_handle_crash.md)中第三节。
 
 ```
 echo "/data/ddb/core/core.%p"  | sudo tee /proc/sys/kernel/core_pattern
