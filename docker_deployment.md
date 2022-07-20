@@ -66,7 +66,7 @@ $ docker-compose --version
 
 (2) 生成DophinDB server 镜像文件
 
-解压后修改包中Dockerbuild/DockerFile文件中的dolphindb_version参数，可以在build时更新到指定的DophinDB server版本。现行发布版本请从 [Release Notes](../release) 查询
+解压后修改包中Dockerbuild/DockerFile文件中的dolphindb_version参数，可以在build时更新到指定的DophinDB server版本。现行发布版本请从 [Release Notes](../release/README.md) 查询
 
 示例如下：
 ```
