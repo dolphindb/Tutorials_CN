@@ -7,33 +7,44 @@ DolphinDB提供以下4个函数，将文本数据导入内存或数据库：
 - [`loadTextEx`](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/l/loadTextEx.html): 将文本文件导入数据库中，包括分布式数据库，本地磁盘数据库或内存数据库。
 - [`textChunkDS`](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/t/textChunkDS.html)：将文本文件划分为多个小数据源，再通过[`mr`](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/m/mr.html)函数进行灵活的数据处理。
 
-DolphinDB的文本数据导入不仅灵活，功能丰富，而且速度非常快。DolphinDB与Clickhouse, MemSQL, Druid, Pandas等业界流行的系统相比，单线程导入的速度更快，最多可达一个数量级的优势；多线程并行导入的情况下，速度优势更加明显。
+DolphinDB的文本数据导入不仅灵活，而且速度非常快。DolphinDB与Clickhouse, MemSQL, Druid, Pandas等业界流行的系统相比，单线程导入的速度优势，最多可达一个数量级；多线程并行导入的情况下，速度优势更加明显。
 
 本教程介绍文本数据导入时的常见问题，相应的解决方案以及注意事项。
 
-- [1. 自动识别数据格式](#1-自动识别数据格式)
-- [2. 指定数据导入格式](#2-指定数据导入格式)
+- [DolphinDB文本数据加载教程](#dolphindb文本数据加载教程)
+  - [1. 自动识别数据格式](#1-自动识别数据格式)
+  - [2. 指定数据导入格式](#2-指定数据导入格式)
     - [2.1 提取文本文件的schema](#21-提取文本文件的schema)
     - [2.2 指定字段名称和类型](#22-指定字段名称和类型)
     - [2.3 指定日期和时间类型的格式](#23-指定日期和时间类型的格式)
     - [2.4 导入指定列](#24-导入指定列)
     - [2.5 跳过文本数据的前若干行](#25-跳过文本数据的前若干行)
-- [3. 并行导入数据](#3-并行导入数据)
+  - [3. 并行导入数据](#3-并行导入数据)
     - [3.1 单个文件多线程载入内存](#31-单个文件多线程载入内存)
     - [3.2 多文件并行导入](#32-多文件并行导入)
-- [4. 导入数据库前的预处理](#4-导入数据库前的预处理)
-- [5. 使用Map-Reduce自定义数据导入](#5-使用map-reduce自定义数据导入)
-- [6. 其它注意事项](#6-其它注意事项)
-    - [6.1 不同编码的数据的处理](#61-不同编码的数据的处理)
-    - [6.2 数值类型的解析](#62-数值类型的解析)
-    - [6.3 自动去除双引号](#63-自动去除双引号)
-- [附录](#附录)
+  - [4. 导入数据库前的预处理](#4-导入数据库前的预处理)
+    - [4.1 指定日期和时间数据的数据类型](#41-指定日期和时间数据的数据类型)
+      - [4.1.1 将数值类型表示的日期和时间转化为指定类型](#411-将数值类型表示的日期和时间转化为指定类型)
+      - [4.1.2 日期或时间数据类型之间转换](#412-日期或时间数据类型之间转换)
+    - [4.2 填充空值](#42-填充空值)
+  - [5. 导入数组向量类型的数据](#5-导入数组向量类型的数据)
+    - [5.1 直接导入符合条件的文本文件 （2.00.4及以上版本）](#51-直接导入符合条件的文本文件-2004及以上版本)
+    - [5.2 文本文件导入内存后，将多列合并成一列数组向量，再导入分布式数据库](#52-文本文件导入内存后将多列合并成一列数组向量再导入分布式数据库)
+    - [5.3 使用 loadTextEx 函数时指定 transform 参数，将文本文件导入分布式数据库](#53-使用-loadtextex-函数时指定-transform-参数将文本文件导入分布式数据库)
+  - [6. 使用Map-Reduce自定义数据导入](#6-使用map-reduce自定义数据导入)
+    - [6.1 将文件中的股票和期货数据存储到两个不同的数据表](#61-将文件中的股票和期货数据存储到两个不同的数据表)
+    - [6.2 快速加载大文件首尾部分数据](#62-快速加载大文件首尾部分数据)
+  - [7. 其它注意事项](#7-其它注意事项)
+    - [7.1 不同编码的数据的处理](#71-不同编码的数据的处理)
+    - [7.2 数值类型的解析](#72-数值类型的解析)
+    - [7.3 自动去除双引号](#73-自动去除双引号)
+  - [附录](#附录)
 
 ## 1. 自动识别数据格式
 
-大多数其它系统中，导入文本数据时，需要由用户指定数据的格式。为了方便用户，DolphinDB在导入数据时，能够自动识别数据格式。
+大多数其它系统中，导入文本数据时，需要由用户指定数据的格式。DolphinDB在导入数据时，能够自动识别数据格式，为用户提供了方便。
 
-自动识别数据格式包括两部分：字段名称识别和数据类型识别。如果文件的第一行没有任何一列以数字开头，那么系统认为第一行是文件头，包含了字段名称。DolphinDB会抽取少量部分数据作为样本，并自动推断各列的数据类型。因为是基于部分数据，某些列的数据类型的识别可能有误。但是对于大多数文本文件，无须手动指定各列的字段名称和数据类型，就能正确地导入到DolphinDB中。
+自动识别数据格式包括两部分：字段名称识别和数据类型识别。如果文件的第一行没有任何一列以数字开头，那么系统认为第一行是文件头，包含了字段名称。DolphinDB会抽取少量部分数据作为样本，并自动推断各列的数据类型。因为是基于部分数据，某些列的数据类型可能识别错误。但是对于大多数文本文件，无须手动指定各列的字段名称和数据类型，就能正确地导入到DolphinDB中。
 
 > 请注意：1.20.0之前的版本不支持导入INT128, UUID和IPADDR这三种数据类型。如果在csv文件中包含这三种数据类型，请确保所用版本不低于1.20.0。
 
@@ -91,7 +102,7 @@ type | 字符串，表示每列的数据类型
 format | 字符串，表示日期或时间列的格式
 col | 整型，表示要加载的列的下标。该列的值必须是升序。
 
-其中，name和type这两列是必需的，而且必须是前两列。format和col这两列是可选的，且没有先后关系的要求。
+其中，name和type这两列是必需的，而且必须是前两列。format和col这两列是可选的，且没有先后顺序的要求。
 
 例如，我们可以使用以下的数据表作为schema参数：
 
@@ -132,7 +143,7 @@ unixTime   LONG
 
 ### 2.2 指定字段名称和类型
 
-当系统自动识别的字段名称或者数据类型不符合预期或需求时，可以通过修改`extractTextSchema`生成的schema表或直接创建schema表为文本文件中的每列指定字段名称和数据类型。
+当系统自动识别的字段名称或者数据类型不符合预期时，可以通过修改`extractTextSchema`生成的schema表或直接创建schema表为文本文件中的每列指定字段名称和数据类型。
 
 例如，若导入数据的volume列被自动识别为INT类型，而需要的volume类型是LONG类型，就需要修改schema表，指定volumn列类型为LONG。
 ```
@@ -380,12 +391,10 @@ for(x in dataFilePath.cut(100/parallelLevel)){
 };
 ```
 
-> 请注意：DolphinDB的分区表不允许多个线程同时向一个分区写数据。上例中，每个文件中的分区列（id列）取值不同，因此不会造成多个线程写入同一个分区的情况。在设计分区表的并发读写时，请确保不会有多个线程同时写入同一分区。
-
 通过[`getRecentJobs`](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/g/getRecentJobs.html)函数可以取得当前本地节点上最近n个批处理作业的状态。使用select语句计算并行导入批量文件所需时间，得到在6核12超线程的CPU上耗时约1.59秒。
 
 ```
-select max(endTime) - min(startTime) from getRecentJobs() where jobId like "loadData"+string(parallelLevel)+"%";
+select max(endTime) - min(startTime) from getRecentJobs() where jobId like ("loadData"+string(parallelLevel)+"%");
 
 max_endTime_sub
 ---------------
@@ -442,7 +451,7 @@ def i2t(mutable t){
 }
 ```
 
-> 请注意：在自定义函数体内对数据进行处理时，请尽量使用本地的修改（以！结尾的函数）来提升性能。
+> 请注意：在自定义函数体内对数据进行处理时，请尽量使用本地的修改（以!结尾的函数）来提升性能。
 
 调用`loadTextEx`函数，并且指定transform参数为`i2t`函数，系统会对文本文件中的数据执行`i2t`函数，并将结果保存到数据库中。
 
@@ -503,18 +512,131 @@ transform参数可调用DolphinDB的内置函数。当内置函数要求多个�
 ```
 db=database(dbPath,VALUE,2018.01.02..2018.01.30)
 tb=db.createPartitionedTable(tb,`tb1,`date)
-tmpTB=loadTextEx(dbHandle=db,tableName=`pt,partitionColumns=`date,filename=dataFilePath,transform=nullFill!{,0});
+tmpTB=loadTextEx(dbHandle=db,tableName=`tb1,partitionColumns=`date,filename=dataFilePath,transform=nullFill!{,0});
 ```
 
-## 5. 使用Map-Reduce自定义数据导入
+## 5. 导入数组向量类型的数据
+DolphinDB 中的数组向量 (array vector) 是一种特殊的向量，用于存储可变长度的二维数组。数组向量应用于数据表时，可将数据类型相同且含义相近的多列存为一列，例如股票的多档报价数据存为一个数组向量。
+
+数据表中使用数组向量具有以下优势：
+1. 显著简化某些常用的查询和计算
+2. 若不同列中含有大量重复数据，使用数组向量存储可提高数据压缩比，提升查询速度
+
+DolphinDB 提供3种方法，以导入数组向量类型的数据：
+1. 直接导入符合条件的文本文件
+2. 将文本文件导入内存后，将多列合并成一个数组向量，再导入分布式数据库
+3. 使用 loadTextEx 函数时指定 transform 参数，将文本文件导入分布式数据库
+
+### 5.1 直接导入符合条件的文本文件 （2.00.4及以上版本）
+
+在导入文本文件时，暂不支持将多列数据合并导入 DolphinDB 数据表的一列（数组向量类型）。如需将数据导入为数组向量，需经过以下两步：
+
+1. 将文本文件的多列数据合并存储到一列中，并通过标识符进行分隔。
+2. 导入数据时，通过 loadText (ploadText) 与 loadTextEx 的 arrayDelimiter 参数指定分隔符，系统会将包含指定分隔符的列解析为数组向量。
+
+构建包含数组向量的表，并将其存入1个 csv 文件
+
+```
+bid = array(DOUBLE[], 0, 20).append!([1.4799 1.479 1.4787, 1.4796 1.479 1.4784, 1.4791 1.479 1.4784])
+ask = array(DOUBLE[], 0, 20).append!([1.4821 1.4825 1.4828, 1.4818 1.482 1.4821, 1.4814 1.4818 1.482])
+TradeDate = 2022.01.01 + 1..3
+SecurityID = rand(`APPL`AMZN`IBM, 3)
+t = table(SecurityID as `sid, TradeDate as `date, bid as `bid, ask as `ask)
+saveText(t,filename="/home/data/t.csv",delimiter=',',append=true)
+```
+
+导入数据前需要修改 schema 中对应列的类型为数组向量。
+
+```
+path = "/home/data/t.csv"
+schema=extractTextSchema(path);
+update schema set type = "DOUBLE[]" where name="bid" or name ="ask"
+```
+
+使用 loadText (ploadText) 与 loadTextEx 导入数据时，通过参数 arrayDelimiter 指定分隔符（本例中的分隔符为“,"）。
+
+```
+//用 loadText 将文本文件导入内存表
+t = loadText(path, schema=schema, arrayDelimiter=",")
+
+//用 loadTextEx 将文本文件导入分布式数据库
+//创建 TSDB 引擎下的数据库表
+db = database(directory="dfs://testTSDB", partitionType=VALUE, partitionScheme=`APPL`AMZN`IBM, engine="TSDB" )
+name = `sid`date`bid`ask
+type = ["SYMBOL","DATE","DOUBLE[]","DOUBLE[]"]
+tbTemp = table(1:0, name, type)
+db.createPartitionedTable(tbTemp, `pt, `sid, sortColumns=`date)
+pt = loadTextEx(dbHandle=db, tableName=`pt, partitionColumns=`sid, filename=path, schema=schema, arrayDelimiter=",")
+```
+
+
+### 5.2 文本文件导入内存后，将多列合并成一列数组向量，再导入分布式数据库
+
+如果不能方便地对文本文件进行修改，也可以先将数据导入内存后，将多列数据合并成一个数组向量，再导入分布式数据库。  
+下例展示如何将国内A股行情快照数据的买10档或卖10档作为1个 vector 存入单个 cell 中。
+
+建库建表及模拟数据生成语句参见[建库建表及模拟数据生成脚本](script/csvImportDemo/tsdbDatabaseTableGenerationAndDataSimulationForWritingArrayVector.dos)。
+
+在本例中，我们首先使用 loadText 函数将模拟数据导入内存，再使用 fixedLengthArrayVector 函数将买10档和卖10档的各项数据分别整合为1列，最后将处理后的数据写入数据库。
+
+```
+snapFile="/home/data/snapshot.csv"
+dbpath="dfs://LEVEL2_Snapshot_ArrayVector"
+tbName="Snap"
+
+schemas=extractTextSchema(snapFile)
+update schemas set type = `SYMBOL where name = `InstrumentStatus
+
+//使用 loadText 加载文本，耗时约1分30秒
+rawTb = loadText(snapFile,schema=schemas)
+//合并10档数据为1列，耗时约15秒
+arrayVectorTb = select SecurityID,TradeTime,PreClosePx,OpenPx,HighPx,LowPx,LastPx,TotalVolumeTrade,TotalValueTrade,InstrumentStatus,fixedLengthArrayVector(BidPrice0,BidPrice1,BidPrice2,BidPrice3,BidPrice4,BidPrice5,BidPrice6,BidPrice7,BidPrice8,BidPrice9) as BidPrice,fixedLengthArrayVector(BidOrderQty0,BidOrderQty1,BidOrderQty2,BidOrderQty3,BidOrderQty4,BidOrderQty5,BidOrderQty6,BidOrderQty7,BidOrderQty8,BidOrderQty9) as BidOrderQty,fixedLengthArrayVector(BidOrders0,BidOrders1,BidOrders2,BidOrders3,BidOrders4,BidOrders5,BidOrders6,BidOrders7,BidOrders8,BidOrders9) as BidOrders ,fixedLengthArrayVector(OfferPrice0,OfferPrice1,OfferPrice2,OfferPrice3,OfferPrice4,OfferPrice5,OfferPrice6,OfferPrice7,OfferPrice8,OfferPrice9) as OfferPrice,fixedLengthArrayVector(OfferOrderQty0,OfferOrderQty1,OfferOrderQty2,OfferOrderQty3,OfferOrderQty4,OfferOrderQty5,OfferOrderQty6,OfferOrderQty7,OfferOrderQty8,OfferOrderQty9) as OfferOrderQty,fixedLengthArrayVector(OfferOrders0,OfferOrders1,OfferOrders2,OfferOrders3,OfferOrders4,OfferOrders5,OfferOrders6,OfferOrders7,OfferOrders8,OfferOrders9) as OfferOrders,NumTrades,IOPV,TotalBidQty,TotalOfferQty,WeightedAvgBidPx,WeightedAvgOfferPx,TotalBidNumber,TotalOfferNumber,BidTradeMaxDuration,OfferTradeMaxDuration,NumBidOrders,NumOfferOrders,WithdrawBuyNumber,WithdrawBuyAmount,WithdrawBuyMoney,WithdrawSellNumber,WithdrawSellAmount,WithdrawSellMoney,ETFBuyNumber,ETFBuyAmount,ETFBuyMoney,ETFSellNumber,ETFSellAmount,ETFSellMoney from rawTb
+//载入数据库，耗时约60秒
+loadTable(dbpath, tbName).append!(arrayVectorTb)
+```
+由上述代码可以看出，数据导入到分布式数据表，共耗时约2分45秒。
+
+### 5.3 使用 loadTextEx 函数时指定 transform 参数，将文本文件导入分布式数据库
+
+使用上文第4章中提到的通过为 loadTextEx 指定 transform 参数的方式，一步到位地将数据导入分布式数据库。
+
+自定义函数`toArrayVector`，将10档数据合并为1列，重新排序列，并返回处理后的数据表。
+
+```
+def toArrayVector(mutable tmp){
+  //将10档数据合并为1列，添加到tmp表中。也可以使用update!方法添加。
+	tmp[`BidPrice]=fixedLengthArrayVector(tmp.BidPrice0,tmp.BidPrice1,tmp.BidPrice2,tmp.BidPrice3,tmp.BidPrice4,tmp.BidPrice5,tmp.BidPrice6,tmp.BidPrice7,tmp.BidPrice8,tmp.BidPrice9)
+	tmp[`BidOrderQty]=fixedLengthArrayVector(tmp.BidOrderQty0,tmp.BidOrderQty1,tmp.BidOrderQty2,tmp.BidOrderQty3,tmp.BidOrderQty4,tmp.BidOrderQty5,tmp.BidOrderQty6,tmp.BidOrderQty7,tmp.BidOrderQty8,tmp.BidOrderQty9)
+	tmp[`BidOrders]=fixedLengthArrayVector(tmp.BidOrders0,tmp.BidOrders1,tmp.BidOrders2,tmp.BidOrders3,tmp.BidOrders4,tmp.BidOrders5,tmp.BidOrders6,tmp.BidOrders7,tmp.BidOrders8,tmp.BidOrders9)
+	tmp[`OfferPrice]=fixedLengthArrayVector(tmp.OfferPrice0,tmp.OfferPrice1,tmp.OfferPrice2,tmp.OfferPrice3,tmp.OfferPrice4,tmp.OfferPrice5,tmp.OfferPrice6,tmp.OfferPrice7,tmp.OfferPrice8,tmp.OfferPrice9)
+	tmp[`OfferOrderQty]=fixedLengthArrayVector(tmp.OfferOrderQty0,tmp.OfferOrderQty1,tmp.OfferOrderQty2,tmp.OfferOrderQty3,tmp.OfferOrderQty4,tmp.OfferOrderQty5,tmp.OfferOrderQty6,tmp.OfferOrderQty7,tmp.OfferOrderQty8,tmp.OfferOrderQty9)
+	tmp[`OfferOrders]=fixedLengthArrayVector(tmp.OfferOrders0,tmp.OfferOrders1,tmp.OfferOrders2,tmp.OfferOrders3,tmp.OfferOrders4,tmp.OfferOrders5,tmp.OfferOrders6,tmp.OfferOrders7,tmp.OfferOrders8,tmp.OfferOrders9)
+  //删除合并前的列
+	tmp.dropColumns!(`BidPrice0`BidPrice1`BidPrice2`BidPrice3`BidPrice4`BidPrice5`BidPrice6`BidPrice7`BidPrice8`BidPrice9`BidOrderQty0`BidOrderQty1`BidOrderQty2`BidOrderQty3`BidOrderQty4`BidOrderQty5`BidOrderQty6`BidOrderQty7`BidOrderQty8`BidOrderQty9`BidOrders0`BidOrders1`BidOrders2`BidOrders3`BidOrders4`BidOrders5`BidOrders6`BidOrders7`BidOrders8`BidOrders9`OfferPrice0`OfferPrice1`OfferPrice2`OfferPrice3`OfferPrice4`OfferPrice5`OfferPrice6`OfferPrice7`OfferPrice8`OfferPrice9`OfferOrderQty0`OfferOrderQty1`OfferOrderQty2`OfferOrderQty3`OfferOrderQty4`OfferOrderQty5`OfferOrderQty6`OfferOrderQty7`OfferOrderQty8`OfferOrderQty9`OfferOrders0`OfferOrders1`OfferOrders2`OfferOrders3`OfferOrders4`OfferOrders5`OfferOrders6`OfferOrders7`OfferOrders8`OfferOrders9)
+  //对列重新排序
+	tmp.reorderColumns!(`SecurityID`TradeTime`PreClosePx`OpenPx`HighPx`LowPx`LastPx`TotalVolumeTrade`TotalValueTrade`InstrumentStatus`BidPrice`BidOrderQty`BidOrders`OfferPrice`OfferOrderQty`OfferOrders`NumTrades`IOPV`TotalBidQty`TotalOfferQty`WeightedAvgBidPx`WeightedAvgOfferPx`TotalBidNumber`TotalOfferNumber`BidTradeMaxDuration`OfferTradeMaxDuration`NumBidOrders`NumOfferOrders`WithdrawBuyNumber`WithdrawBuyAmount`WithdrawBuyMoney`WithdrawSellNumber`WithdrawSellAmount`WithdrawSellMoney`ETFBuyNumber`ETFBuyAmount`ETFBuyMoney`ETFSellNumber`ETFSellAmount`ETFSellMoney)
+	return tmp 
+}
+```
+
+调用 `loadTextEx` 函数，并且指定 transform 参数为 `toArrayVector` 函数，系统会对文本文件中的数据执行`toArrayVector` 函数，并将结果保存到数据库中。
+
+```
+db=database(dbpath)
+db.loadTextEx(tbName, `Tradetime`SecurityID, snapFile, schema=schemas, transform=toArrayVector)
+```
+
+数据导入分布式表耗时约1分40秒，比5.2章节的方法快了65秒。
+
+## 6. 使用Map-Reduce自定义数据导入
 
 DolphinDB支持使用Map-Reduce自定义数据导入，将数据按行进行划分，并将划分后的数据通过Map-Reduce导入到DolphinDB。
 
 可使用[`textChunkDS`](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/t/textChunkDS.html)函数将文件划分为多个小文件数据源，再通过[`mr`](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/m/mr.html)函数写入到数据库中。在调用`mr`将数据存入数据库前，用户还可进行灵活的数据处理，从而实现更复杂的导入需求。
 
-### 5.1 将文件中的股票和期货数据存储到两个不同的数据表
+### 6.1 将文件中的股票和期货数据存储到两个不同的数据表
 
-在DolphinDB中执行以下脚本，生成一个大小约为1GB的数据文件，其中包括股票数据和期货数据。
+在DolphinDB中执行以下脚本，生成一个大小约为1.6GB的数据文件，其中包括股票数据和期货数据。
 ```
 n=10000000
 dataFilePath="/home/data/chunkText.csv"
@@ -544,7 +666,7 @@ def divideImport(tb, mutable stockTB, mutable futuresTB)
 }
 ```
 
-再通过`textChunkDS`函数划分文本文件，以300MB为单位进行划分，文件被划分成了4部分。
+再通过`textChunkDS`函数划分文本文件，以300MB为单位进行划分，文件被划分成了6部分。
 ```
 ds=textChunkDS(dataFilePath,300)
 ds;
@@ -565,7 +687,7 @@ mr(ds=ds, mapFunc=divideImport{,tb1,tb2}, parallel=false);
 stock表：
 
 ```
-select top 5 * from loadTable("dfs://DolphinDBTickDatabase", `stock);
+select top 5 * from loadTable(dbPath1, `stock);
 
 type  sym  date       price1    price2     price3      price4       price5       price6       qty1 qty2 qty3 qty4 qty5 qty6
 ----- ---- ---------- --------- ---------- ----------- ------------ ------------ ------------ ---- ---- ---- ---- ---- ----
@@ -579,7 +701,7 @@ stock AMZN 2000.02.23 11.534805 106.040664 1085.913295 11461.783565 12496.932604
 futures表：
 
 ```
-select top 5 * from loadTable("dfs://DolphinDBFuturesDatabase", `futures);
+select top 5 * from loadTable(dbPath2, `futures);
 
 type    sym  date       price1    price2     price3      price4       price5       price6       qty1 qty2 qty3 qty4 qty5 ...
 ------- ---- ---------- --------- ---------- ----------- ------------ ------------ ------------ ---- ---- ---- ---- ---- ---
@@ -590,7 +712,7 @@ futures IBM  2000.01.01 10.45422  112.229537 1087.366764 10356.28124  11829.2061
 futures TSLA 2000.01.01 11.901426 106.127109 1144.022732 10465.529256 12831.721586 10621.111858 4    43   136  9858 8487 ...
 ```
 
-### 5.2 快速加载大文件首尾部分数据
+### 6.2 快速加载大文件首尾部分数据
 
 可使用`textChunkDS`将大文件划分成多个小的数据源(chunk)，然后加载首尾两个数据源。在DolphinDB中执行以下脚本生成数据文件：
 
@@ -622,9 +744,9 @@ count
 192262
 ```
 
-## 6. 其它注意事项
+## 7. 其它注意事项
 
-### 6.1 不同编码的数据的处理
+### 7.1 不同编码的数据的处理
 
 由于DolphinDB的字符串采用UTF-8编码，若加载的文件不是UTF-8编码，需在导入后进行转化。DolphinDB提供了[`convertEncode`](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/c/convertEncode.html)、[`fromUTF8`](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/f/fromUTF8.html)和[`toUTF8`](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/t/toUTF8.html)函数，用于导入数据后对字符串编码进行转换。
 
@@ -636,7 +758,7 @@ tmpTB=loadText(filename=dataFilePath, skipRows=0)
 tmpTB.replaceColumn!(`exchange, convertEncode(tmpTB.exchange,"gbk","utf-8"));
 ```
 
-### 6.2 数值类型的解析
+### 7.2 数值类型的解析
 
 本教程[第1节](#1-自动识别数据格式)介绍了DolphinDB在导入数据时的数据类型自动解析机制，本节讲解数值类型（包括CHAR，SHORT，INT，LONG，FLOAT和DOUBLE）数据的解析。系统能够识别以下几种形式的数值数据：
 
@@ -694,7 +816,7 @@ id price1 price2 total
 3                2.658E-7
 ```
 
-### 6.3 自动去除双引号
+### 7.3 自动去除双引号
 
 在CSV文件中，有时候会用双引号来处理数值中含有的特殊字符（譬如千位分隔符）的字段。DolphinDB处理这样的数据时，会自动去除文本外的双引号。下面结合例子具体说明。
 
@@ -723,4 +845,4 @@ id num
 附录
 --
 
-本教程的例子中使用的数据文件： [candle_201801.csv](data/candle_201801.csv)。
+本教程的例子中使用的数据文件： [candle_201801.csv](../data/candle_201801.csv)。
