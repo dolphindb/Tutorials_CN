@@ -121,6 +121,7 @@
     - [DolphinDB流计算在金融行业的应用：实时计算日累计逐单资金流](streaming_capital_flow_daily.md)
     - [SQL优化案例：外汇掉期估值计算](FxSwapValuation.md)
     - [DolphinDB历史数据回放功能应用：股票行情回放](stock_market_replay.md)
+    - [物联网时序数据查询案例](iot_query_case.md)
 - 入门和测试
     - [DolphinDB入门：量化金融范例](quant_finance_examples.md)
     - [DolphinDB入门：物联网范例](iot_examples.md)

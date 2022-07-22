@@ -1,0 +1,225 @@
+
+//1. create database and table
+db1 = database(,VALUE,1000..2000) //  tenantId
+db2  = database(, VALUE, 2022.01.01..2022.12.30) // DATE
+
+// TSDB for iot 
+dbNoise = database("dfs://NoiseDB",COMPO,[db1,db2], engine="TSDB", atomic="CHUNK") 
+// OLAP 
+dbNoiseOLAP = database("dfs://NoiseDBOLAP",COMPO,[db1,db2], atomic="CHUNK") 
+
+create table "dfs://NoiseDB"."noise"(
+    tenantId INT,
+    deviceId INT,
+    soundPressureLevel INT,
+    soundPowerLevel DOUBLE,
+    ts TIMESTAMP,
+    date DATE
+)
+partitioned by tenantId,date
+sortColumns=[`deviceId,`ts]
+
+// OLAP
+create table "dfs://NoiseDBOLAP"."noise"(
+    tenantId INT,
+    deviceId INT,
+    soundPressureLevel INT,
+    soundPowerLevel DOUBLE,
+    ts TIMESTAMP,
+    date DATE
+)
+partitioned by tenantId,date
+
+
+//2.  prepare data
+def genData(tenantNum, nodeNum, frequency, date){
+	totalRecords =  frequency * tenantNum * nodeNum
+	tenantId = rand(1001..(1000+tenantNum), totalRecords)
+	deviceId = rand(10001..(10000+nodeNum), totalRecords)
+	soundPressureLevel = rand(180, totalRecords)
+	soundPowerLevel = rand(10000.0, totalRecords)
+	startTs= rand(timestamp(date)..(timestamp(date) + 60 * 60 * 1000), 1)[0]
+	endTs = startTs +frequency*100
+	ts = rand(startTs..endTs, totalRecords) 
+	date1 =take(date, totalRecords)
+	t = table(tenantId, deviceId, soundPressureLevel, soundPowerLevel, ts, date1)
+	pt = loadTable(database("dfs://NoiseDB"),"noise")
+	pt.append!(t)
+}
+
+def genDataByday(d){
+	print(now() + " start to generate data of " + d)
+	genData(100, 100, 10000,d)
+	print(now() + "successfully generated data of " + d)
+}
+
+for(d in 2022.01.01..2022.01.12){	
+	genDataByday(d)
+}
+
+
+select count(*) from  loadTable(database("dfs://NoiseDB"),"noise") where date between 2022.01.01:2022.01.12
+select sum(diskUsage)/1024/1024/1024 as GB from getTabletsMeta(tableName="noise",top=-1, diskUsage=true)
+
+
+// before testing compact manually
+chunkIds = exec chunkId from getChunksMeta() where type=1
+for (x in chunkIds) {
+  triggerTSDBCompaction(x)
+}
+
+//clear os cache,run it on linux
+//sudo bash -c "echo 3 > /proc/sys/vm/drop_caches"  
+
+//3. time series search case 
+//3.1 query the  last 100 record of a node/device 
+noise = loadTable(database("dfs://NoiseDB"),"noise")
+tenantIdRand=1055
+deviceIdRand=10067
+dateRand=2022.01.01
+
+timer(10) select * from noise 
+where date=dateRand and tenantId=tenantIdRand and deviceId=deviceIdRand
+order by ts asc
+limit 100
+
+
+//3.2 query the last state of a  node/device 
+tenantIdRand=rand(1001..1100, 100)[0]
+dateRand=2022.01.01
+
+timer(10) select * from noise 
+where date=dateRand and tenantId=tenantIdRand 
+context by deviceId
+csort ts desc
+limit 1
+
+
+
+//3.3 query the statis of a node/device  in  5 min
+tenantIdRand=1055
+deviceIdRand=10067
+dateRand=2022.01.01
+ts1=exec max(ts) from  noise where date = dateRand and tenantId = tenantIdRand and deviceId = deviceIdRand
+ts2 = ts1 - 5 * 60 * 1000
+
+timer(10)  select
+	 min(ts) as startTs
+	,max(ts) as endTs
+	,max(soundPressureLevel)
+	,avg(soundPressureLevel)
+	, max(soundPowerLevel) 
+	,avg(soundPowerLevel) 
+from noise
+where date=dateRand and tenantId=tenantIdRand and deviceId=deviceIdRand and ts between ts2:ts1
+group by tenantId,deviceId
+
+
+//3.4 query a whole day data of a device
+tenantIdRand=1055
+deviceIdRand=10067
+dateRand=2022.01.01
+
+timer(10) select *
+from noise
+where date=2022.01.01 and tenantId=tenantIdRand and deviceId=deviceIdRand
+order by ts
+
+
+//clear os cache,run it on linux
+//sudo bash -c "echo 3 > /proc/sys/vm/drop_caches"  
+
+//clearAllCache()
+
+// 4 compare with OLAP
+noiseOLAP = loadTable("dfs://NoiseDBOLAP","noise")
+noiseOLAP.append!(select * from noise where date=2022.01.01)
+
+// 4.1 case1
+noiseOLAP = loadTable("dfs://NoiseDBOLAP","noise")
+tenantIdRand=1055
+deviceIdRand=10067
+dateRand=2022.01.01
+timer(10) select * from noiseOLAP 
+where date=dateRand and tenantId=tenantIdRand and deviceId=deviceIdRand
+order by ts asc
+limit 100
+
+
+//4.2 query the last state of a  node/device 
+tenantIdRand=rand(1001..1100, 100)[0]
+dateRand=2022.01.01
+
+timer(10) select * from noiseOLAP 
+where date=dateRand and tenantId=tenantIdRand 
+context by deviceId
+csort ts desc
+limit 1
+
+
+
+//4.3 query the statis of a node/device  in  5 min
+tenantIdRand=1055
+deviceIdRand=10067
+dateRand=2022.01.01
+ts1=exec max(ts) from  noiseOLAP where date = dateRand and tenantId = tenantIdRand and deviceId = deviceIdRand
+ts2 = ts1 - 5 * 60 * 1000
+
+timer(10)  select
+	 min(ts) as startTs
+	,max(ts) as endTs
+	,max(soundPressureLevel)
+	,avg(soundPressureLevel)
+	, max(soundPowerLevel) 
+	,avg(soundPowerLevel) 
+from noiseOLAP
+where date=dateRand and tenantId=tenantIdRand and deviceId=deviceIdRand and ts between ts2:ts1
+group by tenantId,deviceId
+
+
+//4.4 query a whole day data of a device
+tenantIdRand=1055
+deviceIdRand=10067
+dateRand=2022.01.01
+
+timer(10) select *
+from noiseOLAP
+where date=2022.01.01 and tenantId=tenantIdRand and deviceId=deviceIdRand
+order by ts
+
+
+
+// 5 export data
+t = select * from noise where date=2022.01.01
+saveText(t, "/data/noise20220101.csv")
+
+
+
+// 6 notice
+// on the community version or with limited resource , split the  data  into small slices,and manually gc the cache
+// example1
+def genDataByday(d){
+	print(now() + " start to generate data of " + d)
+	genData(100, 100, 3000,d)
+	flushTSDBCache()
+	sleep(1000)
+	genData(100, 100, 3000, d)
+	flushTSDBCache()
+	sleep(1000)
+	genData(100, 100, 4000, d)
+	flushTSDBCache()
+	sleep(1000)
+	print(now() + "successfully generated data of " + d)
+}
+
+// example2
+noiseOLAP = loadTable("dfs://NoiseDBOLAP","noise")
+noiseOLAP.append!(select * from noise where date=2022.01.01 and tenantId between 1001:1033)
+purgeCacheEngine()
+sleep(3000)
+noiseOLAP.append!(select * from noise where date=2022.01.01 and tenantId between 1034:1066)
+purgeCacheEngine()
+sleep(3000)
+noiseOLAP.append!(select * from noise where date=2022.01.01 and tenantId between 1067:1100)
+purgeCacheEngine()
+sleep(3000)
