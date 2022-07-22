@@ -75,7 +75,10 @@ select count(*) from  loadTable(database("dfs://NoiseDB"),"noise") where date be
 导入完成后，每个分区下生成3个level 0 file，未满足自动合并条件（大于等于10个 levelFile），需要进行手动合并。
 
 ```sql
-chunkIds = exec chunkId from getChunksMeta() where type=12for (x in chunkIds) {3  triggerTSDBCompaction(x)4}
+chunkIds = exec chunkId from getChunksMeta() where type=1
+for (x in chunkIds) {
+  triggerTSDBCompaction(x)
+}
 ```
 
 完成后将案例数据导出数据至 csv 文件，以便后续导入 OLAP 引擎、ClickHouse。在 ClickHouse 中使用`OPTIMIZE TABLE noise` 合并下 mergeTree。具体过程参照附录 ClickHouse 脚本。
@@ -190,10 +193,6 @@ CPU: 2 cores
 三者的具体测试结果为下表，表中数值为**平均**耗时/**首次**查询耗时（单位 ms），平均耗时的计算逻辑为：
 
 平均耗时 = （ 首次耗时 + 9次缓存命中耗时 ）/ 10
-
-| 测试用例 | 场景   | DolphinDB TSDB | DolphinDB OLAP | ClickHouse |
-| ---- | ---- | -------------- | -------------- | ---------- |
-|      |      |                |                |            |
 
 | 测试用例  | 场景                | DolphinDB TSDB | DolphinDB OLAP | ClickHouse |
 | ----- | ----------------- | -------------- | -------------- | ---------- |
