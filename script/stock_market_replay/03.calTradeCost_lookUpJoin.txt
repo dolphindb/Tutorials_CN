@@ -44,7 +44,7 @@ def appendLeftStream(msg){
 }
 
 //register filter stream computing engine and subscribe the stream tables
-def filterAndParseStreamFunc(){
+def filterAndParseStreamFunc(tradeSchema, snapshotSchema){
 	filter1 = dict(STRING,ANY)
 	filter1["condition"] = "trade"
 	filter1["handler"] = appendLeftStream
@@ -56,7 +56,7 @@ def filterAndParseStreamFunc(){
 	
 	subscribeTable(tableName="messageStream", actionName="tradeJoinSnapshot", offset=-1, handler=parseEngine, msgAsTable=true, reconnect=true)
 }
-filterAndParseStreamFunc()
+filterAndParseStreamFunc(tradeSchema, snapshotSchema)
 
 //replay history data
 def replayStockMarketData(){
