@@ -7,15 +7,15 @@
 #### 1.1 创建数据库
 
 ```
-db = database("C:/DolphinDB");
+db = database("dfs://DolphinDB");
 ```
-  * 若目录C:/DolphinDB不存在，则自动创建该文件目录并创建数据库。
-  * 若目录C:/DolphinDB存在，且只包含`DolphinDB`创建的表及相关文件，则会打开该数据库。
-  * 若目录C:/DolphinDB存在，但包含有非`DolphinDB`创建的表及相关文件，则数据库创建失败。需要清空C:/DolphinDB目录再次尝试。
+  * 若目录"dfs://DolphinDB"不存在，则自动创建该文件目录并创建数据库。
+  * 若目录"dfs://DolphinDB"存在，且只包含`DolphinDB`创建的表及相关文件，则会打开该数据库。
+  * 若目录"dfs://DolphinDB"存在，但包含有非`DolphinDB`创建的表及相关文件，则数据库创建失败。需要清空"dfs://DolphinDB"目录再次尝试。
 
 #### 1.2 删除数据库
 ```
-dropDatabase("C:/DolphinDB");
+dropDatabase("dfs://DolphinDB");
 ```
 * 函数`dropDatabase`以数据库的路径作为参数。
 
@@ -34,31 +34,31 @@ t1 = table(take(1..10, 100) as id, rand(10, 100) as x, rand(10.0, 100) as y);
 ```
 * 使用`table`函数建立内存表，包含id、x、y 三列，共100行。
 
-* 将内存表保存到数据库中：
+* 将内存表保存到分布式数据库中：
 
 ```
-db = database("C:/DolphinDB")
-saveTable(db, t1);
+db = database("dfs://DolphinDB",VALUE,1..10)
+pt=createPartitionedTable(db,t1,`pt,`id).append!(t1)
 ```
-* 使用`saveTable` 函数将内存表t1保存到数据库db中（默认以表名存入磁盘）。
-  
+* 使用`createPartitionedTable` 函数将内存表t1追加到数据库db中的分区表pt中。
+<!--  
 * 在数据库路径下，生成了t1.tbl的表文件和t1的文件夹。
  
 * 在t1文件夹下，生成了id.col、x.col、y.col三个列文件，分别存储表t1的三列。
-
+-->
 ##### 2.1.2 使用`loadTable`函数从数据库中加载表
 
 * 获取已存在的数据库的句柄：
 
 ```
-db = database("C:/DolphinDB");
+db = database("dfs://DolphinDB");
 ```
-* 从数据库中读取表名为t1的表：
+* 从数据库中读取表名为pt的表：
 
 ```
-t = loadTable(db, "t1");
+t = loadTable(db, "pt");
 ```
-* 使用`typestr`函数查看表的类型为"IN-MEMORY TABLE"，即内存表。
+* 使用`typestr`函数查看表的类型为"SEGMENTED DFS TABLE"，即分布式分区表。
 
 ```
 typestr(t);
@@ -76,7 +76,7 @@ t = loadText(C:/test.csv);
 
 #### 2.2 使用`dropTable`删除数据库中的表
 ```
-db = database("C:/DolphinDB")
+db = database("dfs://DolphinDB")
 dropTable(db, "tableName"); 
 ```
 
@@ -116,7 +116,7 @@ delete from t where id=3
 ```
 * 持久化
 
-内存表操作结果没有被记录到磁盘上。若需要对修改的表进行持久化，使用`saveTable`函数。
+内存表操作结果没有被记录到磁盘上。若需要对修改的表进行持久化，使用`saveTable`，或使用 `createPartitionedTable` 函数创建分区表，再使用 `append!` 函数或 `tableInsert` 函数把数据保存至分区表中。
 
 ### 4. 更多高级教程
   * __独立服务器__：作为一个独立的工作站或服务器使用，无需配置。详见教程：[单节点部署](./standalone_server.md)

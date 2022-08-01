@@ -4,7 +4,7 @@ DolphinDB提供以下4个函数，将文本数据导入内存或数据库：
 
 - [`loadText`](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/l/loadText.html): 将文本文件导入为内存表。
 - [`ploadText`](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/p/ploadText.html): 将文本文件并行导入为分区内存表。与`loadText`函数相比，速度更快。
-- [`loadTextEx`](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/l/loadTextEx.html): 将文本文件导入数据库中，包括分布式数据库，本地磁盘数据库或内存数据库。
+- [`loadTextEx`](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/l/loadTextEx.html): 将文本文件导入数据库中，包括分布式数据库或内存数据库。
 - [`textChunkDS`](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/t/textChunkDS.html)：将文本文件划分为多个小数据源，再通过[`mr`](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/m/mr.html)函数进行灵活的数据处理。
 
 DolphinDB的文本数据导入不仅灵活，而且速度非常快。DolphinDB与Clickhouse, MemSQL, Druid, Pandas等业界流行的系统相比，单线程导入的速度优势，最多可达一个数量级；多线程并行导入的情况下，速度优势更加明显。
@@ -355,7 +355,7 @@ Time elapsed: 2669.702 ms
 
 在大数据应用领域，数据导入往往不只是一个或两个文件的导入，而是数十个甚至数百个大型文件的批量导入。为了达到更好的导入性能，建议尽量以并行方式导入批量的数据文件。
 
-[`loadTextEx`](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/l/loadTextEx.html)函数可将文本文件导入指定的数据库中，包括分布式数据库，本地磁盘数据库或内存数据库。由于DolphinDB的分区表支持并发读写，因此可以支持多线程导入数据。
+[`loadTextEx`](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/l/loadTextEx.html)函数可将文本文件导入指定的数据库中，包括分布式数据库或内存数据库。由于DolphinDB的分区表支持并发读写，因此可以支持多线程导入数据。
 
 使用`loadTextEx`将文本数据导入到分布式数据库，具体实现为将数据先导入到内存，再由内存写入到数据库，这两个步骤由同一个函数完成，以保证高效率。
 
