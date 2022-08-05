@@ -1,0 +1,30 @@
+/*  
+ *   程序名：	历史IOPV计算
+ *   作者：	DolphinDB
+ *   时间：	2022-06-15
+ *   程序说明：	本程序为 DolphinDB 单只 ETF 基金 IOPV 历史计算
+ *   		基金份额参考净值(原始公式)＝ {∑(pi*sharesi) * 10 + AI + ECC} /10000
+ *   		基金份额参考净值(本案例公式)＝ {∑(pi*sharesi) /1000} 
+ */
+
+// 登录系统并清除缓存
+login("admin","123456")
+clearAllCache()
+go
+
+// 构建组合成分券，设置为50只成分券（*注 本组合参考西部利得创业板大盘交易型开放式基金）
+symbols =  `300073`300363`300373`300474`300682`300769`301029`300390`300957`300763`300979`300919`300037`300832`300866`300896`300751`300223`300676`300274`300413`300496`300661`300782`300142`300759`300595`300285`300146`300207`300316`300454`300529`300699`300628`300760`300601`300450`300433`300408`300347`300124`300122`300059`300033`300015`300014`300012`300003`300750
+// 通过rand随机函数，为50只成分券设置持仓手数
+positions = rand(76339..145256, 50)
+// 构建基金
+portfolio = dict(symbols, positions)
+
+// timer查看计算耗时，总耗时1012.57ms
+timer {
+// 使用深交所 Level2 逐笔成交数据计算组合成分券在一天内各个时刻中的价值
+timeSeriesValue = select tradetime, SecurityID, price * portfolio[SecurityID]/1000 as constituentValue from loadTable("dfs://LEVEL2_SZ","Trade") where SecurityID in portfolio.keys(), tradedate = 2020.12.01, price > 0
+// 利用Pivot by数据透视汇总（rowSum）所有成分券在某一时刻的价值，即IOPV；如果当前时刻没有成交价格，利用ffill函数使用前一笔成交价格。
+iopvHist = select rowSum(ffill(constituentValue)) as IOPV from timeSeriesValue pivot by tradetime, SecurityID
+}
+
+plot([iopvHist.IOPV], iopvHist.tradetime, "IOPV history")
