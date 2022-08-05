@@ -70,7 +70,7 @@ haStreamTable(raftGroup, table, tableName, cacheLimit, [keyColumn], [retentionMi
 ```
 参数raftGroup是一个大于1的整数，表示Raft组的ID，它必须是通过streamingRaftGroups配置的Raft组中的一个成员。
 
-可选参数keyColumn是一个字符串，表示主键。目前仅支持设置一个主键。设置了keyColumn后，系统能根据keyColumn自动过滤重复数据。比如从设备采集的流数据，这个keyColumn产生规则可以是设备编号+每个设备的消息唯一号；从股市获取的股票信息，keyColumn可以是股票编码+每个股票消息的唯一号，这样从多个采集源采集入库或重复入库，都能保证数据不重复。
+可选参数keyColumn是一个字符串，表示主键。设置了keyColumn后，系统能根据keyColumn自动过滤重复数据。比如从设备采集的流数据，这个keyColumn产生规则可以是设备编号+每个设备的消息唯一号；从股市获取的股票信息，keyColumn可以是股票编码+每个股票消息的唯一号，这样从多个采集源采集入库或重复入库，都能保证数据不重复。
 
 一个Raft组可以包含多个高可用流数据表。这里要注意以下几点：
 - 高可用流表在日志中持久化了表结构信息，重启后不需要重新建表。普通流表在节点重启后，需要重新创建流表。
