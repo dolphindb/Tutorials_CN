@@ -42,7 +42,7 @@ replay(inputTable, outputTable, `date, `time, 10)
 
 ### 使用data source的单表回放
 
-若数据表的行数过多，可使用`replayDS`函数将其划分为若干个小的数据源，再使用`replay`函数从磁盘中读取数据并回放，`replayDS`函数的返回值是一个向量，记录了划分出的多个SQL查询语句。`replay`内部实现使用了[pipeline](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/p/pipeline.html)框架，取数据与输出分开执行。当`replayDS`函数的输入为数据源时，多块数据可以并行读取，以避免输出线程等待的情况。此例中并行度设置为2，表示有两个线程同时执行取数据的操作。
+若数据表的行数过多，可使用`replayDS`函数将其划分为若干个小的数据源，再使用`replay`函数从磁盘中读取数据并回放，`replayDS`函数的返回值是一个向量，记录了划分出的多个SQL查询语句。`replay`内部实现使用了[pipeline](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/p/pipeline.html)框架，取数据与输出分开执行。当`replayDS`函数的输出作为数据源时，多块数据可以并行读取，以避免输出线程等待的情况。此例中并行度设置为2，表示有两个线程同时执行取数据的操作。
 ```
 inputTable = loadTable("dfs://source", "source")
 inputDS = replayDS(<select * from inputTable>, `date, `time, 08:00:00.000 + (1..10) * 3600000)

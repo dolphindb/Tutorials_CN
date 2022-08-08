@@ -1,6 +1,6 @@
 # DolphinDB 历史数据回放功能应用：股票行情回放
 
-一个量化策略在生产（交易）环境中运行时，处理实时数据的程序通常为事件驱动。为确保研发和生产使用同一套代码，通常在研发阶段需将历史数据，严格按照事件发生的时间顺序进行回放，以此模拟交易环境。一个交易所的行情数据通常包括逐笔委托、逐笔成交、快照等多种数据。DolphinDB 提供了严格按照时间顺序将多个不同数据源同时进行回放的功能。
+一个量化策略在生产（交易）环境中运行时，实时数据的处理通常是由事件驱动的。为确保研发和生产使用同一套代码，通常在研发阶段需将历史数据，严格按照事件发生的时间顺序进行回放，以此模拟交易环境。一个交易所的行情数据通常包括逐笔委托、逐笔成交、快照等多种类型的数据。DolphinDB 提供了严格按照时间顺序将多个不同数据源同时进行回放的功能。
 
 本教程以股票行情回放为例提供一种多表回放方案。首先在第 1、2 章简要介绍 DolphinDB 数据回放功能和原理，之后在第 3 章给出完整的股票行情回放应用方案和代码实现。
 
@@ -13,7 +13,7 @@
 
 ## 1. 单表回放
 
-DolphinDB 历史数据回放功能通过 replay 函数实现。replay 函数的作用是将内存表或数据库表中的记录以一定的速率写入到目标表中，以模拟实时数据流不断注入目标表的场景。最基础的回放模式是单表回放，即将一个输入表回放至一个相同表结构的目标表中，以下是不包括建表语句的单表回放示例：
+DolphinDB 历史数据回放功能通过 replay 函数实现。replay 函数的作用是将内存表或数据库表中的记录以一定的速率写入到目标表中，以模拟实时注入的数据流。根据输入表的数量，回放分为单表回放和多表回放，其中单表回放是最基础的回放模式，即将一个输入表回放至一个相同表结构的目标表中，以下是不包括建表语句的单表回放示例：
 
 ```python
 tradeDS = replayDS(sqlObj=<select * from loadTable("dfs://trade", "trade") where Date = 2020.12.31>, dateColumn=`Date, timeColumn=`Time)
@@ -26,11 +26,11 @@ replay(inputTables=tradeDS, outputTables=tradeStream, dateColumn=`Date, timeColu
 
 ## 2. 多表回放
 
-DolphinDB 在对多表回放的支持上不断地演进，最终提供了基于异构流数据表的异构多表回放方案，其能够实现多个数据源的严格时序回放和消费。本小节将对多表回放面临的难点、相应的 DolphinDB 技术解决方案和原理展开介绍。
+DolphinDB不断优化拓展多表回放的功能，既支持N个输入表一对一回放至N个输出表的N对N回放，又在1.30.17/2.00.5及之后的版本中支持了N个不同结构的输入表同时回放至同一个输出表的N对一异构回放，异构回放能够保证多个数据源的严格时序回放和消费。本小节将对多表回放面临的难点、相应的 DolphinDB 技术解决方案和原理展开介绍。
 
-### 2.1 多对多回放
+### 2.1 N 对 N回放
 
-类似单表回放的原理，replay 函数提供了多对多模式的多表回放，即将多个输入表回放至多个目标表，输入表与目标表一一对应。以下是多对多模式的多表回放的示例：
+类似单表回放的原理，replay 函数提供了N 对 N模式的多表回放，即将多个输入表回放至多个目标表，输入表与目标表一一对应。以下是N 对 N模式的多表回放的示例：
 
 ```python
 orderDS = replayDS(sqlObj=<select * from loadTable("dfs://order", "order") where Date = 2020.12.31>, dateColumn=`Date, timeColumn=`Time)
@@ -39,16 +39,16 @@ snapshotDS = replayDS(sqlObj=<select * from loadTable("dfs://snapshot", "snapsho
 replay(inputTables=[orderDS, tradeDS, snapshotDS], outputTables=[orderStream, tradeStream, snapshotStream], dateColumn=`Date, timeColumn=`Time, replayRate=10000, absoluteRate=true)
 ```
 
-以上脚本将三个数据库表中的历史数据分别注入三个目标表中。在多对多的模式中，不同表的在同一秒内的两条数据写入目标表的顺序则可能和数据中的时间字段的先后关系不一致。此外下游如果由三个处理线程分别对三个目标表进行订阅与消费，也很难保证表与表之间的数据被处理的顺序关系。因此，多对多回放不能保证整体上最严格的时序。
+以上脚本将三个数据库表中的历史数据分别注入三个目标表中。在N 对 N的模式中，不同表的在同一秒内的两条数据写入目标表的顺序可能和数据中的时间字段的先后关系不一致。此外，下游如果由三个处理线程分别对三个目标表进行订阅与消费，也很难保证表与表之间的数据被处理的顺序关系。因此，N 对 N回放不能保证整体上最严格的时序。
 
-在实践中，一个领域中不同类型的消息是有先后顺序的，比如股票的逐笔成交和逐笔委托，所以在对多个数据源回放时会有保持每条数据之间的严格的先后顺序的需求，为此我们需要解决以下问题：
+在实践中，一个领域中不同类型的消息是有先后顺序的，比如股票的逐笔成交和逐笔委托，所以在对多个数据源回放时要求每条数据都严格按照时间顺序注入目标表，为此我们需要解决以下问题：
 
 - 不同结构的数据如何统一进行排序和注入以保证整体的顺序？
 - 如何保证对多表回放结果的实时消费也是严格按照时序进行的？
 
-### 2.2 异构回放
+### 2.2 N 对一异构回放
 
-面对上述多表回放的难点，DolphinDB 进一步增加了异构模式的多表回放（1.30.17/2.00.5 及以上版本），它将多个不同表结构的数据表写入到同一张异构流数据表中，从而实现了严格按时间顺序的多表回放。以下是异构模式的多表回放示例：
+面对上述多表回放的难点，DolphinDB 进一步增加了异构模式的多表回放，支持将多个不同表结构的数据表写入到同一张异构流数据表中，从而实现了严格按时间顺序的多表回放。以下是异构模式的多表回放示例：
 
 ```python
 orderDS = replayDS(sqlObj=<select * from loadTable("dfs://order", "order") where Date = 2020.12.31>, dateColumn=`Date, timeColumn=`Time)
@@ -62,23 +62,23 @@ replay(inputTables=inputDict, outputTables=messageStream, dateColumn=`Date, time
 
 以上脚本中的输出表 messageStream 为异构流数据表，其表结构如下：
 
-| name    | typeString | comment                                |
-| ------- | ---------- | -------------------------------------- |
-| msgTime | TIMESTAMP  | 消息时间                               |
-| msgType | SYMBOL     | 消息类型："order"、"trade"、"snapshot" |
-| msgBody | BLOB       | 消息内容，以二进制格式存储             |
+| name    | typeString | comment                                  |
+| ------- | ---------- | ---------------------------------------- |
+| msgTime | TIMESTAMP  | 消息时间                                 |
+| msgType | SYMBOL     | 数据源标识："order"、"trade"、"snapshot" |
+| msgBody | BLOB       | 消息内容，以二进制格式存储               |
 
-异构回放时 outputTables 参数指定的表至少需要包含以上三列。回放完成后，表 messageStream 的数据预览如下：
+异构回放时 outputTables 参数指定的表至少需要包含以上三列，此外，还可以指定各输入表的公共列（列名和类型一致的列）。回放完成后，表 messageStream 的数据预览如下：
 
 ![](images/stock_market_replay/messageStream.png)
 
-表中每行记录对应输入表中的一行记录，msgTime 字段是输入表中的时间列，msgType 字段用来区分来自哪张输入表，msgBody 字段以二进制格式存储了输入表中的记录内容。异构回放基于异构流数据表对多个数据源全局排序并写入目标表，因而保证了多个数据源之间的严格时间顺序。同时，异构流数据表和普通流数据表一样可以被订阅，即多种类型的数据存储在同一张表中被发布并被同一个线程实时处理，因而也保证了消费的严格时序性。
+表中每行记录对应输入表中的一行记录，msgTime 字段是输入表中的时间列，msgType 字段用来区分来自哪张输入表，msgBody 字段以二进制格式存储了输入表中的记录内容。在回放的过程中，通过异构流数据表这样的数据结构可以对多个数据源进行全局排序，因而保证了多个数据源之间的严格时间顺序。同时，异构流数据表和普通流数据表一样可以被订阅，即多种类型的数据存储在同一张表中被发布并被同一个线程实时处理，因而也保证了消费的严格时序性。
 
-为了对异构流数据表进行指标计算等数据处理，则需要将二进制格式的消息内容反序列化为原始结构的一行记录。DolphinDB 在脚本语言以及在 API 中均支持了对异构流数据表的解析功能。在脚本中，使用流过滤与分发引擎 streamFilter 对异构流数据表进行反序列化，并对反序列后的结果指定数据处理逻辑；在 API 中，各类 API 在支持流数据订阅功能的基础上，扩展支持了在订阅时对异构流数据表进行反序列化。
+若要对异构流数据表进行数据处理操作，如指标计算等，则需要将二进制格式的消息内容反序列化为原始结构的一行记录。DolphinDB 在脚本语言以及在 API 中均支持了对异构流数据表的解析功能。脚本支持流数据分发引擎 streamFilter 对异构流数据表进行反序列化以及反序列后结果的数据处理；同时，各类 API 在支持流数据订阅功能的基础上，扩展支持了在订阅时对异构流数据表进行反序列化。
 
 ## 3. 多表回放应用：股票行情回放
 
-基于上文提到的异构回放、异构流数据表解析以及 DolphinDB 流处理框架中的其他特性等，本章将结合股票行情回放展示 DolphinDB 异构模式的多表回放功能在实际场景中的应用，包括数据回放以及三种具体的回放结果消费方案。
+基于上文提到的异构回放、异构流数据表解析以及 DolphinDB 流处理框架中的其他特性等，本章将结合股票行情回放展示 DolphinDB 异构模式的多表回放功能在实际场景中的应用，包括数据回放以及三种具体的回放结果消费方案：使用内置流计算引擎实时处理数据、实时推送外部消息中间件、外部程序订阅与实时消费。
 
 ### 3.1 行情回放与消费方案
 
@@ -112,11 +112,11 @@ replay(inputTables=inputDict, outputTables=messageStream, dateColumn=`Date, time
 
 ### 3.3 代码实现
 
-本教程代码开发工具采用 DolphinDB GUI，所有代码均可在 DolphinDB GUI 客户端开发工具执行。相关环境配置见后文 [5. 开发环境配置](#5 - 开发环境配置)。
+本教程脚本开发工具采用 DolphinDB GUI，相关环境配置见后文[5. 开发环境配置](#5-开发环境配置)。
 
 #### 3.3.1 股票行情回放
 
-此部分代码为 DolphinDB 脚本，将三个数据库中的不同结构的数据回放至同一个异构流数据表中。完整脚本见附录 [01. 股票行情回放. txt](script/stock_market_replay/01.stockMarketReplay.txt)。
+本小节脚本将三个数据库中的不同结构的数据回放至同一个异构流数据表中。完整脚本见附录 [01. 股票行情回放. txt](script/stock_market_replay/01.stockMarketReplay.txt)。
 
 - 创建异构流数据表 messageStream
 
@@ -128,7 +128,7 @@ enableTableShareAndPersistence(table=messageTemp, tableName="messageStream", asy
 messageTemp = NULL
 ```
 
-messageStream 是共享的异步持久化异构流数据表。共享意味着在当前节点的所有会话中可见，为了之后能够对该表进行订阅，必须将其定义为共享的流数据表。同时此处对流数据表进行持久化，其主要目的是控制该表的最大内存占用，enableTableShareAndPersistence 函数中的 cacheSize 参数规定了该表在内存中最多保留 100 万行。流数据持久化也保障了流数据的备份和恢复，当节点异常关闭后，持久化的数据会在重启时自动载入流数据表以继续流数据消费。
+messageStream 是共享的异步持久化异构流数据表。为了之后能够对该表进行订阅，必须将其定义为共享的流数据表，共享意味着在当前节点的所有会话中可见。同时此处对流数据表进行持久化，其主要目的是控制该表的最大内存占用，enableTableShareAndPersistence 函数中的 cacheSize 参数规定了该表在内存中最多保留 100 万行。流数据持久化也保障了流数据的备份和恢复，当节点异常关闭后，持久化的数据会在重启时自动载入流数据表以继续流数据消费。
 
 - 三个数据源异构回放至流数据表 messageStream
 
@@ -142,11 +142,11 @@ inputDict = dict(["order", "trade", "snapshot"], [orderDS, tradeDS, snapshotDS])
 submitJob("replay", "replay stock market", replay, inputDict, messageStream, `Date, `Time, , , 3)
 ```
 
-上述脚本读取三个数据库中的结构不同的数据进行全速的异构回放，回放通过 submitJob 函数提交后台作业来执行。下面讲解对于回放进行调优的相关参数和原理：
+上述脚本读取三个数据库中的结构不同的数据表进行全速的异构回放，回放通过 submitJob 函数提交后台作业来执行。下面讲解对于回放进行调优的相关参数和原理：
 
 replayDS 函数中的 timeRepartitionSchema 参数：replayDS 函数将输入的 SQL 查询转化为数据源，其会根据输入表的分区以及 timeRepartitionSchema 参数，将原始的 SQL 查询按照时间顺序拆分成若干小的 SQL 查询。
 
-replay 函数中的 parallelLevel 参数：parallelLevel 表示从数据库查询数据的并行度，即同时查询经过划分之后的小数据源的线程数，默认为 1，上述脚本中通过 submitjob 的参数设置为 3。
+replay 函数中的 parallelLevel 参数：parallelLevel 表示从数据库加载数据到内存的工作线程数量，即同时查询经过划分之后的小数据源的并行度，默认为 1，上述脚本中通过 submitjob 的参数设置为 3。
 
 对数据库表的回放过程分为两步，其一是通过 SQL 查询历史数据至内存，查询包括对数据的排序，其二是将内存中的数据写入输出表，两步以流水线的方式执行。若将某日数据全部导入内存并排序，会占用大量内存甚至导致内存不足，同时由于全部数据的查询耗时比较长，会导致第二步写入输出表的时刻也相应推迟。以 orderDS 为例，若不设置 timeRepartitionSchema 参数，则相应的 SQL 查询为：
 
@@ -177,7 +177,7 @@ submitJob("replay", "replay text", replay, inputDict, messageStream, `Date, `Tim
 
 #### 3.3.2 消费场景 1：在 DolphinDB 订阅中实时计算个股交易成本
 
-此部分代码为 DolphinDB 脚本，将实时消费 3.3.1 小节创建的流数据表 messageStream，使用 asof join 引擎实时关联逐笔成交与快照数据，并计算个股交易成本，完整脚本见附录 [02. 消费场景 1: 计算个股交易成本_asofJoin 实现. txt](script/stock_market_replay/02.calTradeCost_asofJoin.txt)。
+本小节脚本将实时消费 3.3.1 小节创建的流数据表 messageStream，使用 asof join 引擎实时关联逐笔成交与快照数据，并计算个股交易成本，完整脚本见附录 [02. 消费场景 1: 计算个股交易成本_asofJoin 实现. txt](script/stock_market_replay/02.calTradeCost_asofJoin.txt)。
 
 - 创建计算结果输出表 prevailingQuotes
 
@@ -206,7 +206,7 @@ joinEngine=createAsofJoinEngine(name="tradeJoinSnapshot", leftTable=tradeSchema,
 
 使用 asof join 引擎实现在对股票分组的基础上，对于每条输入的 trade 记录，实时关联与之在时间列上最接近的一条 snapshot 记录，并使用 trade 中的价格字段和 snapshot 中的报价字段进行指标计算。最终，以上配置的 asof join 引擎会输出和左表行数相同的结果。asof join 引擎更多介绍请参考 [createAsofJoinEngine 用户手册](https://www.dolphindb.cn/cn/help/200/FunctionsandCommands/FunctionReferences/c/createAsofJoinEngine.html?highlight=asofjoin)。
 
-值得一提的是，asof join 引擎用于两个数据流的实时关联，其优势在于支持通过事件时间进行关联，即这里的配置项 useSystemTime=false 表示关联时使用数据中的时间列，在实际应用中，考虑到在两个数据流中相同事件时间的数据的到来可能发生乱序，使用事件时间进行关联通常是更符合业务含义的做法。在此处，异构回放能够保证两个数据流的严格处理顺序，因此也可以使用 look up join 引擎得到相同的计算结果，即用 trade 表去关联在系统时间上最新的一条 snapshot 记录，此处使用 look up join 引擎会比 asof join 引擎在性能上有稍好的表现，脚本见附录 [03. 消费场景 1: 计算个股交易成本_lookUpJoin 实现. txt](script/stock_market_replay/03.calTradeCost_lookUpJoin.txt)。look up join 引擎更多介绍请参考 [createLookUpJoinEngine 用户手册](https://www.dolphindb.cn/cn/help/200/FunctionsandCommands/FunctionReferences/c/createLookupJoinEngine.html)。
+考虑到实际的业务含义，此例中 asof join 引擎在用于两个数据流的实时关联时，配置参数 useSystemTime=false 以按照数据中的时间列进行关联计算。使用数据中的时间列，相较于使用数据注入引擎时的系统时间作为时间列，可以避免在实时场景中两个数据流到达引擎的时刻乱序而带来的问题。但是，在此处，因为异构回放能够严格保证两个数据流的处理顺序，因此也可以使用数据注入引擎的系统时间进行关联计算。除了在使用 asof join 引擎时配置参数 useSystemTime=true 外，使用 look up join 引擎也能够实现按系统时间进行实时关联，即当每一条 trade 表中的记录注入引擎时，总是立刻去关联已经注入引擎的最新的一条相应股票的 snapshot 记录，得到的计算结果会同上文中的 asof join 引擎实现完全一致，而由于 look up join 引擎在内部实现上更简单，所以在计算性能上会有稍好的表现，完成脚本见附录 [03. 消费场景 1: 计算个股交易成本_lookUpJoin 实现. txt](script/stock_market_replay/03.calTradeCost_lookUpJoin.txt)。look up join 引擎更多介绍请参考 [createLookUpJoinEngine 用户手册](https://www.dolphindb.cn/cn/help/200/FunctionsandCommands/FunctionReferences/c/createLookupJoinEngine.html)。
 
 自定义函数 createSchemaTable，用于获取数据库表的表结构，以做为创建引擎时的参数传入。
 
@@ -227,7 +227,7 @@ schema = dict(["trade", "snapshot"], [tradeSchema, snapshotSchema])
 parseEngine = streamFilter(name="streamFilter", dummyTable=messageStream, filter=[filter1, filter2], msgSchema=schema)
 ```
 
-streamFilter 函数通过设置 msgSchema 参数，会对异构流数据表进行反序列，并根据 filter 参数中设置的 handler 来处理订阅的数据。当订阅数据到来时，handler 之间是串行执行的，保证了对数据的处理严格按照时序进行。
+streamFilter 函数通过设置 msgSchema 参数，会对异构流数据表进行反序列，并根据 filter 参数中设置的 handler 来处理订阅的数据。当订阅数据到来时，handler 之间是串行执行的，这样就保证了对数据的处理严格按照时序进行。
 
 handler 参数是一元函数或数据表，用于处理订阅的数据。当它是函数时，其唯一的参数是经过解析和过滤后的数据表。这里对于 trade 数据其 handler 设置为函数 appendLeftStream，该函数对订阅到的数据首先做过滤，再将符合条件的数据作为左表写入到 asof join 引擎。对于 snapshot 数据其 handler 设置为 asof join 引擎的右表，表示对于订阅到的 snapshot 数据直接作为右表写入 asof join 引擎。
 
@@ -237,9 +237,9 @@ handler 参数是一元函数或数据表，用于处理订阅的数据。当它
 subscribeTable(tableName="messageStream", actionName="tradeJoinSnapshot", offset=-1, handler=engine, msgAsTable=true, reconnect=true)
 ```
 
-设置参数 offset 为 - 1，订阅将会从提交订阅时流数据表的当前行开始。为了消费到完整的数据，建议先执行此处脚本以提交订阅，再提交 3.3.1 小节的后台回放作业。
+设置参数 offset 为 - 1，订阅将会从提交订阅时流数据表的当前行开始。为了消费到完整的数据，建议先执行此处脚本以提交订阅，再提交后台回放作业，参考 3.3.1 小节。
 
-- 在 GUI 中查看计算结果
+- 查看计算结果
 
 ![](images/stock_market_replay/prevailingQuotes.png)
 
@@ -247,7 +247,7 @@ asof join 引擎在 matchingColumn 的分组内输出表数据与输入时的顺
 
 #### 3.3.3 消费场景 2：在 DolphinDB 订阅中将回放结果实时推送 Kafka
 
-此部分代码为 DolphinDB 脚本，将 3.3.1 小节创建的流数据表 messageStream 实时发送至消息中间件 Kafka。执行以下脚本，需要有可以写入的 Kafka server，并且安装 DolphinDB Kafka 插件。完整脚本见附录 [04. 消费场景 2: 实时推送 Kafka.txt](script/stock_market_replay/04.publishToKafka.txt)。
+本小节脚本将 3.3.1 小节创建的流数据表 messageStream 实时发送至消息中间件 Kafka。执行以下脚本，需要有可以写入的 Kafka server，并且安装 DolphinDB Kafka 插件，插件配置见后文[5. 开发环境配置](#5-开发环境配置)。完整脚本见附录 [04. 消费场景 2: 实时推送 Kafka.txt](script/stock_market_replay/04.publishToKafka.txt)。
 
 - 加载 Kafka 插件并创建 Kafka producer
 
@@ -295,7 +295,7 @@ schema = dict(["order","trade", "snapshot"], [loadTable("dfs://order", "order"),
 filterEngine = streamFilter(name="streamFilter", dummyTable=messageStream, filter=[filter1, filter2, filter3], msgSchema=schema)
 ```
 
-streamFilter 函数通过设置 msgSchema 参数，会对异构流数据表进行反序列，并根据 filter 参数中设置的 handler 来处理订阅的数据。当订阅数据到来时，handler 之间是串行执行的，保证了对数据的处理严格按照时序进行。
+streamFilter 函数通过设置 msgSchema 参数，会对异构流数据表进行反序列，并根据 filter 参数中设置的 handler 来处理订阅的数据。当订阅数据到来时，handler 之间是串行执行的，这样就保证了对数据的处理严格按照时序进行。
 
 handler 参数是一元函数或数据表，用于处理订阅的数据。当它是函数时，其唯一的参数是经过解析和过滤后的数据表。sendMsgToKafka{"order", producer} 的写法是函数化编程中的部分应用，即指定函数 sendMsgToKafka 的部分参数，产生一个参数较少的新函数。
 
@@ -305,7 +305,7 @@ handler 参数是一元函数或数据表，用于处理订阅的数据。当它
 subscribeTable(tableName="messageStream", actionName="sendMsgToKafka", offset=-1, handler=engine, msgAsTable=true, reconnect=true)
 ```
 
-设置参数 offset 为 - 1，订阅将会从提交订阅时流数据表的当前行开始。为了消费到完整的数据，建议先执行此处脚本以提交订阅，再提交 3.3.1 小节的后台回放作业。
+设置参数 offset 为 - 1，订阅将会从提交订阅时流数据表的当前行开始。为了消费到完整的数据，建议先执行此处脚本以提交订阅，再提交后台回放作业，参考 3.3.1 小节。
 
 - 在终端查看发送结果
 
@@ -322,7 +322,7 @@ subscribeTable(tableName="messageStream", actionName="sendMsgToKafka", offset=-1
 
 #### 3.3.4 消费场景 3：在外部程序中通过 C++API 实时订阅与处理
 
-此部分代码为 C++ 程序，程序会订阅 3.3.1 小节创建的异构流数据表 messageStream，并实时打印每条数据。完整代码见附录 [05. 消费场景 3:C++API 实时订阅. cpp](script/stock_market_replay/05.subscribe.cpp)。
+本小节代码为 C++ 程序，程序会订阅 3.3.1 小节创建的异构流数据表 messageStream，并实时打印每条数据。以下代码依赖DolphinDB C++ API，API安装见后文[5. 开发环境配置](#5-开发环境配置)。完整代码见附录 [05. 消费场景 3:C++API 实时订阅. cpp](script/stock_market_replay/05.subscribe.cpp)。
 
 ```c++
 int main(int argc, char *argv[]){
@@ -375,7 +375,7 @@ listenport 参数为单线程客户端的订阅端口号，设置 C++ 程序所�
 
 ## 4. 性能测试
 
-本教程对异构模式下的多表回放功能进行了性能测试。以 3.2 小节的测试数据集作为回放的输入，以 3.3.1 小节的回放脚本作为测试脚本，该脚本不设定回放速率（即以最快的速率回放），并且输出表没有任何订阅，最终回放了 101,081,629 条数据至输出表中，总耗时 4m18s，每秒回放约 39 万条数据，内存占用峰值 4.7GB。测试使用的服务器的 CPU 为 Intel(R) Xeon(R) Silver 4216 CPU @ 2.10GHz。
+本教程对异构模式下的多表回放功能进行了性能测试。以 3.2 小节的测试数据集作为回放的输入，以 3.3.1 小节的回放脚本作为测试脚本，该脚本不设定回放速率（即以最快的速率回放），并且输出表没有任何订阅，最终回放了 101,081,629 条数据至输出表中，总耗时 4m18s，每秒回放约 39 万条数据，内存占用峰值 4.7GB。测试使用的服务器的 CPU 为 Intel(R) Xeon(R) Silver 4216 CPU @ 2.10GHz，更详细的服务器及DolphinDB server配置信息见后文 [5. 开发环境配置](#5 - 开发环境配置)。
 
 ## 5. 开发环境配置
 
