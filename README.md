@@ -8,6 +8,7 @@
     - [多服务器集群部署](multi_machine_cluster_deployment.md)
     - [基于Docker的集群部署教程](docker_deployment.md)
     - [基于K8s的集群部署教程](k8s_deployment.md)
+    - [AWS Markeplace上的DolphinDB MGR快速上手](dolphindb-mgr-aws-byol-v2.md)
     - [高可用集群部署教程](ha_cluster_deployment.md)
     - [如何扩展集群节点和存储](scale_out_cluster.md)
     - [DolphinDB客户端软件教程](client_tool_tutorial.md)
