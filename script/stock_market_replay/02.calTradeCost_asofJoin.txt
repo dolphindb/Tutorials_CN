@@ -53,9 +53,9 @@ def filterAndParseStreamFunc(tradeSchema, snapshotSchema){
 	filter2["condition"] = "snapshot"
 	filter2["handler"] = getRightStream(getStreamEngine(`tradeJoinSnapshot))
 	schema = dict(["trade", "snapshot"], [tradeSchema, snapshotSchema])
-	parseEngine = streamFilter(name="streamFilter", dummyTable=messageStream, filter=[filter1, filter2], msgSchema=schema)
+	engine = streamFilter(name="streamFilter", dummyTable=messageStream, filter=[filter1, filter2], msgSchema=schema)
 	
-	subscribeTable(tableName="messageStream", actionName="tradeJoinSnapshot", offset=-1, handler=parseEngine, msgAsTable=true, reconnect=true)
+	subscribeTable(tableName="messageStream", actionName="tradeJoinSnapshot", offset=-1, handler=engine, msgAsTable=true, reconnect=true)
 }
 filterAndParseStreamFunc(tradeSchema, snapshotSchema)
 

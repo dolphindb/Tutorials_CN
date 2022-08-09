@@ -55,9 +55,9 @@ def filterAndParseStreamFunc(producer){
 	filter3["condition"] = "snapshot"
 	filter3["handler"] = sendMsgToKafkaFunc{"snapshot", producer}
 	schema = dict(["order","trade", "snapshot"], [loadTable("dfs://order", "order"), loadTable("dfs://trade", "trade"), loadTable("dfs://snapshot", "snapshot")])
-	filterEngine = streamFilter(name="streamFilter", dummyTable=messageStream, filter=[filter1, filter2, filter3], msgSchema=schema)
+	engine = streamFilter(name="streamFilter", dummyTable=messageStream, filter=[filter1, filter2, filter3], msgSchema=schema)
 	
-	subscribeTable(tableName="messageStream", actionName="sendMsgToKafka", offset=-1, handler=filterEngine, msgAsTable=true, reconnect=true)
+	subscribeTable(tableName="messageStream", actionName="sendMsgToKafka", offset=-1, handler=engine, msgAsTable=true, reconnect=true)
 }
 filterAndParseStreamFunc(producer)
 
