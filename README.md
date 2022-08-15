@@ -106,7 +106,6 @@
     - [mytt (My麦语言 T通达信 T同花顺)指标库](../../../DolphinDBModules/blob/master/mytt/README.md)
 - 应用场景示例
     - [DolphinDB在工业物联网的应用](iot_demo.md)
-    - [加密货币逐笔交易数据回放](../../../applications/blob/master/cryptocurr_replay/README.md)
     - [在DolphinDB中计算K线](OHLC.md) 
     - [使用DolphinDB进行机器学习](machine_learning.md)
     - [DolphinDB流计算引擎实现传感器数据异常检测](iot_anomaly_detection.md)
