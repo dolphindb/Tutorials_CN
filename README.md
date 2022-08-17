@@ -16,7 +16,7 @@
     - [快速上手 DolphinDB-Mgr](../../../dolphindb-k8s/blob/master/deploy_k8s_quickly.md)
     - [自托管的 Kubernetes 部署 DolphinDB 集群](../../../dolphindb-k8s/blob/master/k8s_deployment.md)
     - [AWS Markeplace上的DolphinDB MGR快速上手](../../../dolphindb-k8s/blob/master/k8s_deployment_in_AWS.md)
-    - [基于阿里云K8S的DolphinDB套件部署教程]../../../dolphindb-k8s/blob/master/k8s_deployment_in_Aliyun.md)
+    - [基于阿里云K8S的DolphinDB套件部署教程](../../../dolphindb-k8s/blob/master/k8s_deployment_in_Aliyun.md)
 - 数据库
     - [分区数据库设计和操作](database.md)
     - [数据导入教程](import_data.md)
