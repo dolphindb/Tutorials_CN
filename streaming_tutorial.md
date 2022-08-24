@@ -831,7 +831,7 @@ act_getdata"。那么当订阅完成之后，用getStreamingStat().pubTables 查
 
 以getStreamEngineStat().DailyTimeSeriesEngine为例，查看内容为：
 
-![image](images/streaming/getStreamEngineStat.png)
+![image](./images/streaming/getStreamEngineStat.png)
 
 在上例中，系统中仅有一个DailyTimeSeriesEngine，其引擎名为engine1，目前占用了大约32KB内存。引擎的内存占用主要是因为随着订阅的流数据不断注入引擎，存放在内存中的数据越来越多。在创建引擎时可以通过参数 garbageSize 控制清理历史数据的频率以控制引擎中的内存占用。
 
