@@ -38,7 +38,7 @@ DolphinDB流数据处理系统提供了多种方便的功能，例如：
     - [5.2 流计算引擎高可用](#52-流计算引擎高可用)
   - [6 流数据API](#6-流数据api)
   - [7 状态监控](#7-状态监控)
-    - [7.2 流数据引擎状态](#72-流数据引擎状态)
+    - [7.1 流数据引擎状态](#71-流数据引擎状态)
   - [8 性能调优](#8-性能调优)
   - [9 可视化](#9-可视化)
 
@@ -825,13 +825,13 @@ act_getdata"。那么当订阅完成之后，用getStreamingStat().pubTables 查
 
 ![image](./images/streaming/pubtables1.png)
 <-->
-### 7.2 流数据引擎状态
+### 7.1 流数据引擎状态
 
 调用 [getStreamEngineStat()](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/g/getStreamEngineStat.html) 会返回一个字典，其key为引擎类型名称，value为一个表，包含key对应引擎的状态。
 
 以getStreamEngineStat().DailyTimeSeriesEngine为例，查看内容为：
 
-![image-20220812165219826](./images/streaming/getStreamEngineStat.png)
+![image](images/streaming/getStreamEngineStat.png)
 
 在上例中，系统中仅有一个DailyTimeSeriesEngine，其引擎名为engine1，目前占用了大约32KB内存。引擎的内存占用主要是因为随着订阅的流数据不断注入引擎，存放在内存中的数据越来越多。在创建引擎时可以通过参数 garbageSize 控制清理历史数据的频率以控制引擎中的内存占用。
 
