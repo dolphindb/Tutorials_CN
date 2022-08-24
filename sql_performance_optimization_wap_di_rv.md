@@ -18,18 +18,10 @@
 本教程包含内容：
 
 - [SQL优化案例：深度不平衡、买卖压力指标、波动率计算](#sql优化案例深度不平衡买卖压力指标波动率计算)
-  - [1. Snapshot数据文件结构](#1-snapshot数据文件结构)
+  - [1. Snapshot 数据文件结构](#1-snapshot数据文件结构)
   - [2. 指标定义](#2-指标定义)
   - [3. SQL优化](#3-sql优化)
-    - [3.1 新手：以列为单位进行计算](#31-新手以列为单位进行计算)
-    - [3.2 进阶：将列拼接为矩阵进行计算](#32-进阶将列拼接为矩阵进行计算)
-    - [3.3 高性能1：V2.00的TSDB存储和计算](#33-高性能1v200的tsdb存储和计算)
-    - [3.4 高性能2：V2.00的TSDB使用Array Vector存储和计算](#34-高性能2v200的tsdb使用array-vector存储和计算)
   - [4. OLAP到TSDB的性能提升原因](#4-olap到tsdb的性能提升原因)
-    - [4.1 数据库分区方法](#41-数据库分区方法)
-    - [4.2 数据表创建方法](#42-数据表创建方法)
-    - [4.3 OLAP存储引擎与TSDB存储引擎的差异](#43-olap存储引擎与tsdb存储引擎的差异)
-    - [4.4 小结](#44-小结)
   - [5. 总结](#5-总结)
 
 ## 1. Snapshot数据文件结构
@@ -66,7 +58,7 @@
   洛阳钼业、工业富联、中信建投、红塔证券、中国人保、汇顶科技、用友网络、京沪高铁、邮储银行、闻泰科技
   ```
 
-2020年上交所14460个证券的Snapshot数据已经提前导入至DolphinDB数据库中，一共约28.75亿条快照数据，导入方法见[股票行情数据导入实例](./stockdata_csv_import_demo.md)，一共174列。
+2020年上交所14460个证券的Snapshot数据已经提前导入至DolphinDB数据库中，一共约28.75亿条快照数据，导入方法见[股票行情数据导入实例](https://gitee.com/dolphindb/Tutorials_CN/blob/master/stockdata_csv_import_demo.md)，一共174列。
 
 
 ## 2. 指标定义
@@ -251,8 +243,8 @@ createPartitionedTable(dbHandle=db, table=tbTemp, tableName=tableName, partition
 * 上证50指数的成分股数据量：58,257,708
 * 逻辑CPU核数：8
 * 平均占用CPU核心数：7.6个
-* 无level file index cache下的计算耗时：27秒
-* 有level file index cache下的计算耗时：16秒
+* 无level file索引缓存下的计算耗时：27秒
+* 有level file索引缓存下的计算耗时：16秒
 
 ### 3.4 高性能2：V2.00的TSDB使用Array Vector存储和计算
 
