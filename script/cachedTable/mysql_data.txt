@@ -1,0 +1,12 @@
+create database configDB;
+
+use configDB;
+
+create table config (frequency int,
+maxvoltage float,
+maxec float
+);
+
+insert into config (frequency,maxvoltage,maxec) values(1,245,12);
+
+select * from configDB.config;

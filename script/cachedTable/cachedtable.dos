@@ -1,0 +1,16 @@
+login("admin","123456")
+loadPlugin("C:/Users/walter/Desktop/DolphinDB/DolphinDB_Win64_V2.00.0_8800/server/plugins/mysql/PluginMySQL.txt")
+use mysql
+
+def syncFunc(){
+	//同步mysql数据
+	conn = mysql::connect("192.168.0.34",3306,"root","123456","configDB")
+	t = load(conn,"config")
+
+	//返回表
+	return t
+}
+
+config=cachedTable(syncFunc,60)
+
+select * from config

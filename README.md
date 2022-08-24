@@ -126,7 +126,8 @@
     - [物联网时序数据查询案例](iot_query_case.md)
     - [DolphinDB流计算在金融行业的应用：实时计算日累计逐单资金流](streaming_capital_flow_daily.md)
     - [DolphinDB历史数据回放功能应用：股票行情回放](stock_market_replay.md)
-    - [DolphinDB 流计算应用：基金份额参考价值IOPV计算](streaming_IOPV.md)
+    - [DolphinDB流计算应用：基金份额参考价值IOPV计算](streaming_IOPV.md)
+    - [DolphinDB缓存表（CachedTable）快速实现MySQL跨数据库基础信息同步功能](cachedtable.md)
 - 入门和测试
     - [DolphinDB入门：量化金融范例](quant_finance_examples.md)
     - [DolphinDB入门：物联网范例](iot_examples.md)
