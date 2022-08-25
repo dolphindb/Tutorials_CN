@@ -1,0 +1,35 @@
+USE testdb;
+CREATE TABLE testTable(
+	date DATE NOT NULL,
+	time TIME NOT NULL,
+	ts TIMESTAMP NOT NULL
+);
+
+LOAD DATA INFILE '/var/lib/mysql-files/taq.csv' 
+INTO TABLE taq 
+FIELDS TERMINATED BY ','
+ENCLOSED BY '"'
+LINES TERMINATED BY '\n'
+IGNORE 1 ROWS;
+
+
+CREATE TABLE taqTs(
+	symbol VARCHAR(50) NOT NULL,
+	date DATE NOT NULL,
+	time TIME NOT NULL,
+	bid DECIMAL(10,2) NOT NULL,
+	ofr DECIMAL(10,2) NOT NULL,
+	bidsiz INT NOT NULL,
+	ofrsiz INT NOT NULL,
+	mode INT NOT NULL,
+	ex CHAR(3) NOT NULL,
+	mmid VARCHAR(50) NULL,
+	ts TIMESTAMP NOT null
+);
+
+LOAD DATA INFILE '/var/lib/mysql-files/taqTs.csv' 
+INTO TABLE taqTs 
+FIELDS TERMINATED BY ','
+ENCLOSED BY '"'
+LINES TERMINATED BY '\n'
+IGNORE 1 ROWS;

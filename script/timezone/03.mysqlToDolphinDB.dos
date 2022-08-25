@@ -1,0 +1,17 @@
+// 生成时间戳，保存到新的csv
+taq = loadText("/home/wyn/mysql-script/taq.csv")
+
+update taq set ts = convertTZ(concatDateTime(date,time),"America/New_York","Etc/GMT")
+
+saveText(taq,"/home/wyn/taqTs.csv",,1)
+
+long(convertTZ(now(),"Asia/Shanghai","Etc/GMT"))
+
+// 加载插件，查询mysql
+loadPlugin("/home/wyn/ddb130.19/server/plugins/mysql/PluginMySQL.txt")
+
+conn = mysql::connect(`127.0.0.1, 3306, `root, "lxq199612", `testdb)
+
+mysql::showTables(conn)
+
+taqDdb = mysql::load(conn, "SELECT * FROM taqTs")
