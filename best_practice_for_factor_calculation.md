@@ -79,7 +79,8 @@ DolphinDB 自带的数据回放和流式增量计算引擎可以方便地解决�
 
 
 ### 2.1 逐笔成交数据
-![逐笔成交数据](../script/factorPractice/images/level2_tick_samples.png?inline=false)
+![逐笔成交数据](script/factorPractice/images/level2_tick_samples.png?inline=false)
+
 
 逐笔成交是交易所公布买卖双方具体成交的每一笔数据，每3秒发布一次，每次包含这3秒内的所有成交记录。每一笔成交撮合，都由买方和卖方的一笔具体委托组成。上述数据样例采用字段 BuyNo 和 SellNo 标注买卖双方的委托单号，其它关键字段分别为： SecurityID（标的物代码），TradeTime（成交时刻），TradePrice（成交价格），TradeQty（本笔成交量）和 TradeAmount（本笔成交金额）。
 
@@ -88,7 +89,7 @@ DolphinDB 自带的数据回放和流式增量计算引擎可以方便地解决�
 
 ### 2.2 快照数据
 
-![快照数据](../../script/factorPractice/images/snapshot_samples.png?inline=false)
+![快照数据](../script/factorPractice/images/snapshot_samples.png?inline=false)
 
 股票交易所每3秒发布一次，每次涵盖这3秒结束时的日内累计成交量(TotalVolumeTrade)，日内累计成交金额(TotalValueTrade)，3秒终了时的盘口买卖双方挂单（买方为 Bid，卖方在有些数据源字段为 Offer，在有些数据源字段为 Ask，其余字段以此类推：BidPrice 为买方各档价格，OfferPrice 为卖方各档价格，OrderQty 为买卖双方各档的委托单总量， Orders 为买卖双方委托单数），3秒终了时的最近一笔成交价格（LastPx），全天开盘价（OpenPx），日内截止当下最高价（HighPx），日内截止当下最低价（LowPx）等各字段。其他和逐笔成交一致的字段不再赘述，涵义一致，详情可参见交易所数据说明字典。
 
