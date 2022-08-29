@@ -209,4 +209,4 @@ AlertManger默认绑定在9093端口，前端地址是http://127.0.0.1:9093 里�
 ![targets](./images/monitor/graph.png?raw=true)
 
 
-实际工作中，查看指标或者创建仪表盘通常使用Grafana，Prometheus作为Grafana的数据源；另外，DolphinDB 已经实现了Grafana的服务端和客户端的接口，具体配置可以参考[grafana教程](../../grafana-datasource/blob/master/README_CN.md)。
+实际工作中，查看指标或者创建仪表盘通常使用Grafana，Prometheus作为Grafana的数据源；另外，DolphinDB 已经实现了Grafana的服务端和客户端的接口，具体配置可以参考[grafana教程](https://gitee.com/dolphindb/grafana-datasource/blob/master/README.zh.md)。
