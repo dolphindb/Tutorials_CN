@@ -1019,7 +1019,7 @@ scheduleJob(jobId=`daily, jobDesc="Daily Job 1", jobFunc=bacthExeCute, scheduleT
 
 快照数据，一般指3s一条的多档数据。在实际生产中，往往会根据这样的数据产生实时的因子，或根据多档报价、成交量计算，或根据重要字段做计算。这一类因子，推荐使用字段名作为自定义函数的参数。除此之外，由于快照数据的多档的特殊性，普通存储会占用很大的空间，故在存储模式上，我们也推荐将多档数据存为ArrayVector的形式。如此一来，既能节省磁盘空间，又能使代码简洁，省去选取多个重复字段的困扰。
 
-在[章节附件8.3 快照因子全流程代码汇总](../script/factorPractice/appendix_8.3_case3_snapshot.dos)中，模拟数据生成了20天快照数据，并将其存储为了普通快照数据和ArrayVector快照数据两种。代码中也展示了对于有状态因子flow和无状态因子权重偏度的在流批一体中的最佳实践。
+在[章节附件8.3 快照因子全流程代码汇总](script/factorPractice/appendix_8.3_case3_snapshot.dos)中，模拟数据生成了20天快照数据，并将其存储为了普通快照数据和ArrayVector快照数据两种。代码中也展示了对于有状态因子flow和无状态因子权重偏度的在流批一体中的最佳实践。
 
 ### 8.4 逐笔因子
 
