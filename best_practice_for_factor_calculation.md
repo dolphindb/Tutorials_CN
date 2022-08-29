@@ -84,12 +84,12 @@ DolphinDB 自带的数据回放和流式增量计算引擎可以方便地解决�
 
 逐笔成交是交易所公布买卖双方具体成交的每一笔数据，每3秒发布一次，每次包含这3秒内的所有成交记录。每一笔成交撮合，都由买方和卖方的一笔具体委托组成。上述数据样例采用字段 BuyNo 和 SellNo 标注买卖双方的委托单号，其它关键字段分别为： SecurityID（标的物代码），TradeTime（成交时刻），TradePrice（成交价格），TradeQty（本笔成交量）和 TradeAmount（本笔成交金额）。
 
-每个交易日的原始数据量在 8 GB 上下。根据上表的分区机制进行建库建表，点击查看对应脚本：[逐笔成交数据建库建表完整代码](../script/factorPractice/appendix_2.1_createTickDbAndTable_main.dos)。
+每个交易日的原始数据量在 8 GB 上下。根据上表的分区机制进行建库建表，点击查看对应脚本：[逐笔成交数据建库建表完整代码](script/factorPractice/appendix_2.1_createTickDbAndTable_main.dos)。
 
 
 ### 2.2 快照数据
 
-![快照数据](../script/factorPractice/images/snapshot_samples.png?inline=false)
+![快照数据](script/factorPractice/images/snapshot_samples.png?inline=false)
 
 股票交易所每3秒发布一次，每次涵盖这3秒结束时的日内累计成交量(TotalVolumeTrade)，日内累计成交金额(TotalValueTrade)，3秒终了时的盘口买卖双方挂单（买方为 Bid，卖方在有些数据源字段为 Offer，在有些数据源字段为 Ask，其余字段以此类推：BidPrice 为买方各档价格，OfferPrice 为卖方各档价格，OrderQty 为买卖双方各档的委托单总量， Orders 为买卖双方委托单数），3秒终了时的最近一笔成交价格（LastPx），全天开盘价（OpenPx），日内截止当下最高价（HighPx），日内截止当下最低价（LowPx）等各字段。其他和逐笔成交一致的字段不再赘述，涵义一致，详情可参见交易所数据说明字典。
 
@@ -97,21 +97,21 @@ DolphinDB 自带的数据回放和流式增量计算引擎可以方便地解决�
 
 在 DolphinDB 2.0版本的 TSDB 存储引擎中，支持 array vector 的存储机制，即可以允许数据表中一个 cell 存储一个向量。在本白皮书的案例中，后面文章会详细介绍 array vector 存储方案和普通存储方案的区别。快照数据的买10档或卖10档在本例中作为一个 vector 存入单个 cell 中，其他各字段和普通快照数据表都相同。
 
-两种存储模式的建库建表可以参考[Snapshot普通及arrayVector形式建库和建表完整代码](../script/factorPractice/appendix_2.2_createSnapshotDbAndTable_main.dos)
+两种存储模式的建库建表可以参考[Snapshot普通及arrayVector形式建库和建表完整代码](script/factorPractice/appendix_2.2_createSnapshotDbAndTable_main.dos)
 
 快照数据的 array_vector 存储形式：
-![array_vector快照数据](../script/factorPractice/images/snapshot_in_array_vector_samples.png?inline=false)
+![array_vector快照数据](script/factorPractice/images/snapshot_in_array_vector_samples.png?inline=false)
 
 
 ### 2.3 分钟K数据
 
-![分钟K数据](../script/factorPractice/images/kline_samples.png?inline=false)
+![分钟K数据](script/factorPractice/images/kline_samples.png?inline=false)
 
 包含每只股票，每分钟的开盘价、最高价、最低价、收盘价，四个价格字段，同时记录本分钟的成交量和成交金额。另外，数据 K 线可以依据基本字段计算衍生字段，比如：k 线均价(vwap 价格)。k 线数据是由逐笔成交数据聚合产生，具体代码可以参考[第三章3.3.4基于快照数据的分钟聚合](#334-基于快照数据的分钟聚合)。
 
 日 K 数据，存储形式和字段跟分钟 k 线一致，可以由分钟 k 线或高频数据聚合产生，这里不作赘述。
 
-日 k 数据，分钟数据的建库建表可以参考：[k 线数据建库建表完整代码](../script/factorPractice/appendix_2.3_createTableKMinute_main.dos)
+日 k 数据，分钟数据的建库建表可以参考：[k 线数据建库建表完整代码](script/factorPractice/appendix_2.3_createTableKMinute_main.dos)
 
 ## 3. 投研阶段的因子计算
 在投研阶段，会通过历史数据批量计算生成因子。通常，推荐研究员将每一种因子的计算都封装成自定义函数。根据因子类型和使用者习惯的不同，DolphinDB 提供了面板和 SQL 两种计算方式。
@@ -353,7 +353,7 @@ TradeTime           SecurityID factorname val
 
 DolphinDB 流计算解决方案的核心部件是流计算引擎和流数据表。流计算引擎用于时间序列处理、横截面处理、窗口处理、表关联、异常检测等操作。流数据表可以看作是一个简化版的消息中间件，或者说是消息中间件中的一个主题（topic），可以往其发布（publish）数据，也可以从其订阅（subscribe）数据。流计算引擎和流数据表均继承于 DolphinDB 的数据表（table），因此都可以通过 `append!` 函数往其注入数据。流计算引擎的输出也是数据表的形式，因此多个计算引擎可以跟搭积木一样自由组合，形成流式处理的流水线。
 
-![因子数据流处理流程图](../script/factorPractice/images/factor_streams.png?inline=false)
+![因子数据流处理流程图](script/factorPractice/images/factor_streams.png?inline=false)
 
 ### 4.1 流式增量计算
 
@@ -397,7 +397,7 @@ SecurityID TradeTime           Factor
 
 资金流分析是逐笔委托数据的一个重要应用场景。在实时处理逐笔数据时，大小单的统计是资金流分析的一个具体应用。大小单在一定程度上能反映主力、散户的动向。但在实时场景中，大小单的生成有很多难点：（1） 大小单的计算涉及历史状态，如若不能实现增量计算，当计算下午的数据时，可能需要回溯有关这笔订单上午的数据，效率会非常低下。 （2）计算涉及至少两个阶段。在第一阶段需要根据订单分组，根据订单的累计成交量判断大小单，在第二阶段要根据股票来分组，统计每个股票的大小单数量及金额。
 
-大小单是一个动态的概念。一个小单在成交量增加后可能变成一个大单。DolphinDB的两个内置函数`dynamicGroupCumsum`和`dynamicGroupCumcount`用于对动态组的增量计算。完整的代码请参考：[章节附件4.1.2 大小单的流式处理](../script/factorPractice/appendix_4.1.2_streamComputationOfSmallInflowRate_main.dos)。
+大小单是一个动态的概念。一个小单在成交量增加后可能变成一个大单。DolphinDB的两个内置函数`dynamicGroupCumsum`和`dynamicGroupCumcount`用于对动态组的增量计算。完整的代码请参考：[章节附件4.1.2 大小单的流式处理](script/factorPractice/appendix_4.1.2_streamComputationOfSmallInflowRate_main.dos)。
 
 ```
 @state
@@ -449,7 +449,7 @@ SecurityID TradeTime smallBuyOrderAmount smallSellOrderAmount totalOrderAmount f
 
 #### 4.1.3 复杂因子Alpha #1流式计算的快捷实现 <!-- omit in toc -->
 
-从前一个大小单的例子可以看到，有些因子的流式实现比较复杂，需要创建多个引擎进行流水线处理来完成。完全用手工的方式来创建多个引擎其实是一件耗时的工作。如果输入的指标计算只涉及一个分组键，DolphinDB提供了一个解析引擎[`streamEngineParser`](https://www.dolphindb.cn/cn/help/200/FunctionsandCommands/FunctionReferences/s/streamEngineParser.html)来解决此问题。下面我们以第三章3.1面板数据模式的alpha #1因子为例，展示`streamEngineParser`的使用方法。完整代码参考[Alpha #1流式计算](../script/factorPractice/appendix_4.1.3_StreamComputationOfAlpha1Factor_main.dos)。以下为核心代码。
+从前一个大小单的例子可以看到，有些因子的流式实现比较复杂，需要创建多个引擎进行流水线处理来完成。完全用手工的方式来创建多个引擎其实是一件耗时的工作。如果输入的指标计算只涉及一个分组键，DolphinDB提供了一个解析引擎[`streamEngineParser`](https://www.dolphindb.cn/cn/help/200/FunctionsandCommands/FunctionReferences/s/streamEngineParser.html)来解决此问题。下面我们以第三章3.1面板数据模式的alpha #1因子为例，展示`streamEngineParser`的使用方法。完整代码参考[Alpha #1流式计算](script/factorPractice/appendix_4.1.3_StreamComputationOfAlpha1Factor_main.dos)。以下为核心代码。
 
 ```
 @state
@@ -477,7 +477,7 @@ streamEngine = streamEngineParser(name="alpha1Parser", metrics=metrics, dummyTab
 
 前一节我们介绍了因子计算的批流一体实现方案，简单地说，就是一套代码（自定义的因子函数），两种引擎（批计算引擎和流计算引擎）。事实上，DolphinDB提供一种更为简洁的批流一体实现方案，那就是在历史数据建模时，通过数据回放，也用流引擎来实现计算。
 
-在第三章中介绍了用[SQL语句方式批处理计算factorDoubleEMA因子](#32-sql模式)的例子，这里介绍如何使用流计算的方式回放数据，计算 factorDoubleEMA 的因子值。全部代码参考[章节附件4.2 流计算factorDoubleEMA因子](../script/factorPractice/appendix_4.2_streamComputationOfDoubleEmaFactor_main.dos)
+在第三章中介绍了用[SQL语句方式批处理计算factorDoubleEMA因子](#32-sql模式)的例子，这里介绍如何使用流计算的方式回放数据，计算 factorDoubleEMA 的因子值。全部代码参考[章节附件4.2 流计算factorDoubleEMA因子](script/factorPractice/appendix_4.2_streamComputationOfDoubleEmaFactor_main.dos)
 
 ```
 //创建流引擎，并传入因子算法factorDoubleEMA
@@ -493,7 +493,7 @@ inputDS = replayDS(<select SecurityID, TradeTime, LastPx from tableHandle where 
 
 ### 4.3 对接交易系统
 
-DolphinDB 本身具有多种常用编程语言的API，包括C++, java, javascript, c#, python, go等。使用这些语言的程序，都可以调用该语言的 DolphinDB 接口，订阅到 DolphinDB 服务器的流数据。本例提供一个简单的[python接口订阅流数据](../script/factorPractice/appendix_4.3.1_python_callback_handler_subscribing_stream_main.py)样例。
+DolphinDB 本身具有多种常用编程语言的API，包括C++, java, javascript, c#, python, go等。使用这些语言的程序，都可以调用该语言的 DolphinDB 接口，订阅到 DolphinDB 服务器的流数据。本例提供一个简单的[python接口订阅流数据](script/factorPractice/appendix_4.3.1_python_callback_handler_subscribing_stream_main.py)样例。
 
 DolphinDB-Python API订阅流数据例子：
 
@@ -507,7 +507,7 @@ handler=python_callback_handler,#此处传入python端要接收消息的回调�
 
 DolphinDB向ZMQ消息队列推送流数据代码样例：
 
-1.首先启动下游的ZMQ数据消费程序，作为监听端(ZeroMQ消息队列的服务端)，完整代码见[章节附件4.3.2 向ZMQ推送流数据](../script/factorPractice/appendix_4.3.2_zmq_consuming_ddb_stream_main.py)
+1.首先启动下游的ZMQ数据消费程序，作为监听端(ZeroMQ消息队列的服务端)，完整代码见[章节附件4.3.2 向ZMQ推送流数据](script/factorPractice/appendix_4.3.2_zmq_consuming_ddb_stream_main.py)
 
 ```
 zmq_context = Context()
@@ -522,7 +522,7 @@ asyncio.run(loop_runner())
 
 2.启动因子数据的流处理计算和发布
 
-在外部消费ZMQ消息的程序启动后，DolphinDB端要启动流计算，并开始对外发布计算结果。以下是[DolphinDB端的代码](../script/factorPractice/appendix_4.3.3_streamComputationOfDoubleEmaFactorPublishingOnZMQ_main.dos)。输出结果表之前的所有代码部分，和[4.2中流处理计算doubleEma因子](#42-数据回放)例子的一致，故下例代码中不再赘述。
+在外部消费ZMQ消息的程序启动后，DolphinDB端要启动流计算，并开始对外发布计算结果。以下是[DolphinDB端的代码](script/factorPractice/appendix_4.3.3_streamComputationOfDoubleEmaFactorPublishingOnZMQ_main.dos)。输出结果表之前的所有代码部分，和[4.2中流处理计算doubleEma因子](#42-数据回放)例子的一致，故下例代码中不再赘述。
 
 ```
 resultSchema=table(1:0,["SecurityID","TradeTime","factor"], [SYMBOL,TIMESTAMP,DOUBLE])//输出到消息队列的表结构
@@ -593,7 +593,7 @@ OLAP 引擎是纯列式存储，不适合表过宽，若存储宽表的列数超
 * 模拟数据随机性很多大，也影响了 TSDB 引擎宽表得数据压缩。
 * TSDB 引擎会进行数据排序，生成索引，所以同样是纵表，TSDB 引擎在存储空间、存储速度、压缩比方面都要略逊于 OLAP 引擎。     
 
-具体存储脚本参考[因子数据存储模拟脚本](../script/factorPractice/appendix_5.1_factorDataSimulation.zip)。
+具体存储脚本参考[因子数据存储模拟脚本](script/factorPractice/appendix_5.1_factorDataSimulation.zip)。
 
 
 ### 5.2 因子查询
@@ -606,7 +606,7 @@ OLAP 引擎是纯列式存储，不适合表过宽，若存储宽表的列数超
 | 宽表| TSDB| 4000 | 200 |一年 |分钟级| 12,680,800 |32012 |340.19 |月(VALUE分区)+因子(VALUE分区)|
 
 
-下面我们通过多个角度的查询测试来比对这三种存储方式的查询性能。[因子查询测试脚本](../script/factorPractice/appendix_5.2_factorQueryTest.dos)
+下面我们通过多个角度的查询测试来比对这三种存储方式的查询性能。[因子查询测试脚本](script/factorPractice/appendix_5.2_factorQueryTest.dos)
 
 * 查询1个因子1只股票指定时间点数据
 
@@ -733,7 +733,7 @@ wide_tsdb_factor_year=select * from tsdb_wide_min_factor where factorname in ('f
 
 得到分配持仓权重后，再与持仓股票的日收益率做矩阵乘法，最后按天相加，可得整个投资组合的回报率变化曲线。
 
-完整实例代码参考：[向量化因子回测完整代码](../script/factorPractice/appendix_6.1_vectorisedFactorBacktest_main.dos)
+完整实例代码参考：[向量化因子回测完整代码](script/factorPractice/appendix_6.1_vectorisedFactorBacktest_main.dos)
 
 
 ### 6.2 因子相关性分析
@@ -789,7 +789,7 @@ corrMatrix = result.corr.matrix().avg().reshape(size(distinct(day_data.factornam
 - assert语句，判断结果是否符合预期。
 - eqObj等函数，用于测试结果是否符合预期。
 
-下面通过对因子函数factorDoubleEMA的测试来展示单元测试的撰写。全部代码请点击[脚本](../script/factorPractice/appendix_7.2_doubleEMATest.dos)。下面的代码展示了三个测试cases，两个用于批处理，一个用于流计算处理。
+下面通过对因子函数factorDoubleEMA的测试来展示单元测试的撰写。全部代码请点击[脚本](script/factorPractice/appendix_7.2_doubleEMATest.dos)。下面的代码展示了三个测试cases，两个用于批处理，一个用于流计算处理。
 
 ```
 @testing: case = "factorDoubleEMA_without_null"
@@ -931,7 +931,7 @@ grant("group1name", TABLE_READ, "dfs://db1/pt1")
 
 DolphinDB 本身并不直接支持表内数据级的权限控制，但是通过DolphinDB本身灵活的权限控制，我们可以通过其他方式来实现表内数据级的权限控制。   
 这里我们可以通过对用户授予functionview 权限 VIEW_EXEC 这种方式来实现表内数据级的权限控制。   
-完整代码参考：[章节附件7.5.3 因子表权限控制](../script/factorPractice/appendix_7.5.3_factorTableControll.dos)。通过这份代码，用户"u1"虽然没有表的读权限，但是可以获得表内factor1因子的数据。
+完整代码参考：[章节附件7.5.3 因子表权限控制](script/factorPractice/appendix_7.5.3_factorTableControll.dos)。通过这份代码，用户"u1"虽然没有表的读权限，但是可以获得表内factor1因子的数据。
 
 ```
 //创建用户u1,我们想授予u1 只能读取因子factor1的权限
@@ -1003,7 +1003,7 @@ scheduleJob(jobId=`daily, jobDesc="Daily Job 1", jobFunc=bacthExeCute, scheduleT
 
 日频的数据，一般是由逐笔数据或者其他高频数据聚合而成。日频的数据量不大，在日频数据上经常会计算一些动量因子，或者一些复杂的需要观察长期数据的因子。因此在分区考虑上，建议按年分区即可。在因子计算上，日频因子通常会涉及时间和股票多个维度，因此建议用面板模式计算。当然也可以根据不同存储模式，选择不同的计算模式。
 
-在[章节附件8.1 日频因子全流程代码汇总](../script/factorPractice/appendix_8.1_case1_daily.dos)中，模拟了 10 年 4000 只股票的数据，总数据量压缩前大约为 1 GB。代码中会展现上述教程中所涉及日频因子的最佳实践，因子包括 Alpha 1、Alpha 98 ，以及不同计算方式（面板或者SQL模式）写入单值模型、多值模型的最佳实践。
+在[章节附件8.1 日频因子全流程代码汇总](script/factorPractice/appendix_8.1_case1_daily.dos)中，模拟了 10 年 4000 只股票的数据，总数据量压缩前大约为 1 GB。代码中会展现上述教程中所涉及日频因子的最佳实践，因子包括 Alpha 1、Alpha 98 ，以及不同计算方式（面板或者SQL模式）写入单值模型、多值模型的最佳实践。
 
 
 
@@ -1012,7 +1012,7 @@ scheduleJob(jobId=`daily, jobDesc="Daily Job 1", jobFunc=bacthExeCute, scheduleT
 
 分钟频的数据，一般是从逐笔数据或快照数据合成而来。分钟频的数据相比日频的数据较大，在分区设计上建议按月VALUE分区，股票HASH的组合分区。在分钟频的数据上，一般会计算日内的收益率等因子。对于这类因子，建议使用SQL的方式以字段作为参数。很多时候，会将投研的因子，在每日收盘之后，增量做所有因子的计算，此时，也需要对于每日增量的因子做工程化管理。建议将所有此类因子用维度表做一个维护，用定时作业将这些因子批量做计算。
 
-在[章节附件8.2 分钟频因子全流程代码汇总](../script/factorPractice/appendix_8.2_case2_minute.dos)中，模拟了一年4000只股票的数据，总数据量压缩前大约20GB。其中，会展现上述教程中所有涉及分钟频率的因子的最佳实践，因子包括日内收益偏度因子，factorDoubleEMA等因子，，后续将因子写入单值模型、多值模型的全过程，以及每日增量计算所有因子的工程化最佳实践。
+在[章节附件8.2 分钟频因子全流程代码汇总](script/factorPractice/appendix_8.2_case2_minute.dos)中，模拟了一年4000只股票的数据，总数据量压缩前大约20GB。其中，会展现上述教程中所有涉及分钟频率的因子的最佳实践，因子包括日内收益偏度因子，factorDoubleEMA等因子，，后续将因子写入单值模型、多值模型的全过程，以及每日增量计算所有因子的工程化最佳实践。
 
 
 ### 8.3 快照因子
@@ -1025,7 +1025,7 @@ scheduleJob(jobId=`daily, jobDesc="Daily Job 1", jobFunc=bacthExeCute, scheduleT
 
 逐笔成交数据，是交易所提供的最详细的每一笔撮合成交数据。每3秒发布一次，每次提供这3秒内的所有撮合记录。涉及逐笔成交数据的因子都是高频因子，推荐调试建模阶段可以在小数据量上使用批处理计算。一旦模型定型，就可以用批处理中同样的计算代码，迁移到流计算中实时处理(这就是所谓的批流一体)，比批处理方式节省内存，同时实时性也更高，模型迭代也更快。
 
-在[章节附件8.4 逐笔因子全流程代码汇总](../script/factorPractice/appendix_8.4_case4_streamTick.dos)中，会展现上述教程中所有涉及逐笔成交数据的因子计算、流计算。
+在[章节附件8.4 逐笔因子全流程代码汇总](script/factorPractice/appendix_8.4_case4_streamTick.dos)中，会展现上述教程中所有涉及逐笔成交数据的因子计算、流计算。
 
 ## 9. 总结
 用DolphinDB来进行因子的计算时，可选择面板和SQL两种方式来封装因子的核心逻辑。面板方式使用矩阵来计算因子，实现思路非常简练；而SQL方式要求投研人员使用向量化的思路进行因子开发。无论哪种方式，DolphinDB均支持批流一体的实现。DolphinDB内置了相关性和回归分析等计算工具，可分析因子的有效性，可对多因子建模。
@@ -1037,40 +1037,40 @@ scheduleJob(jobId=`daily, jobDesc="Daily Job 1", jobFunc=bacthExeCute, scheduleT
 
 ## 附录
 
-[章节附件2.1 逐笔数据建库建表](../script/factorPractice/appendix_2.1_createTickDbAndTable_main.dos)
+[章节附件2.1 逐笔数据建库建表](script/factorPractice/appendix_2.1_createTickDbAndTable_main.dos)
 
-[章节附件2.2 快照数据建库建表](../script/factorPractice/appendix_2.2_createSnapshotDbAndTable_main.dos)
+[章节附件2.2 快照数据建库建表](script/factorPractice/appendix_2.2_createSnapshotDbAndTable_main.dos)
 
-[章节附件2.3 k线数据建库建表](../script/factorPractice/appendix_2.3_createTableKMinute_main.dos) 
+[章节附件2.3 k线数据建库建表](script/factorPractice/appendix_2.3_createTableKMinute_main.dos) 
 
-[章节附件4.1.2 流计算大小单因子](../script/factorPractice/appendix_4.1.2_streamComputationOfSmallInflowRate_main.dos)
+[章节附件4.1.2 流计算大小单因子](script/factorPractice/appendix_4.1.2_streamComputationOfSmallInflowRate_main.dos)
 
-[章节附件4.1.3 Alpha #1流式计算](../script/factorPractice/appendix_4.1.3_StreamComputationOfAlpha1Factor_main.dos)
+[章节附件4.1.3 Alpha #1流式计算](script/factorPractice/appendix_4.1.3_StreamComputationOfAlpha1Factor_main.dos)
 
-[章节附件4.2 流计算doubleEma因子](../script/factorPractice/appendix_4.2_streamComputationOfDoubleEmaFactor_main.dos)
+[章节附件4.2 流计算doubleEma因子](script/factorPractice/appendix_4.2_streamComputationOfDoubleEmaFactor_main.dos)
 
-[章节附件4.3.1 python接口订阅流数据](../script/factorPractice/appendix_4.3.1_python_callback_handler_subscribing_stream_main.py)
+[章节附件4.3.1 python接口订阅流数据](script/factorPractice/appendix_4.3.1_python_callback_handler_subscribing_stream_main.py)
 
-[章节附件4.3.2 通过ZMQ消息队列收取DolphinDB推送来的流数据](../script/factorPractice/appendix_4.3.2_zmq_consuming_ddb_stream_main.py)
+[章节附件4.3.2 通过ZMQ消息队列收取DolphinDB推送来的流数据](script/factorPractice/appendix_4.3.2_zmq_consuming_ddb_stream_main.py)
 
-[章节附件4.3.3 流计算因子结果推送到外部ZMQ消息队列](../script/factorPractice/appendix_4.3.3_streamComputationOfDoubleEmaFactorPublishingOnZMQ_main.dos)
+[章节附件4.3.3 流计算因子结果推送到外部ZMQ消息队列](script/factorPractice/appendix_4.3.3_streamComputationOfDoubleEmaFactorPublishingOnZMQ_main.dos)
 
-[章节附件5.1 因子存储模拟测试:](../script/factorPractice/appendix_5.1_factorDataSimulation.zip)
+[章节附件5.1 因子存储模拟测试:](script/factorPractice/appendix_5.1_factorDataSimulation.zip)
 
-[章节附件5.2, 5.3 因子查询测试脚本 :](../script/factorPractice/appendix_5.2_factorQueryTest.dos)
+[章节附件5.2, 5.3 因子查询测试脚本 :](script/factorPractice/appendix_5.2_factorQueryTest.dos)
 
-[章节附件6.1 因子向量化回测](../script/factorPractice/appendix_6.1_vectorisedFactorBacktest_main.dos)
+[章节附件6.1 因子向量化回测](script/factorPractice/appendix_6.1_vectorisedFactorBacktest_main.dos)
 
-[章节附件7.2 单元测试](../script/factorPractice/appendix_7.2_doubleEMATest.dos)
+[章节附件7.2 单元测试](script/factorPractice/appendix_7.2_doubleEMATest.dos)
 
-[章节附件7.5.3 因子表权限控制](../script/factorPractice/appendix_7.5.3_factorTableControll.dos)
+[章节附件7.5.3 因子表权限控制](script/factorPractice/appendix_7.5.3_factorTableControll.dos)
 
-[章节附件8.1 日频因子全流程代码汇总](../script/factorPractice/appendix_8.1_case1_daily.dos)
+[章节附件8.1 日频因子全流程代码汇总](script/factorPractice/appendix_8.1_case1_daily.dos)
 
-[章节附件8.2 分钟频因子全流程代码汇总](../script/factorPractice/appendix_8.2_case2_minute.dos)
+[章节附件8.2 分钟频因子全流程代码汇总](script/factorPractice/appendix_8.2_case2_minute.dos)
 
-[章节附件8.3 快照因子全流程代码汇总](../script/factorPractice/appendix_8.3_case3_snapshot.dos)
+[章节附件8.3 快照因子全流程代码汇总](script/factorPractice/appendix_8.3_case3_snapshot.dos)
 
-[章节附件8.4 逐笔因子全流程代码汇总](../script/factorPractice/appendix_8.4_case4_streamTick.dos)
+[章节附件8.4 逐笔因子全流程代码汇总](script/factorPractice/appendix_8.4_case4_streamTick.dos)
 
-[所有代码附件目录](../script/factorPractice)
+[所有代码附件目录](script/factorPractice)
