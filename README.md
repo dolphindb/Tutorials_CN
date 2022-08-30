@@ -59,7 +59,7 @@
 - API
     - [Python API使用教程](../../../api_python3/blob/master/README_CN.md)
     - [Java API使用教程](../../../api-java/blob/master/README_CN.md)
-    - [Java API使用实例](../../../api-java/blob/master/example/README_CN.md)
+    <!--先隐藏，等教程更新完毕再暴露 - [Java API使用实例](../../../api-java/blob/master/example/README_CN.md) -->
     - [JDBC](../../../jdbc/blob/master/README_CN.md)
     - [C# API使用教程](../../../api-csharp/blob/master/README_CN.md)
     - [C++ API使用教程](../../../api-cplusplus/blob/master/README_CN.md)

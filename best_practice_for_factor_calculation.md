@@ -503,7 +503,7 @@ handler=python_callback_handler,#此处传入python端要接收消息的回调�
 )
 ```
 
-在金融生产环境中，更常见的情况，是流数据实时的灌注到消息队列中，供下游的其他模块消费。DolphinDB 也支持将实时计算结果推送到消息中间件，与交易程序对接。示例中提供的样例，使用 DolphinDB 的开源 ZMQ 插件，将实时计算的结果推送到 ZMQ 消息队列，供下游ZMQ协议的订阅程序消费(交易或展示)。除ZMQ之外，其他支持的工具都在 [DolphinDB 插件库](../插件/plugin_development_tutorial.md)中提供。所有已有的 DolphinDB 插件都是开源的，插件的编写组件也是开源的，用户也可按自己的需要编写。
+在金融生产环境中，更常见的情况，是流数据实时的灌注到消息队列中，供下游的其他模块消费。DolphinDB 也支持将实时计算结果推送到消息中间件，与交易程序对接。示例中提供的样例，使用 DolphinDB 的开源 ZMQ 插件，将实时计算的结果推送到 ZMQ 消息队列，供下游ZMQ协议的订阅程序消费(交易或展示)。除ZMQ之外，其他支持的工具都在 [DolphinDB 插件库](plugin_development_tutorial.md)中提供。所有已有的 DolphinDB 插件都是开源的，插件的编写组件也是开源的，用户也可按自己的需要编写。
 
 DolphinDB向ZMQ消息队列推送流数据代码样例：
 
@@ -880,7 +880,7 @@ for (i in 0..11){
 
 ### 7.4 内存管理
 
-内存管理一直是运维人员和研究人员关注的重中之重，本节将从批和流两个角度简单介绍如何在DolphinDB中高效地使用内存。更多有关内存管理的详细内容，请参阅[`DolphinDB内存管理教程`](../系统管理/memory_management.md)。
+内存管理一直是运维人员和研究人员关注的重中之重，本节将从批和流两个角度简单介绍如何在DolphinDB中高效地使用内存。更多有关内存管理的详细内容，请参阅[`DolphinDB内存管理教程`](memory_management.md)。
 
 在配置 DolphinDB 环境时，计算和事务的内存占用可在单节点的 ”dolphindb.cfg” 或集群的 cluster.cfg 中，通过参数”maxMemSize“配置单节点最大可用内存。
 
@@ -897,7 +897,7 @@ for (i in 0..11){
 
 ### 7.5 权限管理
 
-因子数据是非常重要的数据，一般来说，用户并不能随意访问所有因子，因此需要对因子数据做好权限管理。DolphinDB database 提供了强大、灵活、安全的权限控制系统，可以满足因子库表级，函数视图级的管理。更多有关权限管理的详细内容，请参考[权限管理教程](../系统管理/ACL_and_Security.md)。
+因子数据是非常重要的数据，一般来说，用户并不能随意访问所有因子，因此需要对因子数据做好权限管理。DolphinDB database 提供了强大、灵活、安全的权限控制系统，可以满足因子库表级，函数视图级的管理。更多有关权限管理的详细内容，请参考[权限管理教程](ACL_and_Security.md)。
 
 在实际的生产中通常使用以下三种管理方式：
 
@@ -957,7 +957,7 @@ factor1_tab=getFactor1Table()
 因子任务可以通过以下三种方式执行:   
 - (1) 通过交互的方式执行。   
 - (2) 通过 [submitJob](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/s/submitJob.html)   提交一个Job来执行。   
-- (3) 通过 [scheduleJob](../系统管理/scheduledJob.md)   提交一个定时任务来进行周期性的执行。
+- (3) 通过 [scheduleJob](scheduledJob.md)   提交一个定时任务来进行周期性的执行。
 
 #### 7.6.1 全量计算 <!-- omit in toc -->
 
