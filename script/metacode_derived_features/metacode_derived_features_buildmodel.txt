@@ -1,0 +1,77 @@
+/**
+metacode_derived_features_buildmodel.txt
+Script to machine learning
+DolphinDB Inc.
+DolphinDB server version: 2.00.6 2022.05.09
+Last modification time: 2022.08.31
+*/
+
+/**
+Attention:
+
+1. The variable result is from features engineering calculation
+2. The developer need to install Xgboost plugin in advance
+3. There is one place in the script that need to be modified according to the environment
+   */
+
+//import Xgboost plugin
+try{
+	loadPlugin(getHomeDir()+"/plugins/xgboost/PluginXgboost.txt")
+}
+catch(ex){
+	print(ex)
+}
+
+/**
+part1: Load data from database
+modified location 1: modelSavePath
+*/
+modelSavePath = "/hdd/hdd9/machineLearning/model/001.model"
+/**
+part2: data preprocessing
+Attention: the variable result is from features engineering calculation
+*/
+result = result[each(isValid, result.values()).rowAnd()]
+result_input = copy(result)
+label = result[`LogReturn0_realizedVolatility]
+result_input.update!(`SecurityID_int, int(result[`SecurityID]))
+result_input.dropColumns!(`SecurityID`DateTime`LogReturn0_realizedVolatility)
+
+/**
+part3: split data set 
+*/
+def trainTestSplit(x, testRatio) {
+    xSize = x.size()
+    testSize =( xSize * (1-testRatio))$INT
+    return x[0: testSize], x[testSize:xSize]
+}
+Train_x, Test_x = trainTestSplit(result_input, 0.3)
+Train_y, Test_y = trainTestSplit(label, 0.3)
+
+/**
+part4: set parameters and train, save model
+*/
+params = {
+	objective: 'reg:squarederror',
+	colsample_bytree: 0.8,
+	subsample: 0.8,
+	min_child_weight: 1,
+	max_leaves:128,
+	eta: 0.1,
+	max_depth:10,
+	eval_metric : 'rmse'
+	}
+model_1 = xgboost::train(Train_y ,Train_x, params, 500)
+xgboost::saveModel(model_1, modelSavePath)
+
+/**
+part5: load model and predict, use RMSPE to evaluate.
+You can choose one of model(saved) and model_1 to predict.
+*/
+def RMSPE(a,b)
+{
+	return sqrt( sum( ((a-b)\a)*((a-b)\a) ) \a.size()  )
+}
+model = xgboost::loadModel(modelSavePath)
+y_pred = xgboost::predict(model_1 , Test_x)
+print('RMSPE='+RMSPE(Test_y, y_pred))

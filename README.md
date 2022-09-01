@@ -129,6 +129,7 @@
     - [DolphinDB流计算应用：基金份额参考价值IOPV计算](streaming_IOPV.md)
     - [DolphinDB缓存表（CachedTable）快速实现MySQL跨数据库基础信息同步功能](cachedtable.md)
     - [DolphinDB中有关时间信息的最佳实践指南](timezone.md)
+    - [DolphinDB元编程：开发股票波动率预测模型的676个输入特征](metacode_derived_features.md)
 - 入门和测试
     - [DolphinDB入门：量化金融范例](quant_finance_examples.md)
     - [DolphinDB入门：物联网范例](iot_examples.md)

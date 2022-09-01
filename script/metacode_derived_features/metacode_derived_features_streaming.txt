@@ -1,0 +1,161 @@
+/**
+metacode_derived_features_streaming.txt
+Script to calculate streaming data
+DolphinDB Inc.
+DolphinDB server version: 2.00.6 2022.05.09
+Last modification time: 2022.08.31
+*/
+
+/**
+Attention:
+
+1. The developer need to import level2 snapshot data into the database in advance
+2. The developer need to install Xgboost plugin and save model into specified path in advance
+3. There are two places in the script that need to be modified according to the environment
+   */
+
+//clean environment
+def cleanEnvironment(){
+	try{ unsubscribeTable(tableName=`snapshotStream, actionName="aggrFeatures10min") } catch(ex){ print(ex) }
+	try{ unsubscribeTable(tableName=`aggrFeatures10min, actionName="predictRV") } catch(ex){ print(ex) }
+	try{ dropStreamEngine("aggrFeatures10min") } catch(ex){ print(ex) }
+	try{ dropStreamTable(`snapshotStream) } catch(ex){ print(ex) }
+	try{ dropStreamTable(`aggrFeatures10min) } catch(ex){ print(ex) }
+	try{ dropStreamTable(`result10min) } catch(ex){ print(ex) }
+	undef all
+}
+cleanEnvironment()
+go
+
+//login account
+login("admin", "123456")
+
+/**
+part1: define functions
+*/
+def logReturn(s){
+	return log(s)-log(prev(s))
+}
+
+def realizedVolatility(s){
+	return sqrt(sum2(s))
+}
+
+//create meta code
+def createAggMetaCode(aggDict){
+	metaCode = []
+	metaCodeColName = []
+	for(colName in aggDict.keys()){
+		for(funcName in aggDict[colName])
+		{
+			metaCode.append!(sqlCol(colName, funcByName(funcName), colName + `_ + funcName$STRING))
+			metaCodeColName.append!(colName + `_ + funcName$STRING)
+		}
+	}
+	return metaCode, metaCodeColName$STRING
+}
+
+/**
+part2: feature engineering
+*/
+features = {
+	"DateTime":[`count]
+}
+for( i in 0..9)
+{
+	features["Wap"+i] = [`sum, `mean, `std]
+	features["LogReturn"+i] = [`sum, `realizedVolatility, `mean, `std]
+	features["LogReturnOffer"+i] = [`sum, `realizedVolatility, `mean, `std]
+	features["LogReturnBid"+i] = [`sum, `realizedVolatility, `mean, `std]
+}
+features["WapBalance"] = [`sum, `mean, `std]
+features["PriceSpread"] = [`sum, `mean, `std]
+features["BidSpread"] = [`sum, `mean, `std]
+features["OfferSpread"] = [`sum, `mean, `std]
+features["TotalVolume"] = [`sum, `mean, `std]
+features["VolumeImbalance"] = [`sum, `mean, `std]
+aggMetaCode, metaCodeColName = createAggMetaCode(features)
+
+/**
+part3: import plugin and load saved model
+modified location 1: Path to Plugin, modelSavePath
+*/
+try{
+	loadPlugin(getHomeDir()+"/plugins/xgboost/PluginXgboost.txt")
+}
+catch(ex){
+	print(ex)
+}
+modelSavePath = "/hdd/hdd9/machineLearning/model/001.model"
+model = xgboost::loadModel(modelSavePath)
+
+/**
+part4: define stream table
+*/
+name = `SecurityID`DateTime`PreClosePx`OpenPx`HighPx`LowPx`LastPx`TotalVolumeTrade`TotalValueTrade`BidPrice0`BidPrice1`BidPrice2`BidPrice3`BidPrice4`BidPrice5`BidPrice6`BidPrice7`BidPrice8`BidPrice9`BidOrderQty0`BidOrderQty1`BidOrderQty2`BidOrderQty3`BidOrderQty4`BidOrderQty5`BidOrderQty6`BidOrderQty7`BidOrderQty8`BidOrderQty9`OfferPrice0`OfferPrice1`OfferPrice2`OfferPrice3`OfferPrice4`OfferPrice5`OfferPrice6`OfferPrice7`OfferPrice8`OfferPrice9`OfferOrderQty0`OfferOrderQty1`OfferOrderQty2`OfferOrderQty3`OfferOrderQty4`OfferOrderQty5`OfferOrderQty6`OfferOrderQty7`OfferOrderQty8`OfferOrderQty9
+type =`SYMBOL`TIMESTAMP`DOUBLE`DOUBLE`DOUBLE`DOUBLE`DOUBLE`INT`DOUBLE`DOUBLE`DOUBLE`DOUBLE`DOUBLE`DOUBLE`DOUBLE`DOUBLE`DOUBLE`DOUBLE`DOUBLE`INT`INT`INT`INT`INT`INT`INT`INT`INT`INT`DOUBLE`DOUBLE`DOUBLE`DOUBLE`DOUBLE`DOUBLE`DOUBLE`DOUBLE`DOUBLE`DOUBLE`INT`INT`INT`INT`INT`INT`INT`INT`INT`INT
+share streamTable(100000:0, name, type) as snapshotStream
+share streamTable(100000:0 , `DateTime`SecurityID <- metaCodeColName <- (metaCodeColName+"_150") <- (metaCodeColName+"_300") <- (metaCodeColName+"_450"),`TIMESTAMP`SYMBOL <- take(`DOUBLE, 676)) as aggrFeatures10min
+share streamTable(100000:0 , `Predicted`SecurityID`DateTime, `FLOAT`SYMBOL`TIMESTAMP) as result10min
+
+/**
+part5: define aggregate function ,calculate features metrics 
+*/
+defg featureEngineering(DateTime, BidPrice, BidOrderQty, OfferPrice, OfferOrderQty, aggMetaCode){
+	wap = (BidPrice * OfferOrderQty + BidOrderQty * OfferPrice) \ (BidOrderQty + OfferOrderQty)
+	wapBalance = abs(wap[0] - wap[1])
+	priceSpread = (OfferPrice[0] - BidPrice[0]) \ ((OfferPrice[0] + BidPrice[0]) \ 2)
+	BidSpread = BidPrice[0] - BidPrice[1]
+	OfferSpread = OfferPrice[0] - OfferPrice[1]
+	totalVolume = OfferOrderQty.rowSum() + BidOrderQty.rowSum()
+	volumeImbalance = abs(OfferOrderQty.rowSum() - BidOrderQty.rowSum())
+	LogReturnWap = logReturn(wap)
+	LogReturnOffer = logReturn(OfferPrice)
+	LogReturnBid = logReturn(BidPrice)
+	subTable = table(DateTime as `DateTime, BidPrice, BidOrderQty, OfferPrice, OfferOrderQty, wap, wapBalance, priceSpread, BidSpread, OfferSpread, totalVolume, volumeImbalance, LogReturnWap, LogReturnOffer, LogReturnBid)
+	colNum = 0..9$STRING
+	colName = `DateTime <- (`BidPrice + colNum) <- (`BidOrderQty + colNum) <- (`OfferPrice + colNum) <- (`OfferOrderQty + colNum) <- (`Wap + colNum) <- `WapBalance`PriceSpread`BidSpread`OfferSpread`TotalVolume`VolumeImbalance <- (`LogReturn + colNum) <- (`LogReturnOffer + colNum) <- (`LogReturnBid + colNum)
+	subTable.rename!(colName)
+	subTable['BarDateTime'] = bar(subTable['DateTime'], 10m)
+	result = sql(select = aggMetaCode, from = subTable).eval().matrix()
+	result150 = sql(select = aggMetaCode, from = subTable, where = <time(DateTime) >= (time(BarDateTime) + 150*1000) >).eval().matrix()
+	result300 = sql(select = aggMetaCode, from = subTable, where = <time(DateTime) >= (time(BarDateTime) + 300*1000) >).eval().matrix()
+	result450 = sql(select = aggMetaCode, from = subTable, where = <time(DateTime) >= (time(BarDateTime) + 450*1000) >).eval().matrix()
+	return concatMatrix([result, result150, result300, result450])
+}
+
+metrics=sqlColAlias(<featureEngineering(DateTime,
+		matrix(BidPrice0,BidPrice1,BidPrice2,BidPrice3,BidPrice4,BidPrice5,BidPrice6,BidPrice7,BidPrice8,BidPrice9),
+		matrix(BidOrderQty0,BidOrderQty1,BidOrderQty2,BidOrderQty3,BidOrderQty4,BidOrderQty5,BidOrderQty6,BidOrderQty7,BidOrderQty8,BidOrderQty9),
+		matrix(OfferPrice0,OfferPrice1,OfferPrice2,OfferPrice3,OfferPrice4,OfferPrice5,OfferPrice6,OfferPrice7,OfferPrice8,OfferPrice9),
+		matrix(OfferOrderQty0,OfferOrderQty1,OfferOrderQty2,OfferOrderQty3,OfferOrderQty4,OfferOrderQty5,OfferOrderQty6,OfferOrderQty7,OfferOrderQty8,OfferOrderQty9), aggMetaCode)>, metaCodeColName <- (metaCodeColName+"_150") <- (metaCodeColName+"_300") <- (metaCodeColName+"_450"))
+
+/**
+part6: register stream computing engine and define two subscribe tables
+*/
+createTimeSeriesEngine(name="aggrFeatures10min", windowSize=600000, step=600000, metrics=metrics, dummyTable=snapshotStream, outputTable=aggrFeatures10min, timeColumn=`DateTime, useWindowStartTime=true, keyColumn=`SecurityID, forceTriggerTime = 5)
+
+subscribeTable(tableName="snapshotStream", actionName="aggrFeatures10min", offset=-1, handler=getStreamEngine("aggrFeatures10min"), msgAsTable=true, batchSize=2000, throttle=1, hash=0, reconnect=true)
+
+def predictRV(mutable result10min, model, mutable msg){
+	temp_table = select SecurityID, DateTime from msg
+	msg.update!(`SecurityID_int, int(msg[`SecurityID])).dropColumns!(`SecurityID`DateTime`LogReturn0_realizedVolatility)
+	Predicted = xgboost::predict(model , msg)
+	temp_table_2 = table(Predicted, temp_table)
+	result10min.append!(temp_table_2)
+}
+subscribeTable(tableName="aggrFeatures10min", actionName="predictRV", offset=-1, handler=predictRV{result10min, model}, msgAsTable=true, hash=1, reconnect=true)
+go
+/**
+part7: replay history data
+modified location 2: csvFilePath
+*/
+csvFilePath = "/hdd/hdd9/machineLearning/testSnapshot.csv"
+testSnapshot = loadText(filename=csvFilePath, schema=table(snapshotStream.schema().colDefs.name, snapshotStream.schema().colDefs.typeString))
+submitJob("replay", "replay",  replay{testSnapshot, snapshotStream, `DateTime, `DateTime, 20000, true, 1})
+
+/**
+part8: check result
+*/
+sleep(1000)
+select * from result10min
