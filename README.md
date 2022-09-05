@@ -105,8 +105,9 @@
     - [ZLib](../../../DolphinDBPlugin/blob/release200/zlib/README_CN.md)
     - [zmq](../../../DolphinDBPlugin/blob/release200/zmq/README.md)
 - 模块
-    - [技术分析(Technical Analysis)指标库](ta.md) 
-    - [mytt (My麦语言 T通达信 T同花顺)指标库](../../../DolphinDBModules/blob/master/mytt/README.md)
+    - [技术分析(Technical Analysis)指标库](../../../DolphinDBModules/blob/master/ta/README_CN.md) 
+    - [mytt (My麦语言T通达信T同花顺)指标库](../../../DolphinDBModules/blob/master/mytt/README.md)
+    - [WorldQuant 101 Alpha因子指标库](../../../DolphinDBModules/blob/master/wq101alpha/README_CN.md)
 - 应用场景示例
     - [DolphinDB在工业物联网的应用](iot_demo.md)
     - [在DolphinDB中计算K线](OHLC.md) 
