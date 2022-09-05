@@ -111,7 +111,7 @@ Windows环境中，双击 gui.bat 以启动GUI。
 
 点击菜单栏中的Server添加服务器或编辑服务器：
 
-![Sever](../images/single_GUI_server.png)
+![Sever](../images/single_GUI_server1.png)
 
 ![AddSever](../images/single_GUI_addserver.PNG)
 
