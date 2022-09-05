@@ -231,7 +231,7 @@ subscribeTable(tableName="IOPVStreamResult", actionName="IOPV_mq_read", offset=0
 
 * 在下游系统中订阅数据时通过 ZMQ handler 接收数据
 * 下游系统根据实时 IOPV 创建交易策略（本教程未包含策略实现
-* [参考 DolphinDB zmq Plugin](https://gitee.com/dolphindb/DolphinDBPlugin/blob/master/zmq/README.md)
+* [参考 DolphinDB zmq Plugin](https://gitee.com/dolphindb/DolphinDBPlugin/blob/release200/zmq/README.md)
 
 ## 5. 多只 ETF 实时增量计算
 计算全市场500多只 ETF IOPV 时，如果使用[第4章](#4-单只-etf-实时计算)的方法，由于每次收到新的逐笔成交就要做一次汇总，计算量会非常庞大，因此不是最优方案。通过 DolphinDB 响应式状态引擎增量计算，可以大幅降低算法计算步骤，计算更加高效。

@@ -715,7 +715,7 @@ DolphinDB 插件代码存储于 github/gitee 的 dolphindb/DolphinDBPlugin，其
 
 windows 版本要添加 “WINDOWS”，Linux 版本要添加 “LINUX”。对 release130 及以上分支，添加选项 "LOCKFREE_SYMBASE"。另外，为了兼容旧版本的编译器，libDolphinDB.so 编译时使用了 _GLIBCXX_USE_CXX11_ABI=0 的选项，因此用户在编译插件时也应该加入该选项。若 libDolphinDB.so 编译时使用 ABI=1，编译插件时则无需添加 _GLIBCXX_USE_CXX11_ABI=0 的选项。
 
-编译步骤可参考已实现的插件案例，例如 NSQ 插件的 [CMakeList.txt](https://gitee.com/dolphindb/DolphinDBPlugin/blob/master/nsq/CMakeLists.txt)。
+编译步骤可参考已实现的插件案例，例如 NSQ 插件的 [CMakeList.txt](https://gitee.com/dolphindb/DolphinDBPlugin/blob/release200/nsq/CMakeLists.txt)。
 
 * 如果编译时出现包含 std::__cxx11 字样的链接问题（undefined reference）。
 
@@ -727,7 +727,7 @@ windows 版本要添加 “WINDOWS”，Linux 版本要添加 “LINUX”。对 
 ```cpp
 loadPlugin("/YOUR_SEVER_PATH/plugins/odbc/PluginODBC.txt");
 ```
-> 注意：格式文件介绍详见插件 [插件格式](https://gitee.com/dolphindb/DolphinDBPlugin/blob/master/README_CN.md#加载插件), 其中文件第一行规定了 lib 文件名以及路径。缺省不写路径，即需要插件库与格式文件在同一个目录。
+> 注意：格式文件介绍详见插件 [插件格式](https://gitee.com/dolphindb/DolphinDBPlugin/blob/release200/README_CN.md#加载插件), 其中文件第一行规定了 lib 文件名以及路径。缺省不写路径，即需要插件库与格式文件在同一个目录。
 
 第 2 种，DolphinDB Server 1.20.0 及以上版本，可以通过 preloadModules 参数来自动加载。使用这个方法时需要保证预先加载的插件存在，否则 sever 启动时会有异常。多个插件用逗号分离。例如:
 ```

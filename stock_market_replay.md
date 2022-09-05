@@ -432,7 +432,7 @@ DolphinDB GUI 安装教程：[GUI 教程](https://www.dolphindb.cn/cn/gui/index.
 
 > Kafka 插件版本建议按 DolphinDB server 版本选择，如 2.00.6 版本的 server 安装 release200 分支的插件
 
-Kafka 插件教程：[Kafka 插件教程](https://gitee.com/dolphindb/DolphinDBPlugin/blob/master/kafka/README.md)
+Kafka 插件教程：[Kafka 插件教程](https://gitee.com/dolphindb/DolphinDBPlugin/blob/release200/kafka/README_CN.md)
 
 **Kafka server 部署**
 

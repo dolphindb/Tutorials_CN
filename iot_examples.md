@@ -1152,7 +1152,7 @@ conn = mqtt::subscribe("127.0.0.1",1883,"sensor/#", p, iot_stream)
 
 上述插件均使用了后台任务的方式订阅数据，后台任务在调用订阅函数`subscribe`启动，运行在服务器上。通过`unsubscribe`函数可终止订阅任务。
 
-更多信息请参阅[OPC UA](https://gitee.com/dolphindb/DolphinDBPlugin/blob/master/opcua/README_CN.md) 、[OPC DA](https://gitee.com/dolphindb/DolphinDBPlugin/blob/master/opc/README_CN.md)和[mqtt](https://gitee.com/dolphindb/DolphinDBPlugin/blob/master/mqtt/README_CN.md)教程。
+更多信息请参阅[OPC UA](https://gitee.com/dolphindb/DolphinDBPlugin/blob/release200/opcua/README_CN.md) 、[OPC DA](https://gitee.com/dolphindb/DolphinDBPlugin/blob/release200/opc/README_CN.md)和[mqtt](https://gitee.com/dolphindb/DolphinDBPlugin/blob/release200/mqtt/README_CN.md)教程。
 
 ### 5.2 使用内置计算引擎
 
