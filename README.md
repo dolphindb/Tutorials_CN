@@ -108,6 +108,7 @@
     - [技术分析(Technical Analysis)指标库](../../../DolphinDBModules/blob/master/ta/README_CN.md) 
     - [mytt (My麦语言T通达信T同花顺)指标库](../../../DolphinDBModules/blob/master/mytt/README.md)
     - [WorldQuant 101 Alpha因子指标库](../../../DolphinDBModules/blob/master/wq101alpha/README_CN.md)
+    - [ops运维函数库](../../../DolphinDBModules/blob/master/ops/README.md)
 - 应用场景示例
     - [DolphinDB在工业物联网的应用](iot_demo.md)
     - [在DolphinDB中计算K线](OHLC.md) 
