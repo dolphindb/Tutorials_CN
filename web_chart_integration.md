@@ -4,7 +4,7 @@
 数据图表前端组件在物联网和实时监控的场景有非常广的应用，当前比较流行的有Echarts、HighCharts等组件。本文主要讲解如何利用DolphinDB的Web数据接口，结合JavaScript使用前端组件来展示DolphinDB中的数据。
 
 ### 2. 接口数据格式分析
-DolphinDB提供了基于HTTP协议的接口，可以通过HTTP `post`方式提交查询语句并返回JSON格式的结果。具体信息可以参考[DolphinDB WebApi](../api-json/README_CN.md)。
+DolphinDB提供了基于HTTP协议的接口，可以通过HTTP `post`方式提交查询语句并返回JSON格式的结果。具体信息可以参考[DolphinDB WebApi](https://gitee.com/dolphindb/api-json/blob/master/README_CN.md)。
 
 从文档中可以了解，DolphinDB的返回数据格式是列式的JSON字符串，一个单表返回JSON如下：
 ```json

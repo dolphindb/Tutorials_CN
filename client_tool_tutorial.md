@@ -98,7 +98,7 @@ cd /your/gui/folder
 
 如果DolphinDB GUI无法正常启动，可能有以下三个原因：
 
-* 没有安装Java。Java下载地址：https://www.oracle.com/technetwork/java/javase/downloads/index.html。
+* 没有安装Java。Java下载地址：https://www.oracle.com/technetwork/java/javase/downloads/index.html
 * Java不在系统路径中。在Windows环境下，需要查看是否在`Path`中；在Linux环境中，需要查看是否在`PATH`中。
 * 安装的Java版本不符合要求。DolphinDB GUI使用环境需要64 位Java 8及以上版本。32位的Java即使版本正确，由于不支持Server模式，只有Client模式，将无法启动GUI。我们可以在命令行中使用`java -version`命令查看Java的版本信息。
  

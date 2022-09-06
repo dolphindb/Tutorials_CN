@@ -229,7 +229,7 @@ schemaTB=select * from schemaTB where name in `symbol`date`open`high`close`volum
 
 >请注意：
 >1. 列号从0开始。上例中第一列symbol列对应的列号是0。  
->2. 导入数据时不能改变各列的先后顺序。如果需要调整列的顺序，可以将数据文件加载后，再使用[`reorderColumns!`](https://www.dolphindb.cn/cn/help/FunctionsandCommands/CommandsReferences/r/reorderColumns.html)函数。
+>2. 导入数据时不能改变各列的先后顺序。如果需要调整列的顺序，可以将数据文件加载后，再使用[`reorderColumns!`](https://www.dolphindb.cn/cn/help/FunctionsandCommands/CommandsReferences/r/reorderColumns!.html)函数。
 
 最后，使用`loadText`函数，并配置schema参数，导入文本文件中指定的列。
 

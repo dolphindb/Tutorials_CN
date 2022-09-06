@@ -215,7 +215,7 @@ schemaTable=table(
 db.createPartitionedTable(schemaTable,`quotes,`date`symbol)
 
 ```
-对于二进制格式的文件，DolphinDB提供了2个函数用于导入：[`readRecord!`](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/r/readRecord!.html)函数和[`loadRecord`](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/l/loadRecord.html)函数。二者的区别是，前者不支持导入字符串类型的数据，后者支持。在二进制文件中，date列和time列的数据以数值形式存储，可以使用[`temporalParse`](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/t/temporalParse.html)函数进行日期和时间类型数据的格式转换。再使用[`replaceColumn!`](https://www.dolphindb.cn/cn/help/FunctionsandCommands/CommandsReferences/replaceColumn!.html)函数替换表中原有的列。symbol和market列在二进制文件中也是数值形式存储，处理的方式类似。具体代码如下所示：
+对于二进制格式的文件，DolphinDB提供了2个函数用于导入：[`readRecord!`](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/r/readRecord!.html)函数和[`loadRecord`](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/l/loadRecord.html)函数。二者的区别是，前者不支持导入字符串类型的数据，后者支持。在二进制文件中，date列和time列的数据以数值形式存储，可以使用[`temporalParse`](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/t/temporalParse.html)函数进行日期和时间类型数据的格式转换。再使用[`replaceColumn!`](https://www.dolphindb.cn/cn/help/FunctionsandCommands/CommandsReferences/r/replaceColumn!.html)函数替换表中原有的列。symbol和market列在二进制文件中也是数值形式存储，处理的方式类似。具体代码如下所示：
 ```
 schema = [
 ("symbol", INT), ("market", INT), ("date", INT), ("time", INT), ("preClose", DOUBLE),

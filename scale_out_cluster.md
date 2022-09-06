@@ -91,7 +91,7 @@ tb.append!(data)
 
 在后续完成集群扩展之后，我们会向此数据库中追加数据，来验证拓展部分是否已经启用。
 
-> *需要了解集群初始化配置可以参考 [多物理机上部署集群教程](./multi_machine_cluster_deploy.md)*
+> *需要了解集群初始化配置可以参考 [多物理机上部署集群教程](./multi_machine_cluster_deployment.md)*
 
 
 需要新增的物理机IP：
