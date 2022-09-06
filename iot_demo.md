@@ -93,7 +93,7 @@ demoAgg = createTimeSeriesAggregator(name="demoAgg", windowSize=60000, step=2000
 subscribeTable( tableName="sensorTemp", actionName="demoAgg", offset=-1, handler=append!{demoAgg}, msgAsTable=true)
 ```
 
-在DolphinDB Server端在对高频数据流做保存、分析的时候，Grafana前端程序每秒钟会轮询实时运算的结果，并刷新平均温度的趋势图。DolphinDB提供了Grafana_DolphinDB的datasource插件，关于Grafana的安装以及DolphinDB的插件配置请参考[Grafana配置教程](../../../grafana-datasource/blob/master/README_CN.md)。
+在DolphinDB Server端在对高频数据流做保存、分析的时候，Grafana前端程序每秒钟会轮询实时运算的结果，并刷新平均温度的趋势图。DolphinDB提供了Grafana_DolphinDB的datasource插件，关于Grafana的安装以及DolphinDB的插件配置请参考[Grafana配置教程](https://gitee.com/dolphindb/grafana-datasource/blob/master/README.zh.md)。
 
 在完成grafana的基本配置之后，新增一个Graph Panel, 在Metrics tab里输入
 

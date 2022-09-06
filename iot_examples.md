@@ -240,7 +240,7 @@ schema=table(
 ```
 login(`admin, `123456)
 ```
-登录后使用函数[`changePwd`](https://www.dolphindb.cn/cn/help/FunctionsandCommands/CommandsReferences/changePwd.html)修改密码。更多权限管理细节，请参阅[权限管理和安全](./ACL_and_Security.md)。
+登录后使用函数[`changePwd`](https://www.dolphindb.cn/cn/help/FunctionsandCommands/CommandsReferences/c/changePwd.html)修改密码。更多权限管理细节，请参阅[权限管理和安全](./ACL_and_Security.md)。
 
 - 库表创建后，可使用函数`getAllDBs()`显示当前所有数据库，使用函数[`schema`](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/s/schema.html)显示某个表或某个数据库的结构信息。例如查询上述`dfs://iot`数据库的设备分区信息可用如下代码：
 ```
@@ -391,7 +391,7 @@ login('admin', '123456'); select gmtime(timestamp(datetime)) as time_sec, tag1  
 ![datasource1](images/iotExam/newDashboard.png?raw=true)
 
 上图若不能正常显示，请检查：
-- 在GUI中运行函数[`getRecentJobs`](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/g/getRecentJobs.html)，查看作业运行是否有错，若有错，返回结果中errorMsg会显示错误信息。取消作业用[`cancelJob`](https://www.dolphindb.cn/cn/help/FunctionsandCommands/CommandsReferences/cancelJob.html)。
+- 在GUI中运行函数[`getRecentJobs`](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/g/getRecentJobs.html)，查看作业运行是否有错，若有错，返回结果中errorMsg会显示错误信息。取消作业用[`cancelJob`](https://www.dolphindb.cn/cn/help/FunctionsandCommands/CommandsReferences/c/cancelJob.html)。
 - Grafana默认返回timer_series格式，SQL中返回的第一个字段必须是timestamp类型。
 - DFS数据库需要登录后才能访问，所以select语句前需要先登录。
 - 检查查询语句中是否含有双引号，若有双引号，改其为单引号。
@@ -1054,7 +1054,7 @@ API的写入性能的优化主要可通过以下几个方面：
 * 批量写入: 每次组织大批量数据写入能够有效提升性能。
 * 并行写入：将不同分区的数据，分多个任务并行写入。
 
-DolphinDB的最小存储单元是分区，同一个分区不允许多个线程同时写入，否则会抛出异常。所以在并行写入时，需要考虑将数据按分区进行分流，避免同时向一个分区写入数据。具体多线程写入的实现案例请参阅[Java多线程写入示例代码](https://github.com/dolphindb/api-java/blob/master/example/DFSWritingWithMultiThread.java)和[c++多线程并行写入示例代码](https://gitee.com/dolphindb/api-cplusplus/tree/master/example/DFSWritingWithMultiThread)。
+DolphinDB的最小存储单元是分区，同一个分区不允许多个线程同时写入，否则会抛出异常。所以在并行写入时，需要考虑将数据按分区进行分流，避免同时向一个分区写入数据。具体多线程写入的实现案例请参阅[Java多线程写入示例代码](https://github.com/dolphindb/api-java/blob/release200/example/DFSWritingWithMultiThread.java)和[c++多线程并行写入示例代码](https://gitee.com/dolphindb/api-cplusplus/tree/release200/example/DFSWritingWithMultiThread)。
 * 异步写入：异步写入在写入时不需要等待server回复确认消息，可显著提高连续写入的速度，适用于对写入速度要求高但可靠性要求不苛刻的场景。使用异步写入的方法是在声明DBConnection类变量的时候，置enableAYSN参数值为true即可。适用于DolphinDB 1.10.17、1.20.6及以上linux64版本。
 
 ### 4.6 提升数据压缩比
@@ -1233,7 +1233,7 @@ DolphinDB支持高可用，多个元数据节点和多个数据副本之间保�
 
 ### 6.1 数据高可用测试
 
-要使用数据高可用功能，至少需要2台物理服务器部署DolphinDB集群,每台部署2个数据节点。集群部署请参考[多服务器集群部署教程](./multi_machine_cluster_deploy.md)。其中副本的个数在controller.cfg中配置。例如，把副本数设置为2：
+要使用数据高可用功能，至少需要2台物理服务器部署DolphinDB集群,每台部署2个数据节点。集群部署请参考[多服务器集群部署教程](./multi_machine_cluster_deployment.md)。其中副本的个数在controller.cfg中配置。例如，把副本数设置为2：
 ```
 dfsReplicationFactor=2
 ```

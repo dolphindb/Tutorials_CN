@@ -2,7 +2,7 @@
 
 DolphinDB支持通过动态加载用c++编写的插件程序，新增dolphindb脚本函数，执行这些脚本函数就会调用编写的c++插件程序的自定义函数，实现自定义功能扩展。
 
-DolphinDB的[httpClient插件](https://github.com/dolphindb/DolphinDBPlugin/tree/master/httpClient)提供以下3个函数，用于发送http请求和发送邮件。
+DolphinDB的[httpClient插件](https://github.com/dolphindb/DolphinDBPlugin/tree/release200/httpClient)提供以下3个函数，用于发送http请求和发送邮件。
 - `httpGet`: 发送http的Get方法请求。
 - `httpPost`: 发送http的Post方法请求。
 - `sendEmail`: 发送邮件。
