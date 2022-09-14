@@ -1,0 +1,33 @@
+// 3.优化后代码
+def toIntDate(d){
+	return year(d) * 10000 + monthOfYear(d) * 100 + dayOfMonth(d)
+}
+
+def transformData(tradeDate){
+	tradeSrc = loadTable("dfs://originData", "trade")
+	tradeTgt = loadTable("dfs://formatData", "trade")
+	data = select 
+		securityID + "SZ" as securityID
+		,toIntDate(tradingdate) as  tradingdate
+		,tradingtime$STRING as tradingtime
+		,recid as recid 
+		,tradeprice
+		,tradevolume
+		,tradevolume * tradeprice as tradeamount     	
+		,buyorderid as buyrecid
+		,sellorderid as sellrecid
+		,iif(sellorderid>  buyorderid,"S", "B") as buysellflag    	
+		,unix$LONG as unix
+	from tradeSrc
+	where tradingdate = tradeDate and tradetype in ["0", "F"]
+	tradeTgt.append!(data)
+	pnodeRun(flushOLAPCache)
+}
+
+allDays = 2022.05.01..2022.05.20
+for(aDate in allDays){
+	jobId = "transform_"+ strReplace(aDate$STRING, ".", "")	
+	jobDesc = "transform data"
+	submitJob(jobId, jobDesc, transformData, aDate)
+}
+

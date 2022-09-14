@@ -1,0 +1,57 @@
+//1. 建库建表
+// 环境清理
+def clean(){
+	if(existsDatabase("dfs://originData")){
+	    dropDatabase("dfs://originData")	
+	}
+	if(existsDatabase("dfs://formatData")){
+	    dropDatabase("dfs://formatData")	
+	}
+	pnodeRun(clearAllCache)
+	pnodeRun(flushOLAPCache)
+}
+clean()
+
+srcTable = table(100:0, `securityID`tradingdate`tradingtime`tradetype`recid`tradeprice`tradevolume`buyorderid`sellorderid`unix
+	, [STRING, DATE,TIMESTAMP, SYMBOL, INT, DOUBLE, INT, INT, INT, TIMESTAMP])
+	
+tgtTable = table(100:0, `securityID`tradingdate`tradingtime`recid`tradeprice`tradevolume`tradeamount`buyrecid`sellrecid`buysellflag`unix
+	,[SYMBOL, INT, STRING, INT, DOUBLE, DOUBLE, DOUBLE, INT, INT, SYMBOL, LONG])
+	
+allDays = 2022.05.01..2022.05.20
+INTDays = strReplace(allDays$STRING, ".", "")$INT
+db1 = database(,VALUE,allDays)
+db2 = database(,VALUE,INTDays)
+db3 = database(, HASH, [SYMBOL, 20])
+dbSrc = database("dfs://originData", COMPO, [db1, db3])
+dbTgt = database("dfs://formatData", COMPO, [db2, db3])
+dbSrc.createPartitionedTable(srcTable, "trade", `tradingdate`securityID)
+dbTgt.createPartitionedTable(tgtTable, "trade", `tradingdate`securityID)
+
+
+// 1. 模拟数据脚本
+def genData(aDate, n){
+	securityID = rand(1001..4000, n)$STRING
+	date = take(aDate, n)
+	ts = (aDate$TIMESTAMP + 09:30:00.000 + rand(int(6*60*60*1000), n))$TIMESTAMP
+	ts.sort!()
+	recid = 10001..(10000+n)
+	price = rand(100.0, n)
+	volume = rand(1000, n)
+	tradetype = rand(["0","F","C"], n)
+	buyorderid = 10001..(10000+n)
+	sellorderid =  buyorderid + rand(-10000..10000, n)
+	ts2 = ts
+	tmp = table(securityID, date, ts, tradetype, recid, price, volume, buyorderid, sellorderid, ts2)
+	loadTable("dfs://originData", "trade").append!(tmp)
+}
+
+for(aDate in allDays){
+	jobId = "genData_"+ strReplace(aDate$STRING, ".", "")	
+	jobDesc = "generate data"
+	rows = 50000000
+	submitJob(jobId, jobDesc, genData, aDate, rows)
+	sleep(5 * 1000)
+}
+
+getRecentJobs()
