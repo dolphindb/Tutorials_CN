@@ -15,19 +15,11 @@ DolphinDB提供了从基于Java的GUI, VS Code Extension, Web界面，到命令�
       - [File](#file)
       - [Synchronize to server](#synchronize-to-server)
     - [1.2 安装和启动](#12-安装和启动)
-      - [常见无法正常启动原因](#常见无法正常启动原因)
     - [1.3 程序执行及结果查看](#13-程序执行及结果查看)
     - [1.4 中文出现乱码](#14-中文出现乱码)
     - [1.5 精度配置](#15-精度配置)
     - [1.6 java.lang.OutOfMemoryError: Java heap space](#16-javalangoutofmemoryerror-java-heap-space)
   - [2. VS Code Extension](#2-vs-code-extension)
-    - [2.1 下载安装插件](#21-下载安装插件)
-    - [2.2 连接DolphinDB Server](#22-连接dolphindb-server)
-      - [新增服务器](#新增服务器)
-      - [选择服务器](#选择服务器)
-      - [移除服务器](#移除服务器)
-    - [2.3 编辑和运行DolphinDB脚本](#23-编辑和运行dolphindb脚本)
-    - [2.4 观察变量](#24-观察变量)
   - [3. DolphinDB Notebook](#3-dolphindb-notebook)
     - [3.1 启动](#31-启动)
     - [3.2 登录](#32-登录)
@@ -86,6 +78,9 @@ GUI菜单中的server是指DolphinDB数据库服务器。完成添加后，会�
 
 ### 1.2 安装和启动
 
+DolphinDB 官网 GUI 教程 中有详细介绍，具体方法和常见问题请参考 [如何开始](https://www.dolphindb.cn/cn/gui/index.html)。
+
+<!-- GUI手册中有详细说明，为减少维护成本，此处添加上链接即可>
 在启动GUI前，需要确保已经安装[java 8 64bit](https://www.oracle.com/java/technologies/javase-jre8-downloads.html) 以及以上版本。  
 DolphinDB GUI无需安装，可以直接运行。在Windows环境下，双击gui.bat即可。在Linux和Mac环境下，在Terminal中输入：
 
@@ -119,14 +114,14 @@ Java HotSpot(TM) 64-Bit Server VM (build 25.121-b13, mixed mode)
 ```
 Java HotSpot(TM) Client VM
 ```
-
+<-->
 
 ### 1.3 程序执行及结果查看
 
 GUI编程界面提供代码查询、修改、高亮显示、函数提示等功能。用户可以选择部分代码执行，也可以点击文件执行代码。执行完毕，可以立刻看到执行结果，以及查看所有的局部变量和共享变量的值。
-关于GUI更详细具体的功能介绍请参阅[GUI帮助手册](https://www.dolphindb.cn/cn/gui/index.html)。
+关于GUI更详细具体的功能介绍请参阅[GUI视窗](https://www.dolphindb.cn/cn/gui/index.html)。
 
-![image](images/GUI/code_editing.JPG?raw=true)
+<!-- ![image](images/GUI/code_editing.JPG?raw=true) -->
 
 ### 1.4 中文出现乱码
 如果中文显示出现乱码，需要在文件菜单Preferences中设置中文字体，例如微软雅黑(Microsoft Yahei)。 然后print(变量)名，查看输出结果，乱码会消失。  
@@ -145,15 +140,20 @@ start javaw -classpath dolphindb.jar;dolphingui.jar;jfreechart-1.0.1.jar;jcommon
 
 VS Code 是微软开发的一款轻便又有极强扩展性的代码编辑器。它提供强大的插件框架，可通过插件支持不同编程语言，达到语法高亮、智能语法提示以及代码运行等效果。DolphinDB database 提供了VS Code的插件，用户可以使用VS Code编写DolphinDB脚本并运行。
 
+<!--
 DolphinDB VS Code 插件提供如下功能：
 
 * 自动识别dos和txt后缀的文件
 * 连接DolphinDB server
 * 编辑和执行DolphinDB脚本
 * 观察变量
+-->
 
-VS Code 插件与GUI功能非常相似。优点是VS Code使用者无需安装其它软件，直接下载插件即可使用，学习成本低，上手快。缺点是不支持GUI的画图功能以及DFS数据库浏览器功能。
+VS Code 插件与GUI功能非常相似。优点是VS Code使用者无需安装其它软件，直接下载插件即可使用，学习成本低，上手快。因此，推荐用户选择使用 VS Code。<!--缺点是不支持GUI的画图功能以及DFS数据库浏览器功能。-->
 
+更多 VS Code 插件使用说明，参见 [DolphinDB VSCode 用户手册](https://gitee.com/dolphindb/Tutorials_CN/blob/master/vscode_extension.md)。
+
+<!--
 ### 2.1 下载安装插件
 
 点击VS Code左侧导航栏的Extensions图标，或者通过ctrl+shift+X快捷键打开插件安装窗口，在搜索框中输入DolphinDB，即可搜索到DolphinDB插件。点击Install进行安装。安装完成后，以txt和dos为后缀的文件都可以被DolphinDB插件识别。
@@ -190,6 +190,7 @@ DolphinDB 插件在左边导航增加了变量面板，面板显示当前服务�
 
   ![image](images/vscode/5.gif?raw=true)
 
+-->
 
 ## 3. DolphinDB Notebook
 
