@@ -133,6 +133,7 @@
     - [DolphinDB中有关时间信息的最佳实践指南](timezone.md)
     - [DolphinDB元编程：开发股票波动率预测模型的676个输入特征](metacode_derived_features.md)
     - [从4.5小时到3.5分钟，如何利用DolphinDB高效清洗数据](data_ETL.md)
+    - [DolphinDB流式计算中证1000指数主买/主卖交易量](CSI_1000.md)
 - 入门和测试
     - [DolphinDB入门：量化金融范例](quant_finance_examples.md)
     - [DolphinDB入门：物联网范例](iot_examples.md)
