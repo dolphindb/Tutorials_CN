@@ -1,0 +1,162 @@
+/**
+basic_analysis_of_public_fund_net_value.txt
+Script for analyzing public fund net value data
+DolphinDB Inc.
+DolphinDB server version: 2.00.8
+Storage engine: TSDB
+Last modification time: 2022.09.14
+*/
+
+/**
+part1: create database and table to store the work day
+modified location: csvDataPath, dbName, tbName
+*/
+csvDataPath = "/ssd/ssd2/data/fundData/workday.csv"
+dbName = "dfs://publicFundDB"
+tbName = "workday"
+// create one-partition table in datase("dfs://publicFundDB")
+if(existsTable(dbName, tbName)){
+	dropTable(database(dbName), tbName)
+}
+names = `Day`Market
+types = `DATE`SYMBOL
+schemaTB = table(1:0, names, types)
+db = database(dbName)
+db.createTable(table=schemaTB, tableName=tbName, sortColumns=`Day)
+// load CSV data
+tmp = ploadText(filename=csvDataPath, schema=table(names, types))
+loadTable(dbName, tbName).append!(tmp)
+
+/**
+part2: create database and table to store the net value data of public fund
+modified location: csvDataPath, dbName, tbName
+*/
+csvDataPath = "/ssd/ssd2/data/fundData/publicFundNetValue.csv"
+dbName = "dfs://publicFundDB"
+tbName = "publicFundNetValue"
+// create distributed table in datase("dfs://publicFundDB")
+if(existsTable(dbName, tbName)){
+	dropTable(database(dbName), tbName)
+}
+names = `SecurityID`TradeDate`NetValue`AccNetValue`AdjNetValue
+types = `SYMBOL`DATE`DOUBLE`DOUBLE`DOUBLE
+schemaTB = table(1:0, names, types)
+db = database(dbName)
+db.createPartitionedTable(table=schemaTB, tableName=tbName, partitionColumns=`TradeDate, sortColumns=`SecurityID`TradeDate)
+// load CSV data
+tmp = ploadText(filename=csvDataPath, schema=table(names, types))
+loadTable(dbName, tbName).append!(tmp)
+
+/**
+part3: basic analysis of the net value data of public fund
+*/
+// load metadata
+fundNetValue = loadTable("dfs://publicFundDB", "publicFundNetValue")
+// query the top ten records
+select top 10 * from fundNetValue
+// query the total records
+select count(*) from fundNetValue
+
+/**calculate daily rate of return*/
+// filter data for working days
+dateRange = exec distinct(TradeDate) from fundNetValue
+firstDate = min(dateRange) 
+lastDate =  max(dateRange)
+workdays = exec day from loadTable("dfs://publicFundDB", "workday") where market="SSE", day between firstDate : lastDate, day in dateRange
+// query the daily net value data of the fund and assign it to the variable oriData
+oriData = select TradeDate, SecurityID, AdjNetValue from fundNetValue
+// generate panel data
+panelData = panel(row=oriData.TradeDate, col=oriData.SecurityID, metrics=oriData.AdjNetValue, rowLabel=workdays, parallel=true)
+// query panel data
+panelData[0:10]
+// Calculate daily rate of return on panel data
+returnsMatrix = panelData.ffill(10).percentChange()
+// query partial results
+returnsMatrix[0:3]
+
+/**calculate the change in the number of funds*/
+fundNum = matrix(rowCount(returnsMatrix)).rename!(returnsMatrix.rowNames(), ["count"])
+plot(fundNum.loc( ,`count), fundNum.rowNames(), '公募基金在历史上的数量变化', LINE)
+
+/**calculate the quarterly average rate of return of the fund*/
+qavgReturns = returnsMatrix.setIndexedMatrix!().resample("Q", mean)	
+// plot partial results
+plot(qavgReturns["160211.SZ"], chartType=LINE)
+
+/**calculate the annual average rate of return of each type of fund*/
+// Build a one-to-one dictionary of fund names and fund types
+fundData = loadTable("dfs://publicFundDB", "publicFundData")
+fundType = select SecurityID, Type from fundData where SecurityID in returnsMatrix.colNames() order by Type
+fundTypeMap = dict(fundType["SecurityID"], fundType["Type"])
+// Change the column sorting and column name for display
+tReturnsMatrix = returnsMatrix[fundType["SecurityID"]]
+newNames = fundType["Type"] + "_" + fundType["SecurityID"].strReplace(".", "_").strReplace("!", "1")
+tReturnsMatrix.rename!(newNames)
+tReturnsMatrix[0:3]
+// calculate the annual average rate of return of each type of fund
+yearReturnsMatrix = ((returnsMatrix+1).resample("A", prod)-1).nullFill(0).regroup(fundTypeMap[returnsMatrix.colNames()], mean, byRow=false)
+// plot partial results
+yearReturnsMatrix = yearReturnsMatrix.loc( , ["债券型", "股票型", "混合型"])
+yearReturnsMatrix.loc(year(yearReturnsMatrix.rowNames())>=2014, ).plot(chartType=BAR)
+
+/**calculate sharpe rate*/
+// data overview
+returnsMatrix.resample("A", size)[0]
+// filter analysis space
+uReturnsMatrix = returnsMatrix.loc(,(each(count, returnsMatrix) > 1000 && returnsMatrix.ilastNot() >=  returnsMatrix.rows() - 30)&&!(fundTypeMap[returnsMatrix.colNames()] in ["货币市场型", "REITs"]))
+// calculate annualized return and annualized volatility
+exp = mean(uReturnsMatrix)*242
+vol = std(uReturnsMatrix)*sqrt(242)
+// calculate sharpe rate
+sharpe = (exp - 0.028)/vol
+// generate annualized return, annualized volatility and sharp ratio table
+perf = table(uReturnsMatrix.colNames() as SecurityID, fundTypeMap[uReturnsMatrix.colNames()] as Type, exp*100 as exp, vol*100 as vol, sharpe)
+// plot annualized return
+(exec exp from perf where exp > -10, exp < 40).plotHist(400)
+// plot annualized volatility
+(exec vol from perf where vol < 40).plotHist(400)
+// plot sharp ratio
+(exec sharpe from perf where sharpe > 0).plotHist(200)
+// plot risk return scatter chart
+mask = select * from perf where sharpe>0, vol<40, exp<40 
+plot(mask["exp"], mask["vol"], ,SCATTER)
+
+/**calculate annual rate of return*/
+// filter analysis space
+filterTB = select * from perf where exp<40, vol<40, sharpe>0 context by Type csort sharpe desc limit 50
+returnsMatrix50 = returnsMatrix.loc(2015.01.01:, returnsMatrix.colNames() in filterTB["SecurityID"])
+// calculate annual rate of return
+yearReturnsMatrix50 = transpose((returnsMatrix50 .setIndexedMatrix!()+1).resample("A", prod)-1).nullFill(0)
+//view annual rate of return of a specified type of fund
+yearReturnsMatrix50.loc(fundTypeMap[yearReturnsMatrix50.rowNames()] == "股票型", )
+yearReturnsMatrix50.loc(fundTypeMap[yearReturnsMatrix50.rowNames()] == "债券型", )
+yearReturnsMatrix50.loc(fundTypeMap[yearReturnsMatrix50.rowNames()] == "混合型", )
+
+/**calculate correlation*/
+corrMatrix = pcross(corr, returnsMatrix50)
+// view partial results
+corrMatrix[0:3]
+// view correlation between specified types
+corrMatrix.loc(fundTypeMap[corrMatrix.rowNames()]=="股票型", fundTypeMap[corrMatrix.rowNames()]=="股票型")
+
+/**calculate the cumulative rate of return of the fund*/
+//  get the net value data at the time of purchase from 2010 to 2020
+filterPanelData = panelData.loc(2010.01.01..2020.12.31, view=true)
+// The time index is pushed forward by one year
+dayIndex = panelData.rowNames().temporalAdd(-1,'y')
+// worker day alignment
+workdays = select * from loadTable("dfs://publicFundDB", "workday")
+workeDayIndex = each(def(dayIndex){return exec last(Day) from workdays where Day <= dayIndex}, dayIndex)
+// get the corrected net value data at the time of purchase from 2010 to 2020
+filterPanelDataTmp = panelData.loc(workeDayIndex>=panelData.rowNames()[0]&&workeDayIndex<=2020.12.31, ).rename!(workeDayIndex[workeDayIndex>=panelData.rowNames()[0]&&workeDayIndex<=2020.12.31], panelData.colNames())
+// calculate the cumulative rate of return of the fund
+filterPanelDataTmp, filterPanelData = align(filterPanelDataTmp, filterPanelData)
+cumulativeReturn = (filterPanelDataTmp - filterPanelData) / filterPanelData
+// select funds with more than 1000 returns
+filterCumulativeReturn = cumulativeReturn[x->count(x) > 1000]
+// calculate the average yield of each fund for one year
+select SecurityID, mean from table(filterCumulativeReturn.colNames() as SecurityID, mean(filterCumulativeReturn) as mean) order by mean desc
+// calculate the possibility that the one-year yield of buying and holding is greater than 0.2
+result = each(count, cumulativeReturn[cumulativeReturn>0.2]) \ cumulativeReturn.rows()
+(select SecurityID, prop from table(cumulativeReturn.colNames() as SecurityID, result as prop) order by prop desc).head(30)
+

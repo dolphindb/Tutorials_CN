@@ -1,0 +1,81 @@
+/**
+basic_analysis_of_public_fund_open_market_data.txt
+Script for analyzing public fund open market data
+DolphinDB Inc.
+DolphinDB server version: 2.00.8
+Storage engine: TSDB
+Last modification time: 2022.09.14
+*/
+
+/**
+part1: create database and table to store the open market data of public fund
+modified location: csvDataPath, dbName, tbName
+*/
+csvDataPath = "/ssd/ssd2/data/fundData/publicFundData.csv"
+dbName = "dfs://publicFundDB"
+tbName = "publicFundData"
+// create database and one-partition table
+if(existsDatabase(dbName)){
+	dropDatabase(dbName)
+}
+timeRange = 1990.01.01 join sort(distinct(yearBegin(2016.01.01..2050.01.01)))
+db = database(dbName, RANGE, timeRange, engine = 'TSDB')
+names = `SecurityID`FullName`Name`Management`Type`Custodian`IssueShare`InceptDate`MFee`CFee`SFee`Closed`Status
+types = `SYMBOL`STRING`STRING`SYMBOL`SYMBOL`SYMBOL`DOUBLE`DATE`DOUBLE`DOUBLE`DOUBLE`DOUBLE`INT
+schemaTB = table(1:0, names, types)
+db.createTable(table=schemaTB, tableName=tbName, sortColumns=`InceptDate)
+// load CSV data
+tmp = ploadText(filename=csvDataPath, schema=table(names, types))
+loadTable(dbName, tbName).append!(tmp)
+
+/**
+part2: basic analysis of the open market data of public fund
+*/
+// load metadata
+fundData = loadTable("dfs://publicFundDB", "publicFundData")
+// query the top ten records
+select top 10 * from fundData
+// query all records
+publicFundData = select * from fundData
+// query the total records
+select count(*) from fundData
+
+/**Find the bond type with the lowest fees in the market*/
+// step1: calculate the total fees and assign it to the variable openFundFee 
+fundFee = select *, (MFee + CFee + SFee) as Fee from fundData
+// step2: Query the top 50 funds with the lowest fees in bond type
+select top 50 * from fundFee where Type == "债券型" order by Fee
+// step3: Query the top 50 funds with the lowest fees in bond type, excluding index type
+select top 50 * from  fundFee where Type == "债券型", not(FullName like "%指数%") order by Fee
+
+/**view the summary of public fund fees*/
+// user defined summary statistics function
+def describe(x){
+	y = stat(x)
+	q_25 = quantile(x, 0.25)
+	q_50 = quantile(x, 0.50)
+	q_75 = quantile(x, 0.75)
+	return y.Count join y.Avg join y.Stdev join y.Min join q_25 join q_50 join q_75 join y.Max join y.Median
+	
+}
+// query the summary of public fund fees
+select describe(Fee) as `count`mean`std`min`q_25`q_50`q_75`max`median from fundFee group by Type
+
+/**plot fees histogram*/
+// Type="REITs"
+(exec Fee from fundFee where Type="REITs").plotHist(binNum=100)
+// Type="保本型"
+(exec Fee from fundFee where Type="保本型").plotHist(binNum=100)
+// Type="债券型"
+(exec Fee from fundFee where Type="债券型").plotHist(binNum=100)
+// Type="另类投资型"
+(exec Fee from fundFee where Type="另类投资型").plotHist(binNum=100)
+// Type="商品型"
+(exec Fee from fundFee where Type="商品型").plotHist(binNum=100)
+// Type="混合型"
+(exec Fee from fundFee where Type="混合型").plotHist(binNum=100)
+// Type="股票型"
+(exec Fee from fundFee where Type="股票型").plotHist(binNum=100)
+// Type="货币市场型"
+(exec Fee from fundFee where Type="货币市场型").plotHist(binNum=100)
+
