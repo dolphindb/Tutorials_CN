@@ -141,7 +141,7 @@ def makeFeaturesParallel(data):
         agg = pd.merge(agg, d, on=['TimeGroup', 'SecurityID'], how='left')
     return agg
 
-with timer(f"{len(stockList)}支股票 {startDate}-{endDate} snapshot衍生指标计算耗时(n_jobs:{n_jobs})"):
+with timer(f"execution time of derived features: (n_jobs:{n_jobs}, stocks: {len(stockList)}, period: {startDate}-{endDate})"):
     for i in range(10):
         snapshot[f'Wap{i}'] = calc_wap(snapshot[f'BidPrice{i}'], snapshot[f'OfferPrice{i}'], snapshot[f'BidOrderQty{i}'],
                                    snapshot[f'OfferOrderQty{i}'])
