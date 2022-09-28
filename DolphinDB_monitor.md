@@ -48,6 +48,7 @@ DolphinDB为需要监控的服务产生相应的metrics（指标），Prometheus
 |jobLoad| Gauge |作业负载（单位：无）|
 |runningJobs  | Gauge |正在执行中的作业和任务数（单位：无）|
 |queuedJobs| Gauge |队列中的作业和任务数（单位：无）|
+|connectionNum| Guage | 节点连接数|
 
 注意这些Metrics也可以通过http://ip:port/metrics 来查看。例如，本机单节点，监听在8848端口的DolphinDB，可以通过http://127.0.0.1:8848/metrics 来查看相关数据。
 
