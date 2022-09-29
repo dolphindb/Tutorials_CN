@@ -98,7 +98,7 @@ def genKday(n){
 }
 	
 def writeInDayByYear(numOfYear){
-	for (n in 0..(numOfYear -1)){
+	for (n in 0..(numOfYear-1)){
 		submitJob("genKday_"+string(n),"genKday_"+string(n),genKday,n)	
 	}
 }
