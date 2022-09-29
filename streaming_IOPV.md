@@ -13,7 +13,6 @@ Indicative Optimized Portfolio Value(IOPV) 全称为基金份额参考净值，�
 > **使用消息中间件**zmq <p>
 
 本教程包含内容：
-
 - [DolphinDB 流计算应用：基金份额参考价值 IOPV 计算](#dolphindb-流计算应用基金份额参考价值-iopv-计算)
   - [1. 计算公式](#1-计算公式)
     - [1.1 标准 IOPV 计算公式](#11-标准-iopv-计算公式)
@@ -23,11 +22,11 @@ Indicative Optimized Portfolio Value(IOPV) 全称为基金份额参考净值，�
     - [2.2 随机标的构建](#22-随机标的构建)
     - [2.3 逐笔成交数据表结构](#23-逐笔成交数据表结构)
   - [3. 历史 IOPV 计算](#3-历史-iopv-计算)
-  - [3.1 传统 IOPV 计算方法](#31-传统-iopv-计算方法)
-  - [3.2 DolphinDB 数据面板计算方法](#32-dolphindb-数据面板计算方法)
+    - [3.1 传统 IOPV 计算方法](#31-传统-iopv-计算方法)
+    - [3.2 DolphinDB 数据面板计算方法](#32-dolphindb-数据面板计算方法)
   - [4. 单只 ETF 实时计算](#4-单只-etf-实时计算)
-  - [4.1 [数据接入] replayDS：历史行情回放](#41-数据接入-replayds历史行情回放)
-  - [4.2 [实时计算] IOPV 横截面计算](#42-实时计算-iopv-横截面计算)
+    - [4.1 [数据接入] replayDS：历史行情回放](#41-数据接入-replayds历史行情回放)
+    - [4.2 [实时计算] IOPV 横截面计算](#42-实时计算-iopv-横截面计算)
     - [4.3 [下游系统消费]通过 ZMQ 消费计算结果](#43-下游系统消费通过-zmq-消费计算结果)
   - [5. 多只 ETF 实时增量计算](#5-多只-etf-实时增量计算)
     - [5.1 过滤价格不变数据](#51-过滤价格不变数据)
@@ -35,7 +34,6 @@ Indicative Optimized Portfolio Value(IOPV) 全称为基金份额参考净值，�
     - [5.3 增量计算](#53-增量计算)
   - [6. 回顾](#6-回顾)
   - [7. 源代码](#7-源代码)
-
 
 ## 1. 计算公式
 ### 1.1 标准 IOPV 计算公式
@@ -114,7 +112,7 @@ basket = getBasketData(allSyms.SecurityID, 100)
 
 ## 3. 历史 IOPV 计算
 
-## 3.1 传统 IOPV 计算方法
+### 3.1 传统 IOPV 计算方法
 
 基于历史逐笔成交计算更细颗粒度的 IOPV，传统计算方法如下：
 
@@ -128,7 +126,7 @@ basket = getBasketData(allSyms.SecurityID, 100)
 
 因此，基于逐笔成交的传统 IOPV 计算方法会有耗时长和代码复杂两个缺点。
 
-## 3.2 DolphinDB 数据面板计算方法
+### 3.2 DolphinDB 数据面板计算方法
 
 在 DolphinDB 中利用 pivot by 生成一个数据面板（矩阵），再对矩阵进行向量化运算可以提高计算速度，同时代码更为简洁。
 
@@ -186,7 +184,7 @@ timeSeriesValue 得到每个时间戳下的所有成分券价值，本次代码�
 
 只要通过3段代码即可实现完整的业务逻辑：
 
-## 4.1 [数据接入] replayDS：历史行情回放
+### 4.1 [数据接入] replayDS：历史行情回放
 
 通过历史行情回放的形式模拟实时行情。使用 DolphinDB 内置的 replayDS 函数能够轻松实现数据回放，实际投研和生产中还可以使用 replayDS 多表联合回放成交、订单和快照行情。
 
@@ -198,7 +196,7 @@ submitJob("replay_order", "replay_trades_stream",  replay,  rds,  `TradeStreamDa
 ```
 上段代码回放了2020.12.01这一天的逐笔成交数据，并把回放数据写入到流表 ```TradeStreamData``` 中。
 
-## 4.2 [实时计算] IOPV 横截面计算
+### 4.2 [实时计算] IOPV 横截面计算
 
 使用横截面计算引擎 ```CrossSectionalEngine``` 计算 IOPV
 
