@@ -12,6 +12,12 @@
 
 以下函数选取自 2.00 版本 [用户手册](https://www.dolphindb.cn/cn/help/index.html)。
 
+## 索引/标签操作
+| DolphinDB 函数          | Python 函数                                                  |
+| ----------------------- | ------------------------------------------------------------ |
+| loc                     | pandas.Series.loc / pandas.DataFrame.loc                     |
+| align                   | pandas.Series.align / pandas.DataFrame.align                 |
+
 ## 统计函数
 
 | DolphinDB 函数          | Python 函数                                                  |
