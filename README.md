@@ -79,7 +79,7 @@
 - 插件
     - [插件开发教程](plugin_development_tutorial.md) 
     - [插件开发深度解析](plugin_advance.md)
-    - [amdQuote](../../../DolphinDBPlugin/blob/release200/admQuote/README.md)
+    - [amdQuote](../../../DolphinDBPlugin/blob/release200/amdQuote/README.md)
     - [AWS S3](../../../DolphinDBPlugin/blob/release200/aws/README.md)
     - [DolphinDB VSCode 插件](vscode_extension.md)
     - [Excel](../../../excel-add-in)
