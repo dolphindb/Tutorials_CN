@@ -494,7 +494,7 @@ perf = table(uReturnsMatrix.colNames() as SecurityID, fundTypeMap[uReturnsMatrix
 
 ```sql
 filterTB = select * from perf where exp<40, vol<40, sharpe>0 context by Type csort sharpe desc limit 50
-returnsMatrix50 = returnsMatrix.loc(2015.01.01:, returnsMatrix.colNames() in filterTB["SecurityID"]
+returnsMatrix50 = returnsMatrix.loc(2015.01.01:, returnsMatrix.colNames() in filterTB["SecurityID"])
 ```
 
 **计算年度收益率**
