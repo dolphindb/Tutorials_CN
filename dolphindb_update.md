@@ -9,8 +9,8 @@
     - [4.2 TSDB 存储引擎更新原理](#42-tsdb-存储引擎更新原理)
   - [5. 数据更新实验](#5-数据更新实验)
     - [5.1 实验准备](#51-实验准备)
-    - [6.2 OLAP 引擎更新实验](#62-olap-引擎更新实验)
-    - [6.2 TSDB 引擎更新实验](#62-tsdb-引擎更新实验)
+    - [5.2 OLAP 引擎更新实验](#52-olap-引擎更新实验)
+    - [5.3 TSDB 引擎更新实验](#53-tsdb-引擎更新实验)
   - [6. 性能分析](#6-性能分析)
   - [7. 总结](#7-总结)
   - [8. 附件](#8-附件)
@@ -275,7 +275,7 @@ def createDatabase(dbName,tableName, ps1, ps2, numMetrics){
 
 实验的基本思路为观察执行 update 语句前后数据目录和文件的变化与上文阐述的原理是否一致。
 
-### 6.2 OLAP 引擎更新实验
+### 5.2 OLAP 引擎更新实验
 
 - 更新前
 
@@ -355,7 +355,7 @@ total 4
 drwxrwxr-x 2 dolphindb dolphindb 4096 Sep  7 05:26 machines_2_125
 ```
 
-### 6.2 TSDB 引擎更新实验
+### 5.3 TSDB 引擎更新实验
 
 #### keepDuplicates = LAST <!-- omit in toc -->
 
