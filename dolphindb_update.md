@@ -134,7 +134,9 @@ $ tree
 
 #### 更新流程 <!-- omit in toc -->
 
-<img src="https://github.com/dolphindb/Tutorials_CN/blob/master/images/dolphindb_update/olap_update_flowchart.png" width="800" height="500"/><br/>
+<img src="images/dolphindb_update/olap_update_flowchart.png" width="800" height="500"/><br/>
+
+https://gitee.com/dolphindb/Tutorials_CN/blob/master/images/dolphindb_update/olap_update_flowchart.png
 
 分布式表数据更新过程是一个事务，采用[两阶段提交](https://en.wikipedia.org/wiki/Two-phase_commit_protocol)协议和 [MVCC](https://en.wikipedia.org/wiki/Multiversion_concurrency_control) 机制，OLAP 引擎数据更新的具体流程如下：
 
@@ -198,7 +200,7 @@ DolphinDB TSDB 引擎在建表时另外提供了两个参数：sortColumns 和 k
 
 更新流程图如下：
 
-<img src="https://github.com/dolphindb/Tutorials_CN/blob/master/images/dolphindb_update/tsdb_last_update_flowchart.png" width="800" height="500"/><br/>
+<img src="images/dolphindb_update/tsdb_last_update_flowchart.png" width="800" height="500"/><br/>
 
 1. 向控制节点申请创建事务，控制节点会给涉及的分区加锁，并分配事务tid，返回分区 chunk ID 等信息；
 
