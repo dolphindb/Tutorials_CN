@@ -4,25 +4,13 @@
   - [1. 概述](#1-概述)
   - [2. 使用方法](#2-使用方法)
   - [3. 存储机制简介](#3-存储机制简介)
-    - [3.1 OLAP 引擎存储结构](#31-olap-引擎存储结构)
-    - [3.2 TSDB 引擎存储结构](#32-tsdb-引擎存储结构)
   - [4. 数据更新原理](#4-数据更新原理)
     - [4.1 OLAP 存储引擎更新原理](#41-olap-存储引擎更新原理)
-      - [更新流程](#更新流程)
-      - [定期回收机制](#定期回收机制)
-      - [快照隔离级别](#快照隔离级别)
     - [4.2 TSDB 存储引擎更新原理](#42-tsdb-存储引擎更新原理)
-      - [建表参数](#建表参数)
-      - [更新策略](#更新策略)
   - [5. 数据更新实验](#5-数据更新实验)
     - [5.1 实验准备](#51-实验准备)
-      - [部署集群](#部署集群)
-      - [创建库表和写入数据](#创建库表和写入数据)
     - [6.2 OLAP 引擎更新实验](#62-olap-引擎更新实验)
     - [6.2 TSDB 引擎更新实验](#62-tsdb-引擎更新实验)
-      - [keepDuplicates = LAST](#keepduplicates--last)
-      - [keepDuplicates = ALL](#keepduplicates--all)
-      - [keepDuplicates = FIRST](#keepduplicates--first)
   - [6. 性能分析](#6-性能分析)
   - [7. 总结](#7-总结)
   - [8. 附件](#8-附件)
@@ -77,7 +65,7 @@ DolphinDB 内置分布式文件系统 DFS，由其统一管理各个节点的存
 
 DolphinDB 提供配置项 volume，可以为每个节点指定数据文件的存储路径，用户可以通过 `pnodeRun(getAllStorages)` 查询路径。
 
-### 3.1 OLAP 引擎存储结构
+### 3.1 OLAP 引擎存储结构 <!-- omit in toc -->
 
 在 OLAP 中，每个分区内部都会为表的每列数据分别存储一个列文件。例如第 2 节脚本创建的使用 OLAP 引擎的表 pt，其分区 [0, 50) 的数据文件保存在 \<volumes\>/CHUNKS/db1/0_50/gA/pt_2 路径下，其中：
 
@@ -113,7 +101,7 @@ $ tree
 6 directories, 9 files
 ```
 
-### 3.2 TSDB 引擎存储结构
+### 3.2 TSDB 引擎存储结构 <!-- omit in toc -->
 
 TSDB 引擎以 [LSM 树（Log Structured Merge Tree）](https://en.wikipedia.org/wiki/Log-structured_merge-tree)的结构存储表数据。例如第 2 节脚本创建的使用 TSDB 引擎的表 pt1，分区 [0, 50) 的数据文件保存在 \<volumes\>/CHUNKS/TSDB_db1/0_50/gE/pt1_2 路径下，路径组成同 OLAP 引擎。
 
@@ -142,11 +130,11 @@ $ tree
 
 下面分别介绍 OLAP 和 TSDB 存储引擎更新分布式表数据的基本原理。
 
-### 4.1 OLAP 存储引擎更新原理
+### 4.1 OLAP 存储引擎更新原理 
 
-#### 更新流程
+#### 更新流程 <!-- omit in toc -->
 
-![](images/dolphindb_update/olap_update_flowchart.png)
+<img src="https://github.com/dolphindb/Tutorials_CN/blob/master/images/dolphindb_update/olap_update_flowchart.png" width="800" height="500"/><br/>
 
 分布式表数据更新过程是一个事务，采用[两阶段提交](https://en.wikipedia.org/wiki/Two-phase_commit_protocol)协议和 [MVCC](https://en.wikipedia.org/wiki/Multiversion_concurrency_control) 机制，OLAP 引擎数据更新的具体流程如下：
 
@@ -180,17 +168,17 @@ $ tree
     
     事务结束后，最终只会保留最后一个版本，因为程序启动后，其他版本都是历史数据，应该回收掉，不应该继续保留。
 
-#### 定期回收机制
+#### 定期回收机制 <!-- omit in toc -->
 
 在实际操作中，用户常常会进行多次数据更新，导致上述目录序列不断增加。为此，系统提供了定期垃圾回收的机制。默认情况下，系统每隔 60 秒回收一定时间值之前更新生成的目录。在开始周期性垃圾回收前，系统最多保留 5 个更新版本。
 
-#### 快照隔离级别
+#### 快照隔离级别 <!-- omit in toc -->
 
 更新数据的整个过程是一个事务，满足 ACID 特性，且通过多版本并发控制机制（MVCC, Multi-Version Concurrency Control）进行读写分离，保证了数据在更新时不影响读取。例如，不同用户同时对相同数据表进行更新和查询操作时，系统将根据操作发生的顺序为其分配 cid，并将它们和 createCids 数组里的版本号对比，寻找所有版本号中值最大且小于 cid 的文件路径，此路径即为该 cid 对应的操作路径。如需要在线获取最新的 cid，可执行 getTabletsMeta().createCids 命令。
 
 ### 4.2 TSDB 存储引擎更新原理
 
-#### 建表参数
+#### 建表参数 <!-- omit in toc -->
 
 DolphinDB TSDB 引擎在建表时另外提供了两个参数：sortColumns 和 keepDuplicates。
 
@@ -198,7 +186,7 @@ DolphinDB TSDB 引擎在建表时另外提供了两个参数：sortColumns 和 k
 
 - keepDuplicates：用于去重，即指定在每个分区内如何处理所有 sortColumns 的值相同的数据。参数默认值为 ALL，表示保留所有数据；取值为 LAST 表示仅保留最新数据；取值为 FIRST 表示仅保留第一条数据。
 
-#### 更新策略
+#### 更新策略 <!-- omit in toc -->
 
 不同的 keepDuplicates 参数值，会有不同的数据更新策略。
 
@@ -210,7 +198,7 @@ DolphinDB TSDB 引擎在建表时另外提供了两个参数：sortColumns 和 k
 
 更新流程图如下：
 
-![](images/dolphindb_update/tsdb_last_update_flowchart.png)
+<img src="https://github.com/dolphindb/Tutorials_CN/blob/master/images/dolphindb_update/tsdb_last_update_flowchart.png" width="800" height="500"/><br/>
 
 1. 向控制节点申请创建事务，控制节点会给涉及的分区加锁，并分配事务tid，返回分区 chunk ID 等信息；
 
@@ -246,7 +234,7 @@ DolphinDB TSDB 引擎在建表时另外提供了两个参数：sortColumns 和 k
 
 ### 5.1 实验准备
 
-#### 部署集群
+#### 部署集群 <!-- omit in toc -->
 
 - Linux 系统 
 
@@ -258,7 +246,7 @@ DolphinDB TSDB 引擎在建表时另外提供了两个参数：sortColumns 和 k
 
 - 开启 cache engine 和 redo log
 
-#### 创建库表和写入数据
+#### 创建库表和写入数据 <!-- omit in toc -->
 
 参考[《DolphinDB入门：物联网范例》](https://gitee.com/dolphindb/Tutorials_CN/blob/master/iot_examples.md)第2.3、2.4节，创建多值模型数据库表，并写入数据。注意此处[脚本](https://gitee.com/dolphindb/Tutorials_CN/blob/master/script/multipleValueModeWrite.txt)为异步写入，可以通过 getRecentJobs() 方法查看写入是否完成。
 
@@ -367,7 +355,7 @@ drwxrwxr-x 2 dolphindb dolphindb 4096 Sep  7 05:26 machines_2_125
 
 ### 6.2 TSDB 引擎更新实验
 
-#### keepDuplicates = LAST
+#### keepDuplicates = LAST <!-- omit in toc -->
 
 - 更新前
 
@@ -441,9 +429,9 @@ tree
 1 directory, 7 files
 ```
 
-#### keepDuplicates = ALL
+#### keepDuplicates = ALL <!-- omit in toc -->
 
--更新前
+- 更新前
 
 设置 createPartitionedTable 方法的 keepDuplicates 参数为 ALL，然后建库和导入数据。
 
@@ -555,7 +543,7 @@ $ tree
 1 directory, 6 files
 ```
 
-#### keepDuplicates = FIRST
+#### keepDuplicates = FIRST <!-- omit in toc -->
 
 createPartitionedTable 方法的 keepDuplicates 参数为 FIRST 时更新操作的表现与 keepDuplicates 参数为 ALL 时相同。
 
@@ -623,7 +611,7 @@ for(i in 0..20)
 
 更新性能较差，因为该配置下每次更新都会在一个新的目录产生一个新的版本，且未变化的列也会被更新，磁盘IO较大，故而性能较差。
 
-综上所述，DolphinDB 只适合低频更新。使用 TSDB 引擎时，若对更新的性能有要求，建议配置keepDuplicates=LAST。
+综上所述，DolphinDB 只适合低频更新。使用 TSDB 引擎时，若对更新的性能有要求，建议配置 keepDuplicates=LAST。
 
 ## 7. 总结
 
