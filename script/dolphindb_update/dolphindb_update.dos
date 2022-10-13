@@ -1,0 +1,28 @@
+n=10000
+ID=rand(100, n)
+dates=2022.08.07..2022.08.11
+date=rand(dates, n)
+vol=rand(1..10 join int(), n)
+t=table(ID, date, vol)
+
+if(existsDatabase("dfs://db1")){
+  dropDatabase("dfs://db1")
+}
+// 创建位 OLAP 存储引擎下的分布式数据表 pt
+db=database(directory="dfs://db1", partitionType=RANGE, partitionScheme=0 50 100)
+pt=db.createPartitionedTable(table=t, tableName=`pt, partitionColumns=`ID)
+pt.append!(t)
+
+if(existsDatabase("dfs://TSDB_db1")){
+  dropDatabase("dfs://TSDB_db1")
+}
+// 创建 TSDB 存储引擎下的分布式数据表 pt1
+db=database(directory="dfs://TSDB_db1", partitionType=RANGE, partitionScheme=0 50 100, engine="TSDB")
+pt1=db.createPartitionedTable(table=t, tableName=`pt1, partitionColumns=`ID, sortColumns=`vol)
+pt1.append!(t)
+
+// 更新语句
+update pt set vol = 1 where ID = 1
+sqlUpdate(pt, <2 as vol>, where=<ID = 1>).eval()
+newData = table(1 as ID, 2022.08.07 as date, 3 as vol)
+upsert!(pt, newData, keyColNames=`ID)
