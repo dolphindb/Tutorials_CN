@@ -27,6 +27,7 @@
     - [集群间数据库同步](data_synchronization_between_clusters.md)
     - [CacheEngine与数据库日志教程](redoLog_cacheEngine.md)
     - [内存表详解](in_memory_table.md)
+    - [DolphinDB 分布式表数据更新原理和性能介绍](dolphindb_update.md)
 - 编程语言
     - [脚本语言的混合范式编程](hybrid_programming_paradigms.md)
     - [函数化编程案例](functional_programming_cases.md)
@@ -139,7 +140,6 @@
     - [从4.5小时到3.5分钟，如何利用DolphinDB高效清洗数据](data_ETL.md)
     - [DolphinDB流式计算中证1000指数主买/主卖交易量](CSI_1000.md)
     - [公募基金历史数据基础分析教程](public_fund_basic_analysis.md)
-    - [DolphinDB 分布式表数据更新原理和性能介绍](dolphindb_update.md)
 - 入门和测试
     - [DolphinDB入门：量化金融范例](quant_finance_examples.md)
     - [DolphinDB入门：物联网范例](iot_examples.md)
