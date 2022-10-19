@@ -20,7 +20,7 @@ DolphinDB提供了三种方式进行性能监控：
 
 ## 1. Prometheus metrics
 
-DolphinDB为需要监控的服务产生相应的metrics（指标），Prometheus Server可以直接使用。DolphinDB 目前支持的metrics如下所示：
+DolphinDB为需要监控的服务产生相应的metrics（指标），Prometheus Server可以直接使用。DolphinDB目前支持的metrics如下所示：
 
 |指标|	类型|	含义|
 |----|----|----|
@@ -61,13 +61,13 @@ metric 有两种查看方式：
 
 从Prometheus官网下载Prometheus和Alertmanager，下载链接为：[https://prometheus.io/download/](https://prometheus.io/download/)。相关文档可参阅[官方帮助](https://prometheus.io/docs/prometheus/latest/getting_started/)。
 
-DolphinDB 有以下三种部署方式：
+DolphinDB有以下三种部署方式：
 
-1. 通过 Docker 容器部署运行 DolphinDB；
-2. 利用 K8S 等工具部署 DolphinDB 的相关组件；
+1. 通过Docker容器部署运行DolphinDB；
+2. 利用K8S等工具部署DolphinDB的相关组件；
 3. 直接部署 DolphinDB。
 
-注：部署 DolphinDB 的相关文档可查阅：[DolphinDB教程](https://gitee.com/dolphindb/Tutorials_CN/blob/master/README.md#/dolphindb/Tutorials_CN/blob/master/dolphindb_user_guide.md)
+注：部署DolphinDB的相关文档可查阅：[DolphinDB教程](https://gitee.com/dolphindb/Tutorials_CN/blob/master/README.md#/dolphindb/Tutorials_CN/blob/master/dolphindb_user_guide.md)
 
 ## 3.安装及配置
 
@@ -185,16 +185,16 @@ inhibit_rules:
 demo@zhiyu:~/prometheus-2.26.0.linux-amd64$ nohup ./prometheus --config.file=promethes.yml &
 ```
 
-prometheus默认绑定在9090端口，可以通过前端 Web 访问，本例使用的地址为 127.0.0.1:9090。
+prometheus默认绑定在9090端口，可以通过前端Web访问，本例使用的地址为127.0.0.1:9090。
 
 * 启动Alertmanager命令如下：
 
 ```
 demo@zhiyu:~/alertmanager-0.21.0.linux-amd64$ nohup ./alertmanager --config.file=alertmanager.yml &
 ```
-AlertManger默认绑定在9093端口，访问地址是http://127.0.0.1:9093，当 Prometheus 中触发报警规则，在该地址中可以看到推送信息，然后提交给具体的渠道处理，从而实现报警。本例中，当负载超过0.1时，邮箱会收到报警邮件。
+AlertManger默认绑定在9093端口，访问地址是`http://127.0.0.1:9093`，当 Prometheus 中触发报警规则，在该地址中可以看到推送信息，然后提交给具体的渠道处理，从而实现报警。本例中，当负载超过0.1时，邮箱会收到报警邮件。
 
-完成启动后，意味着DolphinDB 的指标监控和报警也已完成。
+完成启动后，意味着DolphinDB的指标监控和报警也已完成。
 
 ## 4. 监控展示
 
