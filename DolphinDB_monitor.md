@@ -208,7 +208,7 @@ Prometheus 内置简易的Web控制台，可以查询指标、配置信息等，
 
 ![targets](./images/monitor/rules.png?raw=true)
 
-* 访问http://127.0.0.1:9090/graph，在输入框中输入指标如 *lastMinuteNetworkRecv*，查看对应指标的图形展示：
+* 访问http://127.0.0.1:9090/graph 在输入框中输入指标如 *lastMinuteNetworkRecv*，查看对应指标的图形展示：
 
 ![targets](./images/monitor/graph.png?raw=true)
 
