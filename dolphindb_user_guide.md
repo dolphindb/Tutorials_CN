@@ -62,24 +62,24 @@ DolphinDB 提供数据、元数据以及客户端的高可用方案，使得数�
 
 | **功能**                                       | **独立服务器** | **单机集群** | **多服务器集群** |
 | :----------------------------------------: | :---------: | :--------: | :----------: |
-| [多模存储引擎](https://www.dolphindb.cn/cn/help/200/DatabaseandDistributedComputing/Database/DataModel.html) |:heavy_check_mark:  | :heavy_check_mark:|:heavy_check_mark:  |
-| [支持事务](https://www.dolphindb.cn/cn/help/200/DatabaseandDistributedComputing/Database/Transaction.html) | :heavy_check_mark: | :heavy_check_mark: |:heavy_check_mark:  |
-| [分布式计算](https://gitee.com/dolphindb/Tutorials_CN/blob/master/general_computing.md) | :heavy_check_mark: | :heavy_check_mark:|:heavy_check_mark:  |
-| [多范式编程](https://gitee.com/dolphindb/Tutorials_CN/blob/master/hybrid_programming_paradigms.md) | :heavy_check_mark: | :heavy_check_mark: |:heavy_check_mark:  |
-| [实时流数据](https://gitee.com/dolphindb/Tutorials_CN/blob/master/streaming_tutorial.md) | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: |
-| 系统管理及接口                                  | :heavy_check_mark: | :heavy_check_mark: | :heavy_check_mark: |
-| 云上部署                                     | :heavy_check_mark:         | :heavy_check_mark: | :heavy_check_mark: |
-| 扩展节点                                     | :x:         | :heavy_check_mark: | :heavy_check_mark:  |
-| 数据高可用（多副本）                               | :x:         | :heavy_check_mark: | :heavy_check_mark: |
-| 应用高可用                                    | :x:         | :x:        | :heavy_check_mark: |
+| [多模存储引擎](https://www.dolphindb.cn/cn/help/200/DatabaseandDistributedComputing/Database/DataModel.html) |:white_check_mark:  | :white_check_mark:|:white_check_mark:  |
+| [支持事务](https://www.dolphindb.cn/cn/help/200/DatabaseandDistributedComputing/Database/Transaction.html) | :white_check_mark: | :white_check_mark: |:white_check_mark:  |
+| [分布式计算](https://gitee.com/dolphindb/Tutorials_CN/blob/master/general_computing.md) | :white_check_mark: | :white_check_mark:|:white_check_mark:  |
+| [多范式编程](https://gitee.com/dolphindb/Tutorials_CN/blob/master/hybrid_programming_paradigms.md) | :white_check_mark: | :white_check_mark: |:white_check_mark:  |
+| [实时流数据](https://gitee.com/dolphindb/Tutorials_CN/blob/master/streaming_tutorial.md) | :white_check_mark: | :white_check_mark: | :white_check_mark: |
+| 系统管理及接口                                  | :white_check_mark: | :white_check_mark: | :white_check_mark: |
+| 云上部署                                     | :white_check_mark:         | :white_check_mark: | :white_check_mark: |
+| 扩展节点                                     | :x:         | :white_check_mark: | :white_check_mark:  |
+| 数据高可用（多副本）                               | :x:         | :white_check_mark: | :white_check_mark: |
+| 应用高可用                                    | :x:         | :x:        | :white_check_mark: |
 
 | **应用场景**    | **独立服务器** | **单机集群** | **多服务器集群** |
 | ------- | --------- | -------- | ---------- |
-| 开发      | :heavy_check_mark:         | :heavy_check_mark:        | :heavy_check_mark:          |
-| 研究      | :heavy_check_mark:         | :heavy_check_mark:        | :heavy_check_mark:          |
-| 小规模生产环境 | :heavy_check_mark:         | :heavy_check_mark:        | :heavy_check_mark:          |
-| 可扩展     | :x:         | :heavy_check_mark:        | :heavy_check_mark:          |
-| 企业级生产环境 | :x:         | :x:        | :heavy_check_mark:          |
+| 开发      | :white_check_mark:         | :white_check_mark:        | :white_check_mark:          |
+| 研究      | :white_check_mark:         | :white_check_mark:        | :white_check_mark:          |
+| 小规模生产环境 | :white_check_mark:         | :white_check_mark:        | :white_check_mark:          |
+| 可扩展     | :x:         | :white_check_mark:        | :white_check_mark:          |
+| 企业级生产环境 | :x:         | :x:        | :white_check_mark:          |
 
 ## 3. 使用系统
 
