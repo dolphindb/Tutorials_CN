@@ -27,7 +27,7 @@ def createDayDbTable(dbName, tbName){
 //模拟数据数据定义
 def genKminute(n){
 	tradeDate= select * from table(distinct(businessDay(temporalAdd(2020.01.01,n, "M")..monthEnd(temporalAdd(2020.01.01,n, "M")))).sort() as tradeDate) where tradeDate>=temporalAdd(2020.01.01,n, "M")
-	tradeMin = table(09:30:00.000+0..120*60*1000 join (13:00:00.000+0..120*60*1000) as tradeMin)
+	tradeMin = table((09:30:00.000+0..120*60*1000) join (13:00:00.000+0..120*60*1000) as tradeMin)
 	tradetime = select concatDateTime(tradeDate,tradeMin) as tradetime from cj(tradeDate,tradeMin)
 	securityid ="sz"+lpad(string(000001..004000), 6, `0)
 	tmpTable = cj(table(securityid as securityid),tradetime)
