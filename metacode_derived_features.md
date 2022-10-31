@@ -1,8 +1,8 @@
 # DolphinDB 元编程：开发股票波动率预测模型的 676 个输入特征
 
-随着算力的提升和机器学习与深度学习的普及，在进行数据建模时往往会采用批量生成衍生特征的方法来丰富数据集的特征，如：对原有的 10 维特征都采用 max, min, avg, std, sum 这五种方式进行聚合，数据的特征将变为 50 维。类似的衍生特征工程极大地提升了模型的准确性。调用 Pandas 的 agg 函数，传入一个字典（key：列名，value：衍生特征的函数列表）即可实现这样的衍生特征计算。本教程将使用 DolphinDB 的 [元编程](https://www.dolphindb.cn/cn/help/200/Objects/Metaprogramming.html) ，以极少的代码量实现与 pandas 中类似的衍生特征计算方法。
+随着算力的提升和机器学习与深度学习的普及，在进行数据建模时往往会采用批量生成衍生特征的方法来丰富数据集的特征，如：对原有的10维特征都采用 max, min, avg, std, sum 这五种方式进行分段时间窗口的聚合，数据的特征将变为5 维，有可能显著提升模型的准确性。
 
-我们使用 2021 年 16 支股票的 Level 2 快照数据，构建频率为 10 分钟的特征，并利用元编程，**低代码量**实现了 676 列衍生特征的计算。与多个 Python Pandas 进程并行计算相比，DolphinDB 能带来**约 30 倍的性能提升**。教程还展示了如何在生产环境中用流式计算进行输入特征的实时计算。
+本教程受 [Kaggle](https://www.kaggle.com) 的 [Optiver Realized Volatility Prediction](https://www.kaggle.com/competitions/optiver-realized-volatility-prediction/overview/description) 竞赛项目启发，该项目排名第一的代码中使用了两档的买卖量价数据及 pandas 的元编程实现了批量衍生特征的计算，本教程在此基础上，使用2021年16支股票的 Level 2 快照数据，在 DolphinDB 中构建频率为10分钟的特征，**低代码量**实现了676列衍生特征的计算。与多个 Python Pandas 进程并行计算相比，DolphinDB 能带来**约 30 倍的性能提升**。教程还展示了如何在生产环境中用流式计算进行特征的实时计算。
 
 > 本教程示例代码必须在 **2.00.6** 及以上版本的 DolphinDB server 上运行。
 
@@ -10,11 +10,11 @@
 
 - [DolphinDB 元编程：开发股票波动率预测模型的 676 个输入特征](#dolphindb-元编程开发股票波动率预测模型的-676-个输入特征)
 	- [1. Snapshot 数据文件结构](#1-snapshot-数据文件结构)
-	- [2. 教程开发背景](#2-教程开发背景)
+	- [2. 特征工程](#2-特征工程)
 		- [2.1 一级指标](#21-一级指标)
 		- [2.2 二级指标](#22-二级指标)
 		- [2.3 衍生特征](#23-衍生特征)
-	- [3. DolphinDB 元编程计算代码开发](#3-dolphindb-元编程计算代码开发)
+	- [3. DolphinDB 元编程代码](#3-dolphindb-元编程代码)
 		- [3.1 一二级指标计算](#31-一二级指标计算)
 		- [3.2 衍生特征计算](#32-衍生特征计算)
 	- [4. DolphinDB vs Python](#4-dolphindb-vs-python)
@@ -30,7 +30,7 @@
 
 ## 1. Snapshot 数据文件结构
 
-本教程应用的数据源为股票的 level2 快照数据（Snapshot），每幅快照间隔时间为 3 秒或 5 秒，数据文件结构如下：
+本教程应用的数据源为股票的 level 2 快照数据（Snapshot），每幅快照间隔时间为3秒，数据文件结构如下：
 
 | 字段       | 含义     | 字段             | 含义       | 字段              | 含义     |
 | ---------- | -------- | ---------------- | ---------- | ----------------- | -------- |
@@ -40,37 +40,35 @@
 | OpenPx     | 开始价   | TotalValueTrade  | 成交总金额 | OfferOrderQty[10] | 申卖十量 |
 | HighPx     | 最高价   | InstrumentStatus | 交易状态   | ……                | ……       |
 
-2021 年某市所有股票快照测试数据已经提前导入至 DolphinDB 数据库中，一共约 17 亿条数据，导入方法见 [国内股票行情数据导入实例](https://gitee.com/dolphindb/Tutorials_CN/blob/master/stockdata_csv_import_demo.md)。
+2021年某市所有股票快照测试数据已经提前导入至 DolphinDB 数据库中，一共约17亿条数据，导入方法见 [国内股票行情数据导入实例](https://gitee.com/dolphindb/Tutorials_CN/blob/master/stockdata_csv_import_demo.md)。
 
-## 2. 教程开发背景
-
-本教程受 [Kaggle](https://www.kaggle.com) 的 [Optiver Realized Volatility Prediction](https://www.kaggle.com/competitions/optiver-realized-volatility-prediction/overview/description) 竞赛项目启发，该项目排名第一的代码中使用了两档的买卖量价数据及 pandas 的元编程实现了批量衍生特征的计算，本教程在此基础上，使用真实十档买卖量价的快照数据实现了 676 列衍生特征的计算。
+## 2. 特征工程
 
 ### 2.1 一级指标
 
-一级指标全部由快照数据中的 10 档买卖单量价数据计算而来:
+一级指标由快照数据中的10档买卖单量价数据计算而来:
 
 * **Weighted Averaged Price(wap)**：加权平均价格
 
 ![](https://latex.codecogs.com/svg.latex?wap=\frac{{{BidPrice}*{OfferOrderQty}+{OfferPrice}*{BidOrderQty}}}{{{BidOrderQty}+{OfferOrderQty}}})
 
-* **Price Spread(priceSpread)**：用于衡量买单价和卖单价的价差
+* **Price Spread(priceSpread)**：卖1价与买1价之差与均价之比
 
 ![](https://latex.codecogs.com/svg.latex?priceSpread=\frac{{(OfferPrice_0-BidPrice_0)*2}}{{OfferPrice_0+BidPrice_0}})
 
-* **Bid Price Spread(bidSpread)**：用于衡量买 1 价和买 2 价的价差
+* **Bid Price Spread(bidSpread)**：买1价和买2价之差
 
 ![](https://latex.codecogs.com/svg.latex?bidSpread=bidPrice_0-bidPrice_1)
 
-* **Offer Price Spread(offerSpread)**：用于衡量卖 1 价和卖 2 价的价差
+* **Offer Price Spread(offerSpread)**：卖1价和卖2价之差
 
 ![](https://latex.codecogs.com/svg.latex?offerSpread=offerPrice_0-offerPrice_1)
 
-* **Total Volume(totalVolume)**：10 档买卖单的总量
+* **Total Volume(totalVolume)**：10档买卖单的总量
 
 ![](https://latex.codecogs.com/svg.latex?totalVolume=\sum\limits_{i=0}^9{(offerOrderQty_i+bidOrderQty_i)})
 
-* **Volume Imbalance(volumeImbalance)**：买卖单总量不平衡
+* **Volume Imbalance(volumeImbalance)**：买卖单总量之差的绝对值
 
 ![](https://latex.codecogs.com/svg.latex?volumeImbalance=|\sum\limits_{i=0}^9{offerOrderQty_i}-\sum\limits_{i=0}^9{bidOrderQty_i}|)
 
@@ -84,9 +82,9 @@
 
 ### 2.2 二级指标
 
-二级指标全部由一级指标计算生成
+二级指标由一级指标计算生成
 
-* **WAP Balance(wapBalance)**：加权平均价格平衡
+* **WAP Balance(wapBalance)**：加权平均价格之差的绝对值
 
 ![](https://latex.codecogs.com/svg.latex?wapBalance=|wap_0-wap_1|)
 
@@ -96,7 +94,7 @@
 
 ### 2.3 衍生特征
 
-衍生特征是对一级指标和二级指标做 10 分钟降采样的衍生，降采样的聚合方法通过元编程来批量实现，衍生方法如下：
+衍生特征是对一级指标和二级指标进行10分钟级别聚合计算的结果，所用到的聚合函数如下：
 
 | 指标名称           | 衍生方法                           |
 | ------------------ | ---------------------------------- |
@@ -118,15 +116,15 @@
 
 ![](https://latex.codecogs.com/svg.latex?realizedVolatility=\sqrt{\sum\limits_{i}{logReturn_i^2}})
 
-同时考虑到，过去 10 分钟的特征中，特征的时效性是随时间增加的，越靠前的特征时效性越弱，越靠后的特征时效性越强。所以，本教程对 10 分钟的特征切分成了 0-600s（全部），150-600s，300-600s，450-600s 四段，分别进行上述衍生指标的计算。
+同时考虑到特征具有时效性，所以本教程对10分钟的特征切分成了 0-600s（全部），150-600s，300-600s，450-600s 四段，分别进行上述衍生指标的计算。
 
-**10 分钟的快照数据最终形成 676 维的聚合特征，如下图所示。**
+**10分钟的快照数据最终形成676维的聚合特征，如下图所示：**
 
 ![](images/metacode_derived_features/featureEngineering.png)
 
-## 3. DolphinDB 元编程计算代码开发
+## 3. DolphinDB 元编程代码
 
-本教程中的重点和难点是批量生成大量特征列计算表达式，如果按照传统 SQL 来编程，实现 676 个计算指标需要编写大量代码，因此本教程使用元编程方法实现衍生特征的计算。本教程通过元编程函数 [sql](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/s/sql.html) 生成元代码。为了对快照数据做 10min 的聚合计算，sql 函数的分组参数 ```groupby=[<SecurityID>, <bar(DateTime, 10m) as DateTime>]```。在自定义聚合函数中，首先进行一二级指标计算，再进行衍生特征计算。通过 DolphinDB 元编程对 level2 快照数据完成 676 列衍生特征的完整计算代码如下：
+本教程中的重点和难点是批量生成大量特征列计算表达式，使用元编程的方式可以显著减少所需的代码量。关于元编程的详情请参考[元编程](https://www.dolphindb.cn/cn/help/Objects/Metaprogramming.html)。本教程通过元编程函数 [sql](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/s/sql.html) 生成元代码。在计算特征的自定义聚合函数中，首先进行一二级指标计算，再进行衍生特征计算。通过 DolphinDB 元编程对 level 2 快照数据完成676列衍生特征的完整计算代码如下：
 
 * [DolphinDB 批计算代码](script/metacode_derived_features/metacode_derived_features.txt)：十档量价数据用多列存储。
 
@@ -134,7 +132,7 @@
 
 ### 3.1 一二级指标计算
 
-自定义聚合函数的入参是某支股票的 BidPrice, BidOrderQty, OfferPrice, OfferOrderQty 这四个十档量价数据的矩阵，在 DolphinDB 中对一二级指标的计算代码如下：
+自定义聚合函数的入参是某支股票的 BidPrice, BidOrderQty, OfferPrice, OfferOrderQty 这四个十档量价数据的矩阵。在 DolphinDB 中对一二级指标的计算代码如下：
 
 ```c++
 wap = (BidPrice * OfferOrderQty + BidOrderQty * OfferPrice) \ (BidOrderQty + OfferOrderQty)
@@ -151,7 +149,7 @@ LogReturnBid = logReturn(BidPrice)
 
 ### 3.2 衍生特征计算
 
-利用 Python 的 pandas 库，通过向 groupby.agg 传入一个字典（字典的 key 为列名，value为聚合函数列表），即可实现对指定的列进行批量的聚合指标计算。
+利用 Python 的 pandas 库，通过向 groupby.agg 传入一个字典（字典的 key 为列名，value 为聚合函数列表），即可实现对指定的列进行批量的聚合指标计算。
 
 在 DolphinDB 中，亦可通过自定义函数实现类似的需求，即把字典转换成元编程代码，具体代码如下：
 
@@ -192,7 +190,7 @@ aggMetaCode, metaCodeColName = createAggMetaCode(features)
 
 ![](images/metacode_derived_features/metacodeResult.png)
 
-在自定义函数中，为了方便后续使用元编程进行衍生特征计算，需要将计算的一二级指标拼接成一个 table，同时修改列名，具体代码如下：
+在计算特征的自定义聚合函数中，为了方便后续使用元编程进行衍生特征计算，需要将一二级指标拼接成一个 table，同时修改列名，具体代码如下：
 
 ```
 subTable = table(DateTime as `DateTime, BidPrice, BidOrderQty, OfferPrice, OfferOrderQty, wap, wapBalance, priceSpread, BidSpread, OfferSpread, totalVolume, volumeImbalance, LogReturnWap, LogReturnOffer, LogReturnBid)
@@ -200,9 +198,9 @@ colNum = 0..9$STRING
 colName = `DateTime <- (`BidPrice + colNum) <- (`BidOrderQty + colNum) <- (`OfferPrice + colNum) <- (`OfferOrderQty + colNum) <- (`Wap + colNum) <- `WapBalance`PriceSpread`BidSpread`OfferSpread`TotalVolume`VolumeImbalance <- (`LogReturn + colNum) <- (`LogReturnOffer + colNum) <- (`LogReturnBid + colNum)
 subTable.rename!(colName)
 ```
->其中 “<-” 是 DolphinDB 函数 join 的简写符号，此处用于将各字段拼接成列向量。
+>其中 “<-” 是 DolphinDB 函数 [join](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/j/join.html) 的简写符号，此处用于将各字段拼接成列向量。
 
-最后将元代码作为参数传入自定义聚合函数，配合一二级指标拼接而成的 table 进行 676 列衍生指标的计算，并以 676 列的形式作为聚合结果返回，具体代码如下：
+最后将元代码作为参数传入计算特征的自定义聚合函数，配合一二级指标拼接而成的 table 进行676列衍生指标的计算，并以676列的形式作为聚合结果返回，具体代码如下：
 
 ```c++
 subTable['BarDateTime'] = bar(subTable['DateTime'], 10m)
@@ -217,21 +215,21 @@ return concatMatrix([result, result150, result300, result450])
 
 ![](images/metacode_derived_features/resultTable2021.png)
 
-**所有衍生特征列名展示**
+**衍生特征列名展示**
 
 ![](images/metacode_derived_features/resultColNames.png)
 
 ## 4. DolphinDB vs Python
 
-* 测试数据为 2021 年 16 支股票的 level2 快照数据，总记录数为 19,220,237。
-* 计算逻辑为按股票代码分组，计算 676 个 10 分钟聚合指标。
+* 测试数据为2021年16支股票的 level 2 快照数据，总记录数为19,220,237。
+* 计算逻辑为按股票代码分组，计算676个10分钟聚合指标。
 * DolphinDB 和 Python 的 CPU 计算调用资源都是 8 核。
 * [DolphinDB 批计算代码](script/metacode_derived_features/metacode_derived_features.txt)：十档量价数据用多列存储。
 
 * [DolphinDB 批计算代码（数组向量版）](script/metacode_derived_features/metacode_derived_features_arrayVector.txt)：十档量价数据用数组向量存储。
 * [Python 批计算代码](script/metacode_derived_features/metacode_derived_features_python_script.py)
 
-由于 DolphinDB 的计算是分布式并行计算，本教程中配置的并行度为 8，因此在使用 Python 实现衍生特征计算时，也采用了 8 的并行度进行并行计算，即同时调用 8 个 Python 进程进行计算。
+由于 DolphinDB 的计算是分布式并行计算，本教程中配置的并行度为8，因此在使用 Python 实现衍生特征计算时，也采用了8的并行度进行并行计算，即同时调用8个 Python 进程进行计算。
 
 **计算性能对比结果**
 
@@ -241,8 +239,6 @@ return concatMatrix([result, result150, result300, result450])
 
 
 ## 5. 模型构建
-
-选取 2021 年 16 支股票 09:30:00-11:30:00 和 13:00:00-15:00:00 交易时间段的 level2 快照测试数据进行模型训练。
 
 DolphinDB 支持一系列常用的机器学习算法，例如 [最小二乘回归、随机森林、K - 平均等，使用户能够方便地完成回归、分类、聚类等任务](https://www.dolphindb.cn/cn/help/200/FunctionsandCommands/FunctionStatistics/index.html)。除了内置的经典的机器学习函数，DolphinDB 还支持许多第三方库，因此我们也可以调用 DolphinDB 提供的第三方库插件来进行模型训练。
 
@@ -260,7 +256,7 @@ XGBOOST（Extreme Gradient Boosting）是一种 Tree Boosting 的可扩展机器
 
 ### 5.1 数据处理
 
-删除掉含 NULL 的记录，标注 label 并将构造出来的 676 维特征适当调整为 XGBOOST 输入的数据格式，具体代码如下：
+删除掉含 NULL 的记录，标注 label 并将构造出来的676维特征适当调整为 XGBOOST 输入的数据格式，具体代码如下：
 
 ```c++
 // 将计算出来的特征中包含 NULL 的记录删除
@@ -278,11 +274,11 @@ result_input.update!(`SecurityID_int, int(result[`SecurityID]))
 result_input.dropColumns!(`SecurityID`DateTime`LogReturn0_realizedVolatility)
 ```
 
->  注意：本次预测值为未来 10 分钟的波动率，WAP_0 最接近股价，所以选取 `LogReturn0_realizedVolatility` 作为 `label`。
+>  注意：本次预测值为未来10分钟的波动率，WAP_0 最接近股价，所以选取 `LogReturn0_realizedVolatility` 作为 `label`。
 
 ### 5.2 划分训练集和测试集
 
-本项目中没有设置验证集，训练集和测试集按 7:3 比例划分，即 train:test = 62514:26804，具体代码如下：
+本项目中没有设置验证集，训练集和测试集按 7:3 比例划分，具体代码如下：
 
 ```c++
 def trainTestSplit(x, testRatio) {
@@ -342,7 +338,7 @@ RMSPE：0.559
 模型训练时间：1m 3s 327ms
 ```
 
->  本次预测采取手动粗调参，不代表模型以及应用的最优结果。
+>  本次预测采取手动粗调。
 
 **模型保存及加载**
 
@@ -367,13 +363,9 @@ model = xgboost::loadModel(modelSavePath)
 
 ## 6. 流计算实现
 
-以上部分的计算都是基于批量历史数据的计算，而在实际生产环境中，数据的来源往往是以“流”的方式，而如何套用上述复杂的衍生特征计算逻辑实现流式计算是业务层面面临的重大难题。
+以上部分的计算都是基于批量历史数据的计算。在实际生产环境中，数据的来源往往是以“流”的方式。如何套用上述复杂的衍生特征计算逻辑实现流式计算是业务层面面临的重大难题。
 
 对于这类问题，DolphinDB 内置了多种类型的流计算引擎，以提供简易快捷的低延时解决方案。
-
-[DolphinDB 流计算代码](script/metacode_derived_features/metacode_derived_features_streaming.txt)
-
-[level2 快照测试数据](data/metacode_derived_features/testSnapshot.csv)
 
 ### 6.1 流计算实现架构
 
@@ -381,9 +373,7 @@ model = xgboost::loadModel(modelSavePath)
 
 ![](images/metacode_derived_features/streamingCase1.png)
 
-实时的流数据通过 DolphinDBAPI 注入至 `snapshotStream` 表中。
-
-然后通过订阅/推送，将快照数据注入至时间序列聚合引擎，进行窗口为 10 分钟，步长为 10 分钟的滑动窗口计算，核心代码如下：
+实时的流数据通过 DolphinDBAPI 注入至 `snapshotStream` 表中，然后通过订阅/推送，将快照数据注入至时间序列聚合引擎，进行窗口为10分钟，步长为10分钟的滑动窗口计算。核心代码如下：
 
 * 定义存储 snapshot 的流数据表 `snapshotStream`，特征工程结果表 `aggrFeatures10min`，以及后续模型预测的结果表 `result10min`。
 
@@ -430,15 +420,15 @@ def predictRV(mutable result10min, model, mutable msg){
 subscribeTable(tableName="aggrFeatures10min", actionName="predictRV", offset=-1, handler=predictRV{result10min, model}, msgAsTable=true, hash=1, reconnect=true)
 ```
 
-上述脚本定义的 metrics 中的 featureEngineering 与批处理的代码完全相同，体现了 DolphinDB **流批一体** 的优势特点。
+上述脚本定义的 metrics 中的 featureEngineering 函数与批计算的代码脚本中的自定义聚合函数完全相同，体现了 DolphinDB **流批一体** 的优势特点。
 
-附件的流计算示例代码，通过历史数据回放的方式，回测实盘波动率预测的结果展示：
+构建好流计算框架后，我们通过历史数据回放的方式，将附录中的测试数据输入到上游的共享流表中。下游结果表中实盘波动率预测的结果展示：
 
 ![](images/metacode_derived_features/streamingResult.png)
 
 ### 6.2 流计算延时统计
 
-本章节统计了股票在时序聚合引擎中的计算延时情况，流计算延时主要由两部分构成：` 计算聚合特征的耗时 ` 和 ` 模型预测实时波动率的耗时 `。主要延时为 ` 计算聚合特征的耗时 `。
+本章节统计了股票在时序聚合引擎中的计算延时情况，流计算延时主要由两部分构成：`计算聚合特征的耗时` 和 `模型预测实时波动率的耗时`。
 
 * 计算聚合特征耗时：
 
@@ -470,15 +460,15 @@ Predicted = xgboost::predict(model , test_x)
 | 50       | 10054        | 386ms            | 7ms                      | 393ms  |
 
 
+[DolphinDB 流计算代码](script/metacode_derived_features/metacode_derived_features_streaming.txt)
+
+[level 2 快照测试数据](data/metacode_derived_features/testSnapshot.csv)
+
 ## 7. 总结
 
-本教程通过使用 DolphinDB 强大的数据处理能力，并结合元编程实现了低代码批量生成多维股票衍生特征的应用场景。与 Python 等传统数据处理方法相比，DolphinDB 依靠数据存储引擎和计算引擎的高度融合，在数据预处理阶段，方便地实现了分布式并行计算，不仅节约了内存资源，而且在使用相同物理计算资源的情况下，提高了约 30 倍的计算效率。
-
-在批计算的基础上，本教程利用 DolphinDB 内置的流计算处理框架，为实际生产环境的类似需求（实时计算衍生特征、实时调用模型预测计算）提供了一套完整高效的解决方案。本教程以 16 支股票 level2 快照测试数据作为订阅的数据源，通过模拟真实数据的实时注入，可以在毫秒级完成对每只股票 10 分钟快照数据衍生676 维衍生特征的低延时计算，从而为后续的数据建模提供强大的数据支撑。
+本教程介绍了 DolphinDB 中应用于机器学习场景的流批一体解决方案。我们可以将一个函数应用于历史数据或实时流数据处理，高效便捷地生成衍生特征。性能比较结果表明 DolphinDB 的解决方案比 Python 快30倍。
 
 ## 附录
-
-> 注意事项：本教程示例代码必须在 **2.00.6** 及以上版本的 DolphinDB server 上运行。
 
 [DolphinDB 批计算代码](script/metacode_derived_features/metacode_derived_features.txt)
 
@@ -490,16 +480,15 @@ Predicted = xgboost::predict(model , test_x)
 
 [DolphinDB 流计算代码](script/metacode_derived_features/metacode_derived_features_streaming.txt)
 
-[level2 快照测试数据](data/metacode_derived_features/testSnapshot.csv)
+[level 2 快照测试数据](data/metacode_derived_features/testSnapshot.csv)
 
 **开发环境**
 
 * CPU 类型：Intel(R) Xeon(R) Silver 4216 CPU @ 2.10GHz
 * 逻辑 CPU 总数：8
 * 内存：64GB
-* OS：64 位 CentOS Linux 7 (Core)
+* OS：64位 CentOS Linux 7 (Core)
 * 磁盘：SSD 盘，最大读写速率为 520MB/s
-* server 版本：2.00.6
-* server 部署模式：单节点
-* 2.00 配置文件：[dolphindb.cfg](script/machine_learning_volatility/200tsdb/dolphindb.cfg) (volumes, persistenceDir, TSDBRedoLogDir 需要根据实际环境磁盘路径修改)
-* 单节点部署教程：[单节点部署](https://gitee.com/dolphindb/Tutorials_CN/blob/master/standalone_server.md)
+* server 版本：2.00.6（企业版）
+* server 部署模式：[单节点](https://gitee.com/dolphindb/Tutorials_CN/blob/master/standalone_server.md)
+* 配置文件：[dolphindb.cfg](script/machine_learning_volatility/200tsdb/dolphindb.cfg) (volumes, persistenceDir, TSDBRedoLogDir 需要根据实际环境磁盘路径修改)
