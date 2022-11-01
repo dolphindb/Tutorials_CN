@@ -2,7 +2,7 @@
  * 因子1：年化收益率
             (1 + 当前收益率） ** (252\区间天数) -1
  */
-defg getYearReturn(value){
+defg getAnnualReturn(value){
       return pow(1 + ((last(value) - first(value))\first(value)), 252\730) - 1
 }
 
@@ -36,7 +36,7 @@ defg getAnnualKur(value){
 夏普比率：(年化收益率 - 无风险利率) / 收益年化波动率
  */
 defg getSharp(value){
-	return (getYearReturn(value) - 0.03)\getAnnualVolatility(value) as sharpeRat
+	return (getAnnualReturn(value) - 0.03)\getAnnualVolatility(value) as sharpeRat
 }
 
 /**
@@ -113,7 +113,7 @@ def calAllRs2(mret, symList, k){
  
 def getFactor(result2, symList){
 	Return = select fundNum, 
-	            getYearReturn(value) as annualReturn,
+	            getAnnualReturn(value) as annualReturn,
 	            getAnnualVolatility(value) as annualVolRat,
 	            getAnnualSkew(value) as skewValue,
 	            getAnnualKur(value) as kurValue,

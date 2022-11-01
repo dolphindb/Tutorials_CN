@@ -9,7 +9,7 @@ from joblib import Parallel, delayed
 
 s = ddb.session()
 s.connect("127.0.0.1", 8848, "admin", "123456")
-def getYearReturn(value):
+def getAnnualReturn(value):
     return pow(1 + ((value[-1] - value[0])/value[0]), 252/730)-1
 
 def getAnnualVolatility(value):
@@ -31,7 +31,7 @@ def getAnnualKur(value):
     return st.kurtosis(np.true_divide(diff_value, rolling_value), fisher=False)
 
 def getSharp(value):
-    return (getYearReturn(value) - 0.03)/getAnnualVolatility(value) if getAnnualVolatility(value) != 0 else 0
+    return (getAnnualReturn(value) - 0.03)/getAnnualVolatility(value) if getAnnualVolatility(value) != 0 else 0
 
 def getTrackError(value, price):
     diff_price = np.diff(price)
@@ -124,7 +124,7 @@ def main(li):
     value = np.array(li["value"])
     price = np.array(li["price"])
     log = np.array(li["log"])
-    getYearReturn(value)
+    getAnnualReturn(value)
     getAnnualVolatility(value)
     getAnnualSkew(value)
     getAnnualKur(value)

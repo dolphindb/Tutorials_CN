@@ -52,14 +52,14 @@
 
   - 公式：
 
-    <img src="https://latex.codecogs.com/svg.image?yearReturn_{i}=(1&plus;\frac{EndingValue-BeginningValue}{BeginningValue})**(\frac{252}{730})-1"/>
+    <img src="https://latex.codecogs.com/svg.image?annualReturn_{i}=(1&plus;\frac{EndingValue-BeginningValue}{BeginningValue})**(\frac{252}{730})-1"/>
     
   - 代码实现：
 
     - DolphinDB：
 
       ```sql
-      defg getYearReturn(value){
+      defg getAnnualReturn(value){
             return pow(1 + ((last(value) - first(value))\first(value)), 252\730) - 1
       }
       ```
@@ -67,13 +67,13 @@
     - Python：
 
       ```python
-      def getYearReturn(value):
+      def getAnnualReturn(value):
           return pow(1 + ((value[-1] - value[0])/value[0]), 252/730)-1
       ```
 
 - **年化波动率**
   
-  - 因子含义：衡量投资标的波动风险
+  - 因子含义：衡量基金的波动风险
   
   - 公式：
   
@@ -161,7 +161,7 @@
   
   - 公式：
   
-    <img src="https://latex.codecogs.com/svg.image?sharpValue=(yearReturn_{value}-0.03)/annualVolat"/>
+    <img src="https://latex.codecogs.com/svg.image?sharpValue=(annualReturn_{value}-0.03)/annualVolat"/>
     
   - 代码实现：
   
@@ -169,7 +169,7 @@
   
       ```sql
       defg getSharp(value){
-      	return (getYearReturn(value) - 0.03)\getAnnualVolatility(value) as sharpeRat
+      	return (getAnnualReturn(value) - 0.03)\getAnnualVolatility(value) as sharpeRat
       }
       ```
   
@@ -177,7 +177,7 @@
   
       ```python
       def getSharp(value):
-          return (getYearReturn(value) - 0.03)/getAnnualVolatility(value) if getAnnualVolatility(value) != 0 else 0
+          return (getAnnualReturn(value) - 0.03)/getAnnualVolatility(value) if getAnnualVolatility(value) != 0 else 0
       ```
   
 - **跟踪误差**
@@ -215,7 +215,7 @@
   
   - 公式：
   
-    <img src="https://latex.codecogs.com/svg.image?infoRatio=(yearReturn_{value}-yearReturn_{price})/annualVolat"/>
+    <img src="https://latex.codecogs.com/svg.image?infoRatio=(annualReturn_{value}-annualReturn_{price})/annualVolat"/>
     
   - 代码实现：
   
@@ -549,7 +549,7 @@ mlog =  m_log[1:,]
   ```
   def getFactor(result2, symList){
   	Return = select fundNum, 
-  	            getYearReturn(value) as annualReturn,
+  	            getAnnualReturn(value) as annualReturn,
   	            getAnnualVolatility(value) as annualVolat,
   	            getAnnualSkew(value) as skewValue,
   	            getAnnualKur(value) as kurValue,
@@ -573,7 +573,7 @@ mlog =  m_log[1:,]
   		  result2 = select Tradedate, fundNum, iif(isNull(value), ffill!(value), value) as value,price from ajResult where Tradedate == hsTradedate
   		  symList = exec distinct(fundNum) as fundNum from result2 order by fundNum
   		  symList2 = symList.cut(250)//此处，将任务切分，按每次250个不同基金数据进行计算
-  	ploop(getFactor{result2}, symList2)}
+  	      ploop(getFactor{result2}, symList2)}
   }//定义获取9个因子计算和数据操作的时间的函数
   /**
    * 提交1个 job（单用户）
@@ -599,13 +599,13 @@ mlog =  m_log[1:,]
 
 - 计算10个因子的响应时间:
 
-  首先，定义计算10个因子的函数：
+  首先，定义计算9个因子的函数：
 
   ```
   def getFactor(result2, symList){
   	Return = select fundNum, 
-  	            getYearReturn(value) as annualReturn,
-  	            getAnnualVolatility(value) as yearVolRat,
+  	            getAnnualReturn(value) as annualReturn,
+  	            getAnnualVolatility(value) as annualVolRat,
   	            getAnnualSkew(value) as skewValue,
   	            getAnnualKur(value) as kurValue,
   	            getSharp(value) as sharpValue,
@@ -627,15 +627,15 @@ mlog =  m_log[1:,]
     		  ajResult = select Tradedate, fundNum, value, fund_hs_OLAP.Tradedate as hsTradedate, fund_hs_OLAP.value as price from aj(fund_OLAP, fund_hs_OLAP, `Tradedate)
     		  result2 = select Tradedate, fundNum, iif(isNull(value), ffill!(value), value) as value,price from ajResult where Tradedate == hsTradedate
     		  symList = exec distinct(fundNum) as fundNum from result2 order by fundNum
-                              symList2 = symList.cut(250)
+            symList2 = symList.cut(250)
     		  portfolio = select fundNum as fundNum, (deltas(value)\prev(value)) as log, TradeDate as TradeDate from result2 where TradeDate in 2019.05.24..2022.05.27 and fundNum in symList
-              m_log = exec log from portfolio pivot by TradeDate, fundNum
-              mlog =  m_log[1:,]
-              knum = 2..365
+            m_log = exec log from portfolio pivot by TradeDate, fundNum
+            mlog =  m_log[1:,]
+            knum = 2..365
               }//此处，将任务切分，按每次250个不同基金数据进行计算
-              timer{ploop(getFactor{result2}, symList2)
-              a = ploop(calAllRs2{mlog,symList}, knum).unionAll(false)
-              res2 = select fundNum, ols(factor1, kNum)[0] as hist, ols(factor1, kNum)[1] as hist2, ols(factor1, kNum)[2] as hist3 from a group by fundNum}
+      timer{ploop(getFactor{result2}, symList2)
+            a = ploop(calAllRs2{mlog,symList}, knum).unionAll(false)
+            res2 = select fundNum, ols(factor1, kNum)[0] as hist, ols(factor1, kNum)[1] as hist2, ols(factor1, kNum)[2] as hist3 from a group by fundNum}
     }//定义获取10个因子计算和数据操作的时间的函数
     /**
      * 提交1个 job（单用户）
@@ -665,25 +665,25 @@ mlog =  m_log[1:,]
 
 ### 3.4 结果展示
 
-- 单用户
+- 单用户计算时间
 
-  | CPU数 | 9个因子 | 10个因子（包含赫斯特指数） |
+  | CPU数 | 9个因子（单位：毫秒） | 10个因子（包含赫斯特指数）（单位：毫秒） |
   | ----- | ------ | ------------------------ |
-  | 4     | 753ms  | 7,835ms                  |
-  | 6     | 535ms  | 5,378ms                  |
-  | 8     | 424ms  | 4,537ms                  |
-  | 10    | 507ms  | 3,643ms                  |
-  | 12    | 465ms  | 3,087ms                  |
+  | 4     | 753    | 7,835                    |
+  | 6     | 535    | 5,378                    |
+  | 8     | 424    | 4,537                    |
+  | 10    | 507    | 3,643                    |
+  | 12    | 465    | 3,087                    |
 
-- 多用户（此处为5用户）
+- 多用户（此处为5用户）计算时间
 
-  | CPU数 | 9个因子  | 10个因子（包含赫斯特指数） |
+  | CPU数 | 9个因子（单位：毫秒）  | 10个因子（包含赫斯特指数）（单位：毫秒） |
   | ----- | ------- | ------------------------ |
-  | 4     | 1,980ms | 30,769ms                 |
-  | 6     | 1,480ms | 24,675ms                 |
-  | 8     | 1,215ms | 20,114ms                 |
-  | 10    | 988ms   | 15,843ms                 |
-  | 12    | 836ms   | 13,433ms                 |
+  | 4     | 1,980   | 30,769                   |
+  | 6     | 1,480   | 24,675                   |
+  | 8     | 1,215   | 20,114                   |
+  | 10    | 988     | 15,843                   |
+  | 12    | 836     | 13,433                   |
 
 
 > 注：由于赫斯特指数需要按照2+3+4+...+365种不同的粒度方式切分成不同种类的序列划分，同时分别对不同粒度的每一段序列分别计算均值、离差和标准差等，并最终求平均的 R/S 值，计算的子指标过大，时间复杂度较高，因此耗时相较于其它因子更长。
@@ -711,7 +711,7 @@ def main(li):
     value = np.array(li["value"])
     price = np.array(li["price"])
     log = np.array(li["log"])
-    getYearReturn(value)
+    getAnnualReturn(value)
     getAnnualVolatility(value)
     getAnnualSkew(value)
     getAnnualKur(value)
@@ -750,23 +750,23 @@ print(end-start)
 
 - 单用户
 
-  | CPU数 | 响应时间（DolphinDB） | 响应时间（Python） | 性能对比（Python/DolphinDB) |
+  | CPU数 | DolphinDB 响应时间（单位：秒） | Python 响应时间（单位：毫秒） | 性能对比（Python/DolphinDB) |
   | ----- | --------------------- | ------------------ | --------------------------- |
-  | 4     | 7.83s                 | 35.56s             | 4.54                        |
-  | 6     | 5.37s                 | 26.56s             | 4.94                        |
-  | 8     | 4.53s                 | 21.63s             | 4.77                        |
-  | 10    | 3.64s                 | 19.4s              | 5.33                        |
-  | 12    | 3.08s                 | 18.2s              | 5.9                         |
+  | 4     | 7.83                  | 35.56              | 4.54                        |
+  | 6     | 5.37                  | 26.56              | 4.94                        |
+  | 8     | 4.53                  | 21.63              | 4.77                        |
+  | 10    | 3.64                  | 19.4               | 5.33                        |
+  | 12    | 3.08                  | 18.2               | 5.9                         |
   
 - 多用户（此处为5用户）
 
-  | CPU数 | 响应时间（DolphinDB） | 响应时间（Python） | 性能对比（Python/DolphinDB) |
+  | CPU数 | DolphinDB 响应时间（单位：秒） | Python 响应时间（单位：秒） | 性能对比（Python/DolphinDB) |
   | ----- | --------------------- | ------------------ | --------------------------- |
-  | 4     | 30.76s                | 193.42s            | 6.28                        |
-  | 6     | 24.67s                | 155.29s            | 6.29                        |
-  | 8     | 20.11s                | 159.43s            | 7.93                        |
-  | 10    | 15.84s                | 160.79s            | 10.15                       |
-  | 12    | 13.43s                | 170.51s            | 12.69                       |
+  | 4     | 30.76                 | 193.42             | 6.28                        |
+  | 6     | 24.67                 | 155.29             | 6.29                        |
+  | 8     | 20.11                 | 159.43             | 7.93                        |
+  | 10    | 15.84                 | 160.79             | 10.15                       |
+  | 12    | 13.43                 | 170.51             | 12.69                       |
 
 > 注：在 CPU 单核和单用户的条件下，DolphinDB 和 Python 的响应时间分别为 27.06s 和 631.80s，性能对比达到了23倍。
 
