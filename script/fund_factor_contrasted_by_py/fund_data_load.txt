@@ -1,0 +1,69 @@
+/**
+fund_data_load.txt
+Script to load data to datacase
+DolphinDB Inc.
+DolphinDB server version: 2.00.7 2022.07.14
+Storage engine: OLAP
+Last modification time: 2022.10.31
+*/
+
+// clean up the environment
+undef all
+clearAllCache()
+go
+login("admin", "123456")
+/**
+modified location: csvPath、csvPath1
+*/
+csvPath = "/datafile/nav.csv"
+csvPath1 = "/datafile/hs300.csv"
+
+def readColumnsFromWideCSV(absoluteFilename){
+        schema1 = extractTextSchema(absoluteFilename)
+        update schema1 set type = `STRING 
+        allSymbol = loadText(absoluteFilename,,schema1)[0, 1:]
+        titleSchema = extractTextSchema(absoluteFilename, skipRows = 0);
+        for(x in allSymbol){
+                testValue = exec x[name] from titleSchema
+                testValue = testValue[1:]
+        }
+        return testValue
+}
+
+def readIndexedMatrixFromWideCSV(absoluteFilename){
+        contracts = readColumnsFromWideCSV(absoluteFilename)
+        dataZoneSchema = extractTextSchema(absoluteFilename, skipRows = 1)
+        update dataZoneSchema set type = "DOUBLE" where name != "col0"//所有行全部改成double
+        dataZoneWithIndexColumn = loadText(absoluteFilename, skipRows = 1, schema = dataZoneSchema)
+        indexVector = exec col0 from dataZoneWithIndexColumn
+        dataZoneWithoutIndex = dataZoneWithIndexColumn[:, 1:]
+        dataMatrix = matrix(dataZoneWithoutIndex)
+        dataMatrix.rename!(indexVector, contracts)
+        return dataMatrix
+}
+//data cleaning and transform
+allSymbols = readColumnsFromWideCSV(csvPath)$STRING
+dataMatrix = readIndexedMatrixFromWideCSV(csvPath)
+fundTable = table(dataMatrix.rowNames() as Tradedate, dataMatrix)
+result = fundTable.unpivot(`Tradedate, allSymbols).rename!(`Tradedate`fundNum`value)
+allSymbols1 = readColumnsFromWideCSV(csvPath1)$STRING
+dataMatrix1 = readIndexedMatrixFromWideCSV(csvPath1)
+fundTable1 = table(dataMatrix1.rowNames() as Tradedate, dataMatrix1)
+result1 = fundTable1.unpivot(`Tradedate, allSymbols1).rename!(`Tradedate`fundNum`value)
+//create database an table, then load data
+dbName = "dfs://fund_OLAP"
+dataDate = database(, VALUE, 2021.01.01..2021.12.31)
+symbol = database(, HASH, [SYMBOL, 20])
+if(existsDatabase(dbName)){
+	dropDatabase(dbName)
+}
+db = database(dbName, COMPO, [dataDate, symbol])
+name = `Tradedate`fundNum`value
+type = `DATE`SYMBOL`DOUBLE
+tbTemp = table(1:0, name, type)
+tbName1 = "fund_OLAP"
+db.createTable(tbTemp1, tbName)
+loadTable(dbName, tbName1).append!(result)
+tbName2 = "fund_hs_OLAP"
+db.createTable(tbTemp, tbName2)
+loadTable(dbName, tbName2).append!(result1)
