@@ -1,0 +1,10 @@
+localSite,mode
+175.178.100.3:8990:controller1,controller
+119.91.229.229:8990:controller2,controller
+175.178.100.213:8990:controller3,controller
+175.178.100.3:8960:agent1,agent
+119.91.229.229:8960:agent2,agent
+175.178.100.213:8960:agent3,agent
+175.178.100.3:8961:node1,datanode
+119.91.229.229:8961:node2,datanode
+175.178.100.213:8961:node3,datanode
