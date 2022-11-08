@@ -194,7 +194,7 @@ grant("DeionSanders", DB_MANAGE)
 ```
 grant("JoeFlacco",TABLE_READ,"*")  
 ```
-当 `grant` 或 `deny` 所有对象后，若要撤销操作，只能使用 `revoke`若要撤销操作，只能使用 `revoke` ，则操作无效：  
+当 `grant` 或 `deny` 所有对象后，若要撤销操作，只能使用 `revoke` 撤销所有对象的权限，若只撤销某个指定对象的权限，则操作无效：  
 ```
 revoke("JoeFlacco",TABLE_READ,"dfs://db1/t1")
 ```
@@ -238,13 +238,7 @@ grant(`CliffLee, TABLE_READ, "dfs://dbMT/dt");
 ```  
 createUser("MitchTrubisky","JI3564^",,true)
 ```
-以上三行的结果为，用户user1可以读取除"dfs://db1/t1" 和"dfs://db1/t2" 以外的所有数据表。  
 
-``` 
-grant("user2",TABLE_WRITE,"*")  
-deny("group1",TABLE_WRITE,"*")  
-grant("group2",TABLE_WRITE,"dfs://db1/t2")  
-```
 登录 MitchTrubisky 并创建共享内存表 st1, 赋予用户 CliffLee 读取该表的权限：
 
 ```
