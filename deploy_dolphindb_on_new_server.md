@@ -60,7 +60,7 @@
             <td>否</td>
         </tr>
         <tr>
-            <td>Mac</td>
+            <td>BSD</td>
             <td>-</td>
             <td>否</td>
         </tr>
@@ -206,7 +206,7 @@ inode max percent changed from 25 to 30
 
 ### 1.3 挂载新硬盘
 
-硬盘 IO 性能提升对于大数据处理非常重要，推荐硬件配置见 [1.1.3 节](#113-推荐硬件配置)。
+硬盘 IO 性能提升对于大数据处理非常重要，推荐硬件配置见 1.1.3 推荐硬件配置。
 
 物理安装新硬盘或通过云服务商增加新硬盘后，通过 SSH 连接到 CentOS 服务器。本节通过虚拟机添加容量为 50G 的新硬盘，步骤如下：
 
@@ -707,7 +707,7 @@ DolphinDB为各种部署方式提供了详细的教程，在决定部署方式�
     
 - [基于Docker-Compose的DolphinDB多容器集群部署](https://gitee.com/dolphindb/dolphindb-k8s/blob/master/docker-compose_high_cluster.md)
     
-> 注意：在 windows 系统下部署时，部署路径不能有中文。
+> 注意：在 windows 系统下部署时，部署路径不能包含中文。
 
 更多教程可以前往[官方教程仓库](https://gitee.com/dolphindb/Tutorials_CN)查看。
 
