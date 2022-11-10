@@ -43,7 +43,7 @@
 
 本教程选取了10个基金日频因子，涵盖基金评价体系的各个方面，作为性能测试的指标。其相关的背景含义、计算公式及在 DolphinDB 脚本和 Python 中的定义如下所示：
 
-> 注：下文提到的 `Dailyvalue` 指日净值，`DailyReturn` 指日收益率，`BeginningtValue` 指基金日净值序列中的第一个净值数据，`EndingValue` 指基金日净值序列中的最后一个净值数据。
+> 注：下文提到的 `DailyValue` 指日净值，`DailyReturn` 指日收益率，`BeginningtValue` 指基金日净值序列中的第一个净值数据，`EndingValue` 指基金日净值序列中的最后一个净值数据。
 
 - **年化收益率**
 
@@ -95,7 +95,7 @@
           diff_value = np.diff(value)
           rolling_value = np.roll(value, 1)
           rolling_value = np.delete(rolling_value, [0])
-          return np.std(np.true_divide(diff_value, rolling_value)) * np.sqrt(252)
+          return np.std(np.true_divide(diff_value, rolling_value), ddof=1) * np.sqrt(252)
       ```
   
 - **收益率偏度**
