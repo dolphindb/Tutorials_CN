@@ -58,6 +58,7 @@
     - [定时作业](scheduledJob.md)
     - [使用Prometheus监控告警](DolphinDB_monitor.md)
     - [如何正确定位节点宕机的原因](how_to_handle_crash.md)
+    - [线程简介](thread_intro.md)
     - [从一次SQL查询的全过程看DolphinDB 的线程模型](thread_model_SQL.md)
 - API
     - [Python API使用教程](../../../api_python3/blob/master/README_CN.md)
