@@ -1,10 +1,10 @@
-# 平均性能超 Python10 倍: 如何使用 DolphinDB 计算基金日频因子
+# 平均性能超 Python 10倍: 如何使用 DolphinDB 计算基金日频因子
 
 根据某个基金每日的净值数据计算得到的因子称作“基金日频因子”。基金日频因子能反映出基金的近况，是衡量基金收益、波动、风险等的重要指标。随着数据规模与日俱增，对大规模数量级的数据进行处理的需求日益旺盛，在计算的速度、准确性上对计算工具提出了更高的要求。本教程将为大家介绍如何基于 DolphinDB 计算多个基金的日频因子，并通过 Python 实现相同因子的计算，对比两者的计算性能。所用数据约220万条，均为与沪深300指数按日期对齐后的基金净值数据。结果表明在不同 CPU 核数下，DolphinDB 较 Python 均有明显的性能优势。
 
 本教程包含如下内容：
 
-- [平均性能超 Python10 倍: 如何使用 DolphinDB 计算基金日频因子](#平均性能超-python10-倍-如何使用-dolphindb-计算基金日频因子)
+- [平均性能超Python10倍: 如何使用 DolphinDB 计算基金日频因子](#平均性能超-python-10倍-如何使用-dolphindb-计算基金日频因子)
   - [1. 测试环境](#1-测试环境)
   - [2. 基金日频因子背景介绍及代码实现](#2-基金日频因子背景介绍及代码实现)
   - [3. DolphinDB 中因子计算实现及性能测试](#3-dolphindb-中因子计算实现及性能测试)
@@ -27,7 +27,6 @@
 
   | 硬件名称 | 配置信息                                   |
   | :------- | :----------------------------------------- |
-  | 外网 IP  | xxx.xxx.xxx.122                            |
   | 操作系统 | 64位 CentOS Linux 7 (Core)                 |
   | 内存     | 256 GB                                     |
   | CPU 类型 | Intel(R) Xeon(R) Silver 4216 CPU @ 2.10GHz |
@@ -44,7 +43,7 @@
 
 本教程选取了10个基金日频因子，涵盖基金评价体系的各个方面，作为性能测试的指标。其相关的背景含义、计算公式及在 DolphinDB 脚本和 Python 中的定义如下所示：
 
-> 注：下文提到的 DailyReturn 指日收益率，BeginningtValue 指基金日净值序列中的第一个净值数据，EndingValue 指基金日净值序列中的最后一个净值数据。
+> 注：下文提到的 `Dailyvalue` 指日净值，`DailyReturn` 指日收益率，`BeginningtValue` 指基金日净值序列中的第一个净值数据，`EndingValue` 指基金日净值序列中的最后一个净值数据。
 
 - **年化收益率**
 
@@ -52,7 +51,7 @@
 
   - 公式：
 
-    <img src="https://latex.codecogs.com/svg.image?annualReturn_{i}=(1&plus;\frac{EndingValue-BeginningValue}{BeginningValue})**(\frac{252}{730})-1"/>
+    <img src="https://latex.codecogs.com/svg.image?annualReturn_{value}=(1&plus;\frac{EndingValue-BeginningValue}{BeginningValue})**(\frac{252}{730})-1"/>
     
   - 代码实现：
 
@@ -180,95 +179,127 @@
           return (getAnnualReturn(value) - 0.03)/getAnnualVolatility(value) if getAnnualVolatility(value) != 0 else 0
       ```
   
-- **跟踪误差**
-  - 因子含义：组合收益率与基准收益率之间差异的标准差
-
+- **最大回撤率**
+  
+  - 因子含义：指在选定周期内任一历史时点往后推，产品净值走到最低点时的收益率回撤幅度的最大值
+  
   - 公式：
-
-    <img src="https://latex.codecogs.com/svg.image?trackError=\sqrt{\frac{\sum_{i=1}^{n}(DailyReturn_{i}-PriceReturn_{i})^{2}}{n-1}}"/>
+  
+    在某个时间周期的净值序列中，记 `i` 为某一天，`DailyValuei` 为第 `i` 天的净值，`j` 为 `i` 之前的某一天，`DailyValuej` 为第 `j` 天的净值，找到一组 `i`,  `j` 使得其收益率回撤幅度最大记为最大回撤率 `MaxDrawdown`，
+    
+    <img src="https://latex.codecogs.com/svg.image?MaxDrawdown=max(1-\frac{DailyValue_{i}}{DailyValue_{j}})"/>
     
   - 代码实现：
   
     - DolphinDB：
   
       ```sql
-      defg getTrackError(value, price){
-      	return std(deltas(value)\prev(value) - deltas(price)\prev(price))
+      def getMaxDrawdown(value){
+      	i = imax((cummax(value) - value) \ cummax(value))
+      	if (i==0){
+      		return 0
+      	}
+      	j = imax(value[:i])
+      	return (value[j] - value[i]) \ (value[j])
+      }
+      ```
+    
+    - Python：
+    
+      ```python
+      def getMaxDrawdown(value):
+          i = np.argmax((np.maximum.accumulate(value) - value) / np.maximum.accumulate(value))
+          if i == 0:
+              return 0
+          j = np.argmax(value[:i])
+          return (value[j] - value[i]) / value[j]
+      ```
+  
+- **收益回撤比**
+  
+  - 因子含义：是收益和风险的比值，可以用来衡量一只基金产品投资策略的好坏。
+  
+  - 公式：
+  
+    <img src="https://latex.codecogs.com/svg.image?DrawdownRatio=annualReturn_{value}/MaxDrawdown"/>
+    
+  - 代码实现：
+  
+    - DolphinDB：
+  
+      ```sql
+      def getDrawdownRatio(value){
+      	return getAnnualReturn(value) \ getMaxDrawdown(value)
+      }
+      ```
+      
+    - Python：
+    
+      ```python
+      def getDrawdownRatio(value):
+          return getAnnualReturn(value) / getMaxDrawdown(value) if getMaxDrawdown(value) != 0 else 0
+      ```
+  
+- **β系数**
+  
+  - 因子含义：一种风险指数，可以衡量股票基金相对于整个股市的波动情况
+  
+  - 公式：
+  
+    <img src="https://latex.codecogs.com/svg.image?\beta&space;=&space;\frac{COV(DailyReturn_{value},DailyReturn_{price})}{\sigma&space;_{DailyReturn_{price}}}"/>
+    
+    其中分子为日净值收益率和日基准收益率的协方差，分母为日基准收益率的方差
+    
+  - 代码实现：
+  
+    - DolphinDB：
+  
+      ```sql
+      def getBeta(value, price){
+      	return covar(deltas(value)\prev(value), deltas(price)\prev(price)) \ std(deltas(price)\prev(price))
       }
       ```
   
     - Python：
   
       ```python
-      def getTrackError(value, price):
+      def getBeta(value, price):
           diff_price = np.diff(price)
           rolling_price = np.roll(price, 1)
           rolling_price = np.delete(rolling_price, [0])
           diff_value = np.diff(value)
           rolling_value = np.roll(value, 1)
           rolling_value = np.delete(rolling_value, [0])
-          return np.std(np.true_divide(diff_value, rolling_value)-np.true_divide(diff_price, rolling_price))
+          return np.cov(np.true_divide(diff_value, rolling_value), np.true_divide(diff_price, rolling_price))[0][1] / np.std(np.true_divide(diff_price, rolling_price), ddof=1)
       ```
   
-- **信息比率**
-  - 因子含义：承担单位主动风险带来的超额收益
+- **α系数**
+  
+  - 因子含义：一种风险指数，用于衡量与市场波动无关的超额收益
   
   - 公式：
   
-    <img src="https://latex.codecogs.com/svg.image?infoRatio=(annualReturn_{value}-annualReturn_{price})/annualVolat"/>
-    
+    <img src="https://latex.codecogs.com/svg.image?\alpha=AnnualReturn_{value}-0.03-\beta&space;(AnnualReturn_{price}-0.03)"/>
+  
   - 代码实现：
   
     - DolphinDB：
   
       ```sql
-      defg getIndexFundAnReturn(price){
-      	return pow(1 + ((last(price) - first(price))\first(price)), 252\487) - 1
-      }
-      defg getInforRatio(value, price){
-      	return (pow(1 + ((last(value) - first(value))\first(value)), 252\487) - 1 - getIndexFundAnReturn(price)) \ (getTrackError(value, price) * sqrt(252))
+      def getAlpha(value, price){
+      	return getAnnualReturn(value) - 0.03 - getBeta(value, price) * (getAnnualReturn(price) - 0.03)
       }
       ```
   
     - Python：
   
       ```python
-      def getIndexFundAnReturn(price):
-          return pow(1 + ((price[-1] - price[0]) / price[0]), 252 / 487) - 1
-      def getInforRatio(value, price):
-          return (pow(1 + ((value[-1] - value[0]) / value[0]), 252 / 487) - 1 - getIndexFundAnReturn(price))/(getTrackError(value, price) * np.sqrt(252))
-      ```
-  
-- **在险价值**
-  - 因子含义：在一定时间（t）内，一定置信度（此处为95%）下，最小的期望损失
-
-  - 公式：
-
-    <img src="https://latex.codecogs.com/svg.image?var=\frac{\sum{DailyReturn_{i}(var=0.95)}}{\sum_{i=1}^{n}{DailyReturn_{i}}}"/>
-    
-  - 代码实现：
-  
-    - DolphinDB：
-  
-      ```sql
-      defg getVar(value){
-      	return -percentile(deltas(value)\prev(value), 5)
-      }
-      ```
-  
-    - Python：
-  
-      ```python
-      def getVar(value):
-          diff_value = np.diff(value)
-          rolling_value = np.roll(value, 1)
-          rolling_value = np.delete(rolling_value, [0])
-          res = np.percentile(np.true_divide(diff_value, rolling_value), 5)
-          res = max(-res, 0)
-          return res
+      def getAlpha(value, price):
+          return getAnnualReturn(value) - 0.03 - getBeta(value, price) * (getAnnualReturn(price) - 0.03)
       ```
   
 - **赫斯特指数**
+  
   - 因子含义：体现时间序列的自相关性，尤其是序列中隐藏的长期趋势的指标。此处用来揭示某只基金序列中的隐藏长期趋势。
   
   - 计算方法：
@@ -351,44 +382,6 @@
               res = None
           return res
       ```
-  
-- **HM 模型选股能力**
-
-  - 因子含义：对选股以及择时能力进行衡量的二项式参数检验模型
-
-  - 计算方法：
-
-    Y = DailyReturn-(0.03\252)，X1 = PriceReturn-(0.03\252)，X2 = if(x1 > 0, x1, 0)，其中截距为1。
-
-    对上述变量进行线程回归：Y = a1 * X1 + b1 * X2 + b，其中 a1, a2 为回归系数，b 为截距。
-    
-  - 代码实现：
-  
-    - DolphinDB：
-  
-      ```sql
-       defg getHM1(value, price){
-       	riskRatio = 0.03\252	 
-       	return ols(deltas(value)\prev(value) - riskRatio, (deltas(price)\prev(price) - riskRatio, iif( deltas(price)\prev(price) - riskRatio > 0, deltas(price)\prev(price) - riskRatio, 0))) [0] as intercept
-       }
-      ```
-  
-    - Python：
-  
-      ```python
-      def getHM1(value, price):
-          diff_price = np.diff(price)
-          rolling_price = np.roll(price, 1)
-          rolling_price = np.delete(rolling_price, [0])
-          diff_value = np.diff(value)
-          rolling_value = np.roll(value, 1)
-          rolling_value = np.delete(rolling_value, [0])
-          y_list = np.true_divide(diff_value, rolling_value)
-          x_list = np.true_divide(diff_price, rolling_price)
-          x_add = sm.add_constant(np.array([[i - 0.03/252 for i in x_list], [max(i, 0) - 0.03/252 for i in x_list]]).T)
-          model = sm.OLS(np.array([i - 0.03/252 for i in y_list]), x_add).fit()
-          return model.params[0]
-      ```
 
 ## 3. DolphinDB 中因子计算实现及性能测试
 
@@ -396,7 +389,7 @@
 
 - **数据结构：**
 
-  本教程选取了2019.05.24 - 2022.05.27期间多只基金的日净值数据，总数据量为330多万条。以下是净值表在 DolphinDB 中的数据结构：
+  本教程选取了2018.05.24 - 2021.05.27期间多只基金的日净值数据，总数据量为330多万条。以下是净值表在 DolphinDB 中的数据结构：
 
   | 字段名    | 字段含义   | 数据类型（DolphinDB） |
   | --------- | ---------- | --------------------- |
@@ -404,7 +397,7 @@
   | fundNum   | 基金名称   | SYMBOL                |
   | value     | 基金日净值 | DOUBLE                |
 
-  同时，本教程选取了2019.05.24 - 2022.05.27期间沪深300指数的数据，共734条，用于和基金日净值数据作对齐操作。以下是指数表在 DolphinDB 中的数据结构：
+  同时，本教程选取了2018.05.24 - 2021.05.27期间沪深300指数的数据，共734条，用于和基金日净值数据作对齐操作。以下是指数表在 DolphinDB 中的数据结构：
 
   | 字段名    | 字段含义                    | 数据类型（DolphinDB） |
   | --------- | --------------------------- | --------------------- |
@@ -519,7 +512,7 @@ result2=select Tradedate, fundNum, iif(isNull(value), ffill!(value), value) as v
 
 ```
 symList = exec distinct(fundNum) as fundNum from result2 order by fundNum
-portfolio = select fundNum as fundNum, (deltas(value)\prev(value)) as log, TradeDate as TradeDate from result2 where TradeDate in 2019.05.24..2022.05.27 and fundNum in symList
+portfolio = select fundNum as fundNum, (deltas(value)\prev(value)) as log, TradeDate as TradeDate from result2 where TradeDate in 2018.05.24..2021.05.27 and fundNum in symList
 m_log = exec log from portfolio pivot by TradeDate, fundNum
 mlog =  m_log[1:,]
 ```
@@ -538,7 +531,7 @@ mlog =  m_log[1:,]
 
 本教程以提交后台作业的计算时间来反映 DolphinDB 性能。
 
-为了对比在不同 CPU 核数下的性能，需要修改`dolphindb.cfg`文件中的 `workerNum` 参数，其配置值表示计算时所用到的 CPU 核数，更多 DolphinDB 相关配置信息可参考 [DolphinDB 单实例参数配置](https://dolphindb.cn/cn/help/DatabaseandDistributedComputing/Configuration/Thread.html)。
+为了对比在不同 CPU 核数下的性能，需要修改 `dolphindb.cfg` 文件中的 `workerNum` 参数，其配置值表示计算时所用到的 CPU 核数，更多 DolphinDB 相关配置信息可参考 [DolphinDB 单实例参数配置](https://dolphindb.cn/cn/help/DatabaseandDistributedComputing/Configuration/Thread.html)。
 
 > 注意：每次参数修改后，需要重启 DolphinDB Server 才能生效。
 
@@ -550,16 +543,16 @@ mlog =  m_log[1:,]
   def getFactor(result2, symList){
   	Return = select fundNum, 
   	            getAnnualReturn(value) as annualReturn,
-  	            getAnnualVolatility(value) as annualVolat,
+  	            getAnnualVolatility(value) as annualVolRat,
   	            getAnnualSkew(value) as skewValue,
   	            getAnnualKur(value) as kurValue,
   	            getSharp(value) as sharpValue,
-  	            getTrackError(value, price) as trackError,
-  	            getVar(value) as var,
-  	            getInforRatio(value, price) as infoRatio,
-  	            getHM1(value, price) as intercept       
+  	            getMaxDrawdown(value) as MaxDrawdown,
+  	            getDrawdownRatio(value) as DrawdownRatio,
+  	            getBeta(value, price) as Beta,
+  	            getAlpha(value, price) as Alpha	
                from result2
-               where TradeDate in 2019.05.24..2022.05.27 and fundNum in symList group by fundNum
+               where TradeDate in 2018.05.24..2021.05.27 and fundNum in symList group by fundNum
    }
   ```
 
@@ -609,12 +602,12 @@ mlog =  m_log[1:,]
   	            getAnnualSkew(value) as skewValue,
   	            getAnnualKur(value) as kurValue,
   	            getSharp(value) as sharpValue,
-  	            getTrackError(value, price) as trackError,
-  	            getVar(value) as var,
-  	            getInforRatio(value, price) as infoRatio,
-  	            getHM1(value, price) as intercept       
+  	            getMaxDrawdown(value) as MaxDrawdown,
+  	            getDrawdownRatio(value) as DrawdownRatio,
+  	            getBeta(value, price) as Beta,
+  	            getAlpha(value, price) as Alpha	
                from result2
-               where TradeDate in 2019.05.24..2022.05.27 and fundNum in symList group by fundNum
+               where TradeDate in 2018.05.24..2021.05.27 and fundNum in symList group by fundNum
    }
   ```
   
@@ -628,11 +621,11 @@ mlog =  m_log[1:,]
     		  result2 = select Tradedate, fundNum, iif(isNull(value), ffill!(value), value) as value,price from ajResult where Tradedate == hsTradedate
     		  symList = exec distinct(fundNum) as fundNum from result2 order by fundNum
             symList2 = symList.cut(250)
-    		  portfolio = select fundNum as fundNum, (deltas(value)\prev(value)) as log, TradeDate as TradeDate from result2 where TradeDate in 2019.05.24..2022.05.27 and fundNum in symList
+    		  portfolio = select fundNum as fundNum, (deltas(value)\prev(value)) as log, TradeDate as TradeDate from result2 where TradeDate in 2018.05.24..2021.05.27 and fundNum in symList
             m_log = exec log from portfolio pivot by TradeDate, fundNum
             mlog =  m_log[1:,]
             knum = 2..365
-              }//此处，将任务切分，按每次250个不同基金数据进行计算
+              }//此处，将任务切分，按每次250个不同基金数据进行计算.
       timer{ploop(getFactor{result2}, symList2)
             a = ploop(calAllRs2{mlog,symList}, knum).unionAll(false)
             res2 = select fundNum, ols(factor1, kNum)[0] as hist, ols(factor1, kNum)[1] as hist2, ols(factor1, kNum)[2] as hist3 from a group by fundNum}
@@ -667,23 +660,19 @@ mlog =  m_log[1:,]
 
 - 单用户计算时间
 
-  | CPU数 | 9个因子（单位：毫秒） | 10个因子（包含赫斯特指数）（单位：毫秒） |
+  | CPU数 | 9个因子（单位：秒） | 10个因子（包含赫斯特指数）（单位：秒） |
   | ----- | ------ | ------------------------ |
-  | 4     | 753    | 7,835                    |
-  | 6     | 535    | 5,378                    |
-  | 8     | 424    | 4,537                    |
-  | 10    | 507    | 3,643                    |
-  | 12    | 465    | 3,087                    |
-
+  | 1    | 1.13 | 26.03             |
+  | 6     | 0.56 | 7.23                                   |
+  | 12    | 0.47                 | 4.23                                   |
+  
 - 多用户（此处为5用户）计算时间
 
-  | CPU数 | 9个因子（单位：毫秒）  | 10个因子（包含赫斯特指数）（单位：毫秒） |
+  | CPU数 | 9个因子（单位：秒）  | 10个因子（包含赫斯特指数）（单位：秒） |
   | ----- | ------- | ------------------------ |
-  | 4     | 1,980   | 30,769                   |
-  | 6     | 1,480   | 24,675                   |
-  | 8     | 1,215   | 20,114                   |
-  | 10    | 988     | 15,843                   |
-  | 12    | 836     | 13,433                   |
+  | 1     | 5.47 | 140.50      |
+  | 6     | 1.46 | 27.53                                 |
+  | 12    | 0.84 | 15.66                                 |
 
 
 > 注：由于赫斯特指数需要按照2+3+4+...+365种不同的粒度方式切分成不同种类的序列划分，同时分别对不同粒度的每一段序列分别计算均值、离差和标准差等，并最终求平均的 R/S 值，计算的子指标过大，时间复杂度较高，因此耗时相较于其它因子更长。
@@ -692,7 +681,7 @@ mlog =  m_log[1:,]
 
 本教程中，我们基于 Python 实现了相同的因子计算。本节为大家展示 DolphinDB 与 Python 计算性能的差异。
 
-我们使用 Python API 进行取数等数据处理操作，使用 `numpy`, `pandas`, `scipy` 等库实现基金日频因子的计算。由于 Python 没有自带的多线程库，本教程我们引入了 `joblib` 库中的 `Parallel` 方法，通过设置其 `n_jobs` 参数模拟不同 CPU 核数的运行环境。
+我们使用 Python API 进行取数等数据处理操作，使用 `numpy`,  `pandas`,  `scipy` 等库实现基金日频因子的计算，并且引入了 `joblib` 库中的 `Parallel` 方法，通过设置其 `n_jobs` 参数模拟不同 CPU 核数的运行环境。
 
 ### 4.1 因子计算流程实现
 
@@ -716,10 +705,10 @@ def main(li):
     getAnnualSkew(value)
     getAnnualKur(value)
     getSharp(value)
-    getTrackError(value, price)
-    getInforRatio(value, price)
-    getVar(value)
-    getHM1(value, price)
+    getMaxDrawdown(value)
+    getDrawdownRatio(value)
+    getBeta(value, price)
+    getAlpha(value, price)
     calHurst(log, 2)
 ```
 
@@ -738,10 +727,9 @@ fund_dui_OLAP = fund_dui_OLAP[fund_dui_OLAP['Tradedate'] == fund_dui_OLAP['hsTra
 fund_dui_OLAP.reset_index(drop=True, inplace=True)
 fund_dui_OLAP.drop(columns=['fundNum_y', 'hsTradedate'], inplace=True)
 fund_dui_OLAP.columns = ['Tradedate', 'fundNum', 'value', 'price']
-fund_dui_OLAP["value"].fillna(method = 'ffill', inplace = True)
 fund_dui_OLAP["log"] = pd.Series(getLog(fund_dui_OLAP["value"]))
-list = fund_dui_OLAP[(fund_dui_OLAP['Tradedate'] >= datetime(2019, 5, 24)) & (fund_dui_OLAP['Tradedate'] <= datetime(2022, 5, 27))].groupby('fundNum')
-Parallel(n_jobs=4)(delayed(main)(i) for _,i in list)
+list = fund_dui_OLAP[(fund_dui_OLAP['Tradedate'] >= datetime(2018, 5, 24)) & (fund_dui_OLAP['Tradedate'] <= datetime(2021, 5, 27))].groupby('fundNum')
+Parallel(n_jobs=1)(delayed(main)(i) for _,i in list)
 end = time.time()
 print(end-start)
 ```
@@ -750,31 +738,27 @@ print(end-start)
 
 - 单用户
 
-  | CPU数 | DolphinDB 响应时间（单位：秒） | Python 响应时间（单位：毫秒） | 性能对比（Python/DolphinDB) |
+  | CPU数 | DolphinDB 响应时间（单位：秒） | Python 响应时间（单位：秒） | 性能对比（Python/DolphinDB) |
   | ----- | --------------------- | ------------------ | --------------------------- |
-  | 4     | 7.83                  | 35.56              | 4.54                        |
-  | 6     | 5.37                  | 26.56              | 4.94                        |
-  | 8     | 4.53                  | 21.63              | 4.77                        |
-  | 10    | 3.64                  | 19.4               | 5.33                        |
-  | 12    | 3.08                  | 18.2               | 5.9                         |
+  | 1    | 26.03                          | 112.34        | 4.32 |
+  | 6     | 7.23                           | 55.35         | 7.66                   |
+  | 12    | 4.23              | 36.19       | 8.56                    |
   
 - 多用户（此处为5用户）
 
   | CPU数 | DolphinDB 响应时间（单位：秒） | Python 响应时间（单位：秒） | 性能对比（Python/DolphinDB) |
   | ----- | --------------------- | ------------------ | --------------------------- |
-  | 4     | 30.76                 | 193.42             | 6.28                        |
-  | 6     | 24.67                 | 155.29             | 6.29                        |
-  | 8     | 20.11                 | 159.43             | 7.93                        |
-  | 10    | 15.84                 | 160.79             | 10.15                       |
-  | 12    | 13.43                 | 170.51             | 12.69                       |
+  | 1   | 140.49        | 511.89                      | 3.64 |
+  | 6     | 27.52         | 226.45       | 8.22                   |
+  | 12    | 15.66                          | 224.80       | 14.35                      |
 
-> 注：在 CPU 单核和单用户的条件下，DolphinDB 和 Python 的响应时间分别为 27.06s 和 631.80s，性能对比达到了23倍。
+> 注：教程中我们只选取了部分测试结果进行展示。
 
 ### 4.3 性能分析
 
-在控制其它变量一致的前提下，无论是单用户还是多用户，在不同 CPU 核数环境下 DolphinDB 均表现出了比 Python 更优越的性能。其中性能差异最高可接近 Python 的23倍，平均性能超10倍。究其原因，主要有以下几点：
+在控制其它变量一致的前提下，无论是单用户还是多用户，在不同 CPU 核数环境下 DolphinDB 均表现出了比 Python 更优越的性能。其中性能差异最高可接近 Python 的14倍，平均性能超10倍。究其原因，主要有以下几点：
 
-- DolphinDB 强大的向量化计算能力：DolphinDB 最大程度上兼顾了向量化计算的性能，使得针对数组的向量化计算显示出了比 Python 更优越的性能；
+- DolphinDB 强大的向量化计算能力：DolphinDB 最大程度上兼顾了向量化计算的性能，而 Python 作为解释型脚本语句，每运行一句都要进行相应的解释，这使得针对数组的向量化计算显示出了比 Python 更优越的性能；
 - DolphinDB 丰富的预定义函数：DolphinDB 预定义了1000多个可以直接调用的函数。相较于 Python 减少了因子定义的代码量和封装次数，在计算过程中性能损耗更少；
 - DolphinDB 自带的持久化数据存储：DolphinDB 内置数据存储引擎，可以将数据按照不同分区方式存入分布式数据库表，因子计算时的数据读取更高效；Python 在因子计算的过程中需要引入外部数据源，数据读取效率相对较低。
 
@@ -782,7 +766,7 @@ print(end-start)
 
 本教程基于3000多只基金的日净值数据，为大家介绍了如何在 DolphinDB 和 Python 中计算10种日频因子。同时，我们对比测试了不同 CPU 核数环境下，Python 和 DolphinDB 计算相同因子的性能差异。
 
-可以看到，由于DolphinDB具有强大的支持向量化计算的能力，包含丰富的预定义函数功能，因而无论在多线程还是多任务情况下，DolphinDB 在计算因子时都有优异表现。而 Python 作为解释型脚本语句，每运行一句都要进行相应的解释，且在多线程方面存在不足。因此相较之下，DolphinDB 表现出更为显著的优势。
+可以看到，由于DolphinDB具有强大的向量化计算的能力，包含丰富的预定义函数功能，以及具备自带的持久化数据存储，因而无论在多线程还是多任务情况下，DolphinDB 在计算因子时都有相较于 Python 更为优异的表现。因此相较之下，DolphinDB 表现出更为显著的优势。
 
 ### 附件
 
@@ -790,6 +774,6 @@ print(end-start)
 
 [数据导入到 DolphinDB 的脚本](script/fund_factor_contrasted_by_py/fund_data_load.txt)
 
-[基于 DolphinDB 的十个基金日频因子响应时间计算脚本](script/fund_factor_contrasted_by_py/fund_factor.txt)
+[基于 DolphinDB 的基金日频因子响应时间计算脚本](script/fund_factor_contrasted_by_py/fund_factor_by_ddb)
 
 [基于 Python 的十个基金日频因子响应时间计算脚本](script/fund_factor_contrasted_by_py/fund_factor.py)
