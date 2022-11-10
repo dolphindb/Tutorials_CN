@@ -2,7 +2,7 @@
 
 时间序列数据、截面数据和面板数据是金融领域中常见的数据组织方式。面板数据包含了时间序列和横截面两个维度。在 Python 中，通常可以用 pandas 的 DataFrame 或 numpy 的二维数组来表示。在 DolphinDB 中面板数据也可以用表（table）或矩阵（matrix）来表示。
 
-本教程主要介绍如何在 DolphinDB 中表示和分析面板数据。本文的所有例子都基于 DolphinDB 1.30.16/2.00.5。
+本教程主要介绍如何在 DolphinDB 中表示和分析面板数据。本文的所有例子都基于 DolphinDB 1.30.16/2.00.4。
 
 <!-- TOC -->
 - [DolphinDB 教程：面板数据的处理](#dolphindb-教程面板数据的处理)
@@ -42,7 +42,6 @@ DolphinDB 中数据表和矩阵都采用了列式存储。以下是表和矩阵�
 - 聚合函数：count, avg, sum, sum2, first, firstNot, last, lastNot, max, min, std, var, med, mode, percentile, atImax, atImin, wavg, wsum, beta, corr, covar
 - [row 系列函数](https://www.dolphindb.cn/cn/help/200/FunctionsandCommands/SeriesOfFunctions/rowFunctions.html)（针对面板数据的每一行进行计算）：rowCount, rowAvg, rowSum, rowSum2, rowProd, rowMax, rowMin, rowStd, rowVar, rowBeta, rowCorr, rowAnd, rowOr, rowXor
 
-
 下文通过举例的方式让读者更能了解这些函数是如何进行面板数据操作。
 
 ## 2. SQL 语句处理面板数据
@@ -76,22 +75,22 @@ IBM 09:35:02  175.02 8800
 ```
 ### 2.1 context by
 
-context by 是 Dolphin DB 独有的功能，是对标准 SQL 语句的拓展，我们可以通过 context by 子句实现的分组计算功能来简化对数据面板的操作。
+context by 是 DolphinDB 独有的功能，是对标准 SQL 语句的拓展，我们可以通过 context by 子句实现的分组计算功能来简化对数据面板的操作。
 
 SQL 的 group by 子句将数据分成多组，每组产生一个值，也就是一行。因此使用 group by 子句后，行数一般会大大减少。
 
-在对面板数据进行分组后，每一组数据通常是时间序列数据，譬如按股票分组，每一个组内的数据是一个股票的价格序列。处理面板数据时，有时候希望保持每个组的数据行数，也就是为组内的每一行数据生成一个值。例如，根据一个股票的价格序列生成回报序列，或者根据价格序列生成一个移动平均价格序列。其它数据库系统（例如 SQL Server, PostGreSQL），用窗口函数（window function）来解决这个问题。DolpinDB 引入了 context by 子句来处理面板数据。context by 与窗口函数相比，除了语法更简洁，设计更系统化（与 group by 和 pivot by 一起组成对分组数据处理的三个子句）以外，表达能力上也更强大，具体表现在：
+在对面板数据进行分组后，每一组数据通常是时间序列数据，譬如按股票分组，每一个组内的数据是一个股票的价格序列。处理面板数据时，有时候希望保持每个组的数据行数，也就是为组内的每一行数据生成一个值。例如，根据一个股票的价格序列生成回报序列，或者根据价格序列生成一个移动平均价格序列。其它数据库系统（例如 SQL Server, PostgreSQL），用窗口函数（window function）来解决这个问题。DolpinDB 引入了 context by 子句来处理面板数据。context by 与 group by, pivot by 一起组成了 DolphinDB 分组数据处理系统。它与窗口函数相比，除了语法更简洁以外，表达能力上也更强大，具体表现在：
 
 
 *  不仅能与 select 配合查询数据，也可以与 update 配合更新数据。
 
 *  绝大多数数据库系统在窗口函数中只能使用表中现有的字段分组。context by 子句可以使用任何现有字段和计算字段。
 
-*  窗口函数仅限于少数几个函数。context by 不仅不限制使用的函数，而且可以使用任意表达式，譬如多个函数的组合。
+*   绝大多数数据库系统的窗口函数仅限于少数几个函数。context by 不仅不限制使用的函数，而且可以使用任意表达式，譬如多个函数的组合。
 
 *  context by 可以与 having 子句配合使用，以过滤每个组内部的行。
 
-
+例：
 
 (1) 按股票代码进行分组，应用序列函数计算每一只股票的前后交易量比率，进行对比：
 
@@ -272,7 +271,7 @@ volume.colNames();
 
 ### 3.1 矩阵操作示例
 
-下面举例距离处理用矩阵表示的面板数据时常用的操作。
+下文例举了矩阵形式面板数据的常用操作。
 
 (1) 通过序列函数，对每个股票的相邻价格进行比较。
 ```
@@ -333,75 +332,16 @@ rowMin(price);
 
 ### 3.2 对齐矩阵的二次运算
 
-DolphinDB 提供了两种扩展的数据结构来支持面板数据的对齐运算：indexedMatrix 和 indexedSeries。
+普通矩阵进行二元运算时，按照对应元素分别进行计算，需要保持维度 (shape) 一致，DolphinDB 提供了矩阵对齐的方法，使得矩阵计算不再受维度的限制。
 
-普通矩阵进行二元运算时，按照对应元素分别进行计算，需要保持维度 (shape) 一致，而 indexedMatrix 和 indexedSeries 帮助矩阵或向量进行二元运算时根据行列标签（index）自动对齐，对维度没有硬性要求。
+在 1.30.20/2.00.8 版本前，用户需要通过 indexedMatrix 和 indexedSeries 来支持矩阵的对齐运算，其标签必须是严格递增的。
 
-indexedMatrix 和 indexedSeries 支持的二元运算符和函数有：
+* indexedMatrix：以行列标签为索引的矩阵。
+* indexedSeries：带索引标签的向量。
 
-(1) 算术运算符和函数：+, -, *, /(整除), ratio, %(mod), pow
+indexedMatrix 和 indexedSeries 在进行二元运算时，系统会自动以 "outer join" 的方式对齐，然后进行运算。
 
-(2) 逻辑运算符和函数：and, or, bitXor, &, |
-
-(3) 滑动窗口函数：mwavg, mwsum, mbeta, mcorr, mcovar
-
-(4) 累计窗口函数：cumwavg, cumwsum, cumbeta, cumcorr, cumcovar
-
-(5) 聚合函数：wavg, wsum, beta, corr, covar
-
-#### 3.2.1 indexedMatrix
-
-indexedMatrix 是特殊的矩阵，它将矩阵的行与列标签作为索引。indexedMatrix 进行二元运算时，系统根据行与列标签将多个矩阵对齐，只对行列标签相同的数据进行计算。使用 setIndexedMatrix! 函数可以将普通矩阵设置为 indexedMatrix。比如：
-
-```
-m=matrix(1..5, 6..10, 11..15);
-m.rename!(2020.01.01..2020.01.05, `A`B`C);
-m.setIndexedMatrix!();
-
- # output
-           A B  C
-           - -- --
-2020.01.01|1 6  11
-2020.01.02|2 7  12
-2020.01.03|3 8  13
-2020.01.04|4 9  14
-2020.01.05|5 10 15
-
-n=matrix(1..5, 6..10, 11..15);
-n.rename!(2020.01.02..2020.01.06, `B`C`D);
-n.setIndexedMatrix!();
-
- # output
-           B C  D
-           - -- --
-2020.01.02|1 6  11
-2020.01.03|2 7  12
-2020.01.04|3 8  13
-2020.01.05|4 9  14
-2020.01.06|5 10 15
-
-m+n;
-
- # output
-           A B  C  D
-           - -- -- -
-2020.01.01|
-2020.01.02|  8  18
-2020.01.03|  10 20
-2020.01.04|  12 22
-2020.01.05|  14 24
-2020.01.06|
-```
-
-#### 3.2.2 indexedSeries
-
-可以使用 indexedSeries 函数生成带有索引的向量。例如：
-
-```
-index = 2008.01.02..2008.01.31;
-value = 1..30;
-indexedSeries(index, value);
-```
+1.30.20/2.00.8 版本后，DolphinDB 提供了用于矩阵对齐的函数 [align](https://www.dolphindb.cn/cn/help/200/FunctionsandCommands/FunctionReferences/a/align.html)，拓展了标签矩阵的对齐功能，使矩阵对齐和运算更加灵活。
 
 (1) indexedSeries 之间的对齐运算
 
@@ -432,7 +372,35 @@ s1+s2;
 2020.11.09|
 ```
 
-(2) indexedSeries 和 indexedMatrix 之间的对齐运算
+(2) indexedMatrix 之间的对齐运算
+
+两个 indexedMatrix 进行二元操作，其对齐的方法和 indexedSeries  一致。
+
+```
+id1 = 2020.11.01..2020.11.06;
+m1 = matrix(1..6, 7..12, 13..18).rename!(id1, `a`b`d)
+m1.setIndexedMatrix!()
+
+id2 = 2020.11.04..2020.11.09;
+m2 = matrix(4..9, 10..15, 16..21).rename!(id2, `a`b`c)
+m2.setIndexedMatrix!()
+
+m1+m2;
+
+ # output
+           a  b  c d
+           -- -- - -
+2020.11.01|         
+2020.11.02|         
+2020.11.03|         
+2020.11.04|8  20    
+2020.11.05|10 22    
+2020.11.06|12 24    
+2020.11.07|         
+2020.11.08|         
+2020.11.09|
+```
+(3) indexedSeries 和 indexedMatrix 之间的对齐运算
 
 indexedSeries 与 indexedMatrix 进行二元操作，会根据行标签进行对齐，indexedSeries 与 indexedMatrix 的每列进行计算。
 
@@ -480,9 +448,39 @@ m1 + s1;
 2020.11.09|
 ```
 
+(4) 使用 align 函数进行对齐
+
+```
+x1 = [09:00:00, 09:00:01, 09:00:03]
+x2 = [09:00:00, 09:00:03, 09:00:03, 09:00:04]
+y1 = `a`a`b
+y2 = `a`b`b
+m1 = matrix(1 2 3, 2 3 4, 3 4 5).rename!(y1,x1)
+m2 = matrix(11 12 13, 12 13 14, 13 14 15, 14 15 16).rename!(y2,x2)
+a, b = align(m1, m2, 'ej,aj', false);
+a;
+
+# output
+  09:00:00 09:00:01 09:00:03
+  -------- -------- --------
+a|1        2        3       
+a|2        3        4       
+b|3        4        5      
+
+b;
+
+# output
+  09:00:00 09:00:01 09:00:03
+  -------- -------- --------
+a|11       11       13      
+b|12       12       14      
+b|13       13       15
+```
+
+
 ### 3.3 重采样和频度转换
 
-DolphinDB 提供了 resample 和 asfreq 函数，用于对有时间类型索引的 indexedSeries 或者 indexedMatrix 进行重采样和频度转换。
+DolphinDB 提供了 [resample](https://www.dolphindb.cn/cn/help/200/FunctionsandCommands/FunctionReferences/r/resample.html) 和 [asfreq](https://www.dolphindb.cn/cn/help/200/FunctionsandCommands/FunctionReferences/a/asfreq.html) 函数，用于对有时间类型索引的 indexedSeries 或者 indexedMatrix 进行重采样和频度转换。
 
 其实现目的是为用户提供一个对常规时间序列数据重新采样和频率转换的便捷的方法。
 
@@ -534,107 +532,102 @@ s.asfreq("D").ffill()
 
 #### 3.3.3 NULL 值的处理
 
-在重采样和频率转换中，可能需要对结果的 NULL 值进行处理。
+在重采样和频率转换中，可能需要对结果的 NULL 值进行处理。具体的处理方法请参考[矩阵运算教程](https://gitee.com/dolphindb/Tutorials_CN/blob/master/matrix.md)  2.6 节的介绍。
 
-(1) 删除 NULL 值
+### 3.4 矩阵聚合
 
-DolphinDB 提供 dropna 函数，用于删除向量中的 NULL 值，或矩阵中包含 NULL 值的行或列。
+#### 3.4.1  列聚合
 
-dropna 的语法如下：
-```
-dropna(X, [byRow=true], [thresh])
-```
-- X 是向量或矩阵。
-- byRow 是布尔值。byRow=true 表示按行删除，byRow=false 表示按列删除。
-- thresh 是整数。若一行（列）中非 NULL 元素少于该值，则删除该行（列）。
+对矩阵应用内置的向量函数、聚合函数以及窗口函数，计算都是按列进行的。
+
+以对某个矩阵应用求和 sum 为例：
 
 ```
-index=2020.01.01..2020.06.30;
-m=matrix(take(3 4 5 NULL NULL 1 2, size(index)), take(1 2 3 4 5 NULL NULL, size(index)));
-m.rename!(index, `A`B);
-m.setIndexedMatrix!();
-m.asfreq("M");
+m = rand(10, 20)$10:2
+sum(m)
 
- # output
-           A B
-           - -
-2020.01.31|5 3
-2020.02.29|  4
-2020.03.31|2
-2020.04.30|4 2
-2020.05.31|  5
-2020.06.30|2
-
-m.asfreq("M").dropna();
-
- # output
-           A B
-           - -
-2020.01.31|5 3
-2020.04.30|4 2
+# output
+[69, 38]
 ```
+可以看出，矩阵每一列都被单独视为一个向量进行计算。
 
-(2) 填充 NULL 值
-
-DolphinDB 提供多种填充 NULL 值的函数：向前填充 ffill，向后填充 bfill，特定值填充 nullFill 和线性插值 interpolate。例如：
+自定义函数，若要应用到矩阵每列单独计算，可以通过高阶函数 each 实现。
 
 ```
-m.asfreq("M").ffill();
+m = rand(10, 20)$10:2
+m
 
- # output
-           A B
-           - -
-2020.01.31|5 3
-2020.02.29|5 4
-2020.03.31|2 4
-2020.04.30|4 2
-2020.05.31|4 5
-2020.06.30|2 5
+# output
+#0 #1
+-- --
+6  6 
+9  2 
+7  0 
+5  5 
+8  8 
+8  1 
+8  4 
+7  8 
+4  3 
+7  0 
+
+def mfunc(x, flag){if(flag==1) return sum(x); else return avg(x)}
+each(mfunc, m, 0 1)
+
+# output
+[6.5, 38]
 ```
 
-(3) 替换 NULL 值
+#### 3.4.2 行聚合
 
-DolphinDB 提供高阶函数 withNullFill，可以用特定值替换 NULL 值参与计算。
+DolphinDB 提供了按行进行运算的高阶函数 byRow，以及一系列内置的 row 函数（参见 row 系列函数）。
 
-withNullFill 函数的语法如下：
-```
-withNullFill(func, x, y, fillValue)
-```
-- func 是一个 DolphinDB 内置函数，须为双目运算符，例如 +, -, *, /, ratio, %, pow, and, or 等。
-- x 和 y 可以是向量或矩阵。
-- fillValue 是一个标量。
-
-若 x 与 y 中相同位置的元素只有一个为 NULL，使用 fillValue 替换 NULL 值参与计算。如果 x 和 y 相同位置的元素均为 NULL，返回 NULL。
+以对某个矩阵应用 row 函数 [rowCount](https://www.dolphindb.cn/cn/help/200/FunctionsandCommands/FunctionReferences/r/rowCount.html) 为例：
 
 ```
-s1=m.asfreq("M")[`A];
-s2=m.asfreq("M")[`B];
-s1+s2;
+m=matrix([4.5 NULL 1.5, 1.5 4.8 5.9, 4.9 2.0 NULL]);
+rowCount(m);
 
- # output
-           #0
-           --
-2020.01.31|8
-2020.02.29|
-2020.03.31|
-2020.04.30|6
-2020.05.31|
-2020.06.30|
-
-withNullFill(add, s1, s2, 0);
-
- # output
-           #0
-           --
-2020.01.31|8
-2020.02.29|4
-2020.03.31|2
-2020.04.30|6
-2020.05.31|5
-2020.06.30|2
+# output
+[3,2,2]
 ```
 
+rowCount 统计每行非空的元素个数，返回一个长度和原矩阵行数相同的向量。
 
+自定义函数，若要应用到矩阵每行单独计算，可以通过高阶函数 byRow 实现。复用 3.4.1 的自定义函数 mfunc 和矩阵 m：
+
+```
+byRow(mfunc{, 0}, m)
+
+# output
+[6,5.5,3.5,5,8,4.5,6,7.5,3.5,3.5]
+```
+
+#### 3.4.3 分组聚合
+
+数据表的分组聚合可以通过 SQL 的 [group by](https://www.dolphindb.cn/cn/help/200/SQLStatements/groupby.html) 语句实现；而通过 [regroup](https://www.dolphindb.cn/cn/help/200/FunctionsandCommands/FunctionReferences/r/regroup.html) 函数，可以实现矩阵的分组聚合操作。
+
+根据给出的时间标签将一个价格矩阵进行分组聚合：
+
+```
+timestamp = 09:00:00 + rand(10000, 1000).sort!()
+id= rand(['st1', 'st2'], 1000)
+price = (190 + rand(10.0, 2000))$1000:2
+regroup(price, minute(timestamp), avg, true)
+```
+
+对于 [pivot by](https://www.dolphindb.cn/cn/help/200/SQLStatements/pivotBy.html) 产生的面板矩阵，按照 label 进行聚合，可以通过 [rowNames](https://www.dolphindb.cn/cn/help/200/FunctionsandCommands/FunctionReferences/r/rowNames.html) 或者 [colNames](https://www.dolphindb.cn/cn/help/200/FunctionsandCommands/FunctionReferences/c/columnNames.html) 获取标签：
+
+```
+n=1000
+timestamp = 09:00:00 + rand(10000, n).sort!()
+id = take(`st1`st2`st3, n)
+vol = 100 + rand(10.0, n)
+t = table(timestamp, id, vol)
+
+m = exec vol from t pivot by timestamp, id
+regroup(m,minute(m.rowNames()), avg)
+```
 
 ## 4. 面板数据处理方式的对比
 
@@ -644,7 +637,7 @@ withNullFill(add, s1, s2, 0);
 ```
 alpha_098 = (rank(decay_linear(correlation(((high_0+low_0+open_0+close_0)*0.25), sum(mean(volume_0,5), 26.4719), 4.58418), 7.18088)) -rank(decay_linear(ts_rank(ts_argmin(correlation(rank(open_0), rank(mean(volume_0,15)), 20.8187), 8.62571),6.95668), 8.07206)))
 ```
-为了更好的对比各个处理方式之间的差异，我们选择了一年的股票每日数据，涉及的原始数据量约为 100 万条。如需数据请参考 [模拟数据脚本](./script/panel_data/panelDataDailySimulate.dos)。
+为了更好的对比各个处理方式之间的差异，我们选择了一年的股票每日数据，涉及的原始数据量约为 100 万条。如需数据请参考 [模拟数据脚本](script/panel_data/panelDataDailySimulate.dos)。
 
 以下是脚本测试所需要的数据, 输入数据为包含以下字段的 table：
 
@@ -662,7 +655,7 @@ alpha_098 = (rank(decay_linear(correlation(((high_0+low_0+open_0+close_0)*0.25),
 
 ### 4.1 DolphinDB SQL 与向量化函数处理面板数据的对比
 
-下例分别使用 DolphinDB SQL 语句和矩阵来实现计算 Alpha98 因子。全部 DolphinDB 脚本请参考 [DolphinDB 实现 98 号因子脚本](./script/panel_data/alpha98InDDB.dos)。
+下例分别使用 DolphinDB SQL 语句和矩阵来实现计算 Alpha98 因子。全部 DolphinDB 脚本请参考 [DolphinDB 实现 98 号因子脚本](script/panel_data/alpha98InDDB.dos)。
 
 
 *  DolphinDB SQL 语句实现 Alpha98 因子计算的脚本如下：
@@ -702,7 +695,7 @@ timer res = alphaPanel98(vwap, open, vol)
 
 通过两个 Alpha98 因子脚本的对比，可以发现用向量化函数来实现 Alpha98 因子的脚本会更加简洁一点。
 
-因为 Alpha98 因子在计算过程中用到了截面数据，也用到了大量时间序列的计算结果。在计算某支股票某一天的因子中，既要用到该股票的历史数据，也要用到当天所有股票的信息，对信息量的要求很大。而矩阵形式的面板数据是截面数据和时间序列数据综合起来的一种数据类型，可以支持股票数据按两个维度进行排列，所以在实现 Alpha98 因子计算中，不需要多次对中间数据或输出数据进行维度转换，简化了计算逻辑。在实现 Alpha98 因子计算的过程中，进行函数嵌套的同时还需要多次进行分组计算来处理数据。对比使用 SQL 语句执行计算，用 panel 函数来处理面板数据，明显计算效率会更高，代码会更简洁。
+因为 Alpha98 因子在计算过程中用到了截面数据，也用到了大量时间序列的计算结果。所以在计算某支股票某一天的因子中，既要用到该股票的历史数据，也要用到当天所有股票的信息，对信息量的要求很大。而矩阵形式的面板数据是截面数据和时间序列数据综合起来的一种数据类型，可以支持股票数据按两个维度进行排列，在实现 Alpha98 因子计算中，不需要多次对中间数据或输出数据进行维度转换，简化了计算逻辑。在实现 Alpha98 因子计算的过程中，进行函数嵌套的同时还需要多次进行分组计算来处理数据。对比使用 SQL 语句执行计算，用 panel 函数来处理面板数据，明显计算效率会更高，代码会更简洁。
 
 在性能测试方面，使用单线程计算，SQL 语句计算 Alpha98 因子耗时 610ms。而 panel 函数生成面板数据耗时 70ms，计算 Alpha98 因子耗时 440ms。两者的耗时差异不大，矩阵方式可能略胜一筹。
 
@@ -713,7 +706,7 @@ timer res = alphaPanel98(vwap, open, vol)
 
 ### 4.2 DolphinDB 与 pandas 处理面板数据的性能对比：
 
-pandas 实现 alpha98 因子的部分脚本如下，完整脚本请参考 [python 中实现 98 号因子脚本](./script/panel_data/alpha98InPython.py)：
+pandas 实现 alpha98 因子的部分脚本如下，完整脚本请参考 [python 中实现 98 号因子脚本](script/panel_data/alpha98InPython.py)：
 
 ```
 def myrank(x):
@@ -747,8 +740,8 @@ DolphinDB 内置了许多与时序数据相关的函数，并进行了优化，�
 
 ## 5. 附录
 
-[模拟数据脚本](./script/panel_data/panelDataDailySimulate.dos)
+[模拟数据脚本](script/panel_data/panelDataDailySimulate.dos)
 
-[DolphinDB 实现 98 号因子脚本](./script/panel_data/alpha98InDDB.dos)
+[DolphinDB 实现 98 号因子脚本](script/panel_data/alpha98InDDB.dos)
 
-[Python 实现 98 号因子脚本](./script/panel_data/alpha98InPython.py)
+[Python 实现 98 号因子脚本](script/panel_data/alpha98InPython.py)
