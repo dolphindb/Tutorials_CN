@@ -161,7 +161,7 @@ localSite,mode
 服务器配置文件的修改同[3.1节](#31-离线增加数据节点)，修改完agent.cfg以及cluster.nodes,启动该服务器上的agent节点，然后通过web或GUI连接集群的控制节点并执行以下代码：
 
 ```
-addAgentToController("172.18.0.14",8704,"gent4");
+addAgentToController("172.18.0.14",8704,"agent4");
 addNode("172.18.0.14",8804,"node4");
 ```
 
