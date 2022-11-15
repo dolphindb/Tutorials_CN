@@ -113,7 +113,9 @@ tmpfs                   tmpfs      800872       0   800872    0% /run/user/0
 /dev/mapper/centos-home xfs      42970624   33004 42937620    1% /home
 ```
 
-/home 目录对应的文件系统类型为 xfs，因此可以将 DolphinDB 安装在此目录下。
+/home 目录对应的文件系统类型为 xfs，因此可以将 DolphinDB 数据文件目录配置在该目录下。
+
+> 注意：只强烈推荐数据文件目录的文件系统为 xfs，DolphinDB 安装目录、元数据目录、日志目录的文件系统可以为 ext4 等其他文件系统。
 
 若 /home 目录文件系统类型为 ext4 等不支持动态调整 inode 数量的类型，需要将其格式化为 xfs 类型。格式化步骤如下：
 
