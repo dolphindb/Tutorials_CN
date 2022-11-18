@@ -38,7 +38,7 @@
 
 构建环境需要与目标环境尽可能的一致，包括操作系统版本、CPU 架构、Python 版本等。其中在线环境用于下载并构建各种资源，离线环境用于构建与测试 Python API 的安装包。
 
-![](./images/python_api_install_offline/1.png)
+<img src="./images/python_api_install_offline/1.png" width=70% style="display: flex; justify-content: center">
 
 ### 1.1 Linux 环境准备
 
@@ -91,7 +91,7 @@ source ~/.bashrc
 
 使用 `conda env list` 验证安装已完成：
 
-![](./images/python_api_install_offline/2.png)
+<img src="./images/python_api_install_offline/2.png" width=70% style="display: flex; justify-content: center">
 
 ### 2.2 配置 miniconda
 
@@ -280,7 +280,7 @@ Type "help", "copyright", "credits" or "license" for more information.
 
 ​                 *此电脑 → 属性 → 查找设置 → **输入：** 编辑系统环境变量  → 环境变量 → 系统环境变量*
 
-![](./images/python_api_install_offline/3.png)
+<img src="./images/python_api_install_offline/3.png" width=70% style="display: flex; justify-content: center">
 
 在**新建**中输入 condabin 目录的完整路径，如：
 
@@ -323,7 +323,7 @@ conda create -n offline38 numpy pandas future python=3.8.13 --offline
 conda activate offline38
 ```
 
-![](./images/python_api_install_offline/4.png)
+<img src="./images/python_api_install_offline/4.png" width=70% style="display: flex; justify-content: center">
 
 ### 4.5 安装 Python API
 
@@ -341,7 +341,7 @@ conda activate offline38
 pip install dolphindb-1.30.19.2-cp38-cp38-win_amd64.whl
 ```
 
-![](./images/python_api_install_offline/5.png)
+<img src="./images/python_api_install_offline/5.png" width=70% style="display: flex; justify-content: center">
 
 - 验证安装是否成功
 
@@ -395,7 +395,7 @@ pip freeze dolphindb > requirements.txt
 
 上述步骤完成后，目录类似如下（不同版本会有差异）。
 
-![](./images/python_api_install_offline/6.png)
+<img src="./images/python_api_install_offline/6.png" width=70% style="display: flex; justify-content: center">
 
 ### 5.2 离线环境安装 wheel 包
 
