@@ -60,6 +60,7 @@
     - [如何正确定位节点宕机的原因](how_to_handle_crash.md)
     - [线程简介](thread_intro.md)
     - [从一次SQL查询的全过程看DolphinDB 的线程模型](thread_model_SQL.md)
+    - [DolphinDB 集群运维监控教程](cluster_monitor.md)
 - API
     - [Python API使用教程](../../../api_python3/blob/master/README_CN.md)
     - [Java API使用教程](../../../api-java/blob/master/README_CN.md)
