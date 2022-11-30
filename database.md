@@ -46,7 +46,7 @@ MPP一般通过哈希规则，将数据分布到各个节点上（水平分割�
 
 由于分布式文件系统具有强大的分区管理、容错、复制机制，以及事务管理机制，DolphinDB的单表能轻松的支持百万级别的分区。若每个分区有1GB的数据，就可实现PB级数据的存储和快速查询。另外，通过引入DFS，数据库的存储和数据库节点相分离，使得DolphinDB在集群水平扩展（新增节点）上更加方便。
 
-![](images/distributed_mpp.JPG)
+![](./images/distributed_mpp.JPG)
 
 ### 3. 分区类型
 
@@ -63,6 +63,13 @@ DolphinDB database 支持多种分区类型： 范围分区、哈希分区、值
 
 为了学习方便， 以下分区例子使用Windows本地目录，用户可以将数据库创建使用的路径改成Linux或DFS目录。
 
+调用 database 函数前，用户必须先登录，只有具有DB_MANAGE、DB_OWNER 或管理员权限才能创建数据库。默认的管理员登录脚本为：
+
+```
+login(userId=`admin, password=`123456)
+```
+
+下文提供的所有创建数据库脚本，默认已经登录。
 
 #### 3.1 范围(RANGE)分区
 
@@ -86,7 +93,7 @@ select count(x) from pt;
 
 磁盘目录结构
 
-![](images/database/range.png)
+![](./images/database/range.png)
 
 范围分区创建后，可使用`addRangePartitions`函数来追加分区。细节参见用户手册。
 
@@ -131,7 +138,7 @@ select count(x) from pt;
 
 上面的例子定义了一个具有204个分区的数据库db。每个分区是2000年1月到2016年12月之间的一个月(如下图）。在数据库db中，表t被保存为分区表pt，分区列为month。
 
-![](images/database/value.png)
+![](./images/database/value.png)
 
 值分区创建后，可使用`addValuePartitions`函数来追加分区。细节参见用户手册。
 
@@ -154,7 +161,7 @@ select count(x) from pt;
 ```
 上面的数据库有2个分区。第一个分区包含3个股票代号，第二个分区包含2个股票代号。
 
-![](images/database/list.png)
+![](./images/database/list.png)
 
 #### 3.5 组合(COMPO)分区
 
@@ -181,11 +188,11 @@ select count(x) from pt;
 
 值域有5个分区：
 
-![](images/database/hier1.png)
+![](./images/database/hier1.png)
 
 在20170807这个分区中，有2个区间域(RANGE)分区：
 
-![](images/database/hier2.png)
+![](./images/database/hier2.png)
 
 
 若组合分区有一列为值分区，创建后可使用`addValuePartitions`函数来追加分区。细节参见用户手册。
