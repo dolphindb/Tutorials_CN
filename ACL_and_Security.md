@@ -273,7 +273,10 @@ addAccessControl(st2)
 
 [函数视图](https://www.dolphindb.cn/cn/help/DatabaseandDistributedComputing/DatabaseOperations/FunctionView.html)提供了一种灵活的方式来控制用户访问数据库和表。在视图的基础上，函数视图提供了函数功能，可以同时访问数据库并进行相关计算。
 
-只有系统管理员有创建和删除函数视图的权限。用户即使不具备读写数据库原始数据的权限，也可通过执行函数视图，间接访问数据库，得到所需计算结果。
+注意：
+
+* 只有系统管理员有创建和删除函数视图的权限。用户即使不具备读写数据库原始数据的权限，也可通过执行函数视图，间接访问数据库，得到所需计算结果。
+* 如果函数视图和本地的函数重名，调用时系统会解析为本地函数。
 
 在下例中，管理员定义一个函数视图 "countTradeAll"，并且赋予用户 NickFoles 执行视图 "countTradeAll" 的权限。
 
