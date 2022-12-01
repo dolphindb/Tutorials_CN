@@ -9,7 +9,7 @@ def genDataV1(date1, dateN){
          timer  for (aDate in date1..dateN){
            	 tradeSecurityID = (exec distinct(securityID) from tradeSrc where tradingdate = aDate).shuffle()
           		 for (m in tradeSecurityID){	
-		      		 tradingdf = select  * from tradeSrc where securityID = m and tradingdate = aDate    //step1
+		      		 tradingdf = select  * from tradeSrc where securityID = m and tradingdate = aDate    
 		      		 tradingdf["symbol"] = m + "SZ"        
 		      		 print("stock " + m + ",date is " + aDate + ",tradingdf size " + tradingdf.size())  
 		      		 tradingdf["buysellflag"] =iif(tradingdf["sellorderid"] > tradingdf["buyorderid"],"S", "B")
@@ -21,7 +21,7 @@ def genDataV1(date1, dateN){
 		      		 tradingtime = string(exec tradingtime from tradingdf)
 		      		 tradingdf.replaceColumn!(`tradingtime, tradingtime)
 		      		 unix = long(exec unix from tradingdf)
-		      		 tradingdf.replaceColumn!(`unix, unix)                                             //stepM
+		      		 tradingdf.replaceColumn!(`unix, unix)                                             
 		      		 tradeTgt.append!(tradingdf)	      		
              }
 	}
