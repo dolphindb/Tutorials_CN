@@ -146,7 +146,6 @@
     - [DolphinDB流式计算中证1000指数主买/主卖交易量](CSI_1000.md)
     - [公募基金历史数据基础分析教程](public_fund_basic_analysis.md)
     - [平均性能超Python10倍: 如何使用DolphinDB计算基金日频因子](fund_factor_contrasted_by_py.md)
-    - [从Kdb+到DolphinDB](kdb_to_dolphindb.md)
     - [DolphinDB Kafka插件最佳实践指南](kafka_plugin_guide.md)
     - [DolphinDB Python API离线安装](python_api_install_offline.md)
 - 入门和测试
@@ -156,5 +155,6 @@
     - [DolphinDB API性能基准测试报告](api_performance.md)
     - [金融市场高频数据应当如何管理 - DolphinDB与pickle的性能对比测试和分析](DolphinDB_pickle_comparison.md)
     - [DolphinDB集群水平扩展性能测试](Cluster_scale_out_performance_test.md)
-- 函数映射
+- 迁移
     - [Python 函数到 DolphinDB 函数的映射](function_mapping_py.md)
+    - [从 Kdb+ 到 DolphinDB](kdb_to_dolphindb.md)
