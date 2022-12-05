@@ -148,6 +148,7 @@
     - [平均性能超Python10倍: 如何使用DolphinDB计算基金日频因子](fund_factor_contrasted_by_py.md)
     - [DolphinDB Kafka插件最佳实践指南](kafka_plugin_guide.md)
     - [DolphinDB Python API离线安装](python_api_install_offline.md)
+    - [从SQL Server迁移数据到DolphinDB](SQLServer_to_DolphinDB.md)
 - 入门和测试
     - [DolphinDB入门：量化金融范例](quant_finance_examples.md)
     - [DolphinDB入门：物联网范例](iot_examples.md)
