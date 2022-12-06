@@ -25,14 +25,11 @@ https://www.dolphindb.cn/downloads.html
 
 解压 DolphinDB 压缩包，其中含有 web 集群管理工具、服务端程序以及 license 文件。解压完成后不需要进一步安装。如需企业试用版，点击“试用”申请 license。待我方与您联系后，您会收到企业试用版 license 文件，若 license 文件名不是 dolphindb.lic，需要将其改名为 dolphindb.lic，并将其替换社区版中的同名文件即可使用企业试用版。
 
-### 1.3 图形用户界面GUI（推荐）
+### 1.3 DolphinDB VSCode 插件（推荐）
 
-GUI 是 DolphinDB 的集成开发环境。支持内置函数、语法高亮、自动提示、数据可视化与数据浏览等功能，推荐在数据开发或数据分析场景下使用。GUI使用环境需要Java 8及以上版本。
-请从官网下载页面的`其它资源下载`列表第一个链接获取 GUI 的安装包。 GUI 无需安装，解压即可。
-* Windows 下启动：双击 gui.bat
-* Linux 下启动：sh gui.sh
+DolphinDB 公司开发了支持 DolphinDB 数据库编程语言的 VSCode 插件，便于用户使用 VSCode 编写 DolphinDB 脚本并在 DolphinDB 服务器上运行。VS Code 使用者无需安装其它软件，直接下载插件即可使用，学习成本低，上手快。因此，推荐用户选择使用 VS Code。有关 VSCode 插件的安装和使用，参考：[DolphinDB VSCode 插件用户手册](./vscode_extension.md)。
 
-DolphinDB 也支持使用 VS Code 插件等客户端来连接 DolphinDB、编辑脚本。关于 GUI, VS Code 插件等客户端的更多细节，请参阅[DolphinDB客户端教程](./client_tool_tutorial.md)
+DolphinDB 也支持使用 DolphinDB GUI 客户端来连接 DolphinDB、编辑脚本。有关 DolphinDB GUI 的安装和使用，参考：[DolphinDB 客户端软件教程](./client_tool_tutorial.md)。
 
 ### 1.4 Python/Java/C# API（可选）
 
