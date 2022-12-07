@@ -1,0 +1,310 @@
+login(`admin,`123456)
+pnodeRun(clearAllCache)
+undef(all)
+go;
+
+   //sortColumn降维函数
+def hashFunc(x){
+		return hashBucket(x,500)
+}
+
+   //随机生因子名称和股票代码
+def createFactorNamesAndSymbolNamse(num_factors,num_symbols){
+	factor_names = lpad(string(1..num_factors),6,"f00000")
+	symbols_preliminary = lpad(string(1..num_symbols),6,"000000")+"."    
+	areas = rand(["SZ","SH"],num_symbols) 
+	symbols = symbols_preliminary + areas
+	return factor_names,symbols
+	
+}
+
+  //生成字段及字段类型
+def createColnameAndColtype(mode,factor_names){
+	if(mode == "single"){
+		return ["tradetime","symbol","factorname","value"],[DATETIME,SYMBOL,SYMBOL,DOUBLE]
+	}else{
+		col_names = ["tradetime","symbol"].append!(factor_names)
+		col_types = [DATETIME,SYMBOL].append!(take(DOUBLE,factor_names.size()))
+		return col_names,col_types
+	}
+}
+
+   //建立窄表模型数据库 分区方案为：月份值分区+factorname值分区；sortColumn为：symbol+tradetime   sortKey降维成500
+def creatSingleModelDataBase(dbname,tbname,factor_names){
+	if(existsDatabase(dbname)){
+		dropDatabase(dbname)
+	}
+	dbTradeMonth = database("",VALUE,month(2022.01.01)..month(2022.12.31))
+	dbFactor = database("",VALUE,factor_names)
+	db = database(directory=dbname, partitionType=COMPO, partitionScheme=[dbTradeMonth,dbFactor],engine="TSDB")
+	col_names,col_types = createColnameAndColtype("single",factor_names)
+	factor_partition = db.createPartitionedTable(table = table(1:0, col_names,col_types),tableName = tbname,partitionColumns = ["tradetime","factorname"],sortColumns =["symbol","tradetime"],compressMethods={tradetime:"delta"},sortKeyMappingFunction=[hashFunc])
+}
+
+   //建立宽表数据库  分区方案为：月份值分区+symbol值分区；sortColumn为：symbol+tradetime   
+def createWideDataBase(dbname,tbname,symbols,factor_names){
+	if(existsDatabase(dbname)){
+		dropDatabase(dbname)
+	}
+	dbTradeMonth = database("",VALUE,month(2022.01.01)..month(2022.12.31))
+	dbSymbols = database("",VALUE,symbols)
+	db = database(directory=dbname, partitionType=COMPO, partitionScheme=[dbTradeMonth,dbSymbols],engine="TSDB")
+	col_names,col_types = createColnameAndColtype("wide",factor_names)
+	symbol_partition = db.createPartitionedTable(table = table(1:0, col_names,col_types),tableName = tbname,partitionColumns = ["tradetime","symbol"],sortColumns =["symbol","tradetime"],compressMethods={tradetime:"delta"})
+}
+
+   //获得tradetime列
+def getTimeList(start_date,end_date){
+	morning = minute(09:40:00)+0..11*10
+	afternoon = minute(13:10:00) + 0..11*10
+	minute_day = morning.append!(afternoon)	
+	month_first_day_list = monthStart(start_date..end_date).distinct().sort()
+	month_last_dat_list = monthEnd(month_first_day_list)
+	total_time_range = []
+	for(i in 0..(month_first_day_list.size()-1)){
+		dates_a = month_first_day_list[i]..month_last_dat_list[i]
+		a = weekday(dates_a,false)
+		dates = dates_a[0<=a<=4]
+		time_range = []
+		for(Date in dates){
+			for(x in minute_day){
+				time_range.append!(string(Date)+'T'+string(second(x)))
+			}
+		}
+		time_range = datetime(time_range.flatten())
+		total_time_range.append!(time_range)
+	}
+	return total_time_range
+}
+
+   //窄表模型写入1个分区的数据
+def singleModelPartitionData(dbname,tbname,time_list,symbols,factor_names,factor_name){
+	num_row = symbols.size()*time_list.size()
+	col_names,col_types = createColnameAndColtype("single",factor_names)
+	t = table(num_row:num_row,col_names,col_types)
+	t["tradetime"] = stretch(time_list,num_row)
+	t["symbol"] = take(symbols,num_row)
+	t["factorname"] = take(factor_name,num_row)
+	t["value"] = rand(100.0,num_row)
+	pt = loadTable(dbname,tbname)
+	pt.append!(t)	
+}
+
+   //宽表写入1个分区的数据
+def wideModelPartitionData(dbname,tbname,time_list,factor_names,symbol_name){
+	num_row = time_list.size()
+	col_names,col_types = createColnameAndColtype("kuanbiao",factor_names)
+	t = table(num_row :num_row ,col_names,col_types)
+	t["tradetime"] = stretch(time_list,num_row)
+	t["symbol"] = take(symbol_name,num_row)
+	for (i in 2..(col_names.size()-1)){
+		t[col_names[i]] = rand(100.00,num_row)
+	}
+	pt = loadTable(dbname,tbname)
+	pt.append!(t)	
+}
+
+   //窄表模型写入某个时间范围数据
+def writeSingleModelData(dbname,tbname,start_date,end_date,symbols,factor_names){
+	total_time_range = getTimeList(start_date,end_date)
+	nodes = exec value from pnodeRun(getNodeAlias)
+	for(j in 0..(total_time_range.size()-1)){  
+		for(i in 0..(factor_names.size()-1)){
+			rpc(nodes[i%(nodes.size())],submitJob,"singleModel"+j+"and"+i,dbname,singleModelPartitionData,dbname,tbname,total_time_range[j],symbols,factor_names,factor_names[i])
+		}
+	}
+}
+
+  //宽表写入某个时间范围数据
+def writeWideModelData(dbname,tbname,start_date,end_date,symbols,factor_names){
+	total_time_range = getTimeList(start_date,end_date)
+	nodes = exec value from pnodeRun(getNodeAlias)	
+	for( j in 0..(total_time_range.size()-1)){
+		for(i in 0..(symbols.size()-1)){
+			rpc(nodes[i%(nodes.size())],submitJob,"wideModel"+j+"and"+i,dbname,wideModelPartitionData,dbname,tbname,total_time_range[j],factor_names,symbols[i])
+		}
+	}
+}
+
+   //统计写入耗时
+def getWriteTime(dbname){
+	end_time = exec max(endTime) from getRecentJobs()  where  jobDesc =dbname
+	begin_time = exec min(receivedTime) from getRecentJobs() where   jobDesc = dbname
+	return datetime(end_time)-datetime(begin_time)
+}
+
+   //窄表模型查询随机1000因子
+def querySingleModel(dbname,tbname,start_time,end_time,aim_factor){
+	return select value from loadTable(dbname,tbname) where tradetime>=start_time and tradetime<= end_time and  factorname in aim_factor pivot by tradetime,symbol,factorname
+}
+
+  //宽表模型查询随机1000因子
+def queryWideModel(dbname,tbname,start_time,end_time,aim_factor){
+	ll = aim_factor[0]
+	for(i in 1..(aim_factor.size()-1)){
+		ll = ll+","+aim_factor[i]
+	}
+	script = "select tradetime,symbol,"+ll+" from loadTable("+'"'+dbname+'"'+" ,"+'"'+tbname+'"'+")" + " where tradetime>="+start_time+" and tradetime<="+end_time 
+	tt = parseExpr(script).eval()
+	return tt	
+}
+
+  //窄表模型更新1个分区数据
+def singleModelSinglePartitionUpdate(dbname,tbname,start_time,end_time,update_factor){
+	factor_database_handle = loadTable(dbname,tbname)
+	num_row = exec count(*) from factor_database_handle where tradetime >= start_time and tradetime <= end_time and factorname = update_factor
+           update factor_database_handle  set value = rand(100.0,num_row) where tradetime >= start_time and tradetime <= end_time and factorname = update_factor
+}
+
+  //宽表模型更新1个分区数据
+def wideModelSinglePartitionUpdate(dbname,tbname,start_time,end_time,update_factor,symbol_name){
+	num_row = exec count(*) from loadTable(dbname,tbname) where tradetime>=start_time and tradetime<=end_time and symbol = symbol_name
+	script = "update loadTable("+'"'+dbname+'"'+','+'"'+tbname+'"'+')'+" set "+update_factor+" = rand(100.0,"+num_row+") where tradetime>= "+start_time+" and tradetime <= "+end_time+" and symbol = "+'"'+symbol_name+'"'
+	runScript(script)	
+}
+
+  //窄表模型更新1个因子
+def singleModelUpdateFactor(dbname,tbname,start_date,end_date,update_factor,parallel = true){   //parallel=true表示并行更新,=false表示串行
+	time_list = getTimeList(start_date,end_date)
+	start_time_list,end_time_list = [],[] 
+	for(i in 0..(time_list.size()-1)){
+		start_time_list.append!(time_list[i][0])
+		idx = time_list[i].size()-1
+		end_time_list.append!(time_list[i][idx])
+	}
+	if(!parallel){
+		for(i in 0..(start_time_list.size()-1)){
+			singleModelSinglePartitionUpdate(dbname,tbname,start_time_list[i],end_time_list[i],update_factor)
+		}		
+	}else{
+		ploop(singleModelSinglePartitionUpdate{dbname,tbname,,,update_factor},start_time_list,end_time_list)
+	}
+}
+
+
+  //宽表模型更新1个因子
+def wideModelUpdateFactor(dbname,tbname,start_date,end_date,update_factor,symbols,parallel = true){  //parallel=true表示并行更新,=false表示串行
+	time_list = getTimeList(start_date,end_date)
+	start_time_list,end_time_list = [],[] 
+	for(i in 0..(time_list.size()-1)){
+		start_time_list.append!(time_list[i][0])
+		idx = time_list[i].size()-1
+		end_time_list.append!(time_list[i][idx])
+	}
+	if(!parallel){
+		for(i in 0..(start_time_list.size()-1)){
+			for(j in 0..(symbols.size()-1)){
+				wideModelSinglePartitionUpdate(dbname,tbname,start_time_list[i],end_time_list[i],update_factor,symbols[j])	
+			}
+		}
+	}else{
+		for(i in 0..(start_time_list.size()-1)){
+			ploop(wideModelSinglePartitionUpdate{dbname,tbname,start_time_list[i],end_time_list[i],update_factor,},symbols)
+		}
+	}
+}
+
+  //窄表模型新增1个因子
+def singleModelAddNewFactor(dbname,tbname,start_date,end_date,symbols,factor_names,new_factor){
+	time_list = getTimeList(start_date,end_date).flatten()
+	num_row = symbols.size()*time_list.size()
+	col_names,col_types = createColnameAndColtype("single",factor_names)
+	t = table(num_row:num_row,col_names,col_types)
+	t["tradetime"] = stretch(time_list,num_row)
+	t["symbol"] = take(symbols,num_row)
+	t["factorname"] = take(new_factor,num_row)
+	t["value"] = rand(100.0,num_row)
+	pt = loadTable(dbname,tbname)
+	pt.append!(t)	
+}
+
+  //宽表模型新增一个因子
+def wideModelAddNewFactor(dbname,tbname,start_date,end_date,symbols,new_factor,parallel = true){   //parallel=true表示并行,=false表示串行
+	pt = loadTable(dbname,tbname)
+	addColumn(pt,[new_factor],[DOUBLE])
+	time_list = getTimeList(start_date,end_date)
+	start_time_list,end_time_list = [],[] 
+	for(i in 0..(time_list.size()-1)){
+		start_time_list.append!(time_list[i][0])
+		idx = time_list[i].size()-1
+		end_time_list.append!(time_list[i][idx])
+	}
+	if(!parallel){
+		for(i in 0..(start_time_list.size()-1)){
+			for(j in 0..(symbols.size()-1)){
+				wideModelSinglePartitionUpdate(dbname,tbname,start_time_list[i],end_time_list[i],new_factor,symbols[j])
+			}
+		}
+	}else{
+		for(i in 0..(start_time_list.size()-1)){
+			ploop(wideModelSinglePartitionUpdate{dbname,tbname,start_time_list[i],end_time_list[i],new_factor,},symbols)
+		}
+	}
+}
+
+  //窄表模型删除一个因子
+def singleModelDeleteFactor(dbname,tbname,start_date,end_date,delete_factor){
+	pt = loadTable(dbname,tbname)
+	time_list = getTimeList(start_date,end_date).flatten()
+	start_time,end_time = time_list[0],time_list[time_list.size()-1] 
+	delete  from pt where tradetime >= start_time and tradetime <= end_time and factorname = delete_factor
+}
+//创建 总数是factor_total_num 的因子名，并随机取出 factor_total_num 个排序返回
+def createRandomFactorVector(factor_total_num,factor_query_num){	
+	factor_names = lpad(string(1..factor_total_num),6,"f00000")    //因子名称
+	factor_shuffle=factor_names.shuffle();
+	return factor_shuffle[0:factor_query_num].sort()
+}
+/*
+ * ************************************************************************************************************************************************************************************
+ * step1：建立库表
+ * step2：写入因子数据
+ * step3：查询因子
+ * step4：新增因子
+ * step5：更新因子
+ * step6：删除因子
+ */
+
+
+  //step1：建立库表  建立窄表模型和宽表
+single_dbname,single_tbname = "dfs://singleModelDataBase","singleModel"   //窄表模型库名和表名
+wide_dbname,wide_tbname = "dfs://wideModelDataBase","wideModel"   //宽表模型库名和表名
+num_factors,num_symbols = 10000,5000      //需要因子数量和股票数量
+factor_names,symbols = createFactorNamesAndSymbolNamse(num_factors,num_symbols)    //生成因子名和股票代码
+creatSingleModelDataBase(single_dbname,single_tbname,factor_names)  //建立窄表模型数据库表
+createWideDataBase(wide_dbname,wide_tbname,symbols,factor_names)  //建立宽表模型数据库表
+
+
+  //step2：写入因子数据
+start_date_write,end_date_write = 2022.01.01,2022.01.31    //写入时间范围
+writeSingleModelData(single_dbname,single_tbname,start_date_write,end_date_write,symbols,factor_names)  //写入窄表模型数据
+write_single_time = getWriteTime(single_dbname)   //统计窄表模型写入耗时  (写入耗时非常长，建议等数据写完之后再获取耗时)
+writeWideModelData(wide_dbname,wide_tbname,start_date_write,end_date_write,symbols,factor_names)  //写入宽表数据(建议写完窄表模型数据之后再写宽表数据)
+write_wide_time = getWriteTime(wide_dbname)   //统计宽表模型写入耗时  (写入耗时非常长，建议等数据写完之后再获取耗时)
+
+
+  //step3：查询 某个时间范围内 随机1000因子
+aim_factors=createRandomFactorVector(10000,1000)
+start_time_query,end_time_query = 2022.01.01T00:00:00,2022.01.31T18:00:00   //查询时间范围
+timer result_single = querySingleModel(single_dbname,single_tbname,start_time_query,end_time_query,aim_factors)   //窄表模型查询结果及耗时
+timer result_kuan_biao = queryWideModel(wide_dbname,wide_tbname,start_time_query,end_time_query,aim_factors)  //宽表模型查询结果及耗时
+
+
+  //step4：新增  某个时间段内 新增1个因子，宽表新增耗时很长
+new_factor = "f11008"
+start_date_add,end_date_add = 2022.01.01,2022.01.31  //新增时间范围
+timer singleModelAddNewFactor(single_dbname,single_tbname,start_date_add,end_date_add,symbols,factor_names,new_factor)  //窄表模型新增因子及其耗时
+timer wideModelAddNewFactor(wide_dbname,wide_tbname,start_date_add,end_date_add,symbols,new_factor,parallel = true)  //宽表模型新增因子及其耗时
+
+
+  //step5：更新  某个时间段内  更新1个因子，宽表更新耗时很长
+update_factor = "f01249"
+start_date_update,end_date_update = 2022.01.01,2022.01.31
+timer singleModelUpdateFactor(single_dbname,single_tbname,start_date_update,end_date_update,update_factor,parallel = true)  //窄表模型更新因子及其耗时
+timer wideModelUpdateFactor(wide_dbname,wide_tbname,start_date_update,end_date_update,update_factor,symbols,parallel = true)  //宽表模型更新因子及其耗时
+
+
+  //step6：删除   某个时间段内  删除1个因子
+delete_factor = "f11008"
+start_date_delete,end_date_delete = 2022.01.01,2022.01.31  //删除时间范围
+timer singleModelDeleteFactor(single_dbname,single_tbname,start_date_delete,end_date_delete,delete_factor)   //窄表模型删除因子及其耗时

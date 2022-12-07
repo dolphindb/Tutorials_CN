@@ -149,6 +149,7 @@
     - [DolphinDB Kafka插件最佳实践指南](kafka_plugin_guide.md)
     - [DolphinDB Python API离线安装](python_api_install_offline.md)
     - [从SQL Server迁移数据到DolphinDB](SQLServer_to_DolphinDB.md)
+    - [中高频多因子库存储最佳实践](best_practices_for_multi_factor.md)
 - 入门和测试
     - [DolphinDB入门：量化金融范例](quant_finance_examples.md)
     - [DolphinDB入门：物联网范例](iot_examples.md)
