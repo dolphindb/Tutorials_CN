@@ -1,8 +1,8 @@
 # 利用httpClient插件整合外部消息
 
-DolphinDB支持通过动态加载用c++编写的插件程序，新增dolphindb脚本函数，执行这些脚本函数就会调用编写的c++插件程序的自定义函数，实现自定义功能扩展。
+DolphinDB支持通过动态加载用c++编写的插件程序，通过执行DolphinDB脚本函数，来调用插件程序的自定义函数，实现自定义功能扩展。
 
-DolphinDB的[httpClient插件](https://github.com/dolphindb/DolphinDBPlugin/tree/release200/httpClient)提供以下3个函数，用于发送http请求和发送邮件。
+DolphinDB的[httpClient插件](https://github.com/dolphindb/DolphinDBPlugin/tree/master/httpClient)提供以下3个函数，用于发送http请求和发送邮件。
 - `httpGet`: 发送http的Get方法请求。
 - `httpPost`: 发送http的Post方法请求。
 - `sendEmail`: 发送邮件。
@@ -10,30 +10,17 @@ DolphinDB的[httpClient插件](https://github.com/dolphindb/DolphinDBPlugin/tree
 本文介绍如何通过DolphinDB的httpClient插件的`httpGet`与`httpPost`插件函数实现企业微信发送群聊消息、钉钉发送群聊消息，通过`sendEmail`插件函数发送文本邮件。
 
 以下是使用步骤和消息平台的选择:
-- [1. 在dolphindb中加载httpClient插件](#1-在dolphindb中加载httpClient插件) 
-- [2. 三种外部消息平台的使用](#2-三种外部消息平台的使用)
-
-    其中，企业微信和钉钉的官方API都是使用的http协议。很方便地在DolphinDB上使用DolphinDB的简洁脚本，通过`httpGet`和`httpPost`发送遵循企业微信或钉钉的格式的http请求报文，并接受返回的http请求报文，可以实现与企业微信、钉钉的信息通信。
-    - [2.1 企业微信](#2.1-企业微信消息通信的演示案例)
-        - [2.1.1 自建新应用](#2.1.1-企业微信内自建新应用)
-        - [2.1.2 获取access_token](#2.1.2-获取access_token)
-        - [2.1.3 发送应用消息](#2.1.3-发送应用消息)
-        - [2.1.4 发送群聊消息](#2.1.4-发送群聊消息)
-            - [2.1.4.1 创建群聊](#2.1.4.1-创建企业群聊)
-            - [2.1.4.2 发送消息](#2.1.4.2-利用post请求发送群聊消息)
-    - [2.2 钉钉](#2.2-钉钉消息通信的演示案例)
-        - [2.2.1 创建应用，申请权限](#2.2.1-创建企业内部开发应用，申请接口调用权限)
-        - [2.2.2 获取access_token](#2.2.2-获取access_token)
-        - [2.2.3 发送群聊消息](#2.2.3-发送群聊消息)
-            - [2.2.3.1 获取部门](#2.2.3.1-获取部门列表)
-            - [2.2.3.2 获取成员](#2.2.3.2-获取部门下成员详情)
-            - [2.2.3.3 创建群聊](#2.2.3.3-创建企业群聊)
-            - [2.2.3.4 发送消息](#2.2.3.4-向企业群聊发送消息)
-    - [2.3 邮箱](#2.3-邮件发送示例)
+- [利用httpClient插件整合外部消息](#利用httpclient插件整合外部消息)
+  - [1. 在dolphindb中加载httpClient插件](#1-在dolphindb中加载httpclient插件)
+    - [1.1 Linux](#11-linux)
+  - [2. 三种外部消息平台的使用](#2-三种外部消息平台的使用)
+    - [2.1 企业微信消息通信的演示案例](#21-企业微信消息通信的演示案例)
+    - [2.2 钉钉消息通信的演示案例](#22-钉钉消息通信的演示案例)
+    - [2.3 邮件发送示例](#23-邮件发送示例)
     
 ## 1. 在dolphindb中加载httpClient插件
 
-### Linux
+### 1.1 Linux
 
 需要有libPluginHttpClient.so和PluginHttpClient.txt两个插件程序文件。
 
@@ -69,13 +56,13 @@ loadPlugin("<PluginDir>/httpClient/bin/win64/PluginHttpClient.txt");
 
 [企业微信corpid、userid、部门id、tagid、agentid、secret、access_token的介绍。](https://work.weixin.qq.com/api/doc/90000/90135/90665)
 
-#### 2.1.1 企业微信内自建新应用
+#### 2.1.1 企业微信内自建新应用 <!-- omit in toc -->
 
 [链接](https://work.weixin.qq.com/api/doc/90000/90135/90226)
 * 首先,添加自建应用。管理员账号登录[企业微信管理端](https://work.weixin.qq.com/wework_admin/loginpage_wx?from=myhome_baidu) -> 应用与小程序 -> 应用 -> 自建，点击“创建应用”，设置应用logo、应用名称等信息，创建应用。
 * 创建完成后，在管理端的应用列表里进入该应用，可以看到Agentid、Secret等信息，这些信息在使用企业微信API时会用到。
 
-#### 2.1.2 获取access_token
+#### 2.1.2 获取access_token <!-- omit in toc -->
 [链接](https://work.weixin.qq.com/api/doc/90000/90135/91039)
 * access_token是应用调用API的凭证，由 corpid和corpsecret换取。
     > 请注意，access_token的时效为7200秒。需要缓存access_token，用于后续接口的调用（注意：不能频繁调用gettoken接口，否则会受到频率拦截）。当access_token失效或过期时，可通过查看返回正文的errocode来确定，需要重新获取，应实现access_token失效时重新获取的逻辑。
@@ -87,7 +74,7 @@ loadPlugin("<PluginDir>/httpClient/bin/win64/PluginHttpClient.txt");
 
 这里使用httpClient插件中的函数httpGet(url,params,timeout,headers)。当前步骤不需要添加http请求头，只填写前面3个参数。
 
-* url只需要填写'https://qyapi.weixin.qq.com/cgi-bin/gettoken' , 后面的corpid和corpsecret参数通过httpGet方法中的param参数就可以补充完整。
+* url只需要填写'https://qyapi.weixin.qq.com/cgi-bin/gettoken',  后面的corpid和corpsecret参数通过httpGet方法中的param参数就可以补充完整。
 * param是一个键值对都是string的字典。 参数corpid的值(ID)为企业ID，corpsecret的值(SECRET)为对应应用的凭证密钥，两个值都需要以字符串的形式加入到param中。
 * timeout为超时时间，单位为毫秒，数据类型为整型。达到超时时间后`httpGet`会直接返回，无论是否收到http应答报文。因为这是一个远程网络请求，超时时间最好设置为1000毫秒或以上。
 
@@ -133,7 +120,7 @@ access_token的值在后续步骤中会用到。如果errcode的值为0，则可
 ```
 ACCESS_TOKEN=body.access_token;
 ```
-#### 2.1.3 发送应用消息
+#### 2.1.3 发送应用消息 <!-- omit in toc -->
 
 [链接](https://work.weixin.qq.com/api/doc/90000/90135/90248)
 
@@ -206,8 +193,8 @@ ERRCODE=body.errcode;
 ```
 > 如果部分接收人无权限或不存在，发送仍然执行，但会返回无效的部分（即invaliduser、invalidparty、invalidtag字段），需要设置应用的可见范围。
 
-#### 2.1.4 发送群聊消息
-##### 2.1.4.1 创建企业群聊
+#### 2.1.4 发送群聊消息 <!-- omit in toc -->
+##### 2.1.4.1 创建企业群聊 <!-- omit in toc -->
 [链接](https://work.weixin.qq.com/api/doc/90000/90135/90245)
 * 通过这个步骤，我们创建了一个企业群聊，可以获得一个群聊id(chatid)。
 * 设置应用的可见范围是根目录，没有设置会返回errcode(60011)。可以到应用管理找到这个自建应用，单击这个应用，会跳转到这个应用的详情页面，可以在这个页面编辑这个应用的可见范围。
@@ -227,7 +214,7 @@ ERRCODE=body.errcode;
 
 > 请注意，相较于http协议的get方法，post方法的参数都是放在请求正文中的，httpPost方法的param参数是填写在http报文中的正文部分。在这里，我们需要自行补充完整url。
 
-* url需要填写'https://qyapi.weixin.qq.com/cgi-bin/appchat/create?access_token=ACCESS_TOKEN' 。access_token的值(ACCESS_TOKEN)由第二个步骤获得。
+* url需要填写'https://qyapi.weixin.qq.com/cgi-bin/appchat/create?access_token=ACCESS_TOKEN'。access_token的值(ACCESS_TOKEN)由第二个步骤获得。
 * param填写上面的json格式，每一个参数值都需要更替为实际参数。
     * name：群聊名字。
     * owner：群主id。
@@ -270,7 +257,7 @@ CHATID=body.access_token;
 ```
 就可以便捷地把chatid和errcode的值解析出来。
 
-##### 2.1.4.2 利用post请求发送群聊消息
+##### 2.1.4.2 利用post请求发送群聊消息 <!-- omit in toc -->
 [链接](https://work.weixin.qq.com/api/doc/90000/90135/90248)
 
 通过这最后一个步骤，我们就可以成功地在企业微信内发送群聊信息。
@@ -349,7 +336,7 @@ ERRCODE=body.errcode;
 
 [钉钉CorpId, UserId, UnionId, AppKey, AppSecret, AccessToken, AgentId, AppId, AppSecret的介绍。](https://ding-doc.dingtalk.com/doc#/bgb96b/mzd9qg)
 
-#### 2.2.1 创建企业内部开发应用，申请接口调用权限
+#### 2.2.1 创建企业内部开发应用，申请接口调用权限 <!-- omit in toc -->
 [链接](https://ding-doc.dingtalk.com/doc#/serverapi2/eev437)
 
 首先创建一个微应用。使用钉钉企业管理员账号登陆[钉钉开发者后台网站](https://oa.dingtalk.com/?redirect=http%3A%2F%2Foa.dingtalk.com%2Fomp%2Fapi%2Fmicro_app%2Fadmin%2Flanding%3Fcorpid%3Dopen-dev.dingtalk.com%26redirect_url%3Dhttp%3A%2F%2Fopen-dev.dingtalk.com%2F#/login)，在应用开发页面，选择企业内部开发 > H5微应用，然后单击创建应用,填写应用名称、应用描述和补充应用图标，然后单击确定创建。创建应用可获得appkey，appsecret，在获取access_token中需要用到。
@@ -361,7 +348,7 @@ ERRCODE=body.errcode;
 * 通过以上获取到的部门id，人员id，创建一个企业群聊--需要企业会话权限。
 然后就可以实现利用httpClient插件中的httpGet和httpPost方法向一个企业群聊中发送消息。
 
-#### 2.2.2 获取access_token
+#### 2.2.2 获取access_token <!-- omit in toc -->
 [链接](https://ding-doc.dingtalk.com/doc#/serverapi2/eev437)
 * access_token是应用调用API的凭证，由 appkey和appsecret换取。
 > 请注意，access_token的时效为7200秒。需要缓存access_token，用于后续接口的调用（注意：不能频繁调用gettoken接口，否则会受到频率拦截）。当access_token失效或过期时，需要重新获取，应实现access_token失效时重新获取的逻辑。
@@ -413,8 +400,8 @@ ERRCODE=body.errcode;
 ```
 就可以便捷地把access_token和errcode解析出来。
 
-#### 2.2.3 发送群聊消息
-##### 2.2.3.1 获取部门列表
+#### 2.2.3 发送群聊消息 <!-- omit in toc -->
+##### 2.2.3.1 获取部门列表 <!-- omit in toc -->
 [链接](https://ding-doc.dingtalk.com/doc#/serverapi2/dubakq)
 
 * 请求方式：GET（HTTPS）
@@ -470,7 +457,7 @@ ERRCODE=body.errcode;
 ```
 就可以便捷地把id和errcode解析出来。
 
-##### 2.2.3.2 获取部门下成员详情
+##### 2.2.3.2 获取部门下成员详情 <!-- omit in toc -->
 [链接](https://ding-doc.dingtalk.com/doc#/serverapi2/ege851)
 
 请求方式：GET（HTTPS）
@@ -522,7 +509,7 @@ ERRCODE=body.errcode;
 ```
 就可以便捷地把userIds和errcode解析出来。
 
-##### 2.2.3.3 创建企业群聊
+##### 2.2.3.3 创建企业群聊 <!-- omit in toc -->
 [链接](https://ding-doc.dingtalk.com/doc#/serverapi2/fg9dze)
 请求方式：POST（HTTPS）
 
@@ -581,7 +568,7 @@ ERRCODE=body.errcode;
 ```
 就可以便捷地把errcode解析出来。
 
-##### 2.2.3.4 向企业群聊发送消息
+##### 2.2.3.4 向企业群聊发送消息 <!-- omit in toc -->
 [链接](https://ding-doc.dingtalk.com/doc#/serverapi2/isu6nk)
 * 请求方式：POST（HTTPS）
 
@@ -635,13 +622,23 @@ ERRCODE=body.errcode;
 
 ### 2.3 邮件发送示例
 函数sendEmail支持单发邮件和群发邮件。
-- 如果成功发送邮件，返回的字典res，res['responseCode']==250。
-- 使用本插件的邮件发送函数通常需要在邮件服务商上面设置开启smtp协议，如果还需要获取邮箱授权码，参数psw为邮箱授权码的字符串，否则psw就是邮箱账号的密码。
 
-#### httpClient::sendEmail(user,psw,emailTo,subject,text)
-发送邮件
+#### 2.3.1 前提 <!-- omit in toc -->
 
-其中，user需要填入实际的发送邮箱账号，psw填入实际的邮箱密码(邮箱授权码)。
+- 使用本插件的邮件发送函数通常需要在邮件服务商上面设置开启smtp协议。如果还需要获取邮箱授权码，参数psw为邮箱授权码的字符串，否则psw就是邮箱账号的密码。
+- 在httpClient插件里面，默认设置了126, 163, yeah.net, sohu, dolphindb, qq邮箱的域名地址和端口。如果使用别的邮箱用户来发送邮件，需要通过emailSmtpConfig自行配置服务器地址和端口:
+
+通过`httpClient::emailSmtpConfig(emailName,host,port)`配置邮箱服务器地址和端口。其中，emailName是邮箱名称，格式为邮箱'@'字符后的字符串；host是邮箱stmp服务器的地址；port是邮箱服务器端口。在httpClient插件里面，默认设置了126, 163, yeah.net, sohu, dolphindb, qq邮箱的域名地址和端口。如果使用别的邮箱用户来发送邮件，需要自行配置服务器地址和端口。配置方式如下：
+
+```
+emailName="yahoo.com";
+host="smtp.yahoo.com";
+port=25;
+httpClient::emailSmtpConfig(emailName,host,port);
+```
+
+#### 2.3.2 发送邮件 <!-- omit in toc -->
+通过`httpClient::sendEmail(user,psw,emailTo,subject,text)`发送邮件。其中，user需要填入实际的发送邮箱账号，psw填入实际的邮箱密码(邮箱授权码)。
 
 示例：
 
