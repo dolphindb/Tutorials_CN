@@ -68,6 +68,8 @@
 </table>
 
 > 在 Linux 系统使用 DolphinDB 要求内核版本为 Linux 2.6.19 或以上，推荐使用 **CentOS 7 稳定版**。
+>
+> 若使用 Ubuntu 系统：(1) 需要在系统安装时在 Storage configuration 中选择 /home 目录的格式为 xfs，以方便后续将 /home 目录格式化为 xfs 文件系统；(2) Ubuntu 系统使用 ufw 防火墙，关闭防火墙命令为 `sudo ufw disable`，其他命令请参考 `man ufw`
 
 #### 1.1.2 依赖软件 <!-- omit in toc -->
 
@@ -123,6 +125,7 @@ tmpfs                   tmpfs      800872       0   800872    0% /run/user/0
     
 
 ```console
+# cd /
 # cp -R /home /tmp
 ```
 
@@ -138,7 +141,7 @@ Do you really want to remove active logical volume centos/home? [y/n]: y
 3. 查看硬盘剩余可用空间
 
 ```console
-# vgdisplay | grep Alloc
+# vgdisplay | grep Free
   Free  PE / Size       10527 / 41.12 GiB # 剩余可用空间为 41.12 GB
 ```
 
@@ -318,7 +321,7 @@ UUID=29ecb452-6454-4288-bda9-23cebcf9c755 /mnt/dev1             xfs     defaults
 
 > 注意：
 > 
-> 为目录预留足以存放若干 core 文件的空间，其中core文件最大为约为 maxMemSize 配置项的值；
+> 为目录预留足以存放若干 core 文件的空间，其中core文件最大约为 maxMemSize 配置项的值；
 > 
 > 确保 DolphinDB 在该目录具备写权限。
 
@@ -360,6 +363,16 @@ kernel.core_pattern = /var/crash/core-%e-%s-%u-%g-%p-%t
 ```console
 # ulimit -c
 unlimited
+```
+
+配置完毕后，建议启动 dolphindb 单节点验证 core dump 配置是否生效，步骤如下：
+
+```console
+$ cd /path_to_dolphindb
+$ chmod +x ./startSingle.sh
+$ ./startSingle.sh
+$ kill -11 dolphindb_pid
+$ ls /var/crash/ | grep dolphindb_pid # 检查目录下是否有对应core文件
 ```
 
 ### 1.5 增大文件最大打开数量
