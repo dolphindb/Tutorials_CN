@@ -375,8 +375,8 @@ tsAggregator = createTimeSeriesEngine(name="streamAggr1", windowSize=6, step=3, 
 
 - 使用自定义函数
 ```
-def spread(x,y){
-	return abs(x-y)/(x+y)*2
+defg spread(x,y){
+	return sum(x)/sum(y)
 }
 tsAggregator = createTimeSeriesEngine(name="streamAggr1", windowSize=6, step=3, metrics=<spread(ask, bid)>, dummyTable=quotes, outputTable=outputTable, timeColumn=`time)
 ```
@@ -384,7 +384,7 @@ tsAggregator = createTimeSeriesEngine(name="streamAggr1", windowSize=6, step=3, 
 - 使用多个返回结果的函数
 
 ```
-def sums(x){
+defg sums(x){
 	return [sum(x),sum2(x)]
 }
 tsAggregator = createTimeSeriesEngine(name="streamAggr1", windowSize=6, step=3, metrics=<sums(ask) as `sumAsk`sum2Ask>, dummyTable=quotes, outputTable=outputTable, timeColumn=`time)
