@@ -177,6 +177,7 @@ DolphinDB 函数选取自 2.00 版本 [用户手册](https://www.dolphindb.cn/cn
 | pandas.rolling_mean                                          | mavg                  |
 | pandas.rolling_std                                           | mstd                  |
 | pandas.rolling_median                                        | mmed                  |
+| pandas.DataFrame.shift / pandas.Series.shift                 | move / tmove          |
 
 
 
