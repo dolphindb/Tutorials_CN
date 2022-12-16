@@ -60,24 +60,8 @@ windowSize与step的单位取决于useSystemTime参数。若useSystemTime=true�
 
 如果windowSize为数组，则metrics必须和windowSize大小一致的数组，一一对应计算。比如定义windowSize=[3,6], metrics=[<[sum(volume),avg(price)]>, <std(volume)>], 则sum(volume)和avg(price)按windowSize=3聚合，std(volume)按windowSize=6聚合。
 
-DolphinDB针对以下聚合函数在流数据时序引擎中的使用进行了优化，最大程度降低了重复计算，显著提高运行速度。
+DolphinDB 针对部分内置的聚合函数在流数据时序引擎中的使用进行了优化，最大程度降低了重复计算，显著提高运行速度，详情参照用户手册[createTimeSeriesEngine](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/c/createTimeSeriesEngine.html)函数。
 
-函数名 | 函数说明 
----|---
-corr|相关性
-covar|协方差
-first|第一个元素
-last|最后一个元素
-max|最大值
-med|中位数
-min|最小值
-percentile|给定的百分比对应的值
-std|标准差
-sum|求和
-sum2|平方和
-var|方差
-wavg|加权平均
-wsum|加权和
 
 - dummyTable
 
@@ -375,10 +359,10 @@ tsAggregator = createTimeSeriesEngine(name="streamAggr1", windowSize=6, step=3, 
 
 - 使用自定义函数
 ```
-defg spread(x,y){
-	return sum(x)/sum(y)
+defg diff(x,y){
+	return sum(x)-sum(y)
 }
-tsAggregator = createTimeSeriesEngine(name="streamAggr1", windowSize=6, step=3, metrics=<spread(ask, bid)>, dummyTable=quotes, outputTable=outputTable, timeColumn=`time)
+tsAggregator = createTimeSeriesEngine(name="streamAggr1", windowSize=6, step=3, metrics=<diff(ask, bid)>, dummyTable=quotes, outputTable=outputTable, timeColumn=`time)
 ```
 
 - 使用多个返回结果的函数
