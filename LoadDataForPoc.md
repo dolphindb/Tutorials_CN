@@ -234,11 +234,11 @@ extractTextSchema(filename = filePath, skipRows = 1)
 
 <div align=center><img src=images/LoadDataForPoc/schemaResult.jpg width=15%> </div>
 
-返回结果中，第一列 name 表示 CSV 文件中各列的列名。如果 CSV 文件数据之前没有列名信息，列名自动命名为 col0, col1 等；如果有列名信息，列名和文件中的名称保持一致。第二列 type 表示 CSV 文件中自动识别出来的各列的数据类型。这个结果表的字段和我们建表时的字段是按从上到下的顺序一一对应的，我们把二者整理到一起，如图 3-4 所示：
+返回结果中，第一列 name 表示 CSV 文件中各列的列名。如果 CSV 文件数据之前没有列名信息，列名自动命名为 col0, col1 等；如果有列名信息，列名和文件中的名称保持一致。第二列 type 表示 CSV 文件中自动识别出来的各列的数据类型。这个结果表的字段和我们建表时的字段是按从上到下的顺序一一对应的，我们把二者整理到一起，如下图所示：
 
 <div align=center><img src=images/LoadDataForPoc/vsType.jpg width=35%> </div>
 
-通过对比可以发现，内存表中的字段 col0, col1, col5, col6 与数据表中对应字段 SecurityID, TransactTime ,OrderBSFlag, OrdType 的类型不同。如果此时直接进行数据导入，如下代码所示：
+通过对比可以发现，内存表中的字段 col0, col1, col5, col6 与数据表中对应字段 SecurityID, TransactTime, OrderBSFlag, OrdType 的类型不同。如果此时直接进行数据导入，如下代码所示：
 
 ```
 db = database("dfs://sh_entrust")
@@ -246,7 +246,7 @@ filePath = "/home/ychan/data/loadForPoc/SH/Order/20210104/Entrust.csv"
 loadTextEx(dbHandle = db, tableName = `entrust, partitionColumns = `col1`col0, filename = filePath, skipRows = 1)
 ```
 
-执行后发现报错：**The column \[SecurityID\] expects type of SYMBOL, but the actual type is INT**, 即传入的 SecurityID 数据类型为整型，不符合 SYMBOL 的要求。而 transType 函数的作用就是自定义转换数据类型，赋给 transform 参数后再执行导入语句，会发现不再报错。其他字段的数据导入和类型转换依此类推。本案例中，共有四列做了转换，相关代码如下：
+执行后发现报错：**The column \[SecurityID\] expects type of SYMBOL, but the actual type is INT**，即传入的 SecurityID 数据类型为整型，不符合 SYMBOL 的要求。而 transType 函数的作用就是自定义转换数据类型，赋给 transform 参数后再执行导入语句，会发现不再报错。其他字段的数据导入和类型转换依此类推。本案例中，共有四列做了转换，相关代码如下：
 
 ```
 def transType(mutable memTable)
