@@ -1,0 +1,2 @@
+data/LoadDataForPoc/parallelData.tar.gz filter=lfs diff=lfs merge=lfs -text
+data/LoadDataForPoc/Entrust.tar.gz filter=lfs diff=lfs merge=lfs -text
