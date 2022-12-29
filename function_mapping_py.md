@@ -281,4 +281,4 @@ DolphinDB 函数选取自 2.00 版本 [用户手册](https://www.dolphindb.cn/cn
 
 以上仅列出 DolphinDB 的内置的 TA-lib 函数。
 
-更多 TA-lib 指标函数请参考 DolphinDB 的 [ta 模块](https://dolphindb.net/dolphindb/dolphindbmodules/-/tree/master/ta)。
+更多 TA-lib 指标函数请参考 DolphinDB 的 [ta 模块](../../../DolphinDBModules/tree/master/ta)。
