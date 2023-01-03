@@ -1,0 +1,11 @@
+login("admin","123456")
+
+dbName="dfs://demo"
+tbName="pt"
+
+colNames=`time`stateionID`grinding_time`oil_temp`pressure`pressure_target`rework_time`state
+colTypes=[NANOTIMESTAMP,SYMBOL,DOUBLE,DOUBLE,DOUBLE,DOUBLE,DOUBLE,SYMBOL]
+schemaTb=table(1:0,colNames,colTypes)
+
+db = database(dbName, VALUE,2021.08.01..2022.12.31)
+pt = db.createPartitionedTable(schemaTb, "pt", `time)

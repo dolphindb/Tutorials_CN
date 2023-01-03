@@ -148,7 +148,6 @@
     - [平均性能超Python10倍: 如何使用DolphinDB计算基金日频因子](fund_factor_contrasted_by_py.md)
     - [DolphinDB Kafka插件最佳实践指南](kafka_plugin_guide.md)
     - [DolphinDB Python API离线安装](python_api_install_offline.md)
-    - [从SQL Server迁移数据到DolphinDB](SQLServer_to_DolphinDB.md)
     - [中高频多因子库存储最佳实践](best_practices_for_multi_factor.md)
     - [DolphinDB流计算在物联网的应用：实时检测传感器状态变化](DolphinDB_streaming_application_in_IOT.md)
     - [金融 PoC 用户历史数据导入指导手册之股票 level2 逐笔篇](LoadDataForPoc.md)
@@ -162,3 +161,6 @@
 - 迁移
     - [Python 函数到 DolphinDB 函数的映射](function_mapping_py.md)
     - [从 Kdb+ 到 DolphinDB](kdb_to_dolphindb.md)
+    - [从 SQL Server 迁移数据到 DolphinDB](SQLServer_to_DolphinDB.md)
+    - [从 InfluxDB 迁移数据到 DolphinDB](Migrate_data_from_InfluxDB_to_DolphinDB.md)
+

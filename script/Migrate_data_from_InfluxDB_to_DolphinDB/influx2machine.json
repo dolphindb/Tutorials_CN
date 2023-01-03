@@ -1,0 +1,80 @@
+{
+  "job": {
+    "content": {
+      "reader": {
+        "name": "influxdb2reader",
+        "parameter": {
+          "column": ["*"],
+          "connection": [
+            {
+              "endpoint": "http://183.136.170.168:8086",
+              "bucket": "demo-bucket",
+              "table": [
+                  "machinery"
+              ],
+              "org": "zhiyu"
+            }
+          ],
+          "token": "GLiPjQFQIxzVO0-atASJHH4b075sTlyEZGrqW20XURkelUT5pOlfhi_Yuo2fjcSKVZvyuO00kdXunWPrpJd_kg==",
+          "range": [
+            "2007-08-09"
+          ]
+        }
+      },
+      "writer": {
+        "name": "dolphindbwriter",
+        "parameter": {
+          "userId": "admin",
+          "pwd": "123456",
+          "host": "115.239.209.122",
+          "port": 3134,
+          "dbPath": "dfs://demo",
+          "tableName": "pt",
+          "batchSize": 1000000,
+          "saveFunctionName": "transData",
+          "saveFunctionDef": "def parseRFC3339(timeStr) {if(strlen(timeStr) == 20) {return temporalParse(timeStr,'yyyy-MM-ddTHH:mm:ssZ');} else if (strlen(timeStr) == 24) {return temporalParse(timeStr,'yyyy-MM-ddTHH:mm:ss.SSSZ');} else {return timeStr;}};def transData(dbName, tbName, mutable data) {timeCol = exec time from data; writeLog(timeCol); timeCol=each(parseRFC3339, timeCol);  writeLog(timeCol);replaceColumn!(data, 'time', timeCol); loadTable(dbName,tbName).append!(data); }",
+          "table": [
+              {
+                "type": "DT_STRING",
+                "name": "time"
+              },
+              {
+                "type": "DT_SYMBOL",
+                "name": "stationID"
+              },
+              {
+                "type": "DT_DOUBLE",
+                "name": "grinding_time"
+              },
+              {
+                "type": "DT_DOUBLE",
+                "name": "oil_temp"
+              },
+              {
+                "type": "DT_DOUBLE",
+                "name": "pressure"
+              },
+              {
+                "type": "DT_DOUBLE",
+                "name": "pressure_target"
+              },
+              {
+                "type": "DT_DOUBLE",
+                "name": "rework_time"
+              },
+              {
+                "type": "DT_SYMBOL",
+                "name": "state"
+              }
+          ]
+        }
+      }
+    },
+    "setting": {
+      "speed": {
+        "bytes": -1,
+        "channel": 1
+      }
+    }
+  }
+}
