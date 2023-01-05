@@ -14,6 +14,7 @@
 		- [3.3. 测试案例一：HDD 存储](#33-测试案例一hdd-存储)
 		- [3.4. 测试案例二：SSD 存储](#34-测试案例二ssd-存储)
 		- [3.5. 中高频多因子库存储的最佳实践：SSD vs HDD](#35-中高频多因子库存储的最佳实践ssd-vs-hdd)
+	- [附录](#附录)
 
 ## 1. 概述
 
@@ -476,3 +477,7 @@ def singleModelDeleteFactor(dbname,tbname,start_date,end_date,delete_factor){
 同时，该存储方案无论在 HDD 硬盘或 SSD 硬盘中，都能保持稳定的性能，查询场景性能优于宽表模式，因子运维场景下优势更加明显，各项指标均达到秒级，仅在数据写入环节的性能略逊于宽表模式。
 
 因此，在中高频多因子库的存储方案选择中，我们更推荐用户采用合理设计存储模型的窄表模式。
+
+## 附录
+
+[10分钟级因子存储解决方案](script/best_practices_for_multi_factor/Ten_minutes_factor_storage_Solution.dos)
