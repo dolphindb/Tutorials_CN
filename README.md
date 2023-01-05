@@ -163,4 +163,5 @@
     - [从 Kdb+ 到 DolphinDB](kdb_to_dolphindb.md)
     - [从 SQL Server 迁移数据到 DolphinDB](SQLServer_to_DolphinDB.md)
     - [从 InfluxDB 迁移数据到 DolphinDB](Migrate_data_from_InfluxDB_to_DolphinDB.md)
+    - [从 Redshift 迁移数据到 DolphinDB](Migrate_data_from_Redshift_to_DolphinDB.md)
 

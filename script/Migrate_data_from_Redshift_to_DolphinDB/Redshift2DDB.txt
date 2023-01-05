@@ -1,0 +1,19 @@
+login("admin", "123456")
+//在DolphinDB中根据RedShift的数据创建分布式表
+db=database("dfs://redshift",HASH,[INT,10]);
+dt=table(300000000:0,["channelno","applseqnum","mdstreamid","bidapplseqnum","offerapplseqnum","securityid","securityidsource","lastpx","lastqty","exectype","transacttime","localtime","seqno","transactiondate"],[INT,INT,SYMBOL,INT,INT,SYMBOL,SYMBOL,DOUBLE,DOUBLE,INT,TIME,TIME,INT,DATE]);
+pt=createPartitionedTable(db,dt,"dfstable","channelno");
+
+//加载插件
+loadPlugin("./plugins/odbc/PluginODBC.txt")
+
+//连接RS数据库
+conn = odbc::connect("Driver={Amazon Redshift (x64)}; Server=ddb-redshift-test.cpsycpmgsvcy.us-west-2.redshift.amazonaws.com; Database=ddb-test;User=ddbadmin;Password=DolphinDB123;")
+
+//查询数据并插入DolphinDB
+odbc::query(conn, "select * from trades_sz",pt)
+
+//验证查询的结果
+select top 10 * from pt
+
+
