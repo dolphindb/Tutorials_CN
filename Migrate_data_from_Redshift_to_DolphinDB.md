@@ -145,7 +145,7 @@ Ubuntu 选择 Linux 操作系统 64 位 (.deb)，CentOS 选择 Linux 操作系�
 
 ![](images/Migrate_data_from_Redshift_to_DolphinDB/3-1.png)
 
-1. 安装 ODBC 驱动
+2. 安装 ODBC 驱动
 
 在终端输入以下语句进行安装
 
