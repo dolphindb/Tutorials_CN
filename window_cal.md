@@ -1,56 +1,53 @@
 # DolphinDB窗口计算综述
 
-在时序数据的处理中经常需要使用窗口计算。在DolphinDB中，窗口计算不仅仅应用于全量的历史数据计算，还可以应用于增量的流计算。窗口函数既可应用于SQL（处理表中的列），也可应用于面板数据（处理矩阵中的列）。DolphinDB对于窗口计算进行了精心优化，与其它系统相比，拥有显著的性能优势。除此之外，DolphinDB的窗口函数使用上更加灵活，不仅内置的或自定义的vector函数都可用于窗口计算，而且可以多个函数嵌套使用。
+在时序数据的处理中经常需要使用窗口计算。在DolphinDB中，窗口计算不仅仅应用于全量的历史数据计算，还可以应用于增量的流计算。窗口函数既可应用于SQL（处理表中的列），也可应用于面板数据（处理矩阵中的列）。DolphinDB对于窗口计算进行了精心优化，与其它系统相比，拥有显著的性能优势。除此之外，DolphinDB的窗口函数使用上更加灵活，不仅内置的或自定义的向量函数都可用于窗口计算，而且可以多个函数嵌套使用。
 
 本篇将系统的介绍DolphinDB的窗口计算，从概念划分、应用场景、指标计算等角度，帮助用户快速掌握和运用DolphinDB强大的窗口计算功能。
 
-本篇所有代码支持DolphinDB 1.30.15，2.00.3及以上版本。
+DolphinDB 1.30.15，2.00.3及以上版本支持本篇所有代码。此外,1.30.7，2.00.0以上版本支持绝大部分代码，细节部分会在小节内部详细说明。
 
-1.30.7，2.00.0以上版本支持绝大部分代码，细节部分会在小节内部详细说明。
-
-- [1. 窗口的概念及分类](#1-%E7%AA%97%E5%8F%A3%E7%9A%84%E6%A6%82%E5%BF%B5%E5%8F%8A%E5%88%86%E7%B1%BB)
-  - [1.1 滚动窗口](#11-%E6%BB%9A%E5%8A%A8%E7%AA%97%E5%8F%A3)
-  - [1.2 滑动窗口](#12-%E6%BB%91%E5%8A%A8%E7%AA%97%E5%8F%A3)
-  - [1.3 累计窗口](#13-%E7%B4%AF%E8%AE%A1%E7%AA%97%E5%8F%A3)
-  - [1.4 不定长窗口](#14-%E4%B8%8D%E5%AE%9A%E9%95%BF%E7%AA%97%E5%8F%A3)
-    - [1.4.1 会话窗口](#141-%E4%BC%9A%E8%AF%9D%E7%AA%97%E5%8F%A3)
-    - [1.4.2 segment窗口](#142-segment%E7%AA%97%E5%8F%A3)
-- [2. SQL中的窗口计算以及窗口连接计算](#2-sql%E4%B8%AD%E7%9A%84%E7%AA%97%E5%8F%A3%E8%AE%A1%E7%AE%97%E4%BB%A5%E5%8F%8A%E7%AA%97%E5%8F%A3%E8%BF%9E%E6%8E%A5%E8%AE%A1%E7%AE%97)
-  - [2.1 SQL中的窗口计算](#21-sql%E4%B8%AD%E7%9A%84%E7%AA%97%E5%8F%A3%E8%AE%A1%E7%AE%97)
-    - [2.1.1 滚动窗口](#211-%E6%BB%9A%E5%8A%A8%E7%AA%97%E5%8F%A3)
-      - [2.1.1.1 时间维度的滚动窗口](#2111-%E6%97%B6%E9%97%B4%E7%BB%B4%E5%BA%A6%E7%9A%84%E6%BB%9A%E5%8A%A8%E7%AA%97%E5%8F%A3)
-      - [2.1.1.2 记录数维度的滚动窗口](#2112-%E8%AE%B0%E5%BD%95%E6%95%B0%E7%BB%B4%E5%BA%A6%E7%9A%84%E6%BB%9A%E5%8A%A8%E7%AA%97%E5%8F%A3)
-    - [2.1.2 滑动窗口](#212-%E6%BB%91%E5%8A%A8%E7%AA%97%E5%8F%A3)
-      - [2.1.2.1 步长为1行，窗口长度为n行](#2121-%E6%AD%A5%E9%95%BF%E4%B8%BA1%E8%A1%8C%E7%AA%97%E5%8F%A3%E9%95%BF%E5%BA%A6%E4%B8%BAn%E8%A1%8C)
-      - [2.1.2.2 步长为1行，窗口为指定时间长度](#2122-%E6%AD%A5%E9%95%BF%E4%B8%BA1%E8%A1%8C%E7%AA%97%E5%8F%A3%E4%B8%BA%E6%8C%87%E5%AE%9A%E6%97%B6%E9%97%B4%E9%95%BF%E5%BA%A6)
-      - [2.1.2.3 步长为时间长度，窗口为n个步长时间](#2123-%E6%AD%A5%E9%95%BF%E4%B8%BA%E6%97%B6%E9%97%B4%E9%95%BF%E5%BA%A6%E7%AA%97%E5%8F%A3%E4%B8%BAn%E4%B8%AA%E6%AD%A5%E9%95%BF%E6%97%B6%E9%97%B4)
-      - [2.1.2.4 步长为n行，窗口为k*n行](#2124-%E6%AD%A5%E9%95%BF%E4%B8%BAn%E8%A1%8C%E7%AA%97%E5%8F%A3%E4%B8%BAkn%E8%A1%8C)
-    - [2.1.3 累计窗口](#213-%E7%B4%AF%E8%AE%A1%E7%AA%97%E5%8F%A3)
-      - [2.1.3.1 步长为1行](#2131-%E6%AD%A5%E9%95%BF%E4%B8%BA1%E8%A1%8C)
-      - [2.1.3.2 步长为指定时间长度](#2132-%E6%AD%A5%E9%95%BF%E4%B8%BA%E6%8C%87%E5%AE%9A%E6%97%B6%E9%97%B4%E9%95%BF%E5%BA%A6)
-    - [2.1.4 segment窗口](#214-segment%E7%AA%97%E5%8F%A3)
-  - [2.2 SQL中的窗口连接计算](#22-sql%E4%B8%AD%E7%9A%84%E7%AA%97%E5%8F%A3%E8%BF%9E%E6%8E%A5%E8%AE%A1%E7%AE%97)
-- [3.面板数据使用窗口计算](#3%E9%9D%A2%E6%9D%BF%E6%95%B0%E6%8D%AE%E4%BD%BF%E7%94%A8%E7%AA%97%E5%8F%A3%E8%AE%A1%E7%AE%97)
-  - [3.1 面板数据的滑动窗口计算](#31-%E9%9D%A2%E6%9D%BF%E6%95%B0%E6%8D%AE%E7%9A%84%E6%BB%91%E5%8A%A8%E7%AA%97%E5%8F%A3%E8%AE%A1%E7%AE%97)
-    - [3.1.1 步长为1行，窗口为n行](#311-%E6%AD%A5%E9%95%BF%E4%B8%BA1%E8%A1%8C%E7%AA%97%E5%8F%A3%E4%B8%BAn%E8%A1%8C)
-    - [3.1.2 步长为1行，窗口为指定时间](#312-%E6%AD%A5%E9%95%BF%E4%B8%BA1%E8%A1%8C%E7%AA%97%E5%8F%A3%E4%B8%BA%E6%8C%87%E5%AE%9A%E6%97%B6%E9%97%B4)
-  - [3.2 面板数据的累计窗口计算](#32-%E9%9D%A2%E6%9D%BF%E6%95%B0%E6%8D%AE%E7%9A%84%E7%B4%AF%E8%AE%A1%E7%AA%97%E5%8F%A3%E8%AE%A1%E7%AE%97)
-  <!-- - [3.3 面板数据的聚合窗口计算](#33-%E9%9D%A2%E6%9D%BF%E6%95%B0%E6%8D%AE%E7%9A%84%E8%81%9A%E5%90%88%E7%AA%97%E5%8F%A3%E8%AE%A1%E7%AE%97) -->
-- [4.流式数据的窗口计算](#4%E6%B5%81%E5%BC%8F%E6%95%B0%E6%8D%AE%E7%9A%84%E7%AA%97%E5%8F%A3%E8%AE%A1%E7%AE%97)
-  - [4.1 滚动窗口在流计算中的应用](#41-%E6%BB%9A%E5%8A%A8%E7%AA%97%E5%8F%A3%E5%9C%A8%E6%B5%81%E8%AE%A1%E7%AE%97%E4%B8%AD%E7%9A%84%E5%BA%94%E7%94%A8)
-  - [4.2 滑动、累计窗口在流计算中的应用](#42-%E6%BB%91%E5%8A%A8%E7%B4%AF%E8%AE%A1%E7%AA%97%E5%8F%A3%E5%9C%A8%E6%B5%81%E8%AE%A1%E7%AE%97%E4%B8%AD%E7%9A%84%E5%BA%94%E7%94%A8)
-  - [4.3 会话窗口引擎](#43-%E4%BC%9A%E8%AF%9D%E7%AA%97%E5%8F%A3%E5%BC%95%E6%93%8E)
-- [5.窗口计算的空值处理规则](#5%E7%AA%97%E5%8F%A3%E8%AE%A1%E7%AE%97%E7%9A%84%E7%A9%BA%E5%80%BC%E5%A4%84%E7%90%86%E8%A7%84%E5%88%99)
-  - [5.1 moving，m系列函数，tm系列函数以及cum系列函数的空值处理](#51-movingm%E7%B3%BB%E5%88%97%E5%87%BD%E6%95%B0tm%E7%B3%BB%E5%88%97%E5%87%BD%E6%95%B0%E4%BB%A5%E5%8F%8Acum%E7%B3%BB%E5%88%97%E5%87%BD%E6%95%B0%E7%9A%84%E7%A9%BA%E5%80%BC%E5%A4%84%E7%90%86)
-  - [5.2 rolling的空值处理](#52-rolling%E7%9A%84%E7%A9%BA%E5%80%BC%E5%A4%84%E7%90%86)
-- [6. 常用指标的计算复杂度](#6-%E5%B8%B8%E7%94%A8%E6%8C%87%E6%A0%87%E7%9A%84%E8%AE%A1%E7%AE%97%E5%A4%8D%E6%9D%82%E5%BA%A6)
-- [7. 涉及到窗口计算的函数](#7-%E6%B6%89%E5%8F%8A%E5%88%B0%E7%AA%97%E5%8F%A3%E8%AE%A1%E7%AE%97%E7%9A%84%E5%87%BD%E6%95%B0)
-- [8. 总结](https://dolphindb.net/dolphindb/tutorials_cn/-/blob/window/window_cal.md#8-%E6%80%BB%E7%BB%93)
-
+- [DolphinDB窗口计算综述](#dolphindb窗口计算综述)
+  - [1. 窗口的概念及分类](#1-窗口的概念及分类)
+    - [1.1 滚动窗口](#11-滚动窗口)
+    - [1.2 滑动窗口](#12-滑动窗口)
+    - [1.3 累计窗口](#13-累计窗口)
+    - [1.4 不定长窗口](#14-不定长窗口)
+      - [1.4.1 会话窗口](#141-会话窗口)
+      - [1.4.2 segment窗口](#142-segment窗口)
+  - [2. SQL中的窗口计算以及窗口连接计算](#2-sql中的窗口计算以及窗口连接计算)
+    - [2.1 SQL中的窗口计算](#21-sql中的窗口计算)
+      - [2.1.1 滚动窗口](#211-滚动窗口)
+        - [2.1.1.1 时间维度的滚动窗口](#2111-时间维度的滚动窗口)
+        - [2.1.1.2 记录数维度的滚动窗口](#2112-记录数维度的滚动窗口)
+      - [2.1.2 滑动窗口](#212-滑动窗口)
+        - [2.1.2.1 步长为1行，窗口长度为n行](#2121-步长为1行窗口长度为n行)
+        - [2.1.2.2 步长为1行，窗口为指定时间长度](#2122-步长为1行窗口为指定时间长度)
+        - [2.1.2.3 步长为时间长度，窗口为n个步长时间](#2123-步长为时间长度窗口为n个步长时间)
+        - [2.1.2.4 步长为n行，窗口为k\*n行](#2124-步长为n行窗口为kn行)
+      - [2.1.3 累计窗口](#213-累计窗口)
+        - [2.1.3.1 步长为1行](#2131-步长为1行)
+        - [2.1.3.2 步长为指定时间长度](#2132-步长为指定时间长度)
+      - [2.1.4 segment窗口](#214-segment窗口)
+    - [2.2 SQL中的窗口连接计算](#22-sql中的窗口连接计算)
+  - [3.面板数据使用窗口计算](#3面板数据使用窗口计算)
+    - [3.1 面板数据的滑动窗口计算](#31-面板数据的滑动窗口计算)
+      - [3.1.1 步长为1行，窗口为n行](#311-步长为1行窗口为n行)
+      - [3.1.2 步长为1行，窗口为指定时间](#312-步长为1行窗口为指定时间)
+    - [3.2 面板数据的累计窗口计算](#32-面板数据的累计窗口计算)
+  - [4.流式数据的窗口计算](#4流式数据的窗口计算)
+    - [4.1 滚动窗口在流计算中的应用](#41-滚动窗口在流计算中的应用)
+    - [4.2 滑动、累计窗口在流计算中的应用](#42-滑动累计窗口在流计算中的应用)
+    - [4.3 会话窗口引擎](#43-会话窗口引擎)
+  - [5.窗口计算的空值处理规则](#5窗口计算的空值处理规则)
+    - [5.1 moving，m系列函数，tm系列函数以及cum系列函数的空值处理](#51-movingm系列函数tm系列函数以及cum系列函数的空值处理)
+    - [5.2 rolling的空值处理](#52-rolling的空值处理)
+  - [6. 常用指标的计算复杂度](#6-常用指标的计算复杂度)
+  - [7. 涉及到窗口计算的函数](#7-涉及到窗口计算的函数)
+  - [8. 总结](#8-总结)
 
 ## 1. 窗口的概念及分类
 
-DolphinDB内有四种窗口，分别是：滚动窗口、滑动窗口、累计窗口和不定长窗口（包括会话窗口和segment window）。
+DolphinDB内有四种窗口，分别是：聚合窗口（滚动窗口）、滑动窗口、累计窗口和不定长窗口（包括会话窗口和segment window）。
 
 在DolphinDB中，窗口的度量标准有两种：数据行数和时间。
 为了方便理解，可以参考下图：
@@ -135,7 +132,7 @@ segment窗口是根据给定的数据来切分窗口，连续的相同元素为�
 
 ## 2. SQL中的窗口计算以及窗口连接计算
 
-SQL中的窗口计算一般涉及滚动窗口，滑动窗口，累计窗口以及segment窗口。DolphinDB中也有涉及窗口计算的window join窗口连接。本章将对上述几个窗口计算一一介绍。
+SQL中的窗口计算一般涉及滚动窗口，滑动窗口，累计窗口以及segment窗口。DolphinDB中也有涉及窗口计算的window join窗口连接。本章将对上述几个窗口计算逐一介绍。
 
 ### 2.1 SQL中的窗口计算
 
@@ -266,7 +263,13 @@ last_time               sym vol_100_sum
 
 ##### 2.1.2.1 步长为1行，窗口长度为n行
 
-此类情况可使用m系列函数，`moving`函数，或者`rolling`。下面以[````msum````](https://www.dolphindb.cn/cn/help/130/FunctionsandCommands/FunctionReferences/m/msum.html)为例，滑动计算窗口长度为5行的vol值之和。
+此类情况可使用m系列函数，`moving`函数，或者`rolling`。
+
+从1.30.16/2.00.4版本开始，亦可使用 [`window`](https://www.dolphindb.cn/cn/help/200/Functionalprogramming/TemplateFunctions/window.html) 函数。`window` 函数与 `moving` 函数类似，均为高阶函数，不同的是，`window` 函数更为灵活，不同于 `moving` 函数的窗口右边界是固定的， `window` 函数的左右边界均可自由设定。
+
+下面以[````msum````](https://www.dolphindb.cn/cn/help/130/FunctionsandCommands/FunctionReferences/m/msum.html)为例，滑动计算窗口长度为5行的vol值之和。
+
+
 
 ```
 t=table(2021.11.01T10:00:00 + 0 1 2 5 6 9 10 17 18 30 as time, 1..10 as vol)
@@ -307,7 +310,8 @@ time                sym vol msum_vol
 2021.11.01T10:00:30 B   20  90 
  ```
 
-m系列函数是经过优化的窗口函数，如果想要使用自定义函数做窗口计算，DolphinDB支持在```moving```函数和```rolling```函数中使用自定义聚合函数。下面以```moving```嵌套自定义聚合函数为例：
+m系列函数是经过优化的窗口函数，如果想要使用自定义函数做窗口计算，DolphinDB支持在 `moving` 函数、`window` 函数和 `rolling` 函数中使用自定义聚合函数。下面以```moving```嵌套自定义聚合函数为例：
+
 以下的行情数据有四列(代码，日期，close和volume)，按照代码分组，组内按日期排序。设定窗口大小为20，在窗口期内按照volume排序，取volume最大的五条数据的平均close的计算。
 
 ```
@@ -359,7 +363,11 @@ timer alpha98DDBSql = alpha98SQL(input)
 
 ##### 2.1.2.2 步长为1行，窗口为指定时间长度
 
-此类情况可使用m系列或者tm系列函数。下面以```tmsum```为例，计算滑动窗口长度为5秒的vol值之和。
+此类情况可使用m系列或者tm系列函数。
+
+从1.30.16/2.00.4版本开始，亦可使用 [`twindow`](https://www.dolphindb.cn/cn/help/200/Functionalprogramming/TemplateFunctions/twindow.html) 函数。`twindow` 函数与 `tmoving` 函数类似，均为高阶函数，不同的是，`twindow` 函数更为灵活，不同于 `tmoving` 函数的窗口右边界是固定的， `twindow` 函数的左右边界均可自由设定。
+
+下面以```tmsum```为例，计算滑动窗口长度为5秒的vol值之和。
 
 ```
 //1.30.14，2.00.2以上版本支持```tmsum```函数。
@@ -523,7 +531,7 @@ vol order_type cumsum_vol
 
 ### 2.2 SQL中的窗口连接计算
 
-在DolphinDB中，除了常规的窗口计算之外，还支持窗口连接计算。即在表连接的同时，进行窗口计算。这里用到的函数有```wj```和```pwj```。
+在DolphinDB中，除了常规的窗口计算之外，还支持窗口连接计算。即在表连接的同时，进行窗口计算。这里用到的函数有 ```wj``` 和 ```pwj``` 。
 
 window join在表连接的同时对右表进行步长为1行，窗口为时间长度的窗口计算。因为窗口的左右边界均可以指定，也可以为负数，所以也可以看作非常灵活的滑动窗口。详细用法参见用户手册[`window join`](https://www.dolphindb.cn/cn/help/130/SQLStatements/TableJoiners/windowjoin.html?highlight=window)。
 
@@ -569,13 +577,44 @@ sym time     bid   offer volume avg_bid
 2   09:56:10 20.95 21.05 600    20.65
 ```
 
+从1.30.16/2.00.4版本开始，亦可使用 [`window`](https://www.dolphindb.cn/cn/help/200/Functionalprogramming/TemplateFunctions/window.html) 函数以及 [`twindow`](https://www.dolphindb.cn/cn/help/200/Functionalprogramming/TemplateFunctions/twindow.html) 函数实现单表内部的灵活窗口计算。
+
+以上 `wj` 的代码也可以用 `twindow` 或 `window` 实现：
+
+```
+t2 = table(take(1,10) join take(2,10) as sym, take(09:56:00+1..10,20) as time, (10+(1..10)\10-0.05) join (20+(1..10)\10-0.05) as bid, (10+(1..10)\10+0.05) join (20+(1..10)\10+0.05) as offer, take(100 300 800 200 600, 20) as volume);
+
+//twindow
+select *, twindow(avg,t2.bid,t2.time,-6s:1s) from t2 context by sym
+
+//window
+select *, window(avg, t2.time.indexedSeries(t2.bid), -6s:1s) from t2 context by sym
+
+# output
+
+sym time     bid   offer volume avg_bid           
+--- -------- ---- ------ ------ --------
+1   09:56:01 10.05 10.15 100    10.1
+...  
+1   09:56:08 10.75 10.85 800    10.5              
+1   09:56:09 10.85 10.95 200    10.6
+1   09:56:10 10.95 11.05 600    10.65             
+2   09:56:01 20.05 20.15 100    20.1
+2   09:56:02 20.15 20.25 300    20.15
+...
+2   09:56:08 20.75 20.85 800    20.5              
+2   09:56:09 20.85 20.9  200    20.6
+2   09:56:10 20.95 21.05 600    20.65
+```
+
+
 ## 3.面板数据使用窗口计算
 
 在DolphinDB中，面板数据可以是矩阵也可以是表。表的窗口计算在前一章节已经描述，所以在这一章节中着重讨论矩阵的计算。
 
 ### 3.1 面板数据的滑动窗口计算
 
-滑动窗口m系列函数也可以适用于面板数据，即在矩阵每列内进行计算，返回一个与输入矩阵维度相同的矩阵。如果滑动维度为时间，则要先使用[````setIndexedMatrix!````](https://www.dolphindb.cn/cn/help/130/FunctionsandCommands/FunctionReferences/s/setIndexedMatrix!.html?highlight=setindex)函数将矩阵的行与列标签设为索引。这里需要注意的是，行与列标签均须严格递增。在矩阵计算中，IndexedMatrix可以帮助对齐行与列的不同标签，非常实用。通常我们会使用```pivot by```语句配合```exec```或者```panel```函数将竖表转化为宽表（矩阵），因为这个操作会将矩阵的行与列按递增方式排列，方便我们设置索引矩阵以及后期的计算。
+滑动窗口m系列函数以及 `window` 函数也可以适用于面板数据，即在矩阵每列内进行计算，返回一个与输入矩阵维度相同的矩阵。如果滑动维度为时间，则要先使用[````setIndexedMatrix!````](https://www.dolphindb.cn/cn/help/130/FunctionsandCommands/FunctionReferences/s/setIndexedMatrix!.html?highlight=setindex)函数将矩阵的行与列标签设为索引。这里需要注意的是，行与列标签均须严格递增。在矩阵计算中，IndexedMatrix可以帮助对齐行与列的不同标签，非常实用。通常我们会使用```pivot by```语句配合```exec```或者```panel```函数将竖表转化为宽表（矩阵），因为这个操作会将矩阵的行与列按递增方式排列，方便我们设置索引矩阵以及后期的计算。
 
 首先我们新建一个矩阵，并将其设为IndexedMatrix：
 
@@ -942,9 +981,9 @@ rolling(sum,t.vol,3,2)
 常用的m系列，tm系列函数都经过了优化，其时间复杂度为O(n)，即每一次计算结果只会把位置0去掉，加入新的观察值。
 而mrank与其他函数稍许不同，计算速度会比其他的慢，原因是其时间复杂度为O(mn)，与其窗口大小有关，窗口越大，复杂度越高。即每一次都会将结果重置。
 
-moving，tmoving，rolling这些高阶函数的复杂度与其参数内的func有关，是没有做过优化的。所以每一次滑动都是整个窗口对于func函数进行计算，而非m系列，tm系列函数的增量计算。
+moving，tmoving，rolling, window, twindow 这些高阶函数的复杂度与其参数内的func有关，是没有做过优化的。所以每一次滑动都是整个窗口对于func函数进行计算，而非m系列，tm系列函数的增量计算。
 
-故相比于moving, tmoving, rolling, m系列和tm系列函数对于相同的计算功能会有更好的性能。
+故相比于moving, tmoving, rolling, window 和 twindow 这些高阶函数， m系列和tm系列函数对于相同的计算功能会有更好的性能。
 
 一个简单的例子：
 
@@ -967,9 +1006,10 @@ Time elapsed: 3.501ms
 
 ## 7. 涉及到窗口计算的函数
 
-| 聚合函数   | m系列     | ReactiveStateEngine 是否支持 | tm系列       | ReactiveStateEngine 是否支持 | cum系列           | ReactiveStateEngine 是否支持 |
-| :--------- | ------------ | :--------------------------: | ------------ | :--------------------------: | ----------------- | :--------------------------: |
+| 聚合函数   | m系列           | ReactiveStateEngine 是否支持 | tm系列       | ReactiveStateEngine 是否支持 | cum系列           | ReactiveStateEngine 是否支持 |
+| :--------- | :-------------- | :--------------------------: | :----------- | :--------------------------: | :---------------- | :--------------------------: |
 |            | moving          |              √               | tmoving      |              √               |                   |                              |
+|            | window          |     可用WndowJoinEngine      | twindow      |     可用WndowJoinEngine      |                   |                              |
 | avg        | mavg            |              √               | tmavg        |              √               | cumavg            |              √               |
 | sum        | msum            |              √               | tmsum        |              √               | cumsum            |              √               |
 | beta       | mbeta           |              √               | tmbeta       |              √               | cumbeta           |              √               |
@@ -994,6 +1034,8 @@ Time elapsed: 3.501ms
 | rank       | mrank           |              √               | tmrank       |              √               | cumrank           |                              |
 | wsum       | mwsum           |              √               | tmwsum       |              √               | cumwsum           |              √               |
 | wavg       | mwavg           |              √               | tmwavg       |              √               | cumwavg           |              √               |
+| ifirstNot       | mifirstNot           |                             |              |                              |                   |                              |
+| ilastNot       | milastNot           |                             |              |                              |                   |                              |
 | firstNot   |                 |                              |              |                              | cumfirstNot       |              √               |
 | lastNot    |                 |                              |              |                              | cumlastNot        |              √               |
 | mad        | mmad            |              √               |              |                              |                   |                              |
@@ -1011,24 +1053,8 @@ Time elapsed: 3.501ms
 |            | wilder          |              √               |              |                              |                   |                              |
 |            | gema            |              √               |              |                              |                   |                              |
 |            | linearTimeTrend |              √               |              |                              |                   |                              |
-|mse         | mmse            |                              |              |                              |                   |                              |
+| mse        | mmse            |                              |              |                              |                   |                              |
 |            |                 |                              |              |                              | cumPositiveStreak |                              |
-
-<!-- m系列：
-> mavg, mbeta, mcorr, mcount, mcovar, mimax, mimin, mkurtosis,
-> mmax, mmed, mmin, mmse, mpercentile, mprod, mrank, mslr,
-> mskew, mstd, mstdp, msum, mwavg, mwsum, mvar, mvarp,
-> ema, kama, sma, wma, dema, tema, trima, t3, ma, wilder, gema
-
-tm系列：
-> tmavg, tmbeta, tmcorr, tmcount, tmcovar, tmfirst, tmkurtosis, tmlast, tmmax,
-> tmmed, tmmin, tmove, tmpercentile, tmprod, tmrank, tmstd, tmstdp, tmskew, tmsum,
-> tmvar, tmvarp, tmwavg, tmwsum
-
-cum系列：
-> cumavg, cumbeta, cumcorr, cumcount, cumcovar, cummax, cummed, cummin,
-> cumpercentile, cumPositiveStreak, cumprod, cumrank, cumsum, cumsum2, cumsum3,
-> cumsum4, cumstd, cumwavg, cumwsum, cumvar -->
 
 其他涉及窗口的函数：
 > deltas, ratios, interval, bar, dailyAlignedBar, coevent, createReactiveStateEngine,

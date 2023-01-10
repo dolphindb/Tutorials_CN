@@ -238,7 +238,7 @@ code      date       time         last volume value ask1  ask_size1 bid1  bid_si
 
 HDF5是一种高效的二进制数据文件格式，在数据分析领域广泛使用。DolphinDB支持导入HDF5格式数据文件。
 
-DolphinDB通过[HDF5插件](https://github.com/dolphindb/DolphinDBPlugin/blob/release200/hdf5/README_CN.md)来访问HDF5文件，插件提供了以下方法：
+DolphinDB通过[HDF5插件](https://gitee.com/dolphindb/DolphinDBPlugin/blob/release200/hdf5)来访问HDF5文件，插件提供了以下方法：
 
 - hdf5::ls - 列出h5文件中所有 Group 和 Dataset 对象
 
@@ -258,7 +258,7 @@ DolphinDB 1.00.0版本之后，安装目录/server/plugins/hdf5已经包含HDF5�
 loadPlugin("plugins/hdf5/PluginHdf5.txt")
 ```
 
-若用户使用的是老版本，默认不包含此插件，可先从[HDF5插件](https://github.com/dolphindb/DolphinDBPlugin/tree/release200/hdf5)对应版本分支bin目录下载，再将插件部署到节点的plugins目录下。
+若用户使用的是老版本，默认不包含此插件，可先从[HDF5插件](https://gitee.com/dolphindb/DolphinDBPlugin/blob/release200/hdf5/README_CN.md)对应版本分支bin目录下载，再将插件部署到节点的plugins目录下。
 
 调用插件方法时需要在方法前面提供namespace，比如调用loadHDF5可以使用`hdf5::loadHDF5`。另一种写法是：
 
@@ -306,7 +306,7 @@ hdf5::loadHDF5Ex(db, "cycle", "tradingDay", dataFilePath,datasetName)
 
 DolphinDB支持ODBC接口连接第三方数据库，从其中直接将数据表读取成DolphinDB的内存数据表。
 
-DolphinDB官方提供[ODBC插件](https://github.com/dolphindb/DolphinDBPlugin/blob/release200/odbc)用于连接第三方数据源，使用该插件可以方便的从ODBC支持的数据库迁移数据至DolphinDB中。
+DolphinDB官方提供[ODBC插件](https://gitee.com/dolphindb/DolphinDBPlugin/blob/release200/odbc)用于连接第三方数据源，使用该插件可以方便的从ODBC支持的数据库迁移数据至DolphinDB中。
 
 ODBC插件提供了以下四个方法用于操作第三方数据源数据：
 
@@ -316,7 +316,7 @@ ODBC插件提供了以下四个方法用于操作第三方数据源数据：
 - odbc::execute - 在第三方数据库内执行给定的SQL语句，不返回结果。
 - odbc::append - 把DolphinDB中表的数据写入第三方数据库的表中。
 
-在使用ODBC插件之前，需要安装ODBC驱动程序，请参考[ODBC插件使用教程](https://github.com/dolphindb/DolphinDBPlugin/blob/release200/odbc/README_CN.md)。
+在使用ODBC插件之前，需要安装ODBC驱动程序，请参考[ODBC插件使用教程](https://gitee.com/dolphindb/DolphinDBPlugin/blob/release200/odbc/README_CN.md)。
 
 下面的例子使用ODBC插件连接以下SQL Server：
 
