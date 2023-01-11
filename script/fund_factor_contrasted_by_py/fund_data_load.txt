@@ -15,8 +15,8 @@ login("admin", "123456")
 /**
 modified location: csvPath、csvPath1
 */
-csvPath = "/datafile/nav.csv"
-csvPath1 = "/datafile/hs300.csv"
+csvPath = "datafile/nav.csv"
+csvPath1 = "datafile/hs300.csv"
 
 def readColumnsFromWideCSV(absoluteFilename){
         schema1 = extractTextSchema(absoluteFilename)
@@ -33,7 +33,8 @@ def readColumnsFromWideCSV(absoluteFilename){
 def readIndexedMatrixFromWideCSV(absoluteFilename){
         contracts = readColumnsFromWideCSV(absoluteFilename)
         dataZoneSchema = extractTextSchema(absoluteFilename, skipRows = 1)
-        update dataZoneSchema set type = "DOUBLE" where name != "col0"//所有行全部改成double
+        update dataZoneSchema set type = "DOUBLE" where name != "col0"//所有行除第一行外全部改成double
+        update dataZoneSchema set type = "DATE" where name = "col0"//所有行除第一行外全部改成DATE
         dataZoneWithIndexColumn = loadText(absoluteFilename, skipRows = 1, schema = dataZoneSchema)
         indexVector = exec col0 from dataZoneWithIndexColumn
         dataZoneWithoutIndex = dataZoneWithIndexColumn[:, 1:]
@@ -44,12 +45,13 @@ def readIndexedMatrixFromWideCSV(absoluteFilename){
 //data cleaning and transform
 allSymbols = readColumnsFromWideCSV(csvPath)$STRING
 dataMatrix = readIndexedMatrixFromWideCSV(csvPath)
-fundTable = table(dataMatrix.rowNames() as Tradedate, dataMatrix)
-result = fundTable.unpivot(`Tradedate, allSymbols).rename!(`Tradedate`fundNum`value)
+fundTable = table(dataMatrix.rowNames() as tradingDate, dataMatrix)
+result = fundTable.unpivot(`tradingdate, allSymbols).rename!(`tradingdate`fundNum`value)
 allSymbols1 = readColumnsFromWideCSV(csvPath1)$STRING
 dataMatrix1 = readIndexedMatrixFromWideCSV(csvPath1)
-fundTable1 = table(dataMatrix1.rowNames() as Tradedate, dataMatrix1)
-result1 = fundTable1.unpivot(`Tradedate, allSymbols1).rename!(`Tradedate`fundNum`value)
+fundTable1 = table(dataMatrix1.rowNames() as tradingDate, dataMatrix1)
+result1 = fundTable1.unpivot(`tradingdate, allSymbols1).rename!(`tradingdate`fundNum`value)
+result1
 //create database an table, then load data
 dbName = "dfs://fund_OLAP"
 dataDate = database(, VALUE, 2021.01.01..2021.12.31)
@@ -58,11 +60,11 @@ if(existsDatabase(dbName)){
 	dropDatabase(dbName)
 }
 db = database(dbName, COMPO, [dataDate, symbol])
-name = `Tradedate`fundNum`value
+name = `tradingDate`fundNum`value
 type = `DATE`SYMBOL`DOUBLE
 tbTemp = table(1:0, name, type)
 tbName1 = "fund_OLAP"
-db.createTable(tbTemp1, tbName)
+db.createTable(tbTemp, tbName1)
 loadTable(dbName, tbName1).append!(result)
 tbName2 = "fund_hs_OLAP"
 db.createTable(tbTemp, tbName2)

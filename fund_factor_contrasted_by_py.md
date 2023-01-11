@@ -1,6 +1,8 @@
 # 平均性能超 Python 10倍: 如何使用 DolphinDB 计算基金日频因子
 
-根据某个基金每日的净值数据计算得到的因子称作“基金日频因子”。基金日频因子能反映出基金的近况，是衡量基金收益、波动、风险等的重要指标。随着数据规模与日俱增，对大规模数量级的数据进行处理的需求日益旺盛，在计算的速度、准确性上对计算工具提出了更高的要求。本教程将为大家介绍如何基于 DolphinDB 计算多个基金的日频因子，并通过 Python 实现相同因子的计算，对比两者的计算性能。所用数据约220万条，均为与沪深300指数按日期对齐后的基金净值数据。结果表明在不同 CPU 核数下，DolphinDB 较 Python 均有明显的性能优势。
+根据某个基金每日的净值数据计算得到的因子称作“基金日频因子”。基金日频因子能反映出基金的近况，是衡量基金收益、波动、风险等的重要指标。随着数据规模与日俱增，对大规模数量级的数据进行处理的需求日益旺盛，在计算的速度、准确性上对计算工具提出了更高的要求。
+
+本教程将为大家介绍如何基于 DolphinDB 计算多个基金的日频因子，并通过 Python 实现相同因子的计算，对比两者的计算性能。所用数据约220万条，均为与沪深300指数按日期对齐后的基金净值数据。结果表明在不同 CPU 核数下，DolphinDB 较 Python 均有明显的性能优势。
 
 本教程包含如下内容：
 
@@ -10,13 +12,11 @@
   - [3. DolphinDB 中因子计算实现及性能测试](#3-dolphindb-中因子计算实现及性能测试)
     - [3.1 数据导入及概览](#31-数据导入及概览)
     - [3.2 数据处理](#32-数据处理)
-    - [3.3 因子计算](#33-因子计算)
+    - [3.3 性能测试](#33-性能测试)
     - [3.4 结果展示](#34-结果展示)
-  - [4. Python vs DolphinDB 性能对比](#4-python-vs-dolphindb-性能对比)
-    - [4.1 因子计算流程实现](#41-因子计算流程实现)
-    - [4.2 性能计算结果对比](#42-性能计算结果对比)
-    - [4.3 性能分析](#43-性能分析)
-  - [5. 总结](#5-总结)
+  - [4. Python 中因子计算实现及性能测试](#4-python-中因子计算实现及性能测试)
+  - [5. 性能计算结果对比分析](#5-性能计算结果对比分析)
+  - [6. 总结](#6-总结)
     - [附件](#附件)
 
 ## 1. 测试环境
@@ -43,7 +43,7 @@
 
 本教程选取了10个基金日频因子，涵盖基金评价体系的各个方面，作为性能测试的指标。其相关的背景含义、计算公式及在 DolphinDB 脚本和 Python 中的定义如下所示：
 
-> 注：下文提到的 `DailyValue` 指日净值，`DailyReturn` 指日收益率，`BeginningtValue` 指基金日净值序列中的第一个净值数据，`EndingValue` 指基金日净值序列中的最后一个净值数据。
+> 注：下文提到的 `DailyValue` 指日净值，`DailyReturn` 指日收益率，`BeginningValue` 指基金日净值序列中的第一个净值数据，`EndingValue` 指基金日净值序列中的最后一个净值数据。
 
 - **年化收益率**
 
@@ -310,7 +310,7 @@
   
     ​    公式：
   
-    <img src="https://latex.codecogs.com/svg.image?M=Mean=\frac{\sum_{i=1}^{k}DailyReturn_{k}}{k}"/>
+    <img src="https://latex.codecogs.com/svg.image?M=Mean=\frac{\sum_{i=1}^{k}DailyReturn_{i}}{k}"/>
   
     c. 计算每个片段的离差序列，即用每个片段的均值分别减该片段内的每个元素；
   
@@ -334,7 +334,7 @@
   
     ​    公式：
   
-    <img src="https://latex.codecogs.com/svg.image?AVS=\frac{\sum_{i=1}^{n}(\frac{R}{S})^n}{n}"/>
+    <img src="https://latex.codecogs.com/svg.image?AVS=\frac{\sum_{i=1}^{n}(\frac{R}{S})_{i}}{n}"/>
   
     g. 以划分的标准粒度为自变量，以对应的各片段元素的均值为因变量，计算回归方程，截距即为赫斯特指数；
   
@@ -389,21 +389,21 @@
 
 - **数据结构：**
 
-  本教程选取了2018.05.24 - 2021.05.27期间多只基金的日净值数据，总数据量为330多万条。以下是净值表在 DolphinDB 中的数据结构：
+  本教程选取了2018.05.24 - 2021.05.27期间3000多支基金的日净值数据，总数据量为330多万条。以下是净值表在 DolphinDB 中的数据结构：
 
-  | 字段名    | 字段含义   | 数据类型（DolphinDB） |
-  | --------- | ---------- | --------------------- |
-  | TradeDate | 交易日期   | DATE                  |
-  | fundNum   | 基金名称   | SYMBOL                |
-  | value     | 基金日净值 | DOUBLE                |
+  | 字段名      | 字段含义     | 数据类型（DolphinDB） |
+  | ----------- | ------------ | --------------------- |
+  | tradingDate | 交易日期     | DATE                  |
+  | fundNum     | 基金交易代码 | SYMBOL                |
+  | value       | 基金日净值   | DOUBLE                |
 
   同时，本教程选取了2018.05.24 - 2021.05.27期间沪深300指数的数据，共734条，用于和基金日净值数据作对齐操作。以下是指数表在 DolphinDB 中的数据结构：
 
-  | 字段名    | 字段含义                    | 数据类型（DolphinDB） |
-  | --------- | --------------------------- | --------------------- |
-  | TradeDate | 交易日期                    | DATE                  |
-  | fundNum   | 指数名称（此处均为沪深300） | SYMBOL                |
-  | value     | 沪深300收盘价格             | DOUBLE                |
+  | 字段名      | 字段含义                    | 数据类型（DolphinDB） |
+  | ----------- | --------------------------- | --------------------- |
+  | tradingDate | 交易日期                    | DATE                  |
+  | fundNum     | 指数名称（此处均为沪深300） | SYMBOL                |
+  | value       | 沪深300收盘价格             | DOUBLE                |
 
 - **数据导入：**
 
@@ -428,7 +428,8 @@
   def readIndexedMatrixFromWideCSV(absoluteFilename){
           contracts = readColumnsFromWideCSV(absoluteFilename)
           dataZoneSchema = extractTextSchema(absoluteFilename, skipRows = 1)
-          update dataZoneSchema set type = "DOUBLE" where name != "col0"//所有行全部改成double
+          update dataZoneSchema set type = "DOUBLE" where name != "col0"//所有行除第一行外全部改成double
+          update dataZoneSchema set type = "DATE" where name = "col0"//所有行除第一行外全部改成DATE
           dataZoneWithIndexColumn = loadText(absoluteFilename, skipRows = 1, schema = dataZoneSchema)
           indexVector = exec col0 from dataZoneWithIndexColumn
           dataZoneWithoutIndex = dataZoneWithIndexColumn[:, 1:]
@@ -444,14 +445,14 @@
   //基金日净值数据
   allSymbols = readColumnsFromWideCSV(csvPath)$STRING
   dataMatrix = readIndexedMatrixFromWideCSV(csvPath)
-  fundTable = table(dataMatrix.rowNames() as Tradedate, dataMatrix)
-  result = fundTable.unpivot(`Tradedate, allSymbols).rename!(`Tradedate`fundNum`value)
+  fundTable = table(dataMatrix.rowNames() as tradingdate, dataMatrix)
+  result = fundTable.unpivot(`tradingDate, allSymbols).rename!(`tradingdate`fundNum`value)
     
   //沪深300指数
   allSymbols1 = readColumnsFromWideCSV(csvPath1)$STRING
   dataMatrix1 = readIndexedMatrixFromWideCSV(csvPath1)
-  fundTable1 = table(dataMatrix1.rowNames() as Tradedate, dataMatrix1)
-  result1 = fundTable1.unpivot(`Tradedate, allSymbols1).rename!(`Tradedate`fundNum`value)
+  fundTable1 = table(dataMatrix1.rowNames() as tradingDate, dataMatrix1)
+  result1 = fundTable1.unpivot(`tradingDate, allSymbols1).rename!(`tradingdate`fundNum`value)
   ```
   
   最后，建立分布式数据库 `dfs://fund_OLAP` 和维度表 `fund_OLAP`, `fund_hs_OLAP`，并导入数据：
@@ -466,12 +467,12 @@
   }
   db = database(dbName, COMPO, [dataDate, symbol])
   //定义表结构
-  name = `Tradedate`fundNum`value
+  name = `tradingdate`fundNum`value
   type = `DATE`SYMBOL`DOUBLE
   tbTemp = table(1:0, name, type)
   //创建维度表 fund_OLAP
   tbName1 = "fund_OLAP"
-  db.createTable(tbTemp1, tbName)
+  db.createTable(tbTemp, tbName1)
   loadTable(dbName, tbName1).append!(result)
   //创建维度表 fund_hs_OLAP
   tbName2 = "fund_hs_OLAP"
@@ -504,43 +505,42 @@
 ```
 fund_OLAP=select * from loadTable("dfs://fund_OLAP", "fund_OLAP")
 fund_hs_OLAP=select * from loadTable("dfs://fund_OLAP", "fund_hs_OLAP")
-ajResult=select Tradedate, fundNum, value, fund_hs_OLAP.Tradedate as hsTradedate, fund_hs_OLAP.value as price from aj(fund_OLAP, fund_hs_OLAP, `Tradedate)
-result2=select Tradedate, fundNum, iif(isNull(value), ffill!(value), value) as value, price from ajResult where Tradedate == hsTradedate
+ajResult=select tradingDate, fundNum, value, fund_hs_OLAP.tradingDate as hstradingDate, fund_hs_OLAP.value as price from aj(fund_OLAP, fund_hs_OLAP, `tradingDate)
+result2=select tradingDate, fundNum, iif(isNull(value), ffill!(value), value) as value, price from ajResult where tradingDate == hstradingDate
 ```
 
 同时，计算多个基金的日收益率，进行赫斯特指数的计算：
 
 ```
 symList = exec distinct(fundNum) as fundNum from result2 order by fundNum
-portfolio = select fundNum as fundNum, (deltas(value)\prev(value)) as log, TradeDate as TradeDate from result2 where TradeDate in 2018.05.24..2021.05.27 and fundNum in symList
-m_log = exec log from portfolio pivot by TradeDate, fundNum
+portfolio = select fundNum as fundNum, (deltas(value)\prev(value)) as log, tradingDate as tradingDate from result2 where tradingDate in 2018.05.24..2021.05.27 and fundNum in symList
+m_log = exec log from portfolio pivot by tradingDate, fundNum
 mlog =  m_log[1:,]
 ```
 
 处理后的数据共220万条，结构如下：
 
-| 字段名    | 字段含义        | 数据类型（DolphinDB） |
-| --------- | --------------- | --------------------- |
-| TradeDate | 交易日期        | DATE                  |
-| fundNum   | 基金名称        | SYMBOL                |
-| value     | 基金日净值      | DOUBLE                |
-| price     | 沪深300收盘价格 | DOUBLE                |
-| log       | 基金日收益率    | DOUBLE                |
+| 字段名      | 字段含义        | 数据类型（DolphinDB） |
+| ----------- | --------------- | --------------------- |
+| tradingDate | 交易日期        | DATE                  |
+| fundNum     | 基金交易代码    | SYMBOL                |
+| value       | 基金日净值      | DOUBLE                |
+| price       | 沪深300收盘价格 | DOUBLE                |
+| log         | 基金日收益率    | DOUBLE                |
 
-### 3.3 因子计算
+### 3.3 性能测试
 
-本教程以提交后台作业的计算时间来反映 DolphinDB 性能。
+本节测试了DolphinDB的性能与任务量以及cpu核数的关系。
 
-为了对比在不同 CPU 核数下的性能，需要修改 `dolphindb.cfg` 文件中的 `workerNum` 参数，其配置值表示计算时所用到的 CPU 核数，更多 DolphinDB 相关配置信息可参考 [DolphinDB 单实例参数配置](https://dolphindb.cn/cn/help/DatabaseandDistributedComputing/Configuration/Thread.html)。
+- 任务量：修改提交作业的数量。
+- CPU 核数：修改 `dolphindb.cfg` 文件中的 [*workerNum* ](https://dolphindb.cn/cn/help/DatabaseandDistributedComputing/Configuration/Thread.html)参数，其配置值表示计算时所用到的CPU 核数。注意：每次参数修改后，需要重启 DolphinDB Server 才能生效。
 
-> 注意：每次参数修改后，需要重启 DolphinDB Server 才能生效。
+本教程以提交后台作业的计算时间来反映 DolphinDB 性能。完整脚本可参考附录：[基于 DolphinDB 的基金日频因子实现与性能测试](https://dolphindb1.atlassian.net/wiki/spaces/document/pages/523042851/draft+Python10+DolphinDB#)。
 
-- 计算9个因子（不包含赫斯特指数）的响应时间:
-
-  首先，定义计算9个因子的函数：
+- 在性能测试前，首先定义计算9个因子（不包含赫斯特指数）的函数：
 
   ```
-  def getFactor(result2, symList){
+  def getmetric(result2, symList){
   	Return = select fundNum, 
   	            getAnnualReturn(value) as annualReturn,
   	            getAnnualVolatility(value) as annualVolRat,
@@ -555,74 +555,27 @@ mlog =  m_log[1:,]
                where TradeDate in 2018.05.24..2021.05.27 and fundNum in symList group by fundNum
    }
   ```
-
-  其次，定义获取9个因子计算和数据操作的时间的函数，并提交后台作业：
-
-  ```
-  def parJob1(){
-  	timer{fund_OLAP=select * from loadTable("dfs://fund_OLAP", "fund_OLAP")
-  		  fund_hs_OLAP=select * from loadTable("dfs://fund_OLAP", "fund_hs_OLAP")
-  		  ajResult = select Tradedate, fundNum, value, fund_hs_OLAP.Tradedate as hsTradedate, fund_hs_OLAP.value as price from aj(fund_OLAP, fund_hs_OLAP, `Tradedate)
-  		  result2 = select Tradedate, fundNum, iif(isNull(value), ffill!(value), value) as value,price from ajResult where Tradedate == hsTradedate
-  		  symList = exec distinct(fundNum) as fundNum from result2 order by fundNum
-  		  symList2 = symList.cut(250)//此处，将任务切分，按每次250个不同基金数据进行计算
-  	      ploop(getFactor{result2}, symList2)}
-  }//定义获取9个因子计算和数据操作的时间的函数
-  /**
-   * 提交1个 job（单用户）
-   */
-  submitJob("parallJob1", "parallJob_single_nine", parJob1)
   
-  /**
-   * 提交5个 job（多用户）
-   */
-  for(i in 0..4){
-  	submitJob("parallJob5", "parallJob_multi_nine", parJob1)
-  }
-  ```
+  其中，部分运算结果如下图所示:
 
-  最后，分别计算两种情形下的响应时间：
+  ![计算结果1](images/fund_factor_contrasted_by_py/calculating_outcome.png)
 
-  ```
-  //获取单个用户的运行时间
-  select max(endTime) - min(startTime) from getRecentJobs() where jobDesc = "parallJob_single_nine"
-  //获取多个用户的运行时间
-  select max(endTime) - min(startTime) from getRecentJobs() where jobDesc = "parallJob_multi_nine"
-  ```
-
+  > 注：该计算流程执行前需要预先运行之前预定义过的 DolphinDB 实现的因子函数。
+  
 - 计算10个因子的响应时间:
 
-  首先，定义计算9个因子的函数：
+  定义获取10个因子计算和数据操作的时间的函数，并提交 job：
 
   ```
-  def getFactor(result2, symList){
-  	Return = select fundNum, 
-  	            getAnnualReturn(value) as annualReturn,
-  	            getAnnualVolatility(value) as annualVolRat,
-  	            getAnnualSkew(value) as skewValue,
-  	            getAnnualKur(value) as kurValue,
-  	            getSharp(value) as sharpValue,
-  	            getMaxDrawdown(value) as MaxDrawdown,
-  	            getDrawdownRatio(value) as DrawdownRatio,
-  	            getBeta(value, price) as Beta,
-  	            getAlpha(value, price) as Alpha	
-               from result2
-               where TradeDate in 2018.05.24..2021.05.27 and fundNum in symList group by fundNum
-   }
-  ```
-  
-  其次，定义获取10个因子计算和数据操作的时间的函数，并提交 job：
-  
-  ```
-    def parJob2(){
+  def parJob(){
     	timer{fund_OLAP=select * from loadTable("dfs://fund_OLAP", "fund_OLAP")
     		  fund_hs_OLAP=select * from loadTable("dfs://fund_OLAP", "fund_hs_OLAP")
-    		  ajResult = select Tradedate, fundNum, value, fund_hs_OLAP.Tradedate as hsTradedate, fund_hs_OLAP.value as price from aj(fund_OLAP, fund_hs_OLAP, `Tradedate)
-    		  result2 = select Tradedate, fundNum, iif(isNull(value), ffill!(value), value) as value,price from ajResult where Tradedate == hsTradedate
+    		  ajResult = select tradingdate, fundNum, value, fund_hs_OLAP.tradingDate as hstradingDate, fund_hs_OLAP.value as price from aj(fund_OLAP, fund_hs_OLAP, `tradingDate)
+    		  result2 = select tradingdate, fundNum, iif(isNull(value), ffill!(value), value) as value,price from ajResult where tradingDate == hstradingDate
     		  symList = exec distinct(fundNum) as fundNum from result2 order by fundNum
             symList2 = symList.cut(250)
-    		  portfolio = select fundNum as fundNum, (deltas(value)\prev(value)) as log, TradeDate as TradeDate from result2 where TradeDate in 2018.05.24..2021.05.27 and fundNum in symList
-            m_log = exec log from portfolio pivot by TradeDate, fundNum
+    		  portfolio = select fundNum as fundNum, (deltas(value)\prev(value)) as log, tradingDate as tradingDate from result2 where tradingDate in 2018.05.24..2021.05.27 and fundNum in symList
+            m_log = exec log from portfolio pivot by tradingDate, fundNum
             mlog =  m_log[1:,]
             knum = 2..365
               }//此处，将任务切分，按每次250个不同基金数据进行计算.
@@ -633,17 +586,17 @@ mlog =  m_log[1:,]
     /**
      * 提交1个 job（单用户）
      */
-    submitJob("parallJob1", "parallJob_single_ten", parJob2)
+    submitJob("parallJob1", "parallJob_single_ten", parJob)
     
     /**
      * 提交5个 job（多用户）
      */
     for(i in 0..4){
-    	submitJob("parallJob5", "parallJob_multi_ten", parJob2)
+    	submitJob("parallJob5", "parallJob_multi_ten", parJob)
     }
   ```
   
-  最后，分别计算两种情形下的响应时间：
+  分别计算两种情形下的响应时间：
   
   ```
     //获取单个用户的运行时间
@@ -651,43 +604,35 @@ mlog =  m_log[1:,]
     //获取多个用户的运行时间
     select max(endTime) - min(startTime) from getRecentJobs() where jobDesc = "parallJob_multi_ten"
   ```
-  
-- 9个日频因子计算结果展示
-
-  ![计算结果1](images/fund_factor_contrasted_by_py/calculating_outcome.png)
 
 ### 3.4 结果展示
 
-- 单用户计算时间
+- 单任务（单位：秒）
 
-  | CPU数 | 9个因子（单位：秒） | 10个因子（包含赫斯特指数）（单位：秒） |
-  | ----- | ------ | ------------------------ |
-  | 1    | 1.13 | 26.03             |
-  | 6     | 0.56 | 7.23                                   |
-  | 12    | 0.47                 | 4.23                                   |
+  | CPU数 | 10个因子 |
+  | ----- | ------------------------ |
+  | 1    | 26.03             |
+  | 6     | 7.23                                   |
+  | 12    | 4.23                                   |
   
-- 多用户（此处为5用户）计算时间
+- 多任务（此处为5用户，单位：秒）
 
-  | CPU数 | 9个因子（单位：秒）  | 10个因子（包含赫斯特指数）（单位：秒） |
-  | ----- | ------- | ------------------------ |
-  | 1     | 5.47 | 140.50      |
-  | 6     | 1.46 | 27.53                                 |
-  | 12    | 0.84 | 15.66                                 |
+  | CPU数 | 10个因子 |
+  | ----- | ------------------------ |
+  | 1     | 140.50      |
+  | 6     | 27.53                                 |
+  | 12    | 15.66                                 |
 
 
 > 注：由于赫斯特指数需要按照2+3+4+...+365种不同的粒度方式切分成不同种类的序列划分，同时分别对不同粒度的每一段序列分别计算均值、离差和标准差等，并最终求平均的 R/S 值，计算的子指标过大，时间复杂度较高，因此耗时相较于其它因子更长。
 
-## 4. Python vs DolphinDB 性能对比
+## 4. Python 中因子计算实现及性能测试
 
-本教程中，我们基于 Python 实现了相同的因子计算。本节为大家展示 DolphinDB 与 Python 计算性能的差异。
+本章节中，我们基于 Python 实现了相同的因子计算并统计计算时间。
 
-我们使用 Python API 进行取数等数据处理操作，使用 `numpy`,  `pandas`,  `scipy` 等库实现基金日频因子的计算，并且引入了 `joblib` 库中的 `Parallel` 方法，通过设置其 `n_jobs` 参数模拟不同 CPU 核数的运行环境。
+通过引入了 `joblib` 库中的 `Parallel` 方法，通过设置其 `n_jobs` 参数模拟不同 CPU 核数的运行环境。
 
-### 4.1 因子计算流程实现
-
-本节介绍如何使用 Python 计算10个基金日频因子并统计计算时间。其中 DolphinDB 脚本中的函数到 Python 代码中的函数映射关系可以参考 [DolphinDB 函数到 Python 函数的映射](https://gitee.com/dolphindb/Tutorials_CN/blob/master/function_mapping_py.md)。
-
-首先，使用 Python 定义测算基金日收益率的 `getLog()` 函数和执行因子计算任务的 `main()` 函数：
+在性能测试中，使用 Python 定义测算基金日收益率的 `getLog()` 函数和执行因子计算任务的 `main()` 函数 (因子计算通过 `numpy`, `pandas`, `scipy` 等库实现)：
 
 ```python
 def getLog(value):
@@ -712,41 +657,41 @@ def main(li):
     calHurst(log, 2)
 ```
 
-然后，使用 Python API 连接 DolphinDB，从两个数据表中读取数据，并对其进行数据对齐和计算基金日收益率的操作。同时修改 `Parallel` 方法的 `n_jobs` 参数模拟不同个数的 CPU 环境，并统计整个计算流程的时间：
+使用 Python API 进行取数等数据处理操作，使用Python对其进行数据对齐和计算基金日收益率的操作。统计整个计算流程的时间：
 
 ```python
 s = ddb.session()
 s.connect("127.0.0.1", 8848, "admin", "123456")
 start = time.time()
-fund_OLAP = s.loadTable(dbPath="dfs://fund_OLAP", tableName="fund_OLAP").select("*").toDF().sort_values(['Tradedate'])
+fund_OLAP = s.loadTable(dbPath="dfs://fund_OLAP", tableName="fund_OLAP").select("*").toDF().sort_values(['tradingDate'])
 fund_hs_OLAP = s.loadTable(dbPath="dfs://fund_OLAP", tableName="fund_hs_OLAP").select("*").toDF()
-fund_hs_OLAP.rename(columns={'Tradedate': 'hsTradedate'}, inplace=True)
-fund_hs_OLAP = fund_hs_OLAP.sort_values(['hsTradedate'])
-fund_dui_OLAP = pd.merge_asof(fund_OLAP, fund_hs_OLAP, left_on="Tradedate", right_on="hsTradedate").sort_values(['fundNum_x', 'Tradedate'])
-fund_dui_OLAP = fund_dui_OLAP[fund_dui_OLAP['Tradedate'] == fund_dui_OLAP['hsTradedate']]
+fund_hs_OLAP.rename(columns={'tradingDate': 'hstradingDate'}, inplace=True)
+fund_hs_OLAP = fund_hs_OLAP.sort_values(['hstradingDate'])
+fund_dui_OLAP = pd.merge_asof(fund_OLAP, fund_hs_OLAP, left_on="tradingDate", right_on="hstradingDate").sort_values(['fundNum_x', 'tradingDate'])
+fund_dui_OLAP = fund_dui_OLAP[fund_dui_OLAP['tradingDate'] == fund_dui_OLAP['hstradingDate']]
 fund_dui_OLAP.reset_index(drop=True, inplace=True)
-fund_dui_OLAP.drop(columns=['fundNum_y', 'hsTradedate'], inplace=True)
-fund_dui_OLAP.columns = ['Tradedate', 'fundNum', 'value', 'price']
+fund_dui_OLAP.drop(columns=['fundNum_y', 'hstradingDate'], inplace=True)
+fund_dui_OLAP.columns = ['tradingDate', 'fundNum', 'value', 'price']
 fund_dui_OLAP["log"] = pd.Series(getLog(fund_dui_OLAP["value"]))
-list = fund_dui_OLAP[(fund_dui_OLAP['Tradedate'] >= datetime(2018, 5, 24)) & (fund_dui_OLAP['Tradedate'] <= datetime(2021, 5, 27))].groupby('fundNum')
+list = fund_dui_OLAP[(fund_dui_OLAP['tradingDate'] >= datetime(2018, 5, 24)) & (fund_dui_OLAP['tradingDate'] <= datetime(2021, 5, 27))].groupby('fundNum')
 Parallel(n_jobs=1)(delayed(main)(i) for _,i in list)
 end = time.time()
 print(end-start)
 ```
 
-### 4.2 性能计算结果对比
+## 5. 性能计算结果对比分析
 
-- 单用户
+- 单任务（单位：秒）
 
-  | CPU数 | DolphinDB 响应时间（单位：秒） | Python 响应时间（单位：秒） | 性能对比（Python/DolphinDB) |
+  | CPU数 | DolphinDB 响应时间 | Python 响应时间 | Python/DolphinDB |
   | ----- | --------------------- | ------------------ | --------------------------- |
   | 1    | 26.03                          | 112.34        | 4.32 |
   | 6     | 7.23                           | 55.35         | 7.66                   |
   | 12    | 4.23              | 36.19       | 8.56                    |
   
-- 多用户（此处为5用户）
+- 多任务（此处为5用户，单位：秒）
 
-  | CPU数 | DolphinDB 响应时间（单位：秒） | Python 响应时间（单位：秒） | 性能对比（Python/DolphinDB) |
+  | CPU数 | DolphinDB 响应时间 | Python 响应时间 | Python/DolphinDB |
   | ----- | --------------------- | ------------------ | --------------------------- |
   | 1   | 140.49        | 511.89                      | 3.64 |
   | 6     | 27.52         | 226.45       | 8.22                   |
@@ -754,26 +699,24 @@ print(end-start)
 
 > 注：教程中我们只选取了部分测试结果进行展示。
 
-### 4.3 性能分析
+在控制其它变量一致的前提下，无论是单任务还是多任务，在不同 CPU 核数环境下 DolphinDB 均表现出了比 Python 更优越的性能。其中性能差异最高可接近 Python 的14倍，平均性能超10倍。究其原因，主要有以下几点：
 
-在控制其它变量一致的前提下，无论是单用户还是多用户，在不同 CPU 核数环境下 DolphinDB 均表现出了比 Python 更优越的性能。其中性能差异最高可接近 Python 的14倍，平均性能超10倍。究其原因，主要有以下几点：
-
-- DolphinDB 强大的向量化计算能力：DolphinDB 最大程度上兼顾了向量化计算的性能，而 Python 作为解释型脚本语句，每运行一句都要进行相应的解释，这使得针对数组的向量化计算显示出了比 Python 更优越的性能；
-- DolphinDB 丰富的预定义函数：DolphinDB 预定义了1000多个可以直接调用的函数。相较于 Python 减少了因子定义的代码量和封装次数，在计算过程中性能损耗更少；
+- DolphinDB 强大的向量化计算能力：DolphinDB 最大程度上兼顾了向量化计算的性能，即其计算引擎的设计针对涉及到向量的计算进行了性能上的优化，而 Python 作为解释型脚本语句，每运行一句都要进行相应的解释，且对向量化计算能力的优化较 DolphinDB 有一定的欠缺，这使得针对数组的向量化计算显示出了比 Python 更优越的性能；
+- DolphinDB 丰富的内置函数：DolphinDB 预定义了1000多个可以直接调用的函数。相较于 Python 减少了因子定义的代码量和封装次数，在计算过程中性能损耗更少；
 - DolphinDB 自带的持久化数据存储：DolphinDB 内置数据存储引擎，可以将数据按照不同分区方式存入分布式数据库表，因子计算时的数据读取更高效；Python 在因子计算的过程中需要引入外部数据源，数据读取效率相对较低。
 
-## 5. 总结
+## 6. 总结
 
-本教程基于3000多只基金的日净值数据，为大家介绍了如何在 DolphinDB 和 Python 中计算10种日频因子。同时，我们对比测试了不同 CPU 核数环境下，Python 和 DolphinDB 计算相同因子的性能差异。
+本教程基于3000多只基金的日净值数据，对比测试了不同 CPU 核数环境下以及任务提交数下，Python 和 DolphinDB 计算相同因子的性能差异。
 
-可以看到，由于DolphinDB具有强大的向量化计算的能力，包含丰富的预定义函数功能，以及具备自带的持久化数据存储，因而无论在多线程还是多任务情况下，DolphinDB 在计算因子时都有相较于 Python 更为优异的表现。因此相较之下，DolphinDB 表现出更为显著的优势。
+可以看到，由于DolphinDB具有强大的向量化计算的能力，包含丰富的内置函数功能，以及具备自带的持久化数据存储，因而无论在多线程还是多任务情况下，DolphinDB 在计算因子时都有相较于 Python 更为优异的表现。因此相较之下，DolphinDB 表现出更为显著的优势。
 
 ### 附件
 
-[模拟测试数据文件](data/fund_factor_contrasted_by_py/datafile)
+[测试数据](data/fund_factor_contrasted_by_py/datafile)
 
 [数据导入到 DolphinDB 的脚本](script/fund_factor_contrasted_by_py/fund_data_load.txt)
 
-[基于 DolphinDB 的基金日频因子响应时间计算脚本](script/fund_factor_contrasted_by_py/fund_factor_by_ddb)
+[基于 DolphinDB 的基金日频因子实现与性能测试](script/fund_factor_contrasted_by_py/fund_factor_ddb.txt)
 
-[基于 Python 的十个基金日频因子响应时间计算脚本](script/fund_factor_contrasted_by_py/fund_factor.py)
+[基于 Python 的十个基金日频因子实现与性能测试](script/fund_factor_contrasted_by_py/fund_factor.py)
