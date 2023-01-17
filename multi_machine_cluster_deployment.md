@@ -6,24 +6,24 @@
   - [1. 集群结构](#1-集群结构)
   - [2. 下载](#2-下载)
   - [3. 软件授权许可更新](#3-软件授权许可更新)
-  - [4. DolphinDB server版本的更新](#4-dolphindb-server版本的更新)
-  - [5. DolphinDB集群初始配置](#5-dolphindb集群初始配置)
+  - [4. DolphinDB server 版本的更新](#4-dolphindb-server-版本的更新)
+  - [5. DolphinDB 集群初始配置](#5-dolphindb-集群初始配置)
     - [5.1 配置控制节点](#51-配置控制节点)
       - [5.1.1 配置控制节点的参数文件](#511-配置控制节点的参数文件)
       - [5.1.2 配置集群成员参数文件](#512-配置集群成员参数文件)
       - [5.1.3 配置数据节点、计算节点的参数文件](#513-配置数据节点计算节点的参数文件)
     - [5.2 配置代理节点](#52-配置代理节点)
-  - [6 DolphinDB集群启动](#6-dolphindb集群启动)
-    - [6.1 systemd 启动DolphinDB](#61-systemd-启动dolphindb)
-    - [6.2 命令行启动DolphinDB](#62-命令行启动dolphindb)
+  - [6 DolphinDB 集群启动](#6-dolphindb集群启动)
+    - [6.1 systemd 启动 DolphinDB](#61-systemd-启动-dolphindb)
+    - [6.2 命令行启动 DolphinDB](#62-命令行启动-dolphindb)
       - [6.2.1 启动代理节点](#621-启动代理节点)
       - [6.2.2 启动控制节点](#622-启动控制节点)
       - [6.2.3 关闭代理节点和控制节点](#623-关闭代理节点和控制节点)
     - [6.3 启动网络上的集群管理器](#63-启动网络上的集群管理器)
-    - [6.4 DolphinDB权限控制](#64-dolphindb权限控制)
+    - [6.4 DolphinDB 权限控制](#64-dolphindb-权限控制)
     - [6.5 启动数据节点](#65-启动数据节点)
   - [7. 节点启动失败可能原因](#7-节点启动失败可能原因)
-  - [8. 基于Web的集群管理](#8-基于web的集群管理)
+  - [8. 基于 Web 的集群管理](#8-基于-web-的集群管理)
     - [8.1 控制节点参数配置](#81-控制节点参数配置)
     - [8.2 增删数据节点](#82-增删数据节点)
     - [8.3 数据节点参数配置](#83-数据节点参数配置)
@@ -77,10 +77,10 @@ P5: 10.1.1.9
 ```sh
 /DolphinDB/server/dolphindb.lic
 ```
-##  4. DolphinDB server版本的更新
+##  4. DolphinDB server 版本的更新
 为了避免软件授权许可和配置信息丢失，下载最新版本的 server 后，请覆盖更新除 `dolphindb.lic` 和 `dolphindb.cfg` 以外的文件。
 
-## 5. DolphinDB集群初始配置
+## 5. DolphinDB 集群初始配置
 
 启动一个集群，必须配置控制节点和代理节点。数据节点可以在集群启动后通过 web 界面来配置，也可以在启动集群前通过配置文件手工配置。
 
@@ -119,15 +119,15 @@ lanCluster=0
 
 | 参数配置        | 解释          |
 |:------------- |:-------------|
-|localSite=10.1.1.7:8990:master|     节点局域网信息,格式为 IP地址:端口号:节点别名，所有字段都是必选项。|
-|localExecutors=3          |         本地执行线程的数量。默认值是CPU的内核数量 - 1。|
-|maxConnections=512     |            最大向内连接数|
-|maxMemSize=16          |            最大内存（GB）|
-|webWorkerNum=4              |       处理http请求的工作池的大小。默认值是1。|
+|localSite=10.1.1.7:8990:master|     节点的局域网信息，格式为 host:port:alias。单节点模式中默认值为 localhost:8848:local8848。|
+|localExecutors=3          |         本地执行线程的数量。默认值是 CPU 的内核数量 - 1。|
+|maxConnections=512     |            最多可以从多少个外部 GUI，API 或其它节点连接到本地节点。Windows 的默认值为64，有效最大值也是64；Linux 的默认值为512。|
+|maxMemSize=8          |            分配给 DolphinDB 的最大内存空间（以 GB 为单位）。如果该参数设为0，表明 DolphinDB 的内存使用没有限制。建议设置为比机器内存容量低的一个值。|
+|webWorkerNum=4              |       处理 http 请求的工作池的大小。默认值是1。|
 |workerNum=4        |                常规交互式作业的工作池大小。默认值是CPU的内核数量。|
-|dfsReplicationFactor=2         |    每个表分区或文件块的副本数量。默认值是2。|
-|dfsReplicaReliabilityLevel=1     |  多个副本是否可以保存在同一台物理服务器上。 0：是; 1：不。默认值是0。|
-|dataSync=1         |   是否使用Redo Log功能。0：不；1：是。默认值为0。若设置为1，则需同步配置cluster.cfg中chunkCacheEngineMemSize。|
+|dfsReplicationFactor=1         |    每个表数据块的所有副本数。集群的默认副本数是2，单节点的默认副本数为1。注意：写入数据时 on-line 的数据节点数必须大于等于 dfsReplicationFactor 的值，否则会抛出异常。|
+|dfsReplicaReliabilityLevel=2     | 多个副本是否可以在同一个物理服务器上。 0表示可以；1表示不可以；2表示在资源允许情况下，副本优先部署在多台物理服务器。默认值是0。|
+|dataSync=1         |   表示是否采用数据强制刷盘策略。默认值为0，表示是否由操作系统决定什么时候刷盘。如果 dataSync=1，表示将 redo log、数据和元数据强制刷盘。|
 
 #### 5.1.2 配置集群成员参数文件
 
@@ -217,13 +217,13 @@ controllerSite=10.1.1.7:8990:master
 
 由于代理节点依照 `agent.cfg` 中的 *controllerSite* 参数值来寻找控制节点并与其通信，`controller.cfg` 中的 *localSite* 参数值应与所有 `agent.cfg` 中的 *controllerSite* 参数值一致。 若改变 `controller.cfg` 中的 *localSite* 参数值，即使只是别名改变，所有 `agent.cfg` 中的 *controllerSite* 参数值都应做相应改变。
 
-## 6 DolphinDB集群启动
+## 6 DolphinDB 集群启动
 
 目前有两种方式启动集群，第一种是通过配置 systemd 的守护进程的方式启动，第二种是通过命令行的方式启动。
 
-### 6.1 systemd 启动DolphinDB
+### 6.1 systemd 启动 DolphinDB
 
-首先在 `<dolphindbServer>/server/clusterDemo` 中加入脚本 `controller.sh` 以及 `agent.sh，`其内容如下:
+首先在 `<dolphindbServer>/server/clusterDemo` 中加入脚本 `controller.sh` 以及 `agent.sh`，其内容如下:
 
 ```
 #!/bin/bash
@@ -370,7 +370,7 @@ systemctl stop  ddbagent.service   #停止服务
 systemctl status  ddbagent.service  #检测状态
 ```
 
-### 6.2 命令行启动DolphinDB
+### 6.2 命令行启动 DolphinDB
 
 #### 6.2.1 启动代理节点
 
@@ -452,7 +452,7 @@ ps aux | grep dolphindb  | grep -v grep | grep ec2-user|  awk '{print $2}' | xar
 
 ![集群管理](images/multi_web.JPG)
 
-### 6.4 DolphinDB权限控制
+### 6.4 DolphinDB 权限控制
 
 DolphinDB database 提供了良好的安全机制。只有系统管理员才有权限做集群部署。在初次使用 DolphinDB 网络集群管理器时，需要用以下默认的系统管理员账号登录。
 
@@ -499,11 +499,11 @@ startDataNode(["P1-NODE1", "P2-NODE1","P3-NODE1","P5-NODE1"])
    
    如果使用到被防火墙限制的端口，需要在防火墙中开放它们。
 
-* **配置文件中的IP地址、端口号或节点别名没有书写正确。**
+* **配置文件中的 IP 地址、端口号或节点别名没有书写正确。**
    
     默认情况下集群采用 UDP 发送心跳，若发现 agent 节点进程已经启动，但是集群 web 界面上却显示不在线，可能是集群所在网络不支持 UDP 协议，可尝试将心跳机制改为 TCP 方式发送，即在 `agent.cfg` 和 `cluster.cfg` 文件中添加配置项 *lanCluster*=0。
    
-* **集群成员配置文件cluster.nodes第一行为空行**
+* **集群成员配置文件 cluster.nodes 第一行为空行**
    
    查看 log 文件，如果 log 文件中出现错误信息 "Failed to load the nodes file [XXXX/cluster.nodes] with error: The input file is empty."，表示 `cluster.nodes` 的第一行为空行，这种情况下只需将文件中的空行删除，再重新启动节点即可。
 
@@ -528,7 +528,7 @@ startDataNode(["P1-NODE1", "P2-NODE1","P3-NODE1","P5-NODE1"])
    宏变量的具体使用可详情参照 [DolphinDB用户手册](https://www.dolphindb.com/help/DatabaseandDistributedComputing/Configuration/ClusterMode.html)。
 
 
-## 8. 基于Web的集群管理
+## 8. 基于 Web 的集群管理
 
 经过上述步骤，我们已经成功部署DolphinDB集群。可通过DolphinDB的网络界面提供更改集群配置的所有功能。
 
@@ -558,6 +558,9 @@ startDataNode(["P1-NODE1", "P2-NODE1","P3-NODE1","P5-NODE1"])
 ### 8.3 数据节点参数配置
 
 点击 "Nodes Config" 按钮, 可进行数据节点配置。以下参数是在 5.1.3 中 `cluster.cfg` 里配置的。用户可以根据实际应用在这里添加其它配置参数。修改后的参数在重启所有数据节点后即可生效。
+
+在linux环境部署时，volumes文件夹，建议不要指定用NAS挂在服务器路径的远程磁盘。这样做数据库的性能会很差。
+如果非要这样做，如果您的分区挂载用的是NFS协议，则该datanode(数据节点)进程**必须**以root身份启动(普通用户启动的数据库进程无权限在NAS读写磁盘，sudo用户启动，则会造成文件夹权限混乱)。
 
 ![nodes_config](images/multi_nodes_config.JPG)
 
@@ -613,7 +616,7 @@ P3-NODE1.volumes=/VOL1/
 P5-NODE1.volumes=/VOL1/
 ```
 
-(3) **通过ALIAS通配符**
+(3) **通过 ALIAS 通配符**
 
 若所有数据节点的数据卷路径都含有节点别名，可使用 <ALIAS> 来配置数据卷路径。可用以下代码为每台服务器配置两个物理卷 /VOL1/ 和 /VOL2/：
 
