@@ -24,7 +24,7 @@ DolphinDB为需要监控的服务产生相应的metrics（指标），Prometheus
 
 |指标|	类型|	含义|
 |----|----|----|
-|cpuUsage  | Gauge |CPU使用率（单位：无）|
+|cpuUsage  | Gauge |DolphinDB进程占用CPU的百分比（单位：无）|
 |memoryUsed| Gauge |	节点使用的内存（单位：字节）|
 |memoryAlloc   | Gauge |节点中DolphinDB当前内存池的容量（单位：字节）|
 |diskCapacity| Gauge |磁盘容量（单位：字节）|
