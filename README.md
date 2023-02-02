@@ -151,6 +151,7 @@
     - [中高频多因子库存储最佳实践](best_practices_for_multi_factor.md)
     - [DolphinDB流计算在物联网的应用：实时检测传感器状态变化](DolphinDB_streaming_application_in_IOT.md)
     - [金融 PoC 用户历史数据导入指导手册之股票 level2 逐笔篇](LoadDataForPoc.md)
+    - [DolphinDB NSQ 插件最佳实践指南](best_implementation_for_NSQ_Plugin.md)
 - 入门和测试
     - [DolphinDB入门：量化金融范例](quant_finance_examples.md)
     - [DolphinDB入门：物联网范例](iot_examples.md)
