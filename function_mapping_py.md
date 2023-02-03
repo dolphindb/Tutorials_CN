@@ -237,7 +237,7 @@ DolphinDB 函数选取自 2.00 版本 [用户手册](https://www.dolphindb.cn/cn
 | statsmodels.stats.weightstats.ztest    | zTest          |
 | statsmodels.multivariate.manova.MANOVA | manova         |
 | statsmodels.api.stats.anova_lm         | anova          |
-| statsmodels.regression.linear_model.OLS                 | olsolsEx               |
+| statsmodels.regression.linear_model.OLS                 | ols / olsEx               |
 | statsmodels.regression.linear_model.WLS                 | wls                    |
 
 ##  6. <a name='sklearn'></a>sklearn
