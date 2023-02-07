@@ -386,7 +386,7 @@ parallelLoad(allFileContents)
 
 loadOneDayFile 和 parallelLoad 这两个函数的写法不唯一，可以根据数据的存储格式参考本案例代码灵活设计。主要目的是按天提交任务，每个任务导入某种数据一天的数据。这些代码执行完成后，会马上返回，所提交的异步任务会在后台执行，可以调用 [getRecentJobs](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/g/getRecentJobs.html) 函数查看后台的任务执行情况。任务情况如下图所示：
 
-<div align=center><img src=images/LoadDataForPoc/hardWrite.jpg width=50%> </div>
+<div align=center><img src=images/LoadDataForPoc/getRecentJobs.jpg width=80%> </div>
 
 上图重 startTime 字段不为空，表示该任务已经在执行；endTime 不为空，表示该任务已经执行完成；errorMsg 字段不为空，说明这个任务执行出错了，根据这个错误信息对代码进行调试。
 
@@ -402,7 +402,7 @@ errorMsg 可能的错误信息及解决方式如下：
 
 在数据导入的过程中，如果对导入的性能存在疑虑，可以通过一些工具观测系统资源使用情况，判断是否存在资源利用的瓶颈。在 Linux 系统的终端中输入 dstat 命令，可以查看硬盘写入情况。 如下图所示：
 
-<div align=center><img src=images/LoadDataForPoc/getRecentJobs.jpg width=80%> </div>
+<div align=center><img src=images/LoadDataForPoc/hardWrite.jpg width=50%> </div>
 
 并行导入追求高速的写入性能，通过配置多块磁盘，可发挥硬盘并行 IO 的能力。通过单机配置文件 dolphindb.cfg 或集群配置文件 cluster.cfg 中的 volumes 参数进行磁盘配置。详细的磁盘配置方法详见：[磁盘参数](https://www.dolphindb.cn/cn/help/DatabaseandDistributedComputing/Configuration/ConfigParamRef.html#id15)。
 
