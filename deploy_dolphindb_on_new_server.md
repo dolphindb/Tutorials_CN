@@ -69,7 +69,13 @@
 
 > 在 Linux 系统使用 DolphinDB 要求内核版本为 Linux 2.6.19 或以上，推荐使用 **CentOS 7 稳定版**。
 >
-> 若使用 Ubuntu 系统：(1) 需要在系统安装时在 Storage configuration 中选择 /home 目录的格式为 xfs，以方便后续将 /home 目录格式化为 xfs 文件系统；(2) Ubuntu 系统使用 ufw 防火墙，关闭防火墙命令为 `sudo ufw disable`，其他命令请参考 `man ufw`
+> 若使用 Ubuntu 系统：
+> 
+> (1) 需要在系统安装时在 Storage configuration 中选择 /home 目录的格式为 xfs，以方便后续将 /home 目录格式化为 xfs 文件系统；
+> 
+> (2) Ubuntu 系统使用 ufw 防火墙，关闭防火墙命令为 `sudo ufw disable`，其他命令请参考 `man ufw`；
+> 
+> (3) Ubuntu 系统使用 apport 处理 core dump，若需要自定义 core dump，需要禁用 apport，命令为 `sudo systemctl disable apport.service`
 
 #### 1.1.2 依赖软件 <!-- omit in toc -->
 
