@@ -167,7 +167,7 @@ DolphinDB 使用 C++开发，兼容性好，支持Winodws、Linux、麒麟鲲鹏
 
 #### 2.2.2 功率谱
 
-由于功率信号具有无穷大的能量，所以按照能量E的公式，这个积分是不存在的。但是我们可以把这个信号截断成小块。例如，把信号 ![img](./images/Random_Vibration_Signal_Analysis_Solution/ch2_2_2_st.svg) 截断成一个截短信号![img](./images/Random_Vibration_Signal_Analysis_Solution/ch2_2_2_stt.svg), $-T/2<t<T/2$ 。这样![img](./images/Random_Vibration_Signal_Analysis_Solution/ch2_2_2_stt.svg)就是一个能量信号了，此时根据上一小节能量谱的推算过程，利用傅里叶变换可以求出其能量谱密度![img](./images/Random_Vibration_Signal_Analysis_Solution/ch2_2_2_001.svg)。
+由于功率信号具有无穷大的能量，所以按照能量E的公式，这个积分是不存在的。但是我们可以把这个信号截断成小块。例如，把信号 ![img](./images/Random_Vibration_Signal_Analysis_Solution/ch2_2_2_st.svg) 截断成一个截短信号![img](./images/Random_Vibration_Signal_Analysis_Solution/ch2_2_2_stt.svg), -T/2<t<T/2 。这样![img](./images/Random_Vibration_Signal_Analysis_Solution/ch2_2_2_stt.svg)就是一个能量信号了，此时根据上一小节能量谱的推算过程，利用傅里叶变换可以求出其能量谱密度![img](./images/Random_Vibration_Signal_Analysis_Solution/ch2_2_2_001.svg)。
 
 接下来得出信号![img](./images/Random_Vibration_Signal_Analysis_Solution/ch2_2_2_st.svg)的能量和平均功率表达式，其中![img](./images/Random_Vibration_Signal_Analysis_Solution/ch2_2_2_002.svg) ：
 
