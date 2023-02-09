@@ -52,7 +52,7 @@
 
 ### 1.2 真实场景
 
-工业物联网场景中，可把设备故障分为突发性故障（随机故障）与时间依存性故障。随机故障由偶然因素引起，以往很难防止这类故障的发生，但是在传感器和微处理器迅速发展的今天，可通过设备状态在线实时监测做到避免随机故障。而时间依存性故障则可以在分析建模的基础上，预测故障发展趋势及机组维修时间。要进行上述的监测和预测，免不了要对设备进行状态分析。设备状态分析的方法，大致可分为振动时域分析和振动频域分析。
+工业物联网场景中，可把设备故障分为突发性故障（随机故障）与时间依存性故障。随机故障由偶然因素引起，以往很难防止这类故障的发生，但是在传感器和微处理器迅速发展的今天，可通过设备状态在线实时监测做到避免随机故障。而时间依存性故障则可以在分析建模的基础上，预测故障发展趋势及机组维修时间。要进行上述的监测和预测，需要对设备进行状态分析。设备状态分析的方法，大致可分为振动时域分析和振动频域分析。
 
 - 振动时域分析法，主要使用在时域空间内的一些特征量来判断设备状态，包括峰值、平均峰值、均方根值等等。
 - 振动频谱分析法，提示振动过程的频率结构是进行设备状态分析的重要途径，特别是随着傅里叶变换、经典谱分析、现代谱分析的出现和频谱分析仪的推出，频域分析得到了广泛采用。
@@ -63,15 +63,11 @@
 
 振动烈度的大小反映了机组整体振动程度，要正确判断机组的工作状况，就必须合理地选定烈度标准。场景中具体的标准选定如下：
 
-![img](./images/Random_Vibration_Signal_Analysis_Solution/ch1_2_1_001.png)
-
-振动烈度判据的标准①
+![振动烈度判据的标准①](./images/Random_Vibration_Signal_Analysis_Solution/ch1_2_1_001.png)
 
 通常先根据机器的功率来查表，场景中每个机组的功率大概在2250kw，所以可以得到轴承处的振动烈度界限：4.5mm/s~11.2mm/s。另外还可将振动信号进行时频转换，实践表明，可以将频谱分析中获得的各个频率分量的振动级值变化作为评价的对象。这里的振动级值是振动速度级值，在其他场景中也可以是加速度级值和功率级值。如下图：
 
-![img](./images/Random_Vibration_Signal_Analysis_Solution/ch1_2_1_002.png)
-
-频率分量振动级值判据①
+![频率分量振动级值判据①](./images/Random_Vibration_Signal_Analysis_Solution/ch1_2_1_002.png)
 
 针对振动烈度范围，可以对机组状态振动烈度预警限以及振动烈度报警限进行选取。本场景采用振动烈度界限为限值指标，即预警限制设定为4.5mm/s；报警限值设定为11.2mm/s。针对振动级值变化判据，同样可以得出振动级值报警限与预警限。有了这些，就可对机组进行检测管理。
 
@@ -96,9 +92,7 @@
 
 振动级值趋势预测可以通过如图所示的“级值-时间趋势图”来描述：
 
-![img](./images/Random_Vibration_Signal_Analysis_Solution/ch1_2_3_001.png)
-
-级值-时间趋势图①
+![级值-时间趋势图①](./images/Random_Vibration_Signal_Analysis_Solution/ch1_2_3_001.png)
 
 根据振动级值的变化，一个或多个频率分量在若干个周期测量后的级值增加，找出故障发展的“级值-时间”推测趋势。选择合适的曲线拟合方法，将结果曲线外推，从而揭示什么时间状态将达到危险的极限，这样可以安排适当的日期来对机组进行维护。而曲线拟合的方法有很多种，包括时序模型预测、灰色预测、人工智能预测、遗传算法预测等等。
 
@@ -185,9 +179,7 @@ DolphinDB 使用 C++开发，兼容性好，支持Winodws、Linux、麒麟鲲鹏
 
 经典功率谱估计的方法有两种：周期图法和自相关法。本小节主要介绍周期图法以及加窗后的周期图法。
 
-![img](./images/Random_Vibration_Signal_Analysis_Solution/ch2_3_0_001.png)
-
-功率谱密度估计方法
+![功率谱密度估计方法](./images/Random_Vibration_Signal_Analysis_Solution/ch2_3_0_001.png)
 
 #### 2.3.1 周期图法
 
@@ -233,9 +225,7 @@ DolphinDB 使用 C++开发，兼容性好，支持Winodws、Linux、麒麟鲲鹏
 
 架构图如下：
 
-![img](./images/Random_Vibration_Signal_Analysis_Solution/ch3_2_0_001.png)
-
-总架构图
+![总架构图](./images/Random_Vibration_Signal_Analysis_Solution/ch3_2_0_001.png)
 
 架构说明如下：
 
@@ -278,9 +268,7 @@ getRecentJobs(1)
 
 本篇文章中使用 DolphinDB 脚本实现的 pwelch 函数采纳了 matlab 中 pwelch 函数的部分功能。pwelch（matlab 版本）是一种修正的周期图法功率谱密度估计，它将信号分段加窗求其功率谱密度，然后做平均处理，在前面的小节里已有过介绍。pwelch（ DolphinDB 版本）输入从左到右分别为信号向量 data 、窗函数window、分段重叠的样本数 noverlap 、fft 的点数 nfft、绘制功率谱曲线的抽样频率 fs 。输出为加速度功率谱密度以及对应的频率。下表为 fft 点数、输入向量以及最后输出的频率范围的关系：
 
-![img](./images/Random_Vibration_Signal_Analysis_Solution/ch4_2_0_001.png)
-
-输出频率范围的选择
+![输出频率范围的选择](./images/Random_Vibration_Signal_Analysis_Solution/ch4_2_0_001.png)
 
 这里我们输入为实数，并且 fft 点数为偶数，故输出的频率范围为抽样频率的一半，为[0, 512]。
 
@@ -377,9 +365,7 @@ defg rms(nose,N,sensitivity,gain,window, noverlap, nfft, fs,bandwidthL,bandwidth
 
 流数据先从第三方设备传输到 signal 表，表 signal 又被时序聚合引擎订阅，计算结果输出到流表 srms，最后再把 srms 表中的数据落盘[注4]到数据库 rmsDB 中。另外流入 srms 又被异常检测引擎订阅，计算结果输出到 warn 表中，最后落盘到 warnDB 中。
 
-![img](./images/Random_Vibration_Signal_Analysis_Solution/ch4_4_0_001.png)
-
-流数据发布-订阅-消费模型
+![流数据发布-订阅-消费模型](./images/Random_Vibration_Signal_Analysis_Solution/ch4_4_0_001.png)
 
 #### 4.4.1 流表的定义
 
@@ -500,9 +486,7 @@ select f, psdvalue from psd and f >= 0 and f <= 512
 
 该句代码用于查看传感器1的加速度功率谱密度，前面已经说明本文中 pwelch 函数获得的频率范围为0~512HZ，在查询时可调整 f 的范围来进行查看. 加速度功率谱密度的单位为 $(m^2/s^4)/HZ$ ，或者为 $m^2/s^3$ 。
 
-![img](./images/Random_Vibration_Signal_Analysis_Solution/ch4_5_1_001.png)
-
-传感器1的功率谱密度
+![传感器1的功率谱密度](./images/Random_Vibration_Signal_Analysis_Solution/ch4_5_1_001.png)
 
 #### 4.5.2 查看功率谱密度均方根
 
@@ -514,15 +498,11 @@ select datetime, rmsAcc, rmsVel, rmsDis from srms where source == "channel1"
 
 在 Grafana 中国设置三个纵坐标，分别代表 rmsAcc, rmsVel, rmsDis，设置方法如下：
 
-![img](./images/Random_Vibration_Signal_Analysis_Solution/ch4_5_2_001.png)
-
-设置3个纵坐标
+![设置3个纵坐标](./images/Random_Vibration_Signal_Analysis_Solution/ch4_5_2_001.png)
 
 该句代码用于查看传感器1在2023.01.29 03:54:21.652~2023.01.29 04:04:21.652这10分钟内的加速度均方根、速度均方根、位移均方根：
 
-![img](./images/Random_Vibration_Signal_Analysis_Solution/ch4_5_2_002.png)
-
-传感器1的 rms 图
+![传感器1的 rms 图](./images/Random_Vibration_Signal_Analysis_Solution/ch4_5_2_002.png)
 
 ### 4.6 报警分析
 
@@ -530,15 +510,11 @@ select datetime, rmsAcc, rmsVel, rmsDis from srms where source == "channel1"
 
 首先先查看均方根值，本小节截取了一段时间内一个通道的的均方根值。
 
-![img](./images/Random_Vibration_Signal_Analysis_Solution/ch4_6_0_001.png)
-
-传感器 1 的 rms 值
+![传感器 1 的 rms 值](./images/Random_Vibration_Signal_Analysis_Solution/ch4_6_0_001.png)
 
 再查看 warn 表，返回结果如下，有9条报警数据：
 
-![img](./images/Random_Vibration_Signal_Analysis_Solution/ch4_6_0_002.png)
-
-传感器 1 的报警信息
+![传感器 1 的报警信息](./images/Random_Vibration_Signal_Analysis_Solution/ch4_6_0_002.png)
 
 其中，datetime 是触发报警的时间，source 是触发报警的传感器编号，metric 代表触发报警的规则，type 是规则的编号。
 
