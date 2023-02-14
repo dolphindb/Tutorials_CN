@@ -1,0 +1,72 @@
+/**
+调用计算函数的计算脚本.txt
+Script to execute calculation
+DolphinDB Inc.
+DolphinDB server version: 2.00.8 2022.09.28 JIT
+Storage engine: OLAP
+Last modification time: 2023.02.09
+*/
+
+/*
+ * 读取数据
+ */
+//读取 50 ETF 日频数据
+data = select * from loadTable("dfs://optionPrice", "optionPrice") where sym =`510050
+
+//读取期权价格
+closPriceWideMatrix = panel(data.codes, data.tradeDate, data.closePrice)
+
+//读取合成ETF期货价格
+etfPriceWideMatrix = panel(data.codes, data.tradeDate, data.etfprice)
+
+//读取合约信息表
+contractInfo = select * from loadTable("dfs://optionInfo", "optionInfo") where sym =`510050
+
+//读取交易日轴向量
+tradingDatesAbsoluteFilename = "/hdd/hdd9/tutorials/jitAccelerated/tradedate.csv"
+startDate = 2015.02.01
+endDate = 2022.03.01
+allTradingDates = loadText(tradingDatesAbsoluteFilename)
+tradingDates = exec tradedate from allTradingDates where tradedate<endDate and tradedate >startDate
+
+/*
+ * 单日计算性能测试
+ */
+//定义单日性能测试函数
+def testOneDayPerformance(closPriceWideMatrix, etfPriceWideMatrix, contractInfo, targetDate){
+	targetDate_vec = [targetDate]
+	r = 0
+	optionTodayClose = getTargetDayOptionClose(closPriceWideMatrix, targetDate_vec)
+	validContractsToday = optionTodayClose.columnNames()
+	etfTodayPrice = getTargetDayEtfPrice(etfPriceWideMatrix, targetDate_vec)
+	KPrice, dayRatio, CPMode = getTargetDayContractInfo(contractInfo, validContractsToday, targetDate_vec)
+	timer{
+		impvMatrix = calculateImpv(optionTodayClose, etfTodayPrice, KPrice, r, dayRatio, CPMode)
+		deltaMatrix = calculateDelta(etfTodayPrice, KPrice, r, dayRatio, impvMatrix, CPMode)\(etfTodayPrice*0.01)
+		gammaMatrix = calculateGamma(etfTodayPrice, KPrice, r, dayRatio, impvMatrix)\(pow(etfTodayPrice, 2) * 0.0001)
+		vegaMatrix = calculateVega(etfTodayPrice, KPrice, r, dayRatio, impvMatrix)
+		thetaMatrix = calculateTheta(etfTodayPrice, KPrice, r, dayRatio, impvMatrix, CPMode)
+	}
+	todayTable = table(validContractsToday as optionID, impvMatrix.reshape() as impv, deltaMatrix.reshape() as delta, gammaMatrix.reshape() as gamma, vegaMatrix.reshape() as vega, thetaMatrix.reshape() as theta)
+	todayTable["tradingDate"] = targetDate
+	todayTable.reorderColumns!(["optionID", "tradingDate"])
+	return todayTable
+}
+//执行单日性能测试函数
+oneDay = testOneDayPerformance(closPriceWideMatrix, etfPriceWideMatrix, contractInfo, 2022.02.28)
+
+/*
+ * 多日并行计算性能测试
+ */
+//创建存储计算结果的表变量
+result = table(
+		array(SYMBOL, 0) as optionID,
+		array(DATE, 0) as tradingDate,
+		array(DOUBLE, 0) as impv,
+		array(DOUBLE, 0) as delta,
+		array(DOUBLE, 0) as gamma,
+		array(DOUBLE, 0) as vega,
+		array(DOUBLE, 0) as theta
+	)
+//执行多日并行计算函数
+calculateAll(closPriceWideMatrix, etfPriceWideMatrix, contractInfo, tradingDates, result)

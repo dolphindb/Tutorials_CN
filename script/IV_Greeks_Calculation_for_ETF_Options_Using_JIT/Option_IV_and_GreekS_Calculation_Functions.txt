@@ -1,0 +1,196 @@
+/**
+期权隐含波动率和希腊值计算函数.txt
+Script to define calculation function
+DolphinDB Inc.
+DolphinDB server version: 2.00.8 2022.09.28 JIT
+Storage engine: OLAP
+Last modification time: 2023.02.09
+*/
+
+/*
+ * 按合约和交易日在期权日频收盘价矩阵中寻找对应价格
+ */
+def getTargetDayOptionClose(closPriceWideMatrix, targetDate){
+	colNum = closPriceWideMatrix.colNames().find(targetDate)
+	return closPriceWideMatrix[colNum].transpose().dropna(byRow = false)
+}
+
+/*
+ * 按合约和交易日在期权合成期货价格矩阵中寻找对应价格
+ */
+def getTargetDayEtfPrice(etfPriceWideMatrix, targetDate){
+	colNum = etfPriceWideMatrix.colNames().find(targetDate)
+	return etfPriceWideMatrix[colNum].transpose().dropna(byRow = false)
+}
+
+/*
+ * 根据合约和交易日在期权信息表中寻找 KPrice, dayRatio, CPMode
+ */
+def getTargetDayContractInfo(contractInfo, validContractsToday, targetDate){
+	targetContractInfo = select code, exemode, exeprice, lastdate, exeprice2, dividenddate, targetDate[0] as tradingDate from contractInfo where Code in validContractsToday
+	KPrice = exec iif(tradingDate<dividenddate, exeprice2, exeprice) from targetContractInfo pivot by tradingDate, code
+	dayRatio = exec (lastdate-tradingDate)\365.0 from targetContractInfo pivot by tradingDate, Code
+	CPMode = exec exemode from targetContractInfo pivot by tradingDate, Code
+	return KPrice, dayRatio, CPMode
+}
+
+/*
+ * 计算impv
+ */
+ @jit
+def calculateD1JIT(etfTodayPrice, KPrice, r, dayRatio, HLMean){
+	skRatio = etfTodayPrice / KPrice
+	denominator = HLMean * sqrt(dayRatio)
+	result = (log(skRatio) + (r + 0.5 * pow(HLMean, 2)) * dayRatio) / denominator
+	return result
+}
+
+@jit
+def calculatePriceJIT(etfTodayPrice, KPrice , r , dayRatio , HLMean , CPMode){
+	testResult = 0.0
+	if (HLMean <= 0){
+		testResult = CPMode * (etfTodayPrice - KPrice)
+		if(testResult<0){
+			return 0.0
+		}
+		return testResult
+	}
+	d1 = calculateD1JIT(etfTodayPrice, KPrice, r, dayRatio, HLMean)
+	d2 = d1 - HLMean * sqrt(dayRatio)
+	price = CPMode * (etfTodayPrice * cdfNormal(0, 1, CPMode * d1) - KPrice * cdfNormal(0, 1, CPMode * d2) * exp(-r * dayRatio))
+	return price
+}
+
+@jit
+def calculateImpvJIT(optionTodayClose, etfTodayPrice, KPrice, r, dayRatio, CPMode){
+	v = 0.0	
+	high = 2.0
+	low = 0.0
+	do{
+		if ((high - low) <= 0.00001){
+			break
+		}
+		HLMean = (high + low) / 2.0
+		if (calculatePriceJIT(etfTodayPrice, KPrice, r, dayRatio, HLMean, CPMode) > optionTodayClose){
+			high = HLMean
+		}
+		else{
+			low = HLMean
+		}
+	}
+	while(true)
+	v = (high + low) / 2.0
+	return v
+}
+
+def calculateImpv(optionTodayClose, etfTodayPrice, KPrice, r, dayRatio, CPMode){
+	originalShape = optionTodayClose.shape()
+	optionTodayClose_vec = optionTodayClose.reshape()
+	etfTodayPrice_vec = etfTodayPrice.reshape()
+	KPrice_vec = KPrice.reshape()
+	dayRatio_vec = dayRatio.reshape()
+	CPMode_vec = CPMode.reshape()
+	impvTmp = each(calculateImpvJIT, optionTodayClose_vec, etfTodayPrice_vec, KPrice_vec, r, dayRatio_vec, CPMode_vec)	
+	impv = impvTmp.reshape(originalShape)	
+	return impv
+}
+
+/*
+ * 计算delta
+ */
+def calculateD1(etfTodayPrice, KPrice, r, dayRatio, HLMean){
+	skRatio = etfTodayPrice / KPrice
+	denominator = HLMean * sqrt(dayRatio)
+	result = (log(skRatio) + (r + 0.5 * pow(HLMean, 2)) * dayRatio) / denominator
+	return result
+}
+
+def cdfNormalMatrix(mean, stdev, X){
+	originalShape = X.shape()
+	X_vec = X.reshape()
+	result = cdfNormal(mean, stdev, X_vec)
+	return result.reshape(originalShape)
+}
+
+def calculateDelta(etfTodayPrice, KPrice, r, dayRatio, impvMatrix, CPMode){
+	delta = iif(
+			impvMatrix <= 0,
+			0,
+			0.01*etfTodayPrice*CPMode*cdfNormalMatrix(0, 1, CPMode * calculateD1(etfTodayPrice, KPrice, r, dayRatio, impvMatrix))
+		)
+	return delta
+}
+
+/*
+ * 计算gamma
+ */
+def normpdf(x){
+	return exp(-pow(x, 2)/2.0)/sqrt(2*pi)
+}
+
+def calculateGamma(etfTodayPrice, KPrice, r, dayRatio, impvMatrix){
+	gamma = iif(
+			impvMatrix <= 0,
+			0,
+			(normpdf(calculateD1(etfTodayPrice,  KPrice, r, dayRatio, impvMatrix)) \ (etfTodayPrice * impvMatrix * sqrt(dayRatio))) * pow(etfTodayPrice, 2) * 0.0001
+		)	
+	return gamma
+}
+
+/*
+ * 计算vega
+ */
+def calculateVega(etfTodayPrice, KPrice, r, dayRatio, impvMatrix){
+	vega = iif(
+			impvMatrix <= 0,
+			0,
+			etfTodayPrice * normpdf(calculateD1(etfTodayPrice, KPrice, r, dayRatio, impvMatrix)) * sqrt(dayRatio)
+		)
+	return vega \ 100.0
+}
+
+/*
+ * 计算theta
+ */
+def calculateTheta(etfTodayPrice, KPrice, r, dayRatio, impvMatrix, CPMode){
+	annualDays = 365
+	d1 = calculateD1(etfTodayPrice, KPrice, r, dayRatio, impvMatrix)
+	d2 = d1 - impvMatrix * sqrt(dayRatio)
+	theta = (-etfTodayPrice * normpdf(d1) * impvMatrix \ (2 * sqrt(dayRatio)) - CPMode * r * KPrice * exp(-r * dayRatio) *cdfNormalMatrix(0, 1, CPMode * d2)) \ annualDays
+	result = iif(impvMatrix<= 0, 0, theta)	
+	return result
+}
+
+/*
+ * 单日计算函数
+ */
+def calculateOneDayGreek(closPriceWideMatrix, etfPriceWideMatrix, contractInfo, targetDate){
+	targetDate_vec = [targetDate]
+	r = 0
+	optionTodayClose = getTargetDayOptionClose(closPriceWideMatrix, targetDate_vec)
+	validContractsToday = optionTodayClose.columnNames()
+	etfTodayPrice = getTargetDayEtfPrice(etfPriceWideMatrix, targetDate_vec)
+	KPrice, dayRatio, CPMode = getTargetDayContractInfo(contractInfo, validContractsToday, targetDate_vec)
+	impvMatrix = calculateImpv(optionTodayClose, etfTodayPrice, KPrice, r, dayRatio, CPMode)
+	deltaMatrix = calculateDelta(etfTodayPrice, KPrice, r, dayRatio, impvMatrix, CPMode)\(etfTodayPrice*0.01)
+	gammaMatrix = calculateGamma(etfTodayPrice, KPrice, r, dayRatio, impvMatrix)\(pow(etfTodayPrice, 2) * 0.0001)
+	vegaMatrix = calculateVega(etfTodayPrice, KPrice, r, dayRatio, impvMatrix)
+	thetaMatrix = calculateTheta(etfTodayPrice, KPrice, r, dayRatio, impvMatrix, CPMode)
+	todayTable = table(validContractsToday as optionID, impvMatrix.reshape() as impv, deltaMatrix.reshape() as delta, gammaMatrix.reshape() as gamma, vegaMatrix.reshape() as vega, thetaMatrix.reshape() as theta)
+	todayTable["tradingDate"] = targetDate
+	todayTable.reorderColumns!(["optionID", "tradingDate"])
+	return todayTable
+}
+
+/*
+ * 多日并行计算函数
+ */
+def calculateAll(closPriceWideMatrix, etfPriceWideMatrix, contractInfo, tradingDates, mutable result){
+	calculator = partial(calculateOneDayGreek, closPriceWideMatrix, etfPriceWideMatrix, contractInfo)
+	timer{
+		allResult = ploop(calculator, tradingDates)
+	}
+	for(oneDayResult in allResult){
+		append!(result, oneDayResult)
+	}	
+}
