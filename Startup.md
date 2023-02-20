@@ -11,10 +11,11 @@ DolphinDB系统的启动流程如下图所示：
 
 系统级初始化脚本是必需的，由设置参数init指定，默认脚本是版本发布目录中的dolphindb.dos。系统级初始化脚本中可定义系统级函数。这些函数对所有用户都可见，而且不能被覆盖，相当于DolphinDB内置函数。
 
-执行dolphindb.dos脚本时，脚本解释器、工作线程等已完成初始化，但系统的网络和分布式文件系统尚未启动、函数视图尚未加载。而启动脚本执行前，系统的网络和分布式文件系统已启动，函数视图已加载。如果函数视图中使用了插件，加载插件必须在dolphindb.dos中完成。与定时作业存储在数据节点不同，函数视图存储在控制节点。所以我们不建议在函数视图中使用插件，否则在集群中每个节点的dolphindb.dos都需要加载插件。
+执行系统初始化脚本（dolphindb.dos）脚本时，脚本解释器、工作线程等已完成初始化，但系统的网络和分布式文件系统尚未启动、函数视图尚未加载。因此，如果函数视图中使用了插件，加载插件必须在系统初始化脚本（dolphindb.dos）中完成或者在配置项 preloadModules 配置。与定时作业存储在数据节点不同，函数视图存储在控制节点。所以我们不建议在函数视图中使用插件，否则在集群中每个节点的系统初始化脚本中都需要加载插件。
+
 
 除了以下极少数任务以外，在启动脚本中我们可以执行任何其它任务。
-* 定时作业在启动脚本之后运行，所以不能在启动脚本中使用与定时作业相关的任何功能，包括函数`scheduleJob`, `getScheduledJobs`和`deleteScheduledJob`。
+* 定时作业在启动脚本之后运行，所以不能在启动脚本中使用与定时作业相关的任何功能，包括函数[scheduleJob](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/s/scheduleJob.html), [getScheduledJobs](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/g/getScheduledJobs.html) 和 [deleteScheduledJob](https://www.dolphindb.cn/cn/help/FunctionsandCommands/CommandsReferences/d/deleteScheduledJob.html)。
 * 若需要定义系统级的函数，要求这些函数对所有用户都可见，而且不能被覆盖，请在初始化脚本dolphindb.dos中定义。
 * 依赖其他节点的任务。因为有可能其他节点尚未启动。
 
@@ -64,6 +65,28 @@ enableTableShareAndPersistence(table=t1,tableName=`st1,cacheSize=1000)
 ```
 tb=loadTable("dfs://db1","tb")
 subscribeTable(,"st1","subst",-1,append!{tb},true)
+```
+
+注意：**在例子1，2的场景下，若在启动脚本中定义了共享内存表或者共享流数据表，且在启动脚本中调用了共享表变量，需要在 share 或者 enableTableShareAndPersistence 语句后增加 go 语句，否则解析会抛出异常。参考下例：
+
+将流数据表的数据写入一个共享的键值表，在启动脚本中定义如下：
+```
+def saveT(tb,st){tb.append!(st)}
+
+n=1000000
+colNames = `time`sym`vwap
+colTypes = [DATETIME,SYMBOL,DOUBLE]
+share streamTable(n:0, colNames, colTypes) as test_stream
+opt=keyedTable(`sym, n:0, colNames, colTypes)
+share(opt, `optShared)
+go
+subscribeTable(tableName="test_stream", actionName="test1", offset=0, handler=saveT{optShared}, msgAsTable=true, batchSize=100000, throttle=60)
+```
+
+若不增加 go 语句，系统在解析时会在日志中报错：
+
+```
+<ERROR> :Syntax Error: [line #10] Cannot recognize the token optShared
 ```
 
 **例子3**：加载插件
