@@ -67,7 +67,7 @@ tb=loadTable("dfs://db1","tb")
 subscribeTable(,"st1","subst",-1,append!{tb},true)
 ```
 
-注意：**在例子1，2的场景下，若在启动脚本中定义了共享内存表或者共享流数据表，且在启动脚本中调用了共享表变量，需要在 share 或者 enableTableShareAndPersistence 语句后增加 go 语句，否则解析会抛出异常。参考下例：
+注意：在例子1，2的场景下，若在启动脚本中定义了共享内存表或者共享流数据表，且在启动脚本中调用了共享表变量，需要在 share 函数或者 enableTableShareAndPersistence 函数后增加 [go](https://www.dolphindb.cn/cn/help/ProgrammingStatements/go.html) 语句，否则解析会抛出异常。参考下例：
 
 将流数据表的数据写入一个共享的键值表，在启动脚本中定义如下：
 ```
@@ -83,15 +83,17 @@ go
 subscribeTable(tableName="test_stream", actionName="test1", offset=0, handler=saveT{optShared}, msgAsTable=true, batchSize=100000, throttle=60)
 ```
 
-若不增加 go 语句，系统在解析时会在日志中报错：
+上例中，share(opt, `optShared) 语句执行时，动态注册了共享表对象optShared，而后续订阅的 handler=saveT{optShared} 中调用了变量  optShared。若不增加 go 语句，系统解析时，由于无法识别动态注册的变量 optShared 会抛出异常。 
+
+为避免不加 go 语句导致的解析异常，也可以将上述 share 函数替换成 share 语句：
 
 ```
-<ERROR> :Syntax Error: [line #10] Cannot recognize the token optShared
+share opt as optShared
 ```
 
 **例子3**：加载插件
 
-若定时作业 (scheduled job) 中使用了插件函数，必须在启动脚本中加载插件，否则会因反序列化失败导致系统退出。
+若定时作业 (scheduled job) 中使用了插件函数，必须在启动脚本中加载插件或者在配置项 preloadModules 配置插件，否则会因反序列化失败导致系统退出。
 下列代码在定时作业中使用了ODBC插件：
 ```
 use odbc
@@ -101,18 +103,27 @@ def jobDemo(){
 }
 scheduleJob("job demo","example of init",jobDemo,15:48m, 2019.01.01, 2020.12.31, 'D')
 ```
-若ODBC插件在系统启动时没有加载，读取定时作业时会无法识别函数`jobDemo`，导致退出系统，输出下列日志：
+若ODBC插件在系统启动时没有加载，读取定时作业时会无法识别函数 `jobDemo`，导致退出系统，输出下列日志：
 ```
 <ERROR>:Failed to unmarshall the job [job demo]. Failed to deserialize assign statement. Invalid message format.
 ```
-必须在启动脚本中加入下列代码以加载ODBC插件，系统才能启动成功。
+必须在启动脚本中加入下列代码以加载 ODBC 插件：
 ```
 loadPlugin("plugins/odbc/odbc.cfg")
 ```
+
+或者在配置项文件中添加：
+
+```
+preloadModules=plugins::odbc
+```
+
 ## 4. 编写启动脚本
 
-编写启动脚本时，可以使用[`module`](./module_tutorial.md)来声明和使用可重用模块，可以自定义函数，也可以使用分布式的功能。
+编写启动脚本时，可以使用 [`module`](./module_tutorial.md) 来声明和使用可重用模块，可以自定义函数，也可以使用分布式的功能。
 
-若需要调试启动脚本，可以在脚本中用[print](https://www.dolphindb.cn/cn/help/FunctionsandCommands/CommandsReferences/p/print.html)与[writeLog](https://www.dolphindb.cn/cn/help/FunctionsandCommands/CommandsReferences/w/writeLog.html)等函数打印日志。系统会把启动脚本运行情况输出到节点日志。
+若需要调试启动脚本，可以在脚本中用 [print](https://www.dolphindb.cn/cn/help/FunctionsandCommands/CommandsReferences/p/print.html) 与 [writeLog](https://www.dolphindb.cn/cn/help/FunctionsandCommands/CommandsReferences/w/writeLog.html) 等函数打印日志。系统会把启动脚本运行情况输出到节点日志。
 
-编写启动脚本时，为了防止出现异常而停止执行后续的脚本，可使用try-catch语句俘获异常。
+编写启动脚本时，为了防止出现异常而停止执行后续的脚本，可使用 [try-catch](https://www.dolphindb.cn/cn/help/ProgrammingStatements/tryCatch.html) 语句俘获异常。
+
+编写系统初始化脚本和启动脚本时，可以里用 include 语句进行代码的模块化管理。
