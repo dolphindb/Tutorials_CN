@@ -1,0 +1,85 @@
+/* *
+*  @ brief  
+*  This script is the implementation of clearing the enviroment.
+*  @ Author: DolphinDB
+*  @ Last modification time: 2023.02.02
+*  @ DolphinDB server version: 2.00.8
+*  @ FileName: clearStreamingEnv.dos
+*/
+
+login("admin", "123456")
+
+// define function : ClearAllSharedTables
+def existsShareVariable(varName){
+     return objs(true).name.find(varName)>=0
+}
+
+def ClearAllSharedTables(){
+	sharedTables = exec name from objs(true) where form="TABLE", shared=true
+	for(sharedTable in sharedTables){
+		print("Undef Shared Table: " + sharedTable)
+		try{
+			undef(sharedTable, SHARED)
+		}
+		catch(ex){
+			print(ex)
+		}
+	}
+	print("All shared table have been cleared !")
+}
+
+// define function : ClearAllSubscriptions
+def ClearAllSubscriptions(){
+	if(getStreamingStat().pubTables.rows() > 0){
+		do{
+			try{
+				tableName = getStreamingStat().pubTables[0,0]
+				actionName =  getStreamingStat().pubTables[0,3]
+				actionName = strReplace(actionName,"[","")
+				actionName = strReplace(actionName,"]","")
+				arr = actionName.split(',')
+			}
+			catch(ex){
+				print(ex)
+			}
+			for(actionName in arr){
+				try{	
+					print("unsub: " + tableName + ", "  + actionName)
+					unsubscribeTable(tableName=tableName, actionName=actionName)
+					sleep(10)
+				}
+				catch(ex){
+					print(ex)
+				}
+			}
+	
+		}
+		while(getStreamingStat().pubTables.rows() != 0)
+	}
+	print("All subscriptions have been cleared !")
+}
+
+// define function : DropAllEngines
+def DropAllEngines(){
+	if(getStreamEngineStat().rows() > 0){
+		engineTypes = getStreamEngineStat().keys()
+		for(engineType in engineTypes){
+			engineNames = getStreamEngineStat()[engineType].name
+			for(name in engineNames){
+				print("new Drop Stream Engine: " + name)
+				try{
+					dropStreamEngine(name)
+				}
+				catch(ex){
+					print(ex)
+				}
+			}
+		}
+	}
+	print("All engines have been dropped !")
+}
+
+// clear env
+ClearAllSharedTables()
+ClearAllSubscriptions()
+DropAllEngines()
