@@ -57,7 +57,7 @@ DolphinDB 提供数据、元数据以及客户端的高可用方案，使得数�
 
 ### 2.4 功能及应用场景
 
-| **功能**                                       | **独立服务器** | **单机集群** | **多服务器集群** |
+| **功能**                                       | **单节点** | **单机集群** | **多服务器集群** |
 | :----------------------------------------: | :---------: | :--------: | :----------: |
 | [多模存储引擎](https://www.dolphindb.cn/cn/help/200/DatabaseandDistributedComputing/Database/DataModel.html) |:white_check_mark:  | :white_check_mark:|:white_check_mark:  |
 | [支持事务](https://www.dolphindb.cn/cn/help/200/DatabaseandDistributedComputing/Database/Transaction.html) | :white_check_mark: | :white_check_mark: |:white_check_mark:  |
@@ -70,7 +70,7 @@ DolphinDB 提供数据、元数据以及客户端的高可用方案，使得数�
 | 数据高可用（多副本）                               | :x:         | :white_check_mark: | :white_check_mark: |
 | 应用高可用                                    | :x:         | :x:        | :white_check_mark: |
 
-| **应用场景**    | **独立服务器** | **单机集群** | **多服务器集群** |
+| **应用场景**    | **单节点** | **单机集群** | **多服务器集群** |
 | ------- | --------- | -------- | ---------- |
 | 开发      | :white_check_mark:         | :white_check_mark:        | :white_check_mark:          |
 | 研究      | :white_check_mark:         | :white_check_mark:        | :white_check_mark:          |
