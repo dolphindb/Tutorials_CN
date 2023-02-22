@@ -50,13 +50,13 @@
 3. DolphinDB 提供了更强大的备份文件校验功能，你可以在备份文件之后立刻检验文件的正确性以及完整性。
 
 ## 模拟数据
-本教程对应的数据生成脚本见[附件1](./script/backup_restore/buildData.txt)。数据库结构如下图：
+本教程对应的数据生成脚本见[附件1](./script/buildData.txt)。数据库结构如下图：
 
 ![dbStructure](./images/dbStructure.png)
 
 可以看到，我们构建了两个数据库，分别是OLAP和TSDB数据库。在OLAP数据库中有两张表，`quotes`和`quotes_2`。
 
-本教程各章节中使用的脚本，集合在[附件2](./script/backup_restore/backup_restore.txt)。
+本教程各章节中使用的脚本，集合在[附件2](./script/backup_restore.txt)。
 
 > 1. 备份和恢复任务有两种提交方式，一种是直接在客户端运行函数启动任务，另一种是通过`submitJob`提交任务到后台执行。鉴于备份和恢复的使用场景通常是大数据量，所需时间较长，建议将备份和恢复任务提交到后台执行，之后的脚本也都将采用这种方式。
 > 2. 后台任务的状态可以通过`getRecentJobs`查询
