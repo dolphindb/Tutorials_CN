@@ -124,7 +124,7 @@ DolphinDB 函数选取自 2.00 版本 [用户手册](https://www.dolphindb.cn/cn
 | pandas.DataFrame.cumsum / pandas.Series.cumsum               | cumsum                  |
 | pandas.DataFrame.cumprod / pandas.Series.cumprod             | cumprod                 |
 | pandas.DataFrame.nlargest(nsmallest) / pandas.Series.nlargest(nsmallest)  |  top + order by / aggrTopN |
-| pandas.DataFrame.diff / pandas.Series.diff                   | diff                    |
+| pandas.DataFrame.diff / pandas.Series.diff                   | deltas                  |
 | pandas.DataFrame.quantile / pandas.Series.quantile           | quantile                |
 | pandas.DataFrame.transpose                                   | transpose               |
 | pandas.Series.resample / pandas.DataFrame.resample           | resample                |
