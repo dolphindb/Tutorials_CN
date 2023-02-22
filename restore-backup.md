@@ -52,7 +52,7 @@
 ## 模拟数据
 本教程对应的数据生成脚本见[附件1](./script/backup_restore/buildData.txt)。数据库结构如下图：
 
-![dbStructure](./images/backup_restore/dbStructure.png)
+![dbStructure](./images/dbStructure.png)
 
 可以看到，我们构建了两个数据库，分别是OLAP和TSDB数据库。在OLAP数据库中有两张表，`quotes`和`quotes_2`。
 
@@ -148,7 +148,7 @@ getBackupStatus()
 > 非管理员调用该函数时，只能返回当前用户的 backup/restore 任务。
 
 返回如下：
-![backupStatus](./images/backup_restore/getBackupStatus.png)
+![backupStatus](./images/getBackupStatus.png)
 
 这张表里会返回每个任务涉及到的数据库和表名，涉及多少个分区，当前已完成了多少分区，和完成百分比。
 
@@ -170,7 +170,7 @@ getBackupList(backupDir,dbPath,`quotes_2)
 ```
 部分信息见下图：
 
-![getBackupList](./images/backup_restore/getBackupList.png)
+![getBackupList](./images/getBackupList.png)
 
 ### 2.3 getBackupMeta
 使用`getBackupMeta` 可以获得某一个分区的相关信息，比如所在的表的表结构，分区的完整路径，行数，ID，版本号等等。详情参见 [DolphinDB用户手册](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/g/getBackupMeta.html)
@@ -204,7 +204,7 @@ checkBackup(backupDir,dbPath,`quotes_2)
 然后将`086b0c1e-0386-95a4-4b4a-5038f4fd5d51`分区中volume.col文件移除，并添加一个同名的空文件。
 再次运行checkBackukp，得到结果
 
-![checkBackup](./images/backup_restore/checkBackup.png)
+![checkBackup](./images/checkBackup.png)
 
 接下来我们将这个分区重新备份：
 ```
@@ -224,7 +224,7 @@ backup(backupDir=backupDir,dbPath=dbPath,force=true,parallel=true,snapshot=true,
     >在2.00.9版本及之后，可以在log中查到backup成功或者失败的日志信息
     
 3. 如果您提交的是后台备份任务，可以到您配置的`homeDir/<nodeAlias>/batchJobs`下寻找对应的任务。以1.2的任务为例，可以查询`backupTable.msg`，返回如下：
-    ![1.4batchJobMsg](./images/backup_restore/1.4batchJobmsg.png)
+    ![1.4batchJobMsg](./images/1.4batchJobmsg.png)
   
     如果有"The job is done." 则说明任务已完成。
 
