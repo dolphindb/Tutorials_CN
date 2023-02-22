@@ -1,0 +1,104 @@
+login(`admin,`123456)
+
+/* 1.1 Backup a single database 
+ *  
+ */
+dbPath="dfs://testdb"
+backupDir="/home/$USER/backupDB"
+submitJob("backupDB","backup testdb",backupDB,backupDir,dbPath)
+
+/* 1.2 Backup a single table
+ *  
+ */
+dbPath="dfs://testdb"
+tbName=`quotes_2
+backupDir="/home/$USER/backupTb"
+submitJob("backupTable","backup quotes_2 in testdb",backupTable,backupDir,dbPath,tbName)
+
+/* 1.3 Backup a list of partitions
+ *  
+ */
+dbPath="dfs://testdb"
+tbName=`quotes_2
+backupDir="/home/$USER/backupPar"
+pars=["/Key3/tp/20120101","/Key4/tp/20120101"]
+submitJob("backupPartitions","backup some partitions in quotes_2 in testdb",backup,backupDir,dbPath,false,true,true,tbName,pars)
+ 
+/* 2.2 getBackupList
+ * 
+ */
+dbPath="dfs://testdb"
+backupDir="/home/$USER/backupDB"
+getBackupList(backupDir,dbPath,`quotes_2)
+
+
+/* 2.4 checkBackup
+ * 
+ */
+dbPath="dfs://testdb"
+backupDir="/home/$USER/backupDB"
+checkBackup(backupDir,dbPath)
+
+/* 3.1 Restore a single database 
+ * 
+ */
+//restore "testdb" to another cluster
+dbPath="dfs://testdb"
+backupDir="/home/$USER/backupDB"
+submitJob("restoreDB","restore testdb in new cluster",restoreDB,backupDir,dbPath)
+
+
+//restore "testdb" to "restoredb" in the original cluster
+dbPath="dfs://testdb"
+backupDir="/home/$USER/backupDB"
+restoreDBPath="dfs://restoredb"
+submitJob("restoreDB2","restore testdb to restoredb in the original cluster",restoreDB,backupDir,dbPath,restoreDBPath)
+
+/* 3.2 Restore a single table
+ * 
+ */
+//restore testdb's quotes_2 to new cluster
+dbPath="dfs://testdb"
+tbName=`quotes_2
+backupDir="/home/$USER/backupTb"
+submitJob("restoreTable","restore quotes_2 in testdb to new cluster",restoreTable,backupDir,dbPath,tbName)
+
+//restore testdb's quotes_2 to restoredb's quotes_2 in the original cluster
+dbPath="dfs://testdb"
+tbName=`quotes_2
+backupDir="/home/$USER/backupTb"
+restoreDBPath="dfs://restoredb2"
+submitJob("restoreTable2","restore quotes_2 in testdb to quotes_2 in restoredb",restoreTable,backupDir,dbPath,tbName,restoreDBPath)
+
+//restore testdb's quotes_2 to testdb's quotes_restore 
+dbPath="dfs://testdb"
+tbName=`quotes_2
+backupDir="/home/$USER/backupTb"
+restoreTb="quotes_restore"
+submitJob("restoreTable3","restore quotes_2 to quotes_restore in testdb",restoreTable,backupDir,dbPath,tbName,,restoreTb)
+
+/* 3.3 Restore a single partition
+ * 
+ */
+dbPath="dfs://testdb"
+backupDir="/home/$USER/backupPar"
+tbName=`quotes_2
+pars=["/testdb/Key3/tp/20120101","/testdb/Key4/tp/20120101"]
+for (par in pars){
+	restore(backupDir,dbPath,tbName,par,false,,true,true)
+}
+
+/* 3.4 Migrate data in a cluster
+ * 
+ */
+//run below commands in the original cluster
+dbPath="dfs://testdb"
+dbPath2="dfs://testdb_tsdb"
+backupDir="/home/$USER/migrate"
+submitJob("backupForMigrate","backup testdb for migrate",backupDB,backupDir,dbPath)
+submitJob("backupForMigrate2","backup testdb_tsdb for migrate",backupDB,backupDir,dbPath2)
+
+//run below commands in the new cluster after above jobs finish.
+backupDir="/home/$USER/migrate"
+submitJob("migrate","migrate testdb and testdb_tsdb to new cluster",migrate,backupDir)
+

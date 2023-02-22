@@ -1,0 +1,74 @@
+//Create a in-memory table
+n=80000
+symbols=symbol(string(1..500))
+dates=date(datetimeAdd(2020.01.01,0..366,'d'))
+years=date(datetimeAdd(2020.01M,0..30*12,'M'))
+date=dates[0]
+time=rand(timestamp(date)+0..(1000*60*60*23),n*500)
+syms=take(symbols,n*500)
+price=randNormal(100,5,n*500)
+volume=randNormal(1000,5,n*500)
+side=`B`B
+side=symbol(side)
+side=take(side,n*500)
+sources=`tp`tp
+sources=symbol(sources)
+sources=take(sources,n*500)
+tmp=table(time, syms as symbol,price, volume,side,sources as source)
+
+dbPath="dfs://testdb"
+dbPathTSDB="dfs://testdb_tsdb"
+login(`admin,`123456)
+dates=date(datetimeAdd(2012.01.01,0..1000,'d'))
+
+
+if(existsDatabase(dbPath)){
+	dropDatabase(dbPath)
+}
+if(existsDatabase(dbPathTSDB)){
+	dropDatabase(dbPathTSDB)
+}
+
+dbSource = database("",VALUE,["tp"])
+dbTime = database("",VALUE,2012.01.01..2021.12.31)
+dbSym = database("",HASH,[SYMBOL, 5])
+db=database(dbPath,COMPO,[dbSym,dbSource,dbTime])
+
+dbTSDB=database(dbPathTSDB,COMPO,[dbSym,dbSource,dbTime],,'TSDB')
+
+
+
+//Build partitioned tables in testdb and testdb_tsdb
+t=table(100:0, `time`symbol`price`volume`side`source, [TIMESTAMP,SYMBOL,FLOAT,FLOAT,SYMBOL,SYMBOL])
+db.createPartitionedTable(t,`quotes,`symbol`source`time)
+db.createPartitionedTable(t,`quotes_2,`symbol`source`time)
+dbTSDB.createPartitionedTable(t,`quotes_tsdb,`symbol`source`time, ,`symbol`time)
+
+//Functions to write data in testdb and testdb_tsdb
+def load_one_day_data (date,db_path,table_name,input_table){
+	db_table = loadTable(database=db_path, tableName=table_name)
+	tmpt=copy(input_table)
+	s=date-2020.01.01
+	update tmpt set time=time.temporalAdd(s,'d')
+
+	db_table.append!(tmpt)
+}
+
+smallDates=dates[0:100]
+
+def load_data(dates, db_path, table_name,tmp_table) {
+    for (date in dates) {
+        job_name = "load_data_" + table_name + "_" + year(date)+"_" + monthOfYear(date)+"_"+dayOfMonth(date)
+        job_desc = "TO: " + db_path
+        submitJob(job_name,job_desc,load_one_day_data,date,db_path,table_name,tmp_table)
+        print(job_name + " is submitted...")
+    }
+}
+
+load_data(smallDates,dbPath,`quotes,tmp)
+load_data(smallDates,dbPath,`quotes_2,tmp)
+load_data(smallDates,dbPathTSDB,`quotes_tsdb,tmp)
+
+
+
+
