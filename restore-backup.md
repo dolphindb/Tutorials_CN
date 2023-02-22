@@ -38,7 +38,7 @@
 
 ## 适用场景
 
-本教程适用于整个集群/数据库/表/分区的数据备份、恢复，以及大数据量的数据迁移。如果进行小规模的集群间数据同步，可以参考[DolphinDB 集群间数据库同步的第二章](https://github.com/dolphindb/Tutorials_CN/blob/master/data_synchronization_between_clusters.md#2-%E5%9C%A8%E7%BA%BF%E6%96%B9%E5%BC%8F)。
+本教程适用于整个集群/数据库/表/分区的数据备份、恢复，以及大数据量的数据迁移。如果进行小规模的集群间数据同步，可以参考[DolphinDB 集群间数据库同步的第二章](./data_synchronization_between_clusters.md#2-%E5%9C%A8%E7%BA%BF%E6%96%B9%E5%BC%8F)。
 
 ## 特性
 同2.00.8/1.30.20以前的版本的备份恢复功能相比，有如下的改进：
