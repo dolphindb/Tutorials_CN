@@ -1,315 +1,389 @@
-# 数据备份恢复教程
+- [DolphinDB教程：数据备份以及恢复](#dolphindb教程数据备份以及恢复)
+  - [适用场景](#适用场景)
+  - [特性](#特性)
+  - [模拟数据](#模拟数据)
+  - [1. 数据备份](#1-数据备份)
+    - [1.1 备份单个数据库](#11-备份单个数据库)
+    - [1.2 备份单张表](#12-备份单张表)
+    - [1.3 备份分区](#13-备份分区)
+  - [2. 备份文件检验函数](#2-备份文件检验函数)
+    - [2.1 getBackupStatus](#21-getbackupstatus)
+    - [2.2 getBackupList](#22-getbackuplist)
+    - [2.3 getBackupMeta](#23-getbackupmeta)
+    - [2.4 checkBackup](#24-checkbackup)
+    - [2.5 备份文件检查最佳实践](#25-备份文件检查最佳实践)
+      - [2.5.1 判断备份任务是否正常完成](#251-判断备份任务是否正常完成)
+      - [2.5.2 判断备份文件是否损坏](#252-判断备份文件是否损坏)
+  - [3. 数据恢复](#3-数据恢复)
+    - [3.1 恢复单个数据库](#31-恢复单个数据库)
+    - [3.2 恢复单张表](#32-恢复单张表)
+    - [3.3 恢复单个分区](#33-恢复单个分区)
+    - [3.4 恢复整个集群](#34-恢复整个集群)
+    - [3.5 判断恢复任务是否正常完成](#35-判断恢复任务是否正常完成)
+  - [4. 备份恢复的性能](#4-备份恢复的性能)
+  - [5. FAQ](#5-faq)
+    - [5.1 是否支持恢复到某个时间点？](#51-是否支持恢复到某个时间点)
+    - [5.2 备份时所有分区的时间点是否一致？](#52-备份时所有分区的时间点是否一致)
+    - [5.3 是否支持断点续备/恢复?](#53-是否支持断点续备恢复)
+    - [5.4 是否支持增量备份/恢复？](#54-是否支持增量备份恢复)
+    - [5.5 如何查看备份进度？](#55-如何查看备份进度)
+    - [5.6 如何检查备份是否完成？](#56-如何检查备份是否完成)
+    - [5.7 如何检查恢复是否完成？](#57-如何检查恢复是否完成)
 
-DolphinDB database 提供了一系列函数，用于数据备份与恢复。数据备份和恢复时均以表的分区为单位。
+# DolphinDB教程：数据备份以及恢复
 
-## 1. 备份
+本文适用于 DolphinDB 如下版本：
+- 130系列：1.30.20及以后的版本
+- 200系列：2.00.8及以后的版本。
 
-DolphinDB提供了[`backup`](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/b/backup.html)函数对分布式数据库进行备份。备份是以分区为单位进行的，可对指定数据表的部分或全部分区进行备份，支持全量备份或增量备份。
+## 适用场景
 
-备份需要指定存放备份文件的路径 backupDir 与需要备份的数据（用 SQL 语句表示）。备份后，系统会在 `<backupDir>/<dbName>/<tbName>` 目录下生成元数据文件 _metaData.bin 和数据文件 <chunkID>.bin，每个分区备份为一个数据文件。
+本教程适用于整个集群/数据库/表/分区的数据备份、恢复，以及大数据量的数据迁移。如果进行小规模的集群间数据同步，可以参考[DolphinDB 集群间数据库同步的第二章](https://github.com/dolphindb/Tutorials_CN/blob/master/data_synchronization_between_clusters.md#2-%E5%9C%A8%E7%BA%BF%E6%96%B9%E5%BC%8F)。
+
+## 特性
+同2.00.8/1.30.20以前的版本的备份恢复功能相比，有如下的改进：
+
+1. DolphinDB提供了拷贝文件的备份和恢复分布式数据库的方法，大大增加了备份和恢复的性能；
+
+2. DolphinDB利用底层的 `backup` 和 `restore` 函数封装了不同场景下的备份和恢复函数。用户可以根据需要选择函数进行备份以及恢复。这大大增加了备份恢复功能的易用性；
+
+3. DolphinDB 提供了更强大的备份文件校验功能，你可以在备份文件之后立刻检验文件的正确性以及完整性。
+
+## 模拟数据
+本教程对应的数据生成脚本见[附件1](./script/backup_restore/buildData.txt)。数据库结构如下图：
+
+![dbStructure](./images/backup_restore/dbStructure.png)
+
+可以看到，我们构建了两个数据库，分别是OLAP和TSDB数据库。在OLAP数据库中有两张表，`quotes`和`quotes_2`。
+
+本教程各章节中使用的脚本，集合在[附件2](./script/backup_restore/backup_restore.txt)。
+
+> 1. 备份和恢复任务有两种提交方式，一种是直接在客户端运行函数启动任务，另一种是通过`submitJob`提交任务到后台执行。鉴于备份和恢复的使用场景通常是大数据量，所需时间较长，建议将备份和恢复任务提交到后台执行，之后的脚本也都将采用这种方式。
+> 2. 后台任务的状态可以通过`getRecentJobs`查询
+> 3. 数据生成脚本运行之后，将往磁盘上写150G左右的数据，所以运行此脚本，请确保有足够的磁盘容量。如果磁盘容量不够，可以调节脚本里的`smallDates`变量，以减小数据量
 
 
-下例说明如何备份数据库。
+## 1. 数据备份
+现在 DolphinDB 提供了3种备份数据的方式：
 
-* 数据库的建库建表的脚本如下所示。采用复合分区，按天进行值分区，按照风机编号进行值分区。共有10台风机：
+(1) 备份单个数据库的数据
+
+(2) 备份单张表的数据
+
+(3) 备份部分分区的数据
+
+如果你还需要更灵活的备份方式，可以查看 [DolphinDB用户手册](https://www.dolphindb.cn/cn/help/DatabaseandDistributedComputing/DatabaseOperations/BackupandRestore.html#migrage-restore)，其中有更详细的介绍。
+
+> 注意：
+> 1. 到2.00.8版本，备份暂时只能将文件放在运行备份任务的数据节点所在的机器的目录下。
+> 2. DolphinDB 的备份保证了备份的是在同一时间点的数据。为此，DolphinDB在备份时会给数据加锁（如果使用backupDB则对数据库加锁，如果使用backupTable则对整个表加锁）。加锁期间数据可读但是不可写入。为了避免数据写入失败，请尽量选择没有写入任务的时候进行数据备份
+
+### 1.1 备份单个数据库
+要备份单个数据库，可使用`backupDB`命令。
+
+用例：将数据库`testdb`备份到`/home/$USER/backupDB`目录下（其中$USER为用户名称）
 ```
-m = "tag" + string(decimalFormat(1..523,'000'))
-tableSchema = table(100:0,`wntId`insertDate join m, [INT,DATETIME] join take(FLOAT,523) )
-db1 = database("",VALUE,2020.01.01..2020.12.30)
-db2 = database("",VALUE,1..10)
-db = database("dfs://ddb",COMPO,[db1,db2])
-db.createPartitionedTable(tableSchema,"windTurbine",`insertDate`wntId)
-```
-* 写入2020.01.01~2020.01.03三天的数据后，备份前2天的数据，代码如下，其中 parallel 参数表示是否进行并行备份，是 DolphinDB 1.10.13/1.20.3 版本新增的功能：
-```
-backup(backupDir="/hdd/hdd1/backup/",sqlObj=<select * from loadTable("dfs://ddb","windTurbine") where insertDate<=2020.01.02T23:59:59 >,parallel=true)
-
-```
-执行后返回结果20，说明备份了20个分区的数据。登录服务器，用 tree 命令列出目录的内容如下：
-```
-[dolphindb@localhost backup]$ tree /hdd/hdd1/backup/ -L 3 -t
-/hdd/hdd1/backup/
-└── ddb
-    └── windTurbine
-        ├── 02ddcb20-8872-af9d-ca46-f42a42239c78
-        ├── 237e6e64-d62e-13bf-0443-fa7a974f7c42
-        ├── 4d04471d-fff8-2e9a-7742-a0228af21bad
-        ├── 4e7e014f-1346-c4b0-264e-e9d15de494cb
-        ├── 4f2aade8-97ce-bca9-934f-b0b10f0da1fe
-        ├── 6256d8f2-cc53-7a87-5b43-6cce55b38933
-        ├── 77a4ac82-739c-389b-994b-22f84cb11417
-        ├── 8c27389b-4689-7697-d243-2b16dbca8354
-        ├── 8dd539b3-f3fc-b39c-6842-039dbec1ceb1
-        ├── 90a5af5f-1161-23af-ea42-877999866f44
-        ├── fd6b658c-47eb-e69e-164e-601c5b51daed
-        ├── _metaData
-        ├── 167a9165-05ec-e093-b74a-c6121939ebf0
-        ├── 3afb5932-a8fa-9e93-ff4c-120c1223dcf6
-        ├── 62d47049-155d-83a7-af48-36c8969072a7
-        ├── b20422a9-487d-8eb7-7143-3597a3b44796
-        ├── 2ae9676f-dbe7-669a-7144-68a02572df3e
-        ├── 4559d6db-bb7a-efb8-164e-3198127a7c3d
-        ├── 72e15689-4bf7-44a9-b84e-16fb8e856a6d
-        ├── 8652f2f0-9d60-40aa-4e44-9d77bd1309f6
-        ├── dolphindb.lock
-        └── e266ab82-6ef9-e289-d241-d9218be59dde
-
-2 directories, 22 files
-```
-从中可以看到，备份目录下根据数据库名和表名生成了2层子目录 ddb/windTurbine，在其下还有20个分区数据文件和1个元数据文件 _metaData。
-
-* 增量备份
-```
-backup(backupDir="/hdd/hdd1/backup/",sqlObj=<select *  from loadTable("dfs://ddb","windTurbine") >,force=false,parallel=true)
-
-```
-执行后返回结果10，说明备份了10个分区的数据。登录服务器，用 tree 命令列出目录的内容如下：
-```
-[xjqian@localhost windTurbine]$ tree /hdd/hdd1/backup/ -L 3 -t
-/hdd/hdd1/backup/
-└── ddb
-    └── windTurbine
-        ├── 04eceea9-53d7-1389-4044-d31538025361
-        ├── 14ff1d37-2ea7-7596-d94d-12ecfd8be197
-        ├── 81f7236f-83b3-ef81-f648-3b8db67c04fa
-        ├── 846aaf74-6c51-9a91-6c44-fb1e2cf93036
-        ├── bcb94ce8-0e06-2fad-b946-774fcedc978d
-        ├── c38cb06c-fd7f-608a-b148-b0f6a9883c5c
-        ├── e5993354-cd4d-3ab0-0e4b-ea331e68a2df
-        ├── _metaData
-        ├── 401136d4-1fcd-408c-b84b-20c2af7b3fe8
-        ├── 54076219-0904-97a2-1a4a-d076f35f76fe
-        ├── b51f4f36-be16-cfad-a440-d04ac36b6791
-        ├── dolphindb.lock
-        ├── 02ddcb20-8872-af9d-ca46-f42a42239c78
-        ├── 237e6e64-d62e-13bf-0443-fa7a974f7c42
-        ├── 4d04471d-fff8-2e9a-7742-a0228af21bad
-        ├── 4e7e014f-1346-c4b0-264e-e9d15de494cb
-        ├── 4f2aade8-97ce-bca9-934f-b0b10f0da1fe
-        ├── 6256d8f2-cc53-7a87-5b43-6cce55b38933
-        ├── 77a4ac82-739c-389b-994b-22f84cb11417
-        ├── 8c27389b-4689-7697-d243-2b16dbca8354
-        ├── 8dd539b3-f3fc-b39c-6842-039dbec1ceb1
-        ├── 90a5af5f-1161-23af-ea42-877999866f44
-        ├── fd6b658c-47eb-e69e-164e-601c5b51daed
-        ├── 167a9165-05ec-e093-b74a-c6121939ebf0
-        ├── 3afb5932-a8fa-9e93-ff4c-120c1223dcf6
-        ├── 62d47049-155d-83a7-af48-36c8969072a7
-        ├── b20422a9-487d-8eb7-7143-3597a3b44796
-        ├── 2ae9676f-dbe7-669a-7144-68a02572df3e
-        ├── 4559d6db-bb7a-efb8-164e-3198127a7c3d
-        ├── 72e15689-4bf7-44a9-b84e-16fb8e856a6d
-        ├── 8652f2f0-9d60-40aa-4e44-9d77bd1309f6
-        └── e266ab82-6ef9-e289-d241-d9218be59dde
-
-2 directories, 32 files
-
-```
-可以看到数据文件比之前多了10个，恰好是2020年1月3日的完整数据。
-
-* 每天备份
-
-可用定时作业来实现。下面例子在每天凌晨00:05:00开始备份前一天的数据：
-```
-scheduleJob(`backupJob, "backupDB", backup{"/hdd/hdd1/backup/"+(today()-1).format("yyyyMMdd"),<select * from loadTable("dfs://ddb","windTurbine") where tm between datetime(today()-1) : (today().datetime()-1) >,false,true}, 00:05m, today(), 2030.12.31, 'D');
+dbPath="dfs://testdb"
+backupDir="/home/$USER/backupDB"
+submitJob("backupDB","backup testdb",backupDB,backupDir,dbPath)
 ```
 
-## 2. 恢复
+`backupDB` 有以下特性：
+1. 支持断线续备：如果备份中断，再次运行`backupDB`即可从刚才中断时正在备份的分区开始备份，已备份好的分区无需重新备份一遍。
+2. 支持分区级别的增量备份：对于在数据库和备份文件里同时存在的分区，
+`backupDB`会检查数据库的分区和备份文件里对应的分区的更新时间。DolphinDB 只会对更新时间不一致的分区，用数据库里的数据覆盖备份文件里的。
+3. 备份数据和数据库备份开始时的数据一致：备份文件中存在，而数据库中不存在的分区会被从备份文件中删除；备份文件中不存在，而数据库中存在的分区将会被备份；备份文件和数据库中都存在的分区，参见特性2
 
-DolphinDB提供两种数据恢复的方法：
-- 使用[`migrate`](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/m/migrate.html)函数
-- 使用[`restore`](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/r/restore.html)函数
+### 1.2 备份单张表
+要备份一张表，可使用 `backupTable` 命令。
 
-`migrate` 函数以表为单位恢复，可以批量恢复多个表的全部数据；而 `restore` 函数以分区为单位恢复，每次恢复一个表中部分或全部分区的数据。
-使用 `migrate` 函数时，用户无需创建新数据库，系统会自动创建新数据库；而 `restore` 函数需要用户先建库建表，而且数据库名称必须与备份的分布式数据库的名称一致。
+用例：将数据库 `testdb` 的 `quotes_2` 表备份到 `/home/$USER/backupTb` 目录下（其中$USER为用户名称）
 
-下面的例子恢复2020年1月份的数据到原表，其中备份文件是上一小节的定时作业按天生成：
 ```
-day=2020.01.01
-for(i in 1..31){
-	path="/hdd/hdd1/backup/"+temporalFormat(day, "yyyyMMdd") + "/";
-	day=datetimeAdd(day,1,`d)
-	if(!exists(path)) continue;
-	print "restoring " + path;
-	restore(backupDir=path,dbPath="dfs://ddb",tableName="windTurbine",partition="%",force=true);
+dbPath="dfs://testdb"
+tbName=`quotes_2
+backupDir="/home/$USER/backupTb"
+submitJob("backupTable","backup quotes_2 in testdb",backupTable,backupDir,dbPath,tbName)
+```
+`backupTable` 和`backupDB`有类似的特性，只不过`backupTable`是针对分布式表的，而`backupDB`是针对数据库的。
+
+### 1.3 备份分区
+要备份同一个表的部分或全部分区，可以将他们的分区路径放入一个向量，并将这个向量传入backup函数中
+
+用例：将数据库 `testdb` 的 `quotes_2` 表的 `/Key3/tp/20120101` 和 `/Key4/tp/20120101` 分区备份到 `/home/$USER/backupPar` 目录下
+
+```
+dbPath="dfs://testdb"
+tbName=`quotes_2
+backupDir="/home/$USER/backupPar"
+pars=["/Key3/tp/20120101","/Key4/tp/20120101"]
+submitJob("backupPartitions","backup some partitions in quotes_2 in testdb",backup,backupDir,dbPath,false,true,true,tbName,pars)
+```
+
+
+## 2. 备份文件检验函数
+运行备份任务之后，一个很重要的步骤是检查备份是否成功完成，以及备份文件的完整性。DolphinDB提供了多个函数，用以监控备份任务、检验备份文件：
+
+- `getBackupStatus` 可以用来查看指定用户的backup/restore任务进度
+- `getBackupList` 可以查看备份的所有分区的基本信息，
+- `getBackupMeta` 可以查看备份文件的元数据信息，包括表的schema等信息
+- `checkBackup` 可以用来检查备份文件的完整性
+
+
+接下来我们将一一介绍他们，并且在最后给出检查备份文件的最佳实践。
+
+> 注意：以上的操作需要在进行备份任务的数据节点运行。你可以通过`getNodeAlias`函数查看自己当前所在的数据节点别名。
+
+### 2.1 getBackupStatus
+getBackupStatus可以用来查看指定用户的backup/restore任务进度，同时可以预估任务完成时间。
+
+用例：作为管理员使用 `getBackupStatus` 查看所有用户的 backup/restore 任务
+```
+login(`admin, `123456)
+getBackupStatus()
+```
+
+> 管理员调用该函数时，若指定了 userName，则返回指定用户的 backup/restore 任务；否则返回所有用户的 backup/restore 任务
+>
+> 非管理员调用该函数时，只能返回当前用户的 backup/restore 任务。
+
+返回如下：
+![backupStatus](./images/backup_restore/getBackupStatus.png)
+
+这张表里会返回每个任务涉及到的数据库和表名，涉及多少个分区，当前已完成了多少分区，和完成百分比。
+
+如果任务还未完成，endTime会返回预估完成时间；如果任务已完成，endTime返回实际完成时间。
+
+> 注意事项
+> 1. 返回的表里对每张表的备份/恢复任务都有一行新纪录。例如上图的表里返回了两条记录，虽然只进行了一次备份。
+> 
+> 2. getBackupStatus只会返回这次数据节点启动之后的backup任务的进度。如果重启数据节点，之前的backup任务的进度将丢失
+
+### 2.2 getBackupList
+`getBackupList` 会返回一个分布式表的备份信息。返回为一张表，表里包含备份文件里这个表的所有的分区。每个分区对应表中的一行。表中会有chunkID、chunkPath、版本号、每个分区包含的行数和最后一次更新的时间戳。
+
+用例：getBackupList获得`testdb`数据库中`quotes_2`的表的备份信息。
+```
+dbPath="dfs://testdb"
+backupDir="/home/$USER/backupDB"
+getBackupList(backupDir,dbPath,`quotes_2)
+```
+部分信息见下图：
+
+![getBackupList](./images/backup_restore/getBackupList.png)
+
+### 2.3 getBackupMeta
+使用`getBackupMeta` 可以获得某一个分区的相关信息，比如所在的表的表结构，分区的完整路径，行数，ID，版本号等等。详情参见 [DolphinDB用户手册](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/g/getBackupMeta.html)
+
+
+### 2.4 checkBackup 
+
+`checkBackup` 会检查备份文件中每个分区的 checksum。返回一张包含 checksum 检查不通过的分区的表。
+
+用例：检查1.1节里的备份文件的完整性
+```
+dbPath="dfs://testdb"
+backupDir="/home/$USER/backupDB"
+checkBackup(backupDir,dbPath)
+```
+> checkBackup运行需要的时间和备份文件时所需的时间相近。
+
+如果发现检查不通过的分区，需要通过backup，并设定force为true强制重新备份。如果设置force=false，只会检查分区的元数据信息，那么就有可能不会重新备份有问题的分区。
+
+为了展示这个函数的用法，我们将做如下操作：
+1. 运行 checkBackup
+2. 将之前备份好的文件，选取一个移动到别的目录下，并建一个同名的空文件，再运行checkBackup
+3. 将移除文件涉及的分区重新备份，并再次运行 checkBackup
+
+为了更快返回结果，我们选择检查OLAP数据库中 quotes_2 的备份文件：
+```
+checkBackup(backupDir,dbPath,`quotes_2)
+```
+返回为空，说明校验通过。
+
+然后将`086b0c1e-0386-95a4-4b4a-5038f4fd5d51`分区中volume.col文件移除，并添加一个同名的空文件。
+再次运行checkBackukp，得到结果
+
+![checkBackup](./images/backup_restore/checkBackup.png)
+
+接下来我们将这个分区重新备份：
+```
+backup(backupDir=backupDir,dbPath=dbPath,force=true,parallel=true,snapshot=true,tableName=`quotes_2,partition="/Key4/tp/20120103")
+```
+再运行checkBackup，返回为空，说明校验通过。
+
+所以checkBackup可以检查一个备份文件在备份完成之后是否损坏。
+
+### 2.5 备份文件检查最佳实践
+备份文件检查分为两个阶段，第一个阶段是备份任务结束之后，需要判断其是否正常完成。第二个阶段是在恢复之前，需要检查备份文件是否有损坏。以下的命令都需要在备份任务所在的节点执行。
+#### 2.5.1 判断备份任务是否正常完成
+1. 使用 `getBackupStatus`，返回备份任务信息。每一行代表一个表的备份。如果此次备份任务涉及的各行的completed列都为1，则说明任务成功。
+
+2. 如果 `getBackupStatus` 查不到相关的表的备份信息，说明这个备份任务开始到查询期间，数据节点重启过，那么可以用`getBackupList`函数获取备份的各分区的行数，和数据库中对应的分区的行数进行比对。 
+   
+    >在2.00.9版本及之后，可以在log中查到backup成功或者失败的日志信息
+    
+3. 如果您提交的是后台备份任务，可以到您配置的`homeDir/<nodeAlias>/batchJobs`下寻找对应的任务。以1.2的任务为例，可以查询`backupTable.msg`，返回如下：
+    ![1.4batchJobMsg](./images/backup_restore/1.4batchJobmsg.png)
+  
+    如果有"The job is done." 则说明任务已完成。
+
+#### 2.5.2 判断备份文件是否损坏
+使用 `checkBackup` 函数。具体方法见 [2.4节](#24-checkbackup)。
+
+## 3. 数据恢复
+现在 DolphinDB 提供了4种恢复数据的方式：
+
+1. 恢复单个数据库
+2. 恢复单张表
+3. 恢复部分分区
+4. 恢复整个集群
+
+如果你还需要更灵活的恢复方式，可以查看 [DolphinDB用户手册](https://www.dolphindb.cn/cn/help/DatabaseandDistributedComputing/DatabaseOperations/BackupandRestore.html#migrage-restore)，其中介绍了更灵活的用法。
+
+> 与备份不同，在数据恢复时，不会对涉及分区加锁。比如，在对一张表做恢复的同时，允许对这张表进行写入操作。不过我们建议在恢复的同时不要写入，否则会出现一些无法预测的行为，比如新的写入可能会留在数据库，也可能被恢复任务覆盖。
+
+### 3.1 恢复单个数据库
+要恢复单个数据库的数据，可使用 `restoreDB` 命令。
+
+用例1：将1.1节中备份的数据恢复到新集群中
+```
+dbPath="dfs://testdb"
+backupDir="/home/$USER/backupDB"
+submitJob("restoreDB","restore testdb in new cluster",restoreDB,backupDir,dbPath)
+```
+> 注意：此处我们只是声明了备份文件的路径和需要恢复的数据库路径，而 `restoreDB` 函数会在新集群按照备份文件创建 `testdb` 数据库及库里所有的表，并将所有表的数据导入这个数据库
+
+也可以将单个数据库的数据恢复到同一个集群的另一个数据库中，只需要指定数据库的路径即可：
+```
+# 将1.1节中备份的数据恢复到 restoredb 中
+dbPath="dfs://testdb"
+backupDir="/home/$USER/backupDB"
+restoreDBPath="dfs://restoredb"
+submitJob("restoreDB2","restore testdb to restoredb in the original cluster",restoreDB,backupDir,dbPath,restoreDBPath)
+```
+
+`restoreDB` 有以下特性：
+1. 支持断线续恢复：如果恢复中断，再次运行 `restoreDB` 即可从刚才中断时正在恢复的分区开始恢复，已恢复好的分区无需重新恢复一遍。
+2. 支持分区级别的增量恢复：对于在新数据库和备份文件里同时存在的分区，`restoreDB` 会检查新数据库的分区和备份文件里对应的分区的更新时间。DolphinDB 只会对更新时间不一致的分区，用备份文件里的数据覆盖新数据库里的。
+3. 备份数据和新数据库恢复开始时的数据一致：备份文件中存在，而新数据库中不存在的分区会被恢复到新数据库中；备份文件中不存在，而数据库中存在的分区将会从新数据库中被删去；备份文件和数据库中都存在的分区，参见特性2
+
+### 3.2 恢复单张表
+要恢复单张表的数据，可使用 `restoreTable` 命令。
+用例1：将1.2节中备份的数据恢复到新集群中
+```
+dbPath="dfs://testdb"
+tbName=`quotes_2
+backupDir="/home/$USER/backupTb"
+submitJob("restoreTable","restore quotes_2 in testdb to new cluster",restoreTable,backupDir,dbPath,tbName)
+```
+> 注意：此处我们只是声明了备份文件的路径和需要恢复的表名，而 `restoreTable` 会在新集群按照备份文件创建 `testdb` 数据库和 `quotes` 表，并将数据恢复到这张表
+
+也可以将单张表的数据恢复到同一个集群的另一个数据库中，只需要指定数据库的路径即可：
+```
+# 将1.2中备份的数据恢复到 restoredb2 的 quotes_2 表中
+dbPath="dfs://testdb"
+tbName=`quotes_2
+backupDir="/home/$USER/backupTb"
+restoreDBPath="dfs://restoredb2"
+submitJob("restoreTable2","restore quotes_2 in testdb to quotes_2 in restoredb",restoreTable,backupDir,dbPath,tbName,restoreDBPath)
+```
+
+也可以将单张表的数据恢复到同一个数据库的另一张表中，只需要指定表名即可
+```
+# 将1.2中备份的数据恢复到 testdb 的 quotes_restore 表中。
+dbPath="dfs://testdb"
+tbName=`quotes_2
+backupDir="/home/$USER/backupTb"
+restoreTb="quotes_restore"
+submitJob("restoreTable3","restore quotes_2 to quotes_restore in testdb",restoreTable,backupDir,dbPath,tbName,,restoreTb)
+```
+`restoreTable` 和`restoreDB`有类似的特性，只不过`restoreTable`是针对分布式表的，而`restoreDB`是针对数据库的。
+
+### 3.3 恢复单个分区
+要恢复同一个表的部分分区，可以使用 `restore` 函数。和backup备份分区时略有不同，restore中的partition参数只支持传入一个标量，这个标量中可以使用通配符，去匹配多个分区。比如，`%/Key4/tp/%` 可以匹配 `/Key4/tp/20120101`，`/Key4/tp/20120103`，`/Key4/tp/20120104`...等分区。
+
+用例：将1.3节中备份的分区恢复到新数据库中
+
+```
+dbPath="dfs://testdb"
+backupDir="/home/$USER/backupPar"
+tbName=`quotes_2
+pars=["/testdb/Key3/tp/20120101","/testdb/Key4/tp/20120101"]
+for (par in pars){
+	restore(backupDir,dbPath,tbName,par,false,,true,true)
 }
 ```
 
-下面的例子把2020年1月份的数据恢复到一个新的数据库 dfs://db1 和表 equip，其中先用 `migrate` 恢复第一天的数据，然后用 `migrate` 把剩余备份数据恢复到临时表，再导入 equip：
+### 3.4 恢复整个集群
+如果需要将整个集群的数据进行迁移，可以先将各个数据库备份至同一个目录下，然后通过`migrate`函数进行恢复。
+
+用例：备份两个数据库`testdb`和`testdb_tsdb`至目录下，然后使用migrate在新集群恢复
 ```
-migrate("/hdd/hdd1/backup/20200101/","dfs://ddb","windTurbine","dfs://db1","equip")
-day=2020.01.02
-newTable=loadTable("dfs://db1","equip")
-for(i in 2:31){
-	path="/hdd/hdd1/backup/"+temporalFormat(day, "yyyyMMdd") + "/";
-	day=datetimeAdd(day,1,`d)
-	if(!exists(path)) continue;
-	print "restoring " + path;
-	t=migrate(path,"dfs://ddb","windTurbine","dfs://db1","tmp") 
-	if(t['success'][0]==false){
-		print t['errorMsg'][0]
-		continue
-	}
-	newTable.append!(select * from loadTable("dfs://db1","tmp") where tm between datetime(day-1) : (day.datetime()-1) > )
-	database("dfs://db1").dropTable("tmp")
-}
+//旧集群备份testdb和testdb_tsdb
+dbPath="dfs://testdb"
+dbPath2="dfs://testdb_tsdb"
+backupDir="/home/$USER/migrate"
+submitJob("backupForMigrate","backup testdb for migrate",backupDB,backupDir,dbPath)
+submitJob("backupForMigrate2","backup testdb_tsdb for migrate",backupDB,backupDir,dbPath2)
 
+//备份完成后，在新集群恢复这两个数据库
+backupDir="/home/$USER/migrate"
+submitJob("migrate","migrate testdb and testdb_tsdb to new cluster",migrate,backupDir)
 ```
+`migrate`和`restoreDB`类似，但是有如下两个区别：
+1. migrate可以恢复多个数据库，而restoreDB只能恢复单个数据库。
+2. 当恢复后的数据库名称、表名称与原数据库、原表一致时，migrate 要求原数据库、原表已经被删除，否则无法恢复，而 restoreDB 无此限制。所以migrate无法用于增量恢复和断点续恢复，而一般用于新的集群刚部署完成的时候的数据迁移。有关更多数据备份与还原的函数选择，可参考 [数据备份与恢复 — DolphinDB 2.0 文档](https://www.dolphindb.cn/cn/help/DatabaseandDistributedComputing/DatabaseOperations/BackupandRestore.html#migrage-restore)。
 
-## 3. 备份与恢复管理
+### 3.5 判断恢复任务是否正常完成
+恢复的任务信息也可以通过`getBackupStatus`查询。若要判断恢复任务是否完成，可以参考 [2.5.1节](#251-判断备份任务是否正常完成)。
 
-### 3.1 getBackupList
+## 4. 备份恢复的性能
+本次性能测试使用的机器 CPU 为Intel(R) Xeon(R) Silver 4314 CPU @ 2.40GHz
 
-[`getBackupList`](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/g/getBackupList.html)函数用来查看某个分布式表的所有备份信息，返回一张表，每个分区对应一行记录。
+使用的DolphinDB集群为 DolphinDB 普通集群，1个 controller，3个 data node，每个 data node 挂载1个普通SSD盘，读写速度约为500MB/s。备份文件所在的磁盘也是SSD盘，读写速度也为500MB/s。
 
-比如对上节备份的数据，运行：
+cluster.cfg配置如下：
 ```
-getBackupList("/hdd/hdd1/backup/", "dfs://ddb", "windTurbine")
+maxMemSize=256
+maxConnections=512
+workerNum=8
+localExecutors=7
+chunkCacheEngineMemSize=16
+newValuePartitionPolicy=add
+maxPubConnections=64
+subExecutors=4
+subPort=8893
+lanCluster=0
+enableChunkGranularityConfig=true
+diskIOConcurrencyLevel=0
 ```
-得到如下结果：
+运行备份时，落库为50G大小的数据，观察备份文件所在的磁盘IO，写入速度为490MB/s左右，基本达到了磁盘的性能瓶颈。
 
-|chunkID|	chunkPath|	cid|
----|---|---
-|72e15689-4bf7-44a9-b84e-16fb8e856a6d|	dfs://ddb/20200101/1|	10,413
-|8652f2f0-9d60-40aa-4e44-9d77bd1309f6|	dfs://ddb/20200101/2|	10,417
-|4559d6db-bb7a-efb8-164e-3198127a7c3d|	dfs://ddb/20200101/3|	10,421
-|2ae9676f-dbe7-669a-7144-68a02572df3e|	dfs://ddb/20200101/4|	10,425
-|e266ab82-6ef9-e289-d241-d9218be59dde|	dfs://ddb/20200101/5|	10,429
-|62d47049-155d-83a7-af48-36c8969072a7|	dfs://ddb/20200101/6|	10,414
-|3afb5932-a8fa-9e93-ff4c-120c1223dcf6|	dfs://ddb/20200101/7|	10,418
-|b20422a9-487d-8eb7-7143-3597a3b44796|	dfs://ddb/20200101/8|	10,422
-|167a9165-05ec-e093-b74a-c6121939ebf0|	dfs://ddb/20200101/9|	10,426
-|4d04471d-fff8-2e9a-7742-a0228af21bad|	dfs://ddb/20200101/10|	10,430
-|02ddcb20-8872-af9d-ca46-f42a42239c78|	dfs://ddb/20200102/1|	10,415
-|8dd539b3-f3fc-b39c-6842-039dbec1ceb1|	dfs://ddb/20200102/2|	10,419
-|fd6b658c-47eb-e69e-164e-601c5b51daed|	dfs://ddb/20200102/3|	10,423
-|90a5af5f-1161-23af-ea42-877999866f44|	dfs://ddb/20200102/5|	10,431
-|237e6e64-d62e-13bf-0443-fa7a974f7c42|	dfs://ddb/20200102/6|	10,416
-|8c27389b-4689-7697-d243-2b16dbca8354|	dfs://ddb/20200102/7|	10,420
-|6256d8f2-cc53-7a87-5b43-6cce55b38933|	dfs://ddb/20200102/8|	10,424
-|4e7e014f-1346-c4b0-264e-e9d15de494cb|	dfs://ddb/20200102/9|	10,428
-|77a4ac82-739c-389b-994b-22f84cb11417|	dfs://ddb/20200102/10|	10,432
-|54076219-0904-97a2-1a4a-d076f35f76fe|	dfs://ddb/20200103/1|	10,433
-|b51f4f36-be16-cfad-a440-d04ac36b6791|	dfs://ddb/20200103/2|	10,436
-|401136d4-1fcd-408c-b84b-20c2af7b3fe8|	dfs://ddb/20200103/3|	10,438
-|14ff1d37-2ea7-7596-d94d-12ecfd8be197|	dfs://ddb/20200103/4|	10,439
-|846aaf74-6c51-9a91-6c44-fb1e2cf93036|	dfs://ddb/20200103/5|	10,442
-|c38cb06c-fd7f-608a-b148-b0f6a9883c5c|	dfs://ddb/20200103/6|	10,434
-|e5993354-cd4d-3ab0-0e4b-ea331e68a2df|	dfs://ddb/20200103/7|	10,435
-|04eceea9-53d7-1389-4044-d31538025361|	dfs://ddb/20200103/8|	10,437
-|bcb94ce8-0e06-2fad-b946-774fcedc978d|	dfs://ddb/20200103/9|	10,440
-|81f7236f-83b3-ef81-f648-3b8db67c04fa|	dfs://ddb/20200103/10|	10,441
-
-### 3.2 getBackupMeta
-
-[`getBackupMeta`](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/g/getBackupMeta.html)函数用来查看某张表中某个分区的备份的信息，返回一个字典，包含schema，cid，path等信息。
-
-示例如下：
-```
-getBackupMeta("/hdd/hdd1/backup/","dfs://ddb","/20200103/10","windTurbine")
-```
-运行后结果如下：
-```
-schema->
-name       typeString typeInt comment
----------- ---------- ------- -------
-wntId      INT        4              
-insertDate DATETIME   11             
-tag001     FLOAT      15             
-tag002     FLOAT      15             
-tag003     FLOAT      15             
-...
-
-dfsPath->dfs://ddb/20200103/10
-chunkID->81f7236f-83b3-ef81-f648-3b8db67c04fa
-cid->10441
-```
-### 3.3 loadBackup
-
-[`loadBackup`](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/l/loadBackup.html)函数用于加载指定分布式表中某个分区的备份数据。
-
-```
-loadBackup("/hdd/hdd1/backup/","dfs://ddb","/20200103/10","windTurbine")
-```
-运行后结果如下：
-
-|wntId|insertDate|	tag001|	tags	|tag523|
-|---|---|---|---|---|
-|10|2020.01.03T00:00:00|	90.3187|	...|1|
-|10|2020.01.03T00:00:01|	95.3273|	...|1|
-|...||||
-|10|2020.01.03T23:59:59|	94.6378|	...|1|
+运行恢复时，因为是写入多个磁盘，我们用数据量/时间来估算写入速度。备份文件大小为50G，恢复花费了2分20秒，速度约为365MB/s，低于备份速度。
 
 
-## 4. 示例
+## 5. FAQ
+### 5.1 是否支持恢复到某个时间点？
+不支持，DolphinDB的增量备份并不是添加新的binlog，而是直接覆盖原文件。所以，增量备份功能只是跳过了不需要备份的分区，从而加速了备份，而不支持恢复到某个时间点。在 DolphinDB 中，如果你需要恢复到到一周前的任意一天，那么你需要在一周前的每一天都备份一份数据，并且放在不同的目录中。
 
-下面的例子创建了一个组合分区的数据库 dfs://compoDB。
+### 5.2 备份时所有分区的时间点是否一致？    
+一致。
 
-```
-n=1000000
-ID=rand(100, n)
-dates=2017.08.07..2017.08.11
-date=rand(dates, n)
-x=rand(10.0, n)
-t=table(ID, date, x);
+### 5.3 是否支持断点续备/恢复?
+支持。具体见[1.1节](#11-备份单个数据库)。
 
-dbDate = database(, VALUE, 2017.08.07..2017.08.11)
-dbID=database(, RANGE, 0 50 100);
-db = database("dfs://compoDB", COMPO, [dbDate, dbID]);
-pt = db.createPartitionedTable(t, `pt, `date`ID)
-pt.append!(t);
-```
+### 5.4 是否支持增量备份/恢复？
+支持。具体见[1.1节](#11-备份单个数据库)。
 
-备份表 pt 的所有数据：
-```
-backup("/home/DolphinDB/backup",<select * from loadTable("dfs://compoDB","pt")>,true);
-```
+### 5.5 如何查看备份进度？
+使用 `getBackupStatus` 函数。具体见[2.1节](#21-getbackupstatus)
 
-SQL 元代码中可以添加 where 条件。例如，备份 date>2017.08.10 的数据。
-```
-backup("/home/DolphinDB/backup",<select * from loadTable("dfs://compoDB","pt") where date>2017.08.10>,true);
-```
+### 5.6 如何检查备份是否完成？
+见[2.5.1节](#251-判断备份任务是否正常完成)。
 
-查看表 pt 的备份信息：
-```
-getBackupList("/home/DolphinDB/backup","dfs://compoDB","pt");
-```
+### 5.7 如何检查恢复是否完成？
+见[3.5节](#35-判断恢复任务是否正常完成)
 
-查看 20120810/0_50 分区的备份信息：
-```
-getBackupMeta("/home/DolphinDB/backup","dfs://compoDB","/20170810/0_50","pt");
-```
 
-加载 20120810/0_50 分区的备份数据到内存：
-```
-loadBackup("/home/DolphinDB/backup","dfs://compoDB","/20170810/0_50","pt");
-```
-请注意，如用户使用1.30.16/2.00.4及以上版本创建数据库，可以使用以下代码在查看及加载备份数据时指定参数 partition。
 
-```
-list=getBackupList("/home/DolphinDB/backup","dfs://compoDB","pt").chunkPath;
-path=list[0][regexFind(list[0],"/20170807/0_50"):]
-getBackupMeta("/home/DolphinDB/backup","dfs://compoDB", path, "pt");
-loadBackup("/home/DolphinDB/backup","dfs://compoDB", path, "pt");
-```
-
-把所有数据恢复到原表：
-```
-restore("/home/DolphinDB/backup","dfs://compoDB","pt","%",true);
-```
-
-在数据库 dfs://compoDB 中创建一个与pt结构相同的表 temp：
-```
-temp=db.createPartitionedTable(t, `temp, `date`ID);
-```
-
-把 pt 中2017.08.10的数据恢复到 temp 中：
-```
-restore("/home/DolphinDB/backup","dfs://compoDB","pt","%20170810%",true,temp);
-```
-
-把所有数据恢复到一个新的库 dfs://newCompoDB 和表 pt：
-```
-migrate("/home/DolphinDB/backup","dfs://compoDB","pt","dfs://newCompoDB","pt");
-
-```
