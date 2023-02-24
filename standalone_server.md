@@ -3,7 +3,7 @@
 本教程用于单节点的部署、升级、过期License升级，并对常见问题做出解答，便于用户快速上手DolphinDB。包含以下主题：
 
 <!-- vscode-markdown-toc -->
-* 1. [1. 在 Linux 操作系统部署 DolphinDB 单节点](#LinuxDolphinDB)
+* 1. [在 Linux 操作系统部署 DolphinDB 单节点](#LinuxDolphinDB)
 	* 1.1. [1.1 下载](#downloadDDBLinux)
 	* 1.2. [1.2 更新软件授权许可](#renewLic)
 	* 1.3. [1.3 启动单节点](#startSingleNodeLinux)
