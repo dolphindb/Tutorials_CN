@@ -4,7 +4,7 @@
 
 <!-- vscode-markdown-toc -->
 * 1. [在 Linux 操作系统部署 DolphinDB 单节点](#LinuxDolphinDB)
-	* 1.1. [1.1 下载](#downloadDDBLinux)
+	* [1.1 下载](#downloadDDBLinux)
 	* 1.2. [1.2 更新软件授权许可](#renewLic)
 	* 1.3. [1.3 启动单节点](#startSingleNodeLinux)
 	* 1.4. [1.4 Web 管理界面检查节点运行状态](#Web)
