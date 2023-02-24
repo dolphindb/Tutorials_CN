@@ -1,6 +1,6 @@
 # 单节点部署
 
-本教程用于单节点的部署、升级、过期License升级，并对常见问题做出解答，便于用户快速上手DolphinDB。包含以下主题：
+本教程用于单节点的部署、升级、过期 License 升级，并对常见问题做出解答，便于用户快速上手 DolphinDB 。包含以下主题：
 
 <!-- vscode-markdown-toc -->
 * [1. 在 Linux 操作系统部署 DolphinDB 单节点](#LinuxDolphinDB)
@@ -408,7 +408,7 @@ cp -r backup/CHUNK_METADATA/ local8848/storage/CHUNK_METADATA
 
 可以参考 DolphinDB 官方参数配置说明进行配置参数调优：[参数配置](https://www.dolphindb.cn/cn/help/200/DatabaseandDistributedComputing/Configuration/index.html)。
 
-如果遇到性能问题，请添加微信号 13362150840（仅用于添加微信）或扫描下面二维码，客服会邀您进群，由DolphinDB的技术支持工程师会解答您的问题。
+如果遇到性能问题，请添加微信号 13362150840（仅用于添加微信）或扫描下面二维码，客服会邀您进群，由 DolphinDB 的技术支持工程师会解答您的问题。
 
 ![singlenode_techsupport_qr](images/deploy_standalone/singlenode_techsupport_qr.png)
 
