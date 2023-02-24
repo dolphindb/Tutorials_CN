@@ -71,7 +71,7 @@ ps aux|grep dolphindb
 
 返回如下信息说明后台启动成功：
 
-![SingleNodeValidation](images/deploy_standalone/start_singlenode_linux_backend_success.png)
+![startsuccess](images/deploy_standalone/start_singlenode_linux_backend_success.png)
 
 ### 1.4 Web 管理界面检查节点运行状态
 
