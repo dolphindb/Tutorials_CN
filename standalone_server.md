@@ -350,7 +350,7 @@ updateLicense()
 
 - 离线更新
 
-关闭 DolphinDB后，重新启动，即可完成更新。
+关闭 DolphinDB 后，重新启动，即可完成更新。
 
 ##  5. <a name='FAQ'></a>常见问题解答（FAQ）
 
