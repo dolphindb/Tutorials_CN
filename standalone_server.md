@@ -4,21 +4,21 @@
 
 <!-- vscode-markdown-toc -->
 * [1. 在 Linux 操作系统部署 DolphinDB 单节点](#LinuxDolphinDB)
-	* [1.1 下载](#downloadDDBLinux)
-	* [1.2 更新软件授权许可](#renewLic)
-	* [1.3 启动单节点](#startSingleNodeLinux)
-	* [1.4 Web 管理界面检查节点运行状态](#Web)
+	* [第一步：下载](#downloadDDBLinux)
+	* [第二步：更新软件授权许可](#renewLic)
+	* [第三步：启动单节点](#startSingleNodeLinux)
+	* [第四步：Web 管理界面检查节点运行状态](#Web)
 * [2. 在 Windows 操作系统部署 DolphinDB 单节点](#WindowsDolphinDB)
-	* [2.1 下载](#downloadDDBWin)
-	* [2.2 更新软件授权许可](#renewLicWin)
-	* [2.3 启动单节点](#startSingleNodeWin)
-	* [2.4 Web 管理界面检查节点运行状态](#checknodeweb)
+	* [第一步：下载](#downloadDDBWin)
+	* [第二步：更新软件授权许可](#renewLicWin)
+	* [第三步：启动单节点](#startSingleNodeWin)
+	* [第四步：Web 管理界面检查节点运行状态](#checknodeweb)
 * [3. 单节点升级](#singleNodeUpgrade)
 	* [3.1 Linux 单节点升级](#singleNodeUpgradeLinux)
 	* [3.2 Windows 单节点升级](#Windows)
 * [4. 授权许可文件过期更新](#licupdate)
-	* [4.1 替换授权许可文件](#licreplace)
-	* [4.2 更新授权许可文件](#renewlicense)
+	* [第一步：替换授权许可文件](#licreplace)
+	* [第二步：更新授权许可文件](#renewlicense)
 * [5. 常见问题解答（FAQ）](#FAQ)
 	* [5.1 端口被其它程序占用导致启动失败怎么办？](#q1)
 	* [5.2 Web 管理界面无法访问怎么办？](#q2)
@@ -35,7 +35,7 @@
 
 ##  1. <a name='LinuxDolphinDB'></a>在 Linux 操作系统部署 DolphinDB 单节点
 
-###  1.1. <a name='downloadDDBLinux'></a>下载
+###  第一步：<a name='downloadDDBLinux'></a>下载
 
 - 官方下载地址：http://www.dolphindb.cn/downloads.html
 - 通过 Shell 指令下载，以下载 2.00.9.1 版本为例：
@@ -52,7 +52,7 @@ unzip DolphinDB_Linux64_V2.00.9.1.zip -d /DolphinDB
 
 > :exclamation: 安装路径的目录名中不能含有空格字符或中文字符，否则启动数据节点时会失败。
 
-###  1.2. <a name='renewLic'></a>更新软件授权许可
+###  第二步：<a name='renewLic'></a>更新软件授权许可
 
 如果用户拿到企业版试用授权许可，只需用其替换如下文件即可。
 
@@ -62,7 +62,7 @@ unzip DolphinDB_Linux64_V2.00.9.1.zip -d /DolphinDB
 
 如果用户没有申请企业版试用授权许可，可以直接使用程序包中的社区版试用授权许可。社区试用版指定 DolphinDB 单节点最大可用内存为 8 GB，有效期为 20 年。
 
-###  1.3. <a name='startSingleNodeLinux'></a>启动单节点
+###  第三步：<a name='startSingleNodeLinux'></a>启动单节点
 
 进入 */DolphinDB/server* 目录，第一次启动时需要修改文件权限，执行以下 Shell 指令：
 
@@ -102,7 +102,7 @@ ps aux|grep dolphindb
 
 ![startsuccess](images/deploy_standalone/start_singlenode_linux_backend_success.png)
 
-###  1.4. <a name='Web'></a>Web 管理界面检查节点运行状态
+###  第四步：<a name='Web'></a>Web 管理界面检查节点运行状态
 
 在浏览器中输入部署服务器 IP 地址和部署端口号（默认是 8848）即可进入 Web 管理界面，
 教程中的部署服务器 IP 地址为 10.0.0.82，部署端口为 8848，所以访问地址为 10.0.0.82:8848，
@@ -114,7 +114,7 @@ ps aux|grep dolphindb
 
 ##  2. <a name='WindowsDolphinDB'></a>在 Windows 操作系统部署 DolphinDB 单节点
 
-###  2.1. <a name='downloadDDBWin'></a>下载
+###  第一步：<a name='downloadDDBWin'></a>下载
 
 官方下载地址：http://www.dolphindb.cn/downloads.html
 
@@ -126,7 +126,7 @@ C:\DolphinDB
 
 > :exclamation: 安装路径的目录名中不能含有空格字符或中文字符，否则启动数据节点时会失败。例如不要装到 Windows 系统的 *Program Files* 目录下。
 
-###  2.2. <a name='renewLicWin'></a>更新软件授权许可
+###  第二步：<a name='renewLicWin'></a>更新软件授权许可
 
 如果用户拿到企业版试用授权许可，只需用其替换如下文件即可：
 
@@ -136,7 +136,7 @@ C:\DolphinDB\server\dolphindb.lic
 
 如果用户没有申请企业版试用授权许可，可以直接使用程序包中的社区版试用授权许可。社区试用版指定 DolphinDB 单节点最大可用内存为 8 GB，有效期为 20 年。
 
-###  2.3. <a name='startSingleNodeWin'></a>启动单节点
+###  第三步：<a name='startSingleNodeWin'></a>启动单节点
 
 进入 *C:\DolphinDB\server* 目录，可以看到如下内容：
 
@@ -164,7 +164,7 @@ tasklist|findstr "dolphindb"
 
 ![singlenode_win_findstr](images/deploy_standalone/singlenode_win_findstr.png)
 
-###  2.4. <a name='checknodeweb'></a>Web 管理界面检查节点运行状态
+###  第四步：<a name='checknodeweb'></a>Web 管理界面检查节点运行状态
 
 在浏览器中输入部署服务器 IP 地址和部署端口号（默认是 8848）即可进入 Web 管理界面，
 教程中的部署服务器 IP 地址为 10.0.0.82，部署端口为 8848，所以访问地址为 10.0.0.82:8848，
@@ -322,7 +322,7 @@ version()
 
 ##  4. <a name='licupdate'></a>授权许可文件过期更新
 
-###  4.1. <a name='licreplace'></a>替换授权许可文件
+###  第一步：<a name='licreplace'></a>替换授权许可文件
 
 用新的授权许可文件 *dolphindb.lic* 替换旧的授权许可文件。
 
@@ -338,7 +338,7 @@ Windows 环境授权许可文件位置：
 C:\DolphinDB\server\dolphindb.lic
 ```
 
-###  4.2. <a name='renewlicense'></a>更新授权许可文件
+###  第二步：<a name='renewlicense'></a>更新授权许可文件
 
 - 在线更新
 
