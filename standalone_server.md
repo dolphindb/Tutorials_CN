@@ -28,14 +28,14 @@
 * 6. [6. 参考](#reference)
 
 <!-- vscode-markdown-toc-config
-	numbering=false
+	numbering=true
 	autoSave=true
 	/vscode-markdown-toc-config -->
 <!-- /vscode-markdown-toc -->
 
-##  1. <a name='LinuxDolphinDB'></a>1. 在 Linux 操作系统部署 DolphinDB 单节点
+##  1. <a name='LinuxDolphinDB'></a>在 Linux 操作系统部署 DolphinDB 单节点
 
-###  1.1. <a name='downloadDDBLinux'></a>1.1 下载
+###  1.1. <a name='downloadDDBLinux'></a>下载
 
 - 官方下载地址：http://www.dolphindb.cn/downloads.html
 - 通过 Shell 指令下载，以下载 2.00.9.1 版本为例：
@@ -52,7 +52,7 @@ unzip DolphinDB_Linux64_V2.00.9.1.zip -d /DolphinDB
 
 > :exclamation: 安装路径的目录名中不能含有空格字符或中文字符，否则启动数据节点时会失败。
 
-###  1.2. <a name='renewLic'></a>1.2 更新软件授权许可
+###  1.2. <a name='renewLic'></a>更新软件授权许可
 
 如果用户拿到企业版试用授权许可，只需用其替换如下文件即可。
 
