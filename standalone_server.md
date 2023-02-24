@@ -172,7 +172,7 @@ tasklist|findstr "dolphindb"
 
 ![singlenode_win_web_checknode](images/deploy_standalone/singlenode_win_web_checknode.png)
 
-> :exclamation: 如果浏览器与 DolphinDB 不是部署在同一台服务器，需要关闭防火墙或者打开对应的部署端口，web 管理界面才能正常打开。
+> :exclamation: 如果浏览器与 DolphinDB 不是部署在同一台服务器，需要关闭防火墙或者打开对应的部署端口，Web 管理界面才能正常打开。
 
 ##  3. <a name='singleNodeUpgrade'></a>单节点升级
 
@@ -376,7 +376,7 @@ DolphinDB 正常启动后，在浏览器输入正确的访问地址，但 Web �
 
 ###  5.3. <a name='q3'></a>Linux 升级失败如何版本回退？
 
-如果升级以后，不能正常开启单节点 DolphinDB ，可按以下方式回退到旧版本。
+如果升级以后，不能正常开启单节点 DolphinDB，可按以下方式回退到旧版本。
 
 **第一步：恢复旧版本元数据文件**
 
