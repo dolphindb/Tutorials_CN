@@ -63,7 +63,7 @@ DolphinDB流数据模块采用发布-订阅-消费的模式。流数据首先注
 
 ### 1.3 流数据计算引擎
 
-流数据计算引擎是专门用于处理流数据实时计算和分析的模块。DolphinDB提供`createTimeSeriesEngine`,`createDailyTimeSeriesEngine`,`createSessionWindowEngine`, `createAnomalyDetectionEngine`, `createReactiveStateEngine`, `createCrossSectionalEngine `, `createAsofJoinEngine`, `createEqualJoinEngine`, `createWindowJoinEngine`, `createLookupJoinEngine`等函数创建流数据计算引擎对流数据进行实时计算，并将计算结果持续输出到指定的数据表中。
+流数据计算引擎是专门用于处理流数据实时计算和分析的模块。DolphinDB提供`createTimeSeriesEngine`,`createDailyTimeSeriesEngine`,`createSessionWindowEngine`, `createAnomalyDetectionEngine`, `createReactiveStateEngine`, `createCrossSectionalEngine `, `createAsofJoinEngine`, `createEquiJoinEngine`, `createWindowJoinEngine`, `createLookupJoinEngine`等函数创建流数据计算引擎对流数据进行实时计算，并将计算结果持续输出到指定的数据表中。
 
 ## 2 核心功能
 
@@ -388,7 +388,7 @@ DolphinDB提供了`replay`函数，可以将历史数据按照时间顺序导入
 
 ## 4 流数据计算引擎
 
-DolphinDB提供`createTimeSeriesEngine`,`createDailyTimeSeriesEngine`,`createSessionWindowEngine`, `createAnomalyDetectionEngine`, `createReactiveStateEngine`, `createCrossSectionalEngine `, `createAsofJoinEngine`, `createEqualJoinEngine`, `createWindowJoinEngine`, `createLookupJoinEngine`等函数创建流数据计算引擎对流数据进行实时计算。
+DolphinDB提供`createTimeSeriesEngine`,`createDailyTimeSeriesEngine`,`createSessionWindowEngine`, `createAnomalyDetectionEngine`, `createReactiveStateEngine`, `createCrossSectionalEngine `, `createAsofJoinEngine`, `createEquiJoinEngine`, `createWindowJoinEngine`, `createLookupJoinEngine`等函数创建流数据计算引擎对流数据进行实时计算。
 
 创建响应式状态引擎：
 
