@@ -13,13 +13,13 @@ DolphinDB 2.00.8 及以上版本支持本篇所有代码。此外，1.30.20 及�
 - [2. 流数据连接引擎](#2-流数据连接引擎)
   - [2.1 Asof Join 引擎（createAsofJoinEngine）](#21-asof-join-引擎createasofjoinengine)
   - [2.2 Window Join 引擎（createWindowJoinEngine）](#22-window-join-引擎createwindowjoinengine)
-  - [2.3 Equal Join 引擎（createEqualJoinEngine）](#23-equal-join-引擎createequaljoinengine)
+  - [2.3 Equi Join 引擎（createEquiJoinEngine）](#23-equi-join-引擎createequijoinengine)
   - [2.4 Lookup Join 引擎（createLookupJoinEngine）](#24-lookup-join-引擎createlookupjoinengine)
   - [2.5 Left Semi Join 引擎（createLeftSemiJoinEngine）](#25-left-semi-join-引擎createleftsemijoinengine)
 - [3. 实时关联应用案例](#3-实时关联应用案例)
   - [3.1 用 Asof Join 引擎计算个股交易成本](#31-用-asof-join-引擎计算个股交易成本)
   - [3.2 用 Window Join 引擎将行情快照与逐笔成交数据融合](#32-用-window-join-引擎将行情快照与逐笔成交数据融合)
-  - [3.3 用 Equal Join 引擎拼接不同数据源的实时分钟指标](#33-用-equal-join-引擎拼接不同数据源的实时分钟指标)
+  - [3.3 用 Equi Join 引擎拼接不同数据源的实时分钟指标](#33-用-equi-join-引擎拼接不同数据源的实时分钟指标)
   - [3.4 用 Lookup Join 引擎将实时行情与历史日频指标关联](#34-用-lookup-join-引擎将实时行情与历史日频指标关联)
   - [3.5 用 Left Semi Join 引擎对逐笔成交数据补充原始委托信息](#35-用-left-semi-join-引擎对逐笔成交数据补充原始委托信息)
   - [3.6 用 Left Semi Join 引擎关联股票与指数行情并计算相关性](#36-用-left-semi-join-引擎关联股票与指数行情并计算相关性)
@@ -34,7 +34,7 @@ DolphinDB 2.00.8 及以上版本支持本篇所有代码。此外，1.30.20 及�
 
 ## 1.1 DolphinDB 批计算表关联
 
-在批计算场景中， DolphinDB SQL 语句中不仅提供了与传统关系型数据库类似的 [equal join](https://www.dolphindb.cn/cn/help/SQLStatements/TableJoiners/equaljoin.html), [full join](https://www.dolphindb.cn/cn/help/SQLStatements/TableJoiners/fulljoin.html), [left join](https://www.dolphindb.cn/cn/help/SQLStatements/TableJoiners/leftjoin.html), [prefix join](https://www.dolphindb.cn/cn/help/SQLStatements/TableJoiners/prefixjoin.html), [cross join](https://www.dolphindb.cn/cn/help/SQLStatements/TableJoiners/crossjoin.html) 等表连接方式，还提供了两种专门为时序数据设计的连接方式：[asof join](https://www.dolphindb.cn/cn/help/SQLStatements/TableJoiners/asofjoin.html) 和 [window join](https://www.dolphindb.cn/cn/help/SQLStatements/TableJoiners/windowjoin.html)。
+在批计算场景中， DolphinDB SQL 语句中不仅提供了与传统关系型数据库类似的 [equi join](https://www.dolphindb.cn/cn/help/SQLStatements/TableJoiners/equijoin.html), [full join](https://www.dolphindb.cn/cn/help/SQLStatements/TableJoiners/fulljoin.html), [left join](https://www.dolphindb.cn/cn/help/SQLStatements/TableJoiners/leftjoin.html), [prefix join](https://www.dolphindb.cn/cn/help/SQLStatements/TableJoiners/prefixjoin.html), [cross join](https://www.dolphindb.cn/cn/help/SQLStatements/TableJoiners/crossjoin.html) 等表连接方式，还提供了两种专门为时序数据设计的连接方式：[asof join](https://www.dolphindb.cn/cn/help/SQLStatements/TableJoiners/asofjoin.html) 和 [window join](https://www.dolphindb.cn/cn/help/SQLStatements/TableJoiners/windowjoin.html)。
 
 以下是一个简单的 asof join 批计算的示例，更详细应用介绍请参考：[应用教程：使用 Asof Join, Window Join 快速估计个股交易成本](https://ask.dolphindb.net/article/9)。我们将通过它进一步分析实时连接中的挑战。
 
@@ -64,7 +64,7 @@ asof join 能够关联距离当前时刻最近的数据。指定连接列为 Tim
 
 # 2. 流数据连接引擎
 
-DolphinDB 提供了 [createAsofJoinEngine](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/c/createAsofJoinEngine.html), [createWindowJoinEngine](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/c/createWindowJoinEngine.html), [createEqualJoinEngine](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/c/createEqualJoinEngine.html), [createLeftSemiJoinEngine](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/c/createLeftSemiJoinEngine.html), [createLookupJoinEngine](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/c/createLookupJoinEngine.html) 等 5 种不同的流计算连接引擎函数，不同连接引擎的关联规则基本上与批计算中相应的 join 类似，差异将在后续小节中详细说明。本章首先概述 DolphinDB 流计算引擎，之后依次介绍各个引擎的原理和效果。
+DolphinDB 提供了 [createAsofJoinEngine](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/c/createAsofJoinEngine.html), [createWindowJoinEngine](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/c/createWindowJoinEngine.html), [createEquiJoinEngine](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/c/createEquiJoinEngine.html), [createLeftSemiJoinEngine](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/c/createLeftSemiJoinEngine.html), [createLookupJoinEngine](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/c/createLookupJoinEngine.html) 等 5 种不同的流计算连接引擎函数，不同连接引擎的关联规则基本上与批计算中相应的 join 类似，差异将在后续小节中详细说明。本章首先概述 DolphinDB 流计算引擎，之后依次介绍各个引擎的原理和效果。
 
 流计算连接引擎是 DolphinDB 中对数据流进行实时关联的计算模块，可以理解为一个设置了关联规则的计算黑盒，输入为2条数据流，输出为1条数据流，引擎内部会自动维护计算状态。
 
@@ -146,19 +146,19 @@ Window Join 引擎在创建时通过参数 useSystemTime 指定以下两种规�
 
 <img src="./images/streaming-real-time-correlation-processing/2_4.png" width=60%>
 
-## 2.3 Equal Join 引擎（createEqualJoinEngine）
+## 2.3 Equi Join 引擎（createEquiJoinEngine）
 
-Equal Join 引擎的连接机制类似于 SQL 中的 equal join，按连接列和时间列等值关联左右表，对于左表（或右表）中的每一条记录，当它成功匹配上右表（或左表）中连接列一致的一条记录时，引擎将输出一条结果。
+Equi Join 引擎的连接机制类似于 SQL 中的 equi join，按连接列和时间列等值关联左右表，对于左表（或右表）中的每一条记录，当它成功匹配上右表（或左表）中连接列一致的一条记录时，引擎将输出一条结果。
 
-与SQL 中的 equal join 不同的是，因为引擎内部并不缓存所有历史数据，所以可能出现左表（或右表）中的某条记录到来后无法关联到已经从引擎缓存中清除的历史右表（或左表）记录，进而不会输出结果。这是由Equal Join 引擎的设计初衷和内部实现决定的，该引擎是为以连接列和时间列为键值的输入数据设计的，比如每支股票在每分钟有一条记录。
+与SQL 中的 equi join 不同的是，因为引擎内部并不缓存所有历史数据，所以可能出现左表（或右表）中的某条记录到来后无法关联到已经从引擎缓存中清除的历史右表（或左表）记录，进而不会输出结果。这是由Equi Join 引擎的设计初衷和内部实现决定的，该引擎是为以连接列和时间列为键值的输入数据设计的，比如每支股票在每分钟有一条记录。
 
-下图展示字段结构为（连接列，时间列，指标）的输入数据注入等值关联引擎的效果。后文 3.3 小节将介绍一个等值关联引擎的实际应用场景：[拼接不同数据源的实时分钟指标](#33-用-equal-join-引擎拼接不同数据源的实时分钟指标)。
+下图展示字段结构为（连接列，时间列，指标）的输入数据注入等值关联引擎的效果。后文 3.3 小节将介绍一个等值关联引擎的实际应用场景：[拼接不同数据源的实时分钟指标](#33-用-equi-join-引擎拼接不同数据源的实时分钟指标)。
 
 <img src="./images/streaming-real-time-correlation-processing/2_5.png" width=60%>
 
-建议按推荐场景使用Equal Join 引擎，即对连接列和时间列唯一的数据使用本引擎。若非推荐场景，为了理解输出效果，可以参考如下设计原理：Equal Join 引擎内部分别为左右表数据维护两个以连接列和时间列作为键值的键值表作为缓存，并对每条记录标识是否关联过。下面以左表为例介绍，右表同理。当一条左表记录注入引擎，则到查找右表缓存， 若能成功匹配则输出一条结果，并在右表缓存中标识对应记录为已关联，这时左表缓存中不会保存这条立刻关联输出的左表记录（此原理会导致上图中后续的灰色数据(A,t1,4)无法匹配而不输出），若未能匹配成功，则将该条左表记录加入左表缓存，并标识为未关联。
+建议按推荐场景使用Equi Join 引擎，即对连接列和时间列唯一的数据使用本引擎。若非推荐场景，为了理解输出效果，可以参考如下设计原理：Equi Join 引擎内部分别为左右表数据维护两个以连接列和时间列作为键值的键值表作为缓存，并对每条记录标识是否关联过。下面以左表为例介绍，右表同理。当一条左表记录注入引擎，则到查找右表缓存， 若能成功匹配则输出一条结果，并在右表缓存中标识对应记录为已关联，这时左表缓存中不会保存这条立刻关联输出的左表记录（此原理会导致上图中后续的灰色数据(A,t1,4)无法匹配而不输出），若未能匹配成功，则将该条左表记录加入左表缓存，并标识为未关联。
 
-需要注意，对于缓存中的已关联、未关联的数据，Equal Join 引擎都会进行过期清理，清理原理可参考用户手册 [createEqualJoinEngine](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/c/createEqualJoinEngine.html)。若遵循推荐场景使用此引擎，但是引擎输出结果与 SQL equal join 结果仍不完全一致，则是设置的清理规则导致的差异。
+需要注意，对于缓存中的已关联、未关联的数据，Equi Join 引擎都会进行过期清理，清理原理可参考用户手册 [createEquiJoinEngine](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/c/createEquiJoinEngine.html)。若遵循推荐场景使用此引擎，但是引擎输出结果与 SQL equi join 结果仍不完全一致，则是设置的清理规则导致的差异。
 
 ## 2.4 Lookup Join 引擎（createLookupJoinEngine）
 
@@ -172,9 +172,9 @@ Lookup Join 引擎的连接机制类似于 SQL 中的 left join，按连接列�
 
 ## 2.5 Left Semi Join 引擎（createLeftSemiJoinEngine）
 
-Left Semi Join 引擎的连接机制类似于 SQL 中的 equal join ，按连接列等值关联左右表，对于左表中的每一条记录，当它成功匹配上右表中连接列一致的一条记录时，引擎将输出一条结果。未成功匹配的左表的记录将一直由引擎缓存，等待与右表中更新的记录匹配。
+Left Semi Join 引擎的连接机制类似于 SQL 中的 equi join ，按连接列等值关联左右表，对于左表中的每一条记录，当它成功匹配上右表中连接列一致的一条记录时，引擎将输出一条结果。未成功匹配的左表的记录将一直由引擎缓存，等待与右表中更新的记录匹配。
 
-与SQL 中的 equal join 不同的是，引擎在内部缓存右表的记录时，对于相同连接列的数据总是只保留第一条或者最新一条，因此对于左表的每一条记录至多只会匹配一条右表记录并输出一次。
+与SQL 中的 equi join 不同的是，引擎在内部缓存右表的记录时，对于相同连接列的数据总是只保留第一条或者最新一条，因此对于左表的每一条记录至多只会匹配一条右表记录并输出一次。
 
 下图展示字段结构为（连接列，指标）的输入数据，注入右表保留最新一条记录的Left Semi Join 引擎的效果，左表数据总是等到匹配成功才输出。后文3.5、3.6小节将分别介绍两个Left Semi Join 引擎的实际应用场景：一是[对逐笔成交数据补充原始委托信息](#35-用-left-semi-join-引擎对逐笔成交数据补充原始委托信息)，二是[关联股票和指数行情并计算相关性](#36-用-left-semi-join-引擎关联股票与指数行情并计算相关性)。
 
@@ -290,11 +290,11 @@ snapshot.append!(t1)
 
 <img src="./images/streaming-real-time-correlation-processing/3_4.png" width=70%>
 
-## 3.3 用 Equal Join 引擎拼接不同数据源的实时分钟指标
+## 3.3 用 Equi Join 引擎拼接不同数据源的实时分钟指标
 
 在量化金融的实盘中往往会对原始的行情快照、逐笔成交等进行降采样形成分钟指标，以作为输入提供给进一步的交易策略，这时则需要将多个不同数据源计算出的指标关联到同一张表中。本例将对快照和成交数据分别做实时的 1 分钟聚合，并将快照指标和成交指标关联后输出到同一张宽表中。
 
-这个场景的特征是，每支股票的行情快照分钟指标在每一分钟只有一条记录，逐笔成交分钟指标同样有这样的唯一性，并且在某一分钟的输出上，期望总是在两类指标都计算完成后再将关联输出。以下脚本用 Equal Join 引擎来实现此场景。
+这个场景的特征是，每支股票的行情快照分钟指标在每一分钟只有一条记录，逐笔成交分钟指标同样有这样的唯一性，并且在某一分钟的输出上，期望总是在两类指标都计算完成后再将关联输出。以下脚本用 Equi Join 引擎来实现此场景。
 
 
 
@@ -307,7 +307,7 @@ share streamTable(1:0, `UpdateTime`Sym`AvgBid1Amt, [TIME, SYMBOL, DOUBLE]) as sn
 share streamTable(1:0, `UpdateTime`Sym`AvgBid1Amt`BuyTradeQty`SellTradeQty, [TIME, SYMBOL, DOUBLE, LONG, LONG]) as output
 
 // create engine: 
-eqJoinEngine = createEqualJoinEngine(name="EqualJoin", leftTable=tradesMin, rightTable=snapshotMin, outputTable=output, metrics=<[AvgBid1Amt, BuyTradeQty, SellTradeQty]>, matchingColumn=`Sym, timeColumn=`UpdateTime)
+eqJoinEngine = createEquiJoinEngine(name="EquiJoin", leftTable=tradesMin, rightTable=snapshotMin, outputTable=output, metrics=<[AvgBid1Amt, BuyTradeQty, SellTradeQty]>, matchingColumn=`Sym, timeColumn=`UpdateTime)
 // create engine: 
 tsEngine1 = createTimeSeriesEngine(name="tradesAggr", windowSize=60000, step=60000, metrics=<[sum(iif(Side==1, 0, TradeQty)), sum(iif(Side==2, 0, TradeQty))]>, dummyTable=trades, outputTable=getLeftStream(eqJoinEngine), timeColumn=`TradeTime, keyColumn=`Sym, useSystemTime=false, fill=(0, 0))
 // create engine: 
@@ -319,7 +319,7 @@ subscribeTable(tableName="snapshot", actionName="minAggr", handler=tsEngine2, ms
 ```
 
 - 首先用两个独立的时序聚合引擎（[createTimeSeriesEngine](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/c/createTimeSeriesEngine.html)）对原始的快照和成交数据流按数据中的时间戳做实时聚合、输出每一分钟的指标，之后通过引擎级联的方式，将两个时序聚合引擎的输出分别作为左右表注入连接引擎。引擎级联更详细的介绍见 [流数据教程：4.1 流水线处理](https://gitee.com/dolphindb/Tutorials_CN/blob/master/streaming_tutorial.md#41_流水线处理) 。
-- Equal Join 引擎对左、右表的处理是完全相同的，即上例中在 createEqualJoinEngine 时交换左右表不会影响关联结果。
+- Equi Join 引擎对左、右表的处理是完全相同的，即上例中在 createEquiJoinEngine 时交换左右表不会影响关联结果。
 
 构造数据写入作为原始输入的 2 个流数据表，先写入右表，再写入左表：
 
@@ -410,7 +410,7 @@ subscribeTable(tableName="orders", actionName="appendRightStreamForSell", handle
 subscribeTable(tableName="orders", actionName="appendRightStreamForBuy", handler=getRightStream(ljEngineBuy), msgAsTable=true, offset=-1) 
 ```
 
-- 数据流向：首先，将 trades 和 orders 分为作为左、右表注入引擎 leftJoinSell，此次以 trades 数据中的卖单号关联 oders 中的对应订单。之后，将上述引擎的输出作为左表直接注入引擎 leftJoinBuy，该引擎的右表仍然设置为 orders，此次以 trades 数据中的买单号关联 oders 中的对应订单。
+- 数据流向：首先，将 trades 和 orders 分为作为左、右表注入引擎 leftJoinSell，此次以 trades 数据中的卖单号关联 oders 中的对应订单。之后，将上述引擎的输出作为左表直接注入引擎 leftJoinBuy ，该引擎的右表仍然设置为 orders，此次以 trades 数据中的买单号关联 oders 中的对应订单。
 - 内存管理：上例中创建引擎时未显式指定 garbageSize ，则使用默认值，garbageSize 不论大小均不改变计算结果。注意，和其他连接引擎不同，该函数的 garbageSize 参数只用于清理左表的历史数据，右表的历史数据不进行回收，因此上述案例中两个引擎至少分别占用一个 orders 表大小的内存。
 
 构造数据写入作为原始输入的 2 个流数据表：
@@ -497,9 +497,9 @@ stockKline.append!(t1)
 | ------------------ | ------------------------- | ------------------------------------------------------------ | ------------------- | ------------------------------------------------------------ | ------------------------------------------------------------ |
 | AsofJoinEngine     | matchingColumn            | 左表每到来一条记录，匹配右表连接列一致且时间戳最近的一条记录。 | asof join           | 小于或等于左表行数                                           | [计算个股交易成本](#31-用-asof-join-引擎计算个股交易成本) |
 | WindowJoinEngine   | matchingColumn            | 左表每到来一条记录，匹配右表中连接列一致，且在由左表时间戳确定的窗口范围内的数据。 | window join         | 小于或等于左表行数                                           | [将行情快照和逐笔成交数据融合](#32-用-window-join-引擎将行情快照与逐笔成交数据融合) |
-| EqualJoinEngine    | matchingColumn+timeColumn | 左（右）表每到来一条记录，匹配右（左）表连接列一致的最新的一条记录。 | equal join          | 等于左右表能完全等值匹配的行数（在左右表中的连接列均唯一的前提下） | [拼接不同数据源的实时分钟指标](#33-用-equal-join-引擎拼接不同数据源的实时分钟指标) |
+| EquiJoinEngine     | matchingColumn+timeColumn | 左（右）表每到来一条记录，匹配右（左）表连接列一致的最新的一条记录。 | equi join           | 等于左右表能完全等值匹配的行数（在左右表中的连接列均唯一的前提下） | [拼接不同数据源的实时分钟指标](#33-用-equi-join-引擎拼接不同数据源的实时分钟指标) |
 | LookupJoinEngine   | matchingColumn            | 左表每到来一条记录，匹配右表连接列一致的最新的一条记录。     | left join           | 等于左表行数                                                 | [将实时行情与历史日频指标关联](#34-用-lookup-join-引擎将实时行情与历史日频指标关联) |
-| LeftSemiJoinEngine | matchingColumn            | 对于左表的每一条记录，匹配右表连接列一致的第一条或最后一条记录。 | equal join          | 小于或等于左表行数                                           | [对逐笔成交数据补充原始委托信息](#35-用-left-semi-join-引擎对逐笔成交数据补充原始委托信息)、[关联股票和指数行情并计算相关性](#36-用-left-semi-join-引擎关联股票与指数行情并计算相关性)。 |
+| LeftSemiJoinEngine | matchingColumn            | 对于左表的每一条记录，匹配右表连接列一致的第一条或最后一条记录。 | equi join           | 小于或等于左表行数                                           | [对逐笔成交数据补充原始委托信息](#35-用-left-semi-join-引擎对逐笔成交数据补充原始委托信息)、[关联股票和指数行情并计算相关性](#36-用-left-semi-join-引擎关联股票与指数行情并计算相关性)。 |
 
 # 5. 总结
 
