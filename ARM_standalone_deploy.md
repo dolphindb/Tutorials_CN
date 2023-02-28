@@ -1,41 +1,62 @@
 # 单节点部署(嵌入式ARM版本)
 
+本教程用于嵌入式 ARM 版本的单节点部署、升级、过期 License 升级，并对常见问题做出解答，便于用户快速上手 DolphinDB 。包含以下主题：
+
+- [单节点部署(嵌入式ARM版本)](#单节点部署嵌入式arm版本)
+  - [1. 系统要求](#1-系统要求)
+  - [2. 部署 DolphinDB 单节点](#2-部署-dolphindb-单节点)
+    - [第一步：下载](#第一步下载)
+    - [第二步：更新软件授权许可](#第二步更新软件授权许可)
+    - [第三步：启动单节点](#第三步启动单节点)
+    - [第四步：Web 管理界面检查节点运行状态](#第四步web-管理界面检查节点运行状态)
+  - [3. 单节点升级](#3-单节点升级)
+    - [第一步：正常关闭单节点](#第一步正常关闭单节点)
+    - [第二步：备份旧版本的元数据文件](#第二步备份旧版本的元数据文件)
+    - [第三步：升级](#第三步升级)
+    - [第四步：重新启动单节点](#第四步重新启动单节点)
+  - [4. 授权许可文件过期更新](#4-授权许可文件过期更新)
+    - [第一步：替换授权许可文件](#第一步替换授权许可文件)
+    - [第二步：更新授权许可文件](#第二步更新授权许可文件)
+  - [5. 常见问题解答（FAQ）](#5-常见问题解答faq)
+    - [5.1 端口被其它程序占用导致启动失败怎么办？](#51-端口被其它程序占用导致启动失败怎么办)
+    - [5.2 Web 管理界面无法访问怎么办？](#52-web-管理界面无法访问怎么办)
+    - [5.3 Linux 升级失败如何版本回退？](#53-linux-升级失败如何版本回退)
+    - [5.4 如何进行配置参数调优？](#54-如何进行配置参数调优)
+  - [6. 参考](#6-参考)
+
 ## 1. 系统要求
 
-操作系统：Linux（内核3.10以上版本）
+| **系统要求项** | **具体指标** |
+|---|---|
+| 操作系统 | Linux（内核 3.10 及以上版本） |
+| 内存 | 2GB 及以上 |
+| Flash | 8GB 及以上 |
+| 支持的 ARM CPU | - CORTEXA15<br>- CORTEXA9<br>- ARMV7<br>- ARMV8<br>- CORTEXA53<br>- CORTEXA57<br>- CORTEXA72<br>- CORTEXA73<br>- FALKOR<br>- THUNDERX<br>- THUNDERX2T99<br>- TSV110 |
+| DolphinDB ARM 版使用的交叉编译器 32 位系统 | arm-linux-gnueabihf4.9 |
+| DolphinDB ARM 版使用的交叉编译器 64 位系统 | aarch64-linux-gnu_4.9.3 |
 
-内存：2GB以上
+若用户在实际板子上运行时出现问题，请反馈给我们（[support@dolphindb.com](support@dolphindb.com)）。
 
-Flash：8GB以上
+## 2. 部署 DolphinDB 单节点
 
-支持的ARM CPU:  
+### 第一步：下载
 
-- CORTEXA15
-- CORTEXA9
-- ARMV7  
-- ARMV8
-- CORTEXA53  
-- CORTEXA57  
-- CORTEXA72  
-- CORTEXA73  
-- FALKOR  
-- THUNDERX  
-- THUNDERX2T99  
-- TSV110
-
-DolphinDB ARM版使用的交叉编译器32位系统为arm-linux-gnueabihf4.9，64位系统为aarch64-linux-gnu_4.9.3。若用户在实际板子上运行时出现问题，请反馈给我们（support@dolphindb.com）。
-
-## 2. 安装系统
-
-从DolphinDB网站下载DolphinDB database嵌入式ARM版软件包，解压缩后即可运行。
-
-例如解压到如下目录：
+- 官方下载地址：[http://www.dolphindb.cn/downloads.html](http://www.dolphindb.cn/downloads.html)
+- 通过 Shell 指令下载，以下载 2.00.9.1 版本为例：
 
 ```sh
-/DolphinDB
+wget "https://www.dolphindb.cn/downloads/DolphinDB_ARM64_V2.00.9.1.zip"
 ```
 
-## 3. 软件授权许可更新
+执行以下 Shell 指令解压安装包到指定目录，以解压 2.00.9.1 版本安装包到 */DolphinDB* 目录为例：
+
+```sh
+unzip DolphinDB_ARM64_V2.00.9.1.zip -d /DolphinDB
+```
+
+> :exclamation: 安装路径的目录名中不能含有空格字符或中文字符，否则启动数据节点时会失败。
+
+### 第二步：更新软件授权许可
 
 如果用户拿到企业版试用授权许可，只需用其替换如下文件即可。
 
@@ -43,116 +64,205 @@ DolphinDB ARM版使用的交叉编译器32位系统为arm-linux-gnueabihf4.9，6
 /DolphinDB/server/dolphindb.lic
 ```
 
-## 4. 运行DolphinDB server
+如果用户没有申请企业版试用授权许可，可以直接使用程序包中的社区版试用授权许可。社区试用版指定 DolphinDB 单节点最大可用内存为 8 GB，有效期为 20 年。
 
-进入server目录 /DolphinDB/server/, 运行dolphindb。
+### 第三步：启动单节点
 
-在运行dolphindb可执行文件前，需要修改文件权限：
+进入 */DolphinDB/server* 目录，第一次启动时需要修改文件权限，执行以下 Shell 指令：
 
 ```sh
-chmod 777 dolphindb
+chmod +x dolphindb
 ```
 
-然后可在dolphindb.cfg文件中修改配置参数:
+由于嵌入式系统一般实际可使用内存较小，所以第一次启动时，建议根据实际环境修改与内存相关的配置参数。在 */DolphinDB/server* 目录执行以下 Shell 指令编辑单节点配置文件：
 
-系统默认端口号是8848。如果需要指定其它端口可以通过参数localSite设置，例如修改端口为8900：
+```sh
+vim dolphindb.cfg
+```
 
-```txt
+系统默认端口号是 8848。如果需要指定其它端口可以通过参数 *localSite* 设置，例如修改端口为 8900：
+
+```sh
 localSite=localhost:8900:local8900
 ```
 
-可通过参数maxMemSize来指定DolphinDB可用的最大内存，以GB为单位，例如修改为0.8GB：
+使用参数 *maxMemSize* 限制 DolphinDB 进程可用的最大内存，以 GB 为单位。建议根据实际内存大小设置，例如修改为 0.8 GB：
 
 ```sh
-maxMemSize=0.8d
+maxMemSize=0.8
 ```
 
-参数regularArrayMemoryLimit设置数组的内存限制（以MB为单位）。该参数必须是2的指数幂。默认值是512。建议根据实际内存大小设置，例如修改为64MB：
+使用参数 *regularArrayMemoryLimit* 设置数组的内存限制，以 MB 为单位。该参数必须是 2 的指数幂，默认值是 512。建议根据实际内存大小设置，例如修改为 64 MB：
 
 ```sh
 regularArrayMemoryLimit=64
 ```
 
-另外建议根据闪存大小修改maxLogSize（当日志文件达到指定大小（单位为MB）时，系统会将日志文件存档。默认值是1024，最小值是100），例如修改为100MB：
+参数 *maxLogSize* 是指当日志文件达到指定大小时，系统会将日志文件存档，以 MB 为单位。默认值是 1024，最小值是 100。建议根据实际内存大小设置，例如修改为 100 MB：
 
 ```sh
 maxLogSize=100
-
 ```
 
-在Linux环境中可执行以下指令：
+- 前台运行
+
+执行以下 Shell 指令：
 
 ```sh
 ./dolphindb
 ```
 
-在Linux后台执行dolphindb，可执行以下指令:
+- 后台运行
+
+执行以下 Shell 指令：
 
 ```sh
-nohup ./dolphindb -console 0 &
+sh startSingle.sh
 ```
 
-建议通过Linux命令nohup（头）和 &（尾）启动为后台运行模式，这样即使终端失去连接，DolphinDB也会持续运行。
+可以执行以下 Shell 指令，查看节点是否成功启动：
 
-`-console`默认值为1，如果要设置为后台运行，必须要设置为0（`-console 0`)，否则系统运行一段时间后会自动退出。
-
-## 5. 网络连接到DolphinDB server
-
-到浏览器中输入设备ip地址:8848(或其它端口号)。目前支持Chrome与Firefox浏览器。请注意，在浏览器中连接DolphinDB server时，若10分钟内无命令执行，系统会自动关闭会话以释放DolphinDB系统资源。建议用户在DolphinDB GUI中编写代码与执行命令。DolphinDB GUI中的会话在用户关闭之前会一直存在。
-
-## 6. 通过网络界面运行DolphinDB脚本
-
-在DolphinDB notebook的编辑器窗口输入以下DolphinDB代码：
-
-```txt
-table(1..5 as id, 6..10 as v)
+```sh
+ps aux|grep dolphindb
 ```
 
-下图展示了运行结果。
+返回如下信息说明后台启动成功：
 
-![运行结果](images/single_web.JPG)
+![image](./images/arm_standalone_deploy/chap2_step3_result.png)
 
-## 7. server版本升级
+### 第四步：Web 管理界面检查节点运行状态
 
-1. 正常关闭单节点。
+在浏览器中输入部署服务器 IP 地址和部署端口号（默认是 8848）即可进入 Web 管理界面，教程中的部署服务器 IP 地址为 10.0.0.82，部署端口为 8848，所以访问地址为 10.0.0.82:8848，打开后的 Web 管理界面如下：
 
-2. 备份旧版本的元数据文件。单节点元数据的默认存储目录：
+![image](./images/arm_standalone_deploy/chap2_step4_nodestatus.png)
 
-   ```sh
-   /DolphinDB/server/local8900/dfsMeta/
-   ```
-   ```sh
-   /DolphinDB/server/local8900/storage/CHUNK_METADATA/
-   ```
-   在linux上可在server目录执行以下命令备份单节点元数据：
-   ```sh
-   mkdir backup
-   cp -r local8900/dfsMeta/ backup/dfsMeta
-   cp -r local8900/storage/CHUNK_METADATA/ backup/CHUNK_METADATA
-   ```
-   
->  注意元数据文件可能通过配置文件指定存储在其它目录，如果在默认路径没有找到上述文件，可以通过查询配置文件中的dfsMetaDir参数和chunkMetaDir参数确认元数据文件的存储目录。若配置中未指定dfsMetaDir参数和chunkMetaDir参数，但是配置了volumes参数，CHUNK_METADATA目录在相应的volumes参数指定的目录下。
+> :exclamation: 如果浏览器与 DolphinDB 不是部署在同一台服务器，需要关闭防火墙或者打开对应的部署端口，Web 管理界面才能正常打开。
 
-3. 下载需要更新版本的安装包。可以通过官网（[www.dolphindb.cn](http://www.dolphindb.cn/)）下载，在linux上可通过执行以下命令下载1.30.6版本的安装包： 
+## 3. 单节点升级
 
-   ```sh
-   wget https://www.dolphindb.cn/downloads/DolphinDB_Linux64_V1.30.6.zip
-   ```
+### 第一步：正常关闭单节点
 
->  注意：上述命令中不同版本的号会有不同的文件名。
+进入 */DolphinDB/server/clusterDemo* 目录执行以下 Shell 指令：
 
-4. 解压。在linux上可通过执行以下命令解压1.30.6版本的安装包至v1.30.6目录：
+```sh
+./stopAllNode.sh
+```
 
-   ```sh
-   unzip DolphinDB_Linux64_V1.30.6.zip -d v1.30.6
-   ```
+### 第二步：备份旧版本的元数据文件
 
-5. 拷贝解压后的server子目录下文件除config目录、data目录、log目录和dolphindb.cfg外的所有文件和子目录到旧版本安装目录server下覆盖同名文件。
+单节点元数据的默认存储目录：
 
->  注意若有在旧版本的系统初始化脚本dolphindb.dos中添加脚本，请不要覆盖。旧版本的dolphindb.lic若是企业版license，也不要覆盖。
+```sh
+/DolphinDB/server/local8848/dfsMeta/
+```
 
-6. 重新启动单节点，GUI连接该节点，执行以下命令查看版本信息，检查升级是否成功：
+```sh
+/DolphinDB/server/local8848/storage/CHUNK_METADATA/
+```
+可在 */DolphinDB/server* 目录执行以下 Shell 指令备份单节点元数据：
 
-   ```sh
-   version()
-   ```
+```
+mkdir backup
+cp -r local8848/dfsMeta/ backup/dfsMeta
+cp -r local8848/storage/CHUNK_METADATA/ backup/CHUNK_METADATA
+```
+
+请注意：元数据文件可能通过配置文件指定存储在其它目录，如果在默认路径没有找到上述文件，可以通过查询配置文件中的 *dfsMetaDir* 参数和 *chunkMetaDir* 参数
+确认元数据文件的存储目录。若配置中未指定 *dfsMetaDir* 参数和 *chunkMetaDir* 参数，但是配置了 *volumes* 参数，*CHUNK_METADATA* 目录在相应的 *volumes* 参数指定的目录下。
+
+### 第三步：升级
+
+下载所需升级版本的安装包，官方下载地址：[http://www.dolphindb.cn/downloads.html](http://www.dolphindb.cn/downloads.html)
+
+将新版本 *server* 目录下除 *dolphindb.cfg* 以及 *dolphindb.lic* 外的所有文件覆盖替换旧版文件
+
+### 第四步：重新启动单节点
+
+进入 */DolphinDB/server* 目录执行以下 Shell 指令，后台运行 DolphinDB：
+
+```sh
+sh startSingle.sh
+```
+
+成功启动后，打开 Web 管理界面，在交互编程界面执行以下代码，查看 DolphinDB 当前版本：
+
+```sh
+version()
+```
+
+## 4. 授权许可文件过期更新
+
+### 第一步：替换授权许可文件
+
+用新的授权许可文件 *dolphindb.lic* 替换旧的授权许可文件，授权许可文件位置如下：
+
+```sh
+/DolphinDB/server/dolphindb.lic
+```
+
+### 第二步：更新授权许可文件
+
+- 在线更新
+
+打开 Web 管理界面，在交互编程界面执行以下代码完成更新：
+
+```sh
+updateLicense()
+```
+
+- 离线更新
+
+关闭 DolphinDB，然后重新启动，即可完成更新。
+
+## 5. 常见问题解答（FAQ）
+
+### 5.1 端口被其它程序占用导致启动失败怎么办？
+
+DolphinDB 单节点默认启动端口是 8848，如果遇到无法启动 DolphinDB 的情况，建议打开 */DolphinDB/server* 目录下的 *dolphindb.log* 日志文件，若出现如下错误：
+
+```
+<ERROR> :Failed to bind the socket on port 8848 with error code 98
+```
+
+说明选用的端口被其他程序占用，导致 DolphinDB 无法正常启动，修改配置文件中的端口为其它空闲端口后即可正常启动。
+
+### 5.2 Web 管理界面无法访问怎么办？
+
+DolphinDB 正常启动后，在浏览器输入正确的访问地址，但是 Web 管理界面无法正常打开，如下图所示：
+
+![image](./images/arm_standalone_deploy/chap5_q2.png)
+
+出现上述问题的原因基本上都是因为浏览器与 DolphinDB 不是部署在同一台服务器，且部署 DolphinDB 的服务器开启了防火墙。可以通过关闭部署了 DolphinDB 的服务器的防火墙或者打开对应的部署端口，解决这个问题。
+
+### 5.3 Linux 升级失败如何版本回退？
+
+如果升级以后，不能正常开启单节点 DolphinDB ，可按以下方式回退到旧版本。
+
+**第一步：恢复旧版本元数据文件**
+
+在 */DolphinDB/server* 目录执行以下 Shell 指令恢复已备份的单节点元数据：
+
+```sh
+cp -r backup/dfsMeta/ local8848/dfsMeta
+cp -r backup/CHUNK_METADATA/ local8848/storage/CHUNK_METADATA
+```
+
+**第二步：恢复旧版本程序文件**
+
+在官方下载旧版本程序包，把重新下载的旧版本 */DolphinDB/server* 目录下除 *dolphindb.cfg* 以及 *dolphindb.lic* 外的所有文件覆盖替换升级失败的文件。
+
+### 5.4 如何进行配置参数调优？
+
+可以参考 DolphinDB 官方参数配置说明进行配置参数调优：[参数配置](https://www.dolphindb.cn/cn/help/200/DatabaseandDistributedComputing/Configuration/index.html) 
+
+如果遇到性能问题，请添加微信号 13362150840（仅用于添加微信）或扫描下面二维码，客服会邀您进群，我们的工程师会解答您的问题。
+
+![image](./images/arm_standalone_deploy/chap5_q4.png)
+
+## 6. 参考
+
+更多详细信息，请参阅 DolphinDB 用户手册：
+
+- [中文版 DolphinDB 用户手册](https://www.dolphindb.cn/cn/help/200/index.html)
+- [英文版 DolphinDB 用户手册](https://www.dolphindb.com/help200/index.html)
+
