@@ -158,6 +158,7 @@
     - [DolphinDB流计算引擎实现传感器数据异常检测](iot_anomaly_detection.md)
     - [DolphinDB流计算在物联网的应用：实时检测传感器状态变化](DolphinDB_streaming_application_in_IOT.md)
     - [随机振动信号分析解决方案](Random_Vibration_Signal_Analysis_Solution.md)
+    - [DolphinDB通过Telegraf与Grafana实现设备指标的采集监控和展示](DolphinDB_Telegraf_Grafana.md)
 - 入门和测试
     - [DolphinDB入门：量化金融范例](quant_finance_examples.md)
     - [DolphinDB入门：物联网范例](iot_examples.md)
