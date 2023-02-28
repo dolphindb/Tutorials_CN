@@ -148,7 +148,7 @@ C:\DolphinDB\server\dolphindb.lic
 
 ![singlenode_win_dbclickddbexe](images/deploy_standalone/singlenode_win_dbclickddbexe.png)
 
-系统默认端口号是 8848，可以通过修改配置文件 *dolphindb.cfg* 中的 **localSite** 参数指定其它端口。
+系统默认端口号是 8848，可以通过修改配置文件 *dolphindb.cfg* 中的 *localSite* 参数指定其它端口。
 
 - 后台运行
 
