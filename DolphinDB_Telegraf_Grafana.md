@@ -657,7 +657,7 @@ select top 100 * from cpu_warning_result order by timestamp desc
 
 1. telegraf-dolphindb-outputs插件：[telegraf-dolphindb-outputs](plugin/DolphinDB_Telegraf_Grafana/telegraf_dolphindb_outputs)
 
-2. 编译源码：[telegraf.zip](script/DolphinDB_Telegraf_Grafana/telegraf.zip)
+2. 编译源码：[telegraf.zip](script/DolphinDB_Telegraf_Grafana/telegraf)
 
 3. TelegrafConfig：[TelegrafConfig](script/DolphinDB_Telegraf_Grafana/TelegrafConfig)
 
