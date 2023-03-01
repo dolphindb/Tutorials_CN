@@ -534,13 +534,13 @@ select timestamp,avg(total),avg(used),avg(free),avg(used_percent) from dfs_disk 
 
 上文介绍了 disk 和 system 两个指标的数据采集、存储与监控方法。这章提供了一个利用 DolphinDB 流计算统计 CPU 使用率进行预警监控的实际运维案例。主要步骤大致可以分为3步：首先，在 Telegraf 的配置文件中添加 CPU 使用率这一监控指标，并编写输出到 DolphinDB 流表的输出配置文件；之后在 DolphinDB 中创建存储 CPU 使用率数据的流表，并编写预警脚本；最后，在 Grafana 中查询预警数据，完成监控预警的可视化。具体操作请按下列步骤执行：
 
-1）修改 Telegraf 的配置文件 TelegrafConfig。在 INPUT PLUGINS 中添加 CPU 监控  [[inputs.cpu]]，在OUTPUT PLUGINS 中添加对应 [[outputs.execd]] 输出。
+1. 修改 Telegraf 的配置文件 TelegrafConfig。在 INPUT PLUGINS 中添加 CPU 监控  [[inputs.cpu]]，在OUTPUT PLUGINS 中添加对应 [[outputs.execd]] 输出。
 
 <img src="./images/DolphinDB_Telegraf_Grafana/5_1.png" width=70%>
 
 <img src="./images/DolphinDB_Telegraf_Grafana/5_2.png" width=70%>
 
-2）编写对应 [[outputs.execd]] 的配置文件 dolphindb-output-3.conf。这里直接注释掉 database，将 Telegraf 采集的数据导入到 DolphinDB 流表 cpu_stream 中。
+2. 编写对应 [[outputs.execd]] 的配置文件 dolphindb-output-3.conf。这里直接注释掉 database，将 Telegraf 采集的数据导入到 DolphinDB 流表 cpu_stream 中。
 
 
 
@@ -575,7 +575,7 @@ debug = true
 
 ```
 
-3）修改 DolphinDB 配置文件，用于支持创建磁盘持久化流表。在 dolphindb.cfg 中设置持久化路径如下（<DolphinDBDir>是自定义的数据存放路径，可以与 server 保持同一目录）：
+3. 修改 DolphinDB 配置文件，用于支持创建磁盘持久化流表。在 dolphindb.cfg 中设置持久化路径如下（<DolphinDBDir>是自定义的数据存放路径，可以与 server 保持同一目录）：
 
 
 
@@ -588,7 +588,7 @@ persistenceDir<DolphinDBDir>/persistence
 persistenceOffsetDir=<DolphinDBDir>/streamlog
 ```
 
-4）连接登录 DolphinDB ，在 DolphinDB 中创建存储 CPU 指标数据的流表 cpu_stream。
+4. 连接登录 DolphinDB ，在 DolphinDB 中创建存储 CPU 指标数据的流表 cpu_stream。
 
 
 
@@ -606,7 +606,7 @@ cpuColtypes =[TIMESTAMP,STRING,DOUBLE]
 enableTableShareAndPersistence(table = streamTable(1000:0,cpuColnames,cpuColtypes), tableName=`cpu_stream, cacheSize = 5000000)  
 ```
 
-5）在 DolphinDB 中订阅流表 cpu_stream 中的数据，一方面将流表中的数据导入到分布式表 dfs_cpu 中进行持久化存储，另一方面对流表中的数据进行流计算，预警统计 CPU 使用率大于80%的指标数据，并将统计的数据存入流表 cpu_warning_result 中。
+5. 在 DolphinDB 中订阅流表 cpu_stream 中的数据，一方面将流表中的数据导入到分布式表 dfs_cpu 中进行持久化存储，另一方面对流表中的数据进行流计算，预警统计 CPU 使用率大于80%的指标数据，并将统计的数据存入流表 cpu_warning_result 中。
 
 
 
@@ -629,7 +629,7 @@ def handler_cpu(mutable warning_result, msg)
 subscribeTable(tableName="cpu_stream", actionName="cpu_warning", offset=0, handler=handler_cpu{cpu_warning_result}, msgAsTable=true,batchSize=100000, throttle=1, reconnect=true)
 ```
 
-6）启动 Telegraf 服务。
+6. 启动 Telegraf 服务。
 
 
 
@@ -637,7 +637,7 @@ subscribeTable(tableName="cpu_stream", actionName="cpu_warning", offset=0, handl
 telegraf --config $TelegrafConfig
 ```
 
-7）查看 cpu_stream 中最近的100条 CPU 指标数据，查看 dfs_cpu 中最近的100条 CPU 指标数据，查看 cpu_warning_result 中最近的100条 预警数据 。
+7. 查看 cpu_stream 中最近的100条 CPU 指标数据，查看 dfs_cpu 中最近的100条 CPU 指标数据，查看 cpu_warning_result 中最近的100条 预警数据 。
 
 
 
@@ -649,18 +649,15 @@ select top 100 * from dfs_cpu order by timestamp desc
 select top 100 * from cpu_warning_result order by timestamp desc
 ```
 
-8）登录 Grafana 监控 CPU 利用率大于80%的预警数据。连接上 DolphinDB 数据源并创建面板 Panel 后，直接可视化 cpu_warning_result 中的数据即可（这里只监控了单核 cpu0 的预警数据）。
+8. 登录 Grafana 监控 CPU 利用率大于80%的预警数据。连接上 DolphinDB 数据源并创建面板 Panel 后，直接可视化 cpu_warning_result 中的数据即可（这里只监控了单核 cpu0 的预警数据）。
 
 <img src="./images/DolphinDB_Telegraf_Grafana/5_3.png" width=80%>
 
 ## 6. 附件
 
-1）telegraf-dolphindb-outputs插件：
-[telegraf-dolphindb-outputs](plugin/DolphinDB_Telegraf_Grafana)
+1. telegraf-dolphindb-outputs插件：[telegraf-dolphindb-outputs](plugin/DolphinDB_Telegraf_Grafana)
 
+2. 编译源码：[telegraf.zip](telegraf.zip)
 
-2）编译源码：[telegraf.zip](telegraf.zip)
-
-
-3）TelegrafConfig :[TelegrafConfig](script\DolphinDB_Telegraf_Grafana)
+3. TelegrafConfig :[TelegrafConfig](script/DolphinDB_Telegraf_Grafana/TelegrafConfig)
 
