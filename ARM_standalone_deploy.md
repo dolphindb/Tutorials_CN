@@ -172,7 +172,7 @@ cp -r local8848/storage/CHUNK_METADATA/ backup/CHUNK_METADATA
 
 ### 第三步：升级
 
-下载所需升级版本的安装包，官方下载地址：[http://www.dolphindb.cn/downloads.html](http://www.dolphindb.cn/downloads.html)
+下载所需升级版本的安装包，官方下载地址：[http://www.dolphindb.cn/downloads.html](http://www.dolphindb.cn/downloads.html)。
 
 将新版本 *server* 目录下除 *dolphindb.cfg* 以及 *dolphindb.lic* 外的所有文件覆盖替换旧版文件。
 
@@ -263,7 +263,7 @@ cp -r backup/CHUNK_METADATA/ local8848/storage/CHUNK_METADATA
 
 ### 5.5 如何进行配置参数调优？
 
-可以参考 DolphinDB 官方参数配置说明进行配置参数调优：[参数配置](https://www.dolphindb.cn/cn/help/200/DatabaseandDistributedComputing/Configuration/index.html)
+可以参考 DolphinDB 官方参数配置说明进行配置参数调优：[参数配置](https://www.dolphindb.cn/cn/help/200/DatabaseandDistributedComputing/Configuration/index.html)。
 
 如果遇到性能问题，请添加微信号13362150840（仅用于添加微信）或扫描下面二维码，客服会邀您进群，我们的工程师会解答您的问题。
 
