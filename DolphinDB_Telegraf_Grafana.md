@@ -188,9 +188,9 @@ DolphinDB 基于 Telegraf 的 Output 插件将 Telegraf 采集并处理过的数
 
 **3.1.1 下载插件**
 
-1.下载附件 telegraf-dolphindb-outputs , 放到自行指定路径下，得到插件文件 telegraf-dolphindb-outputs 。
+1.下载附件 telegraf-dolphindb-output, 放到自行指定路径下，得到插件文件 telegraf-dolphindb-output 。
 
-2. 将插件文件 telegraf-dolphindb-outputs 授予可执行权限并移动至 $PATH 路径。
+2. 将插件文件 telegraf-dolphindb-output 授予可执行权限并移动至 $PATH 路径。
 
 
 
@@ -655,7 +655,7 @@ select top 100 * from cpu_warning_result order by timestamp desc
 
 ## 6. 附件
 
-1. telegraf-dolphindb-outputs插件：[telegraf-dolphindb-outputs](plugin/DolphinDB_Telegraf_Grafana/telegraf_dolphindb_outputs)
+1. telegraf-dolphindb-output插件：[telegraf-dolphindb-output](plugin/DolphinDB_Telegraf_Grafana/telegraf-dolphindb-output)
 
 2. 编译源码：[telegraf.zip](script/DolphinDB_Telegraf_Grafana/telegraf.zip)
 
