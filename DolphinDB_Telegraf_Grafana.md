@@ -9,7 +9,7 @@
 		- [2.2 安装 Grafana](#22-安装-grafana)
 		- [2.3 安装 DolphinDB](#23-安装-dolphindb)
 	- [3. Telegraf 采集数据到 DolphinDB](#3-telegraf-采集数据到-dolphindb)
-		- [3.1 下载/自行编译 telegraf-dolphindb-output 插件](#31-下载自行编译-telegraf-dolphindb-output-插件)
+		- [3.1 下载/自行编译 telegraf-dolphindb-outputs 插件](#31-下载自行编译-telegraf-dolphindb-outputs-插件)
 		- [3.2 DolphinDB 环境准备](#32-dolphindb-环境准备)
 		- [3.3 配置文件准备](#33-配置文件准备)
 		- [3.4 配置说明](#34-配置说明)
@@ -182,15 +182,15 @@ Output 接口主要实现了 Connect、Write、Close 三个方法，具体功能
 
 DolphinDB 基于 Telegraf 的 Output 插件将 Telegraf 采集并处理过的数据写入 DolphinDB 中。该插件作为 Telegraf 的子进程在后台常驻运行，Telegraf 将采集并处理好的数据进行序列化并通过 stdin 传入该插件，并通过该插件的 stderr 监听插件日志及处理结果。这里实施将以 Telegraf 内置的 ‘disk’ 和 'system‘ 作为输入源，并将相关数据写入到 DolphinDB 。
 
-附件已提供 DolphinDB 实现好的 telegraf-dolphindb-output 插件，直接下载即可，或也可自行编译实现该插件。
+附件已提供 DolphinDB 实现好的 telegraf-dolphindb-outputs 插件，直接下载即可，或也可自行编译实现该插件。
 
 ### 3.1 下载/自行编译 telegraf-dolphindb-output 插件
 
 **3.1.1 下载插件**
 
-1.下载附件 telegraf-dolphindb-output, 放到自行指定路径下，得到插件文件 telegraf-dolphindb-output 。
+1.下载附件 telegraf-dolphindb-outputs, 放到自行指定路径下，得到插件文件 telegraf-dolphindb-outputs 。
 
-2. 将插件文件 telegraf-dolphindb-output 授予可执行权限并移动至 $PATH 路径。
+2. 将插件文件 telegraf-dolphindb-outputs 授予可执行权限并移动至 $PATH 路径。
 
 
 
@@ -655,7 +655,7 @@ select top 100 * from cpu_warning_result order by timestamp desc
 
 ## 6. 附件
 
-1. telegraf-dolphindb-output插件：[telegraf-dolphindb-output](plugin/DolphinDB_Telegraf_Grafana/telegraf-dolphindb-output)
+1. telegraf-dolphindb-outputs插件：[telegraf-dolphindb-outputs](plugin/DolphinDB_Telegraf_Grafana/telegraf-dolphindb-outputs)
 
 2. 编译源码：[telegraf.zip](script/DolphinDB_Telegraf_Grafana/telegraf.zip)
 
