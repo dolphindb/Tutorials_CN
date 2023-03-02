@@ -184,7 +184,7 @@ DolphinDB 基于 Telegraf 的 Output 插件将 Telegraf 采集并处理过的数
 
 附件已提供 DolphinDB 实现好的 telegraf-dolphindb-outputs 插件，直接下载即可，或也可自行编译实现该插件。
 
-### 3.1 下载/自行编译 telegraf-dolphindb-output 插件
+### 3.1 下载/自行编译 telegraf-dolphindb-outputs 插件
 
 **3.1.1 下载插件**
 
