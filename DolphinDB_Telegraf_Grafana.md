@@ -246,7 +246,7 @@ source /etc/profile
 
 
 ```
-go build -mod mod -o telegraf-dolphindb-output cmd/telegraf-outputs/telegraf-outputs.go
+go build -mod mod -o telegraf-dolphindb-outputs cmd/telegraf-outputs/telegraf-outputs.go
 ```
 
 若执行脚本出错，显示错误： dial tcp 172.217.27.145:443: i/o timeout，请在 /etc/profile 中设置 GOPROXY 环境变量（改一下代理）, 之后启用 go module，用下面的命令：
@@ -258,7 +258,7 @@ export GOPROXY=https://goproxy.io
 export GO111MODULE=on
 ```
 
-③将编译好的插件文件 telegraf-dolphindb-output 授予可执行权限并移动至 $PATH 路径（可将 go-plugins 的根目录添加到系统变量中）。
+③将编译好的插件文件 telegraf-dolphindb-outputs 授予可执行权限并移动至 $PATH 路径（可将 go-plugins 的根目录添加到系统变量中）。
 
 
 
@@ -267,7 +267,7 @@ export PATH=$PATH:/xxxx/go-plugins/
 source /etc/profile
 ```
 
-④完成 telegraf-dolphindb-output 插件编译。
+④完成 telegraf-dolphindb-outputs 插件编译。
 
 ### 3.2 DolphinDB 环境准备
 
