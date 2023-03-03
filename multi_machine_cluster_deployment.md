@@ -13,7 +13,7 @@
       - [5.1.2 配置集群成员参数文件](#512-配置集群成员参数文件)
       - [5.1.3 配置数据节点、计算节点的参数文件](#513-配置数据节点计算节点的参数文件)
     - [5.2 配置代理节点](#52-配置代理节点)
-  - [6 DolphinDB 集群启动](#6-dolphindb集群启动)
+  - [6 DolphinDB 集群启动](#6-dolphindb-集群启动)
     - [6.1 systemd 启动 DolphinDB](#61-systemd-启动-dolphindb)
     - [6.2 命令行启动 DolphinDB](#62-命令行启动-dolphindb)
       - [6.2.1 启动代理节点](#621-启动代理节点)
@@ -525,7 +525,7 @@ startDataNode(["P1-NODE1", "P2-NODE1","P3-NODE1","P5-NODE1"])
    ```
    persistenceDir = /hdd/hdd1/streamCache/<ALIAS>
    ```
-   宏变量的具体使用可详情参照 [DolphinDB用户手册](https://www.dolphindb.com/help/DatabaseandDistributedComputing/Configuration/ClusterMode.html)。
+   宏变量的具体使用可详情参照 [DolphinDB用户手册](https://www.dolphindb.cn/cn/help/DatabaseandDistributedComputing/Configuration/ClusterMode.html)。
 
 
 ## 8. 基于 Web 的集群管理
