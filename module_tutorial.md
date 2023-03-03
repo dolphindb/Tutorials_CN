@@ -167,7 +167,7 @@ DolphinDB GUI 从0.99.2版本开始提供了远程同步模块的功能，具体
 
 1. 指定远程服务器路径：
    * 添加远程服务器（Server->Add Server）时，指定 `Remote Directory` 目录:   
-   ![image](./images/gui/add_server.png)
+   ![image](./images/GUI/add_server.png)
 
    * 若上步中未指定 `Remote Directory`，可通过 Server->Edit Server 进行添加：   
    ![image](./images/gui/module_sync.png)
