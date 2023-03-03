@@ -170,10 +170,10 @@ DolphinDB GUI 从0.99.2版本开始提供了远程同步模块的功能，具体
    ![image](./images/GUI/add_server.png)
 
    * 若上步中未指定 `Remote Directory`，可通过 Server->Edit Server 进行添加：   
-   ![image](./images/gui/module_sync.png)
+   ![image](./images/GUI/module_sync.png)
 
 2. 点击下图 `Synchronize to server` 将 modules 目录下的所有文件和子目录同步到步骤1设置的 `Remote Directory` 下。
-![image](./images/gui/module_sync.png)
+![image](./images/GUI/module_sync.png)
 
 假设 `Remote Directory` 设置为'[home]/modules'，本地需要同步的文件名是 "C:/users/usr1/Project/scripts/test.dos"。同步的时候，系统会在远端自动创建目录和相应文件 '[home]/modules/Project/scripts/test.dos'。
 
