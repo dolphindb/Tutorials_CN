@@ -263,7 +263,7 @@ m=decimal64(1.23, 3)/decimal32(2.45, 2)
 
 通过以下步骤，可以将导入数据转换成 DECIMAL 类型：
 
-​       1. 使用 saveText 函数获得一个 test_decimal.csv 文件。
+​       1. 使用 saveText 函数获得一个 *test_decimal.csv* 文件。
 
 ```sql
 WORK_DIR="/hdd/hdd1/test_decimal/"
@@ -272,7 +272,7 @@ t=table(rand(1..100, n) as id, rand(2022.11.23T12:39:56+1..100, n) as datetimev,
 saveText(t, WORK_DIR+"test_decimal.csv")
 ```
 
-​       2.使用 loadText 函数将 test_decimal.csv 中的部分列转换为 DECIMAL 类型。
+​       2. 使用 loadText 函数将 *test_decimal.csv* 中的部分列转换为 DECIMAL 类型。
 
 ```sql
 shemaTable=table(`id`timev`sym`val1`val2 as name, [`INT, `DATETIME, `SYMBOL, "DECIMAL32(4)", "DECIMAL64(5)"] as type)
