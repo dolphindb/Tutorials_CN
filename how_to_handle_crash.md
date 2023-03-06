@@ -147,6 +147,7 @@ echo "1" > /proc/sys/kernel/core_uses_pid
 > 注意：
 >
 > 设置core文件保存路径时首先要创建这个路径，其次要注意所在磁盘的剩余空间大小，不要影响DolphinDB元数据、分区数据的存储。
+> 通过 `/proc/sys/kernel/core_pattern` 设置的 core 文件保存路径可能在机器重启后失效，若想使设置永久生效，需要在 /etc/sysctl.conf 文件中添加 `kernel.core_pattern=/data/core/core-%e-%p-%t.core`。可根据实际环境修改 core 文件路径及名称。
 
 #### 3.1.3 测试core文件是否能够生成
 
