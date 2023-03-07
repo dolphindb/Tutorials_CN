@@ -11,6 +11,7 @@
     - [DolphinDB客户端软件教程](client_tool_tutorial.md)
     - [DolphinDB技术支持攻略](dolphindb_support.md)
     - [用新服务器从零开始部署 DolphinDB](deploy_dolphindb_on_new_server.md)
+    - [高可用集群灰度升级](gray_scale_upgrade_ha.md)
 - 云上部署 DolphinDB
     - [DolphinDB Docker单机部署方案](../../../dolphindb-k8s/blob/master/docker_single_deployment.md)
     - [基于Docker-Compose的DolphinDB多容器集群部署](../../../dolphindb-k8s/blob/master/docker-compose_high_cluster.md)
