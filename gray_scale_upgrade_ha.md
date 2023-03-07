@@ -25,7 +25,7 @@
 
 ## 3. 升级步骤
 
-本例中，需要将版本为 2.00.7.4 的高可用集群升级到 2.00.8.12 版本
+本例中，需要将版本为 2.00.7.4 的高可用集群升级到 2.00.8.12 版本。
 
 `controller.cfg`
 
@@ -68,7 +68,7 @@ localSite,mode
 2	node45	2.00.7.4 2022.12.08
 ```
 
-DolphinDB 中现有数据库 `dfs://stock`，库中有分布式表 `stock`
+DolphinDB 中现有数据库 `dfs://stock`，库中有分布式表 `stock`。
 
 ```python
 db = database("dfs://stock",VALUE,2023.01.01..2023.01.10,,'TSDB')
@@ -76,7 +76,7 @@ tmp = table(1:0,[`time,`name,`id],[TIMESTAMP,SYMBOL,INT])
 pt = db.createPartitionedTable(tmp,`stock,`time,,`name,ALL)
 ```
 
-执行升级过程中，Python API 始终以高可用的方式向 DFS 表中写入数据
+执行升级过程中，Python API 始终以高可用的方式向 DFS 表中写入数据。
 
 ```python
 import dolphindb as ddb
@@ -110,7 +110,7 @@ while i<=10000000:
 select * from rpc(getControllerAlias(), getClusterChunksStatus) where state != "COMPLETE" 
 ```
 
-第二步，执行以下脚本获取元数据文件的存储目录
+第二步，执行以下脚本获取元数据文件的存储目录。
 
 ```
 pnodeRun(getConfig{`chunkMetaDir})`
