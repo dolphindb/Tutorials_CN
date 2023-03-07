@@ -182,7 +182,7 @@ inhibit_rules:
 
 * 启动Prometheus命令如下：
 ```
-demo@zhiyu:~/prometheus-2.26.0.linux-amd64$ nohup ./prometheus --config.file=promethes.yml &
+demo@zhiyu:~/prometheus-2.26.0.linux-amd64$ nohup ./prometheus --config.file=prometheus.yml &
 ```
 
 prometheus默认绑定在9090端口，可以通过前端Web访问，本例使用的地址为127.0.0.1:9090。
