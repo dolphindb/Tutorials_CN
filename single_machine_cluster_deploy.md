@@ -1,6 +1,6 @@
 # 单服务器集群部署
 
-* DolphinDB 集群包括四种类型节点：控制节点 (controller)，代理节点 (agent)，数据节点 (data node) 和计算节点 (compute node)。
+  DolphinDB 集群包括四种类型节点：控制节点（controller），代理节点（agent），数据节点（data node）和计算节点（compute node）。
 
   - **控制节点**：控制节点是 DolphinDB 集群的核心部分，负责收集代理节点和数据节点的心跳，监控每个节点的工作状态，管理分布式文件系统的元数据和事务日志。普通集群中只有一个控制节点，高可用集群中会有多个控制节点并组成一个 Raft 组，通过 Raft 协议保证多个控制节点上元数据的强一致性。
   - **代理节点**：代理节点负责执行控制节点发出的启动和关闭数据节点或计算节点的命令。在一个集群中，每台物理服务器有且仅有一个代理节点。
@@ -9,7 +9,7 @@
 
   本教程用于单服务器集群的部署、升级、过期 License 升级，并对常见问题做出解答，便于用户快速上手 DolphinDB。包含以下主题：
 
-  - [单服务器集群部署](#单服务器集群部署)
+
 - [1. 在 Linux 操作系统部署 DolphinDB 单服务器集群](#1-在-linux-操作系统部署-dolphindb-单服务器集群)
   - [第一步：下载](#第一步下载)
   - [第二步：更新软件授权许可](#第二步更新软件授权许可)
@@ -142,7 +142,7 @@
 
   在数据节点的 Web 交互编程界面执行以下语句创建数据库和分区表：
 
-  ```
+  ```sql
   // 创建存储的数据库和分区表
   login("admin", "123456")
   dbName = "dfs://testDB"
@@ -159,7 +159,7 @@
 
   然后，执行以下语句模拟生成 5000 个股票 1 天的 1 分钟 K 线数据并写入上面创建的分区表：
 
-  ```
+  ```sql
   // 模拟数据并写入分区表
   n = 1210000
   randPrice = round(10+rand(1.0, 100), 2)
@@ -184,11 +184,11 @@
 
   <img src="./images/single_machine_cluster_deploy/1_6.png" width=70%>
 
-  语句执行成功后可在交互编程界面的左边，”数据库“一栏查看已创建的库表及字段信息。
+  语句执行成功后可在交互编程界面的左边，**数据库**一栏查看已创建的库表及字段信息。
 
   <img src="./images/single_machine_cluster_deploy/1_7.png" width=60%>
 
-  也可在”本地变量“一栏查看已创建的变量和表，展示了变量名、变量类型、变量维度大小、占用内存大小等信息，并且可以直接点击变量名进行变量预览。
+  也可在**本地变量**一栏查看已创建的变量和表，展示了变量名、变量类型、变量维度大小、占用内存大小等信息，并且可以直接点击变量名进行变量预览。
 
   <img src="./images/single_machine_cluster_deploy/1_8.png" width=70%>
 
@@ -210,14 +210,14 @@
 
   在计算节点的 Web 交互编程界面执行以下语句加载分区表对象，此时只加载了分区表的元数据，并未加载分区表全量数据，所以响应时间非常快：
 
-  ```
+  ```sql
   // 加载分区表对象
   pt = loadTable("dfs://testDB", "testTB")
   ```
 
   然后，执行以下语句查询股票表中每天包含的数据条数：
 
-  ```
+  ```sql
   // SQL 返回数据量少的时候，可以直接取回客户端展示
   select count(*) from pt group by date(DateTime) as Date
   ```
@@ -228,12 +228,12 @@
 
   执行以下语句计算每支股票每天的 OHLC 值：
 
-  ```
+  ```sql
   // SQL 返回数据量较大时，可以赋值给变量，占用 server 端内存，客户端分页取回展示
   result = select first(LastPx) as Open, max(LastPx) as High, min(LastPx) as Low, last(LastPx) as Close from pt group by date(DateTime) as Date, SecurityID
   ```
 
-  在这里，把计算结果赋值给了 result 变量，这样就不会直接在客户端界面直接展示，减少客户端内存占用，用户可以通过点击”本地变量“栏目下的 result 变量进行分页展示查看：
+  在这里，把计算结果赋值给了 `result` 变量，这样就不会直接在客户端界面直接展示，减少客户端内存占用，用户可以通过点击**本地变量**栏目下的 `result` 变量进行分页展示查看：
 
   <img src="./images/single_machine_cluster_deploy/1_13.png" width=70%>
 
@@ -297,7 +297,7 @@
 
   ## 第四步：连接数据节点创建数据库和分区表
 
-  数据节点既可以存储数据，也可以用于数据的查询和计算。接下来通过一个例子介绍如何在 DolphinDB 集群数据节点创建数据库并写入数据。首先，打开控制节点的 Web 管理界面，点击对应的数据节点打开其 Web 交互编程界面，如下图所示：
+  数据节点既可以存储数据，也可以用于数据的查询和计算。接下来通过一个例子介绍如何在 DolphinDB 集群数据节点创建数据库并写入数据。首先，打开控制节点的 Web 管理界面，点击对应的数据节点打开其 Web **交互编程**界面，如下图所示：
 
   <img src="./images/single_machine_cluster_deploy/2_3.png" width=70%>
 
@@ -309,7 +309,7 @@
 
   在数据节点的 Web 交互编程界面执行以下语句创建数据库和分区表：
 
-  ```
+  ```sql
   // 创建存储的数据库和分区表
   login("admin", "123456")
   dbName = "dfs://testDB"
@@ -326,7 +326,7 @@
 
   然后，执行以下语句模拟生成 5000 个股票 1天的 1 分钟 K 线数据并写入上面创建的分区表：
 
-  ```
+  ```sql
   // 模拟数据并写入分区表
   n = 1210000
   randPrice = round(10+rand(1.0, 100), 2)
@@ -351,17 +351,17 @@
 
   <img src="./images/single_machine_cluster_deploy/2_5.png" width=70%>
 
-  语句执行成功后可在交互编程界面的左边，”数据库“一栏查看已创建的库表及字段信息。
+  语句执行成功后可在交互编程界面的左边，**数据库**一栏查看已创建的库表及字段信息。
 
   <img src="./images/single_machine_cluster_deploy/2_6.png" width=60%>
 
    
 
-  也可在”本地变量“一栏查看已创建的变量和表，展示了变量名、变量类型、变量维度大小、占用内存大小等信息，并且可以直接点击变量名进行变量预览。
+  也可在**本地变量**一栏查看已创建的变量和表，展示了变量名、变量类型、变量维度大小、占用内存大小等信息，并且可以直接点击变量名进行变量预览。
 
   <img src="./images/single_machine_cluster_deploy/2_7.png" width=70%>
 
-  上述语句执行成功后，可回到控制节点的文件系统查看已创建的库表。
+  上述语句执行成功后，可回到控制节点的**文件系统**查看已创建的库表。
 
   <img src="./images/single_machine_cluster_deploy/2_8.png" width=70%>
 
@@ -369,7 +369,7 @@
 
   ## 第五步：连接计算节点查询和计算
 
-  计算节点主要用于数据的查询和计算。接下来通过一个例子介绍如何在计算节点对数据库内的分区表执行查询和计算。首先，打开控制节点的 Web 管理界面，点击对应的计算节点打开其 Web 交互编程界面，如下图所示：
+  计算节点主要用于数据的查询和计算。接下来通过一个例子介绍如何在计算节点对数据库内的分区表执行查询和计算。首先，打开控制节点的 Web 管理界面，点击对应的计算节点打开其 Web **交互编程**界面，如下图所示：
 
   <img src="./images/single_machine_cluster_deploy/2_9.png" width=70%>
 
@@ -379,14 +379,14 @@
 
   在计算节点的 Web 交互编程界面执行以下语句加载分区表对象，此时只加载了分区表的元数据，并未加载分区表全量数据，所以响应时间非常快：
 
-  ```
+  ```sql
   // 加载分区表对象
   pt = loadTable("dfs://testDB", "testTB")
   ```
 
   然后，执行以下语句查询股票表中每天包含的数据条数：
 
-  ```
+  ```sql
   // SQL 返回数据量少的时候，可以直接取回客户端展示
   select count(*) from pt group by date(DateTime) as Date
   ```
@@ -397,12 +397,12 @@
 
   执行以下语句计算每支股票每天的 OHLC 值：
 
-  ```
+  ```sql
   // SQL 返回数据量较大时，可以赋值给变量，占用 server 端内存，客户端分页取回展示
   result = select first(LastPx) as Open, max(LastPx) as High, min(LastPx) as Low, last(LastPx) as Close from pt group by date(DateTime) as Date, SecurityID
   ```
 
-  在这里，将计算结果赋值给了 result 变量，这样就不会直接在客户端界面直接展示，减少客户端内存占用，用户可以通过点击”本地变量“栏目下的 result 变量进行分页展示查看：
+  在这里，将计算结果赋值给了 `result` 变量，这样就不会直接在客户端界面直接展示，减少客户端内存占用，用户可以通过点击**本地变量**栏目下的 `result` 变量进行分页展示查看：
 
   <img src="./images/single_machine_cluster_deploy/2_12.png" width=70%>
 
@@ -678,7 +678,7 @@
   vim ./controller.cfg
   ```
 
-  ```
+  ```java
   mode=controller
   localSite=localhost:8900:controller8900
   dfsReplicationFactor=1
@@ -711,7 +711,7 @@
   vim ./agent.cfg
   ```
 
-  ```
+  ```java
   mode=agent
   localSite=localhost:8901:agent1
   controllerSite=localhost:8900:controller8900
@@ -741,14 +741,14 @@
   vim ./cluster.nodes
   ```
 
-  ```
+  ```java
   localSite,mode
   localhost:8901:agent1,agent
   localhost:8902:dnode1,datanode
   localhost:8903:cnode1,computenode
   ```
 
-  *cluster.nodes* 用于存放集群代理节点和数据节点信息。默认集群配置文件使用 1 个代理节点，1 个数据节点和1个计算节点，用户可以根据实际要求配置节点个数。该配置文件分为两列，第一例存放节点 IP 地址、端口号和节点别名，这三个信息由冒号分隔；第二列是说明节点类型，比如代理节点类型为 agent ，数据节点类型为 datanode ，计算节点类型为 computenode 。
+  *cluster.nodes* 用于存放集群代理节点和数据节点信息。默认集群配置文件使用 1 个代理节点，1 个数据节点和1个计算节点，用户可以根据实际要求配置节点个数。该配置文件分为两列，第一例存放节点 IP 地址、端口号和节点别名，这三个信息由冒号分隔；第二列是说明节点类型，比如代理节点类型为 `agent` ，数据节点类型为 `datanode` ，计算节点类型为 `computenode` 。
 
   > 注意：节点别名是大小写敏感的，而且在集群内必须是唯一的。
 
@@ -762,7 +762,7 @@
   vim ./cluster.cfg
   ```
 
-  ```
+  ```java
   maxMemSize=32
   maxConnections=512
   workerNum=4
