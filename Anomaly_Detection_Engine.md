@@ -115,7 +115,6 @@ step | alignmentSize
 
 1. 单次采集的温度超过65；
 2. 单次采集的温度超过上一个窗口中75%的值；
-3. 窗口内平均温度和上一个窗口的平均温度相对误差大于1%。
 
 采集的数据存放到流数据表中，异常检测引擎通过订阅流数据表来获取实时数据，并进行异常检测，符合异常指标的数据输出到另外一个表中。
 
@@ -131,7 +130,7 @@ share streamTable(1000:0, `time`temp, [TIMESTAMP, DOUBLE]) as sensor
 
 ```
 share streamTable(1000:0, `time`anomalyType`anomalyString, [TIMESTAMP, INT, SYMBOL]) as outputTable
-engine = createAnomalyDetectionEngine("engine1", <[temp > 65, temp > percentile(temp, 75), abs((avg(temp) - prev(avg(temp))) / avg(temp)) > 0.01]>, sensor, outputTable, `time, , 6, 3)
+engine = createAnomalyDetectionEngine("engine1", <[temp > 65, temp > percentile(temp, 75)]>, sensor, outputTable, `time, , 6, 3)
 ```
 
 (3) 异常检测引擎engine订阅流数据表sensor：
@@ -171,9 +170,7 @@ time                   |anomalyType|anomalyString
 2018.10.08T01:01:01.003|0          |temp > 65
 2018.10.08T01:01:01.003|1          |temp > percentile(temp, 75)
 2018.10.08T01:01:01.005|1          |temp > percentile(temp, 75)
-2018.10.08T01:01:01.006|2          |abs((avg(temp) - prev(avg(temp))) / avg(temp)) > 0.01
 2018.10.08T01:01:01.006|1          |temp > percentile(temp, 75)
-2018.10.08T01:01:01.009|2          |abs((avg(temp) - prev(avg(temp))) / avg(temp)) > 0.01
 
 下面详细解释异常检测引擎的计算过程。为方便阅读，对时间的描述中省略相同的2018.10.08T01:01:01部分，只列出毫秒部分。
 
@@ -181,16 +178,14 @@ time                   |anomalyType|anomalyString
 
 （2）指标`temp > percentile(temp, 75)`中，temp列既作为聚合函数`percentile`的参数，又单独出现，因此会在每条数据到达时，将其中的`temp`与上一个窗口计算得到的`percentile(temp, 75)`比较。第一个窗口基于第一行数据的时间002进行对齐，对齐后窗口起始边界为000，第一个窗口是从000到002，只包含002一条记录，计算`percentile(temp, 75)`的结果是59，数据003到005与这个值比较，满足条件的有003和005。第二个窗口是从002到005，计算`percentile(temp, 75)`的结果是60，数据006到008与这个值比较，满足条件的有006。第三个窗口是从003到008，计算`percentile(temp, 75)`的结果是63，数据009到011与这个值比较，其中没有满足条件的行。最后一条数据011到达后，尚未触发新的窗口计算。
 
-（3）指标`abs((avg(temp) - prev(avg(temp))) / avg(temp)) > 0.01`中，`temp`只作为聚合函数`avg`的参数出现，因此只会在每次窗口计算时检查。类似上一个指标的分析，前三个窗口计算得到的`avg(temp)`分别为59, 60.5, 58.33，满足`abs((avg(temp) - prev(avg(temp))) / avg(temp)) > 0.01`的时间为第二个窗口和第三个窗口的计算时间006和009。
-
 监控异常检测引擎的状态
 
 ```
-getAggregatorStat().AnomalDetectionAggregator
+getAggregatorStat().AnomalyDetectionEngine
 ```
-name    |user  |status |lastErrMsg |numGroups |numRows |numMetrics |metrics             
-------- |----- |------ |---------- |--------- |------- |---------- |--------------------
-engine1 |guest |OK     |           |0         |10      |3          |temp > 65, temp > percentile(temp, 75), abs((avg(temp) - prev(avg(temp))) / avg(temp)) > 0.01
+| name    | user  | status | lastErrMsg | numGroups | numRows | numMetrics                             | metrics | snapshotDir | snapshotInterval | snapshotMsgId | snapshotTimestamp | garbageSize | memoryUsed |   |
+|---------|-------|--------|------------|-----------|---------|----------------------------------------|---------|-------------|------------------|---------------|-------------------|-------------|------------|---|
+| engine1 | admin | OK     |     | 1        | 10      | 2     | temp > 65, temp > percentile(temp, 75) |     |       |      -1    |     |   2,000   |8,524 |
 
 ## 5. 快照机制
 
@@ -228,7 +223,7 @@ enableTableShareAndPersistence(table = streamTable(10000:0, `time`sym`type`metri
 select last(time) from output
 >2021.03.16T11:59:10.920
 
-select last(time) from trade
+select last(time) from trades
 >2021.03.16T11:59:13.916
 
 WORK_DIR="/home/root/WORK_DIR"
@@ -247,28 +242,7 @@ subscribeTable(server="", tableName="trades", actionName="adengine",offset=ofst+
 
 ## 6. createAnomalyDetectionEngine函数介绍
 
-**语法**
-```
-createAnomalyDetectionEngine(name, metrics, dummyTable, outputTable, timeColumn, [keyColumn], [windowSize], [step], [garbageSize], [snapshotDir],  [snapshotIntervalInMsgCount]) 
-```
-
-**返回对象**
-`createAnomalyDetectionEngine`函数的作用是返回一个表对象，向该表写入数据意味着这些数据进入异常检测引擎进行计算。
-
-**参数**
-- name: 一个字符串，表示异常检测引擎的名称，是异常检测引擎的唯一标识。它可以包含字母，数字和下划线，但必须以字母开头。
-- metrics: 元代码。它的返回值必须是bool类型。它可以是函数或表达式，如<[qty > 5, eq(qty, price)]>。可以在其中使用系统内置或用户自定义的聚合函数（使用defg关键字定义），如<[sum(qty) > 5, lt(avg(price), price)]>。详情可参考元编程。
-- dummyTable: 表对象，它可以不包含数据，但它的结构必须与订阅的流数据表结构相同。
-- outputTable: 表对象，用于保存计算结果。它的第一列必须是时间类型，用于存放检测到异常的时间戳，并且该列的数据类型要与dummyTable的时间列一致。如果keyColumn参数不为空，那么outputTable的第二列为keyColumn。之后的两列分别为int类型和string/symbol类型，用于记录异常的类型（在metrics中的下标）和异常的内容
-- timeColumn: 字符串标量，表示输入流数据表的时间列名称。
-- keyColumn: 字符串标量，表示分组列。异常检测引擎会按照keyColumn对输入数据分组，并在每组中进行聚合计算。它是可选参数。
-- windowSize: 正整数。当metrics中包含聚合函数时，windowSize必须指定，表示用于聚合计算的数据窗口的长度。如果metrics中没有聚合函数，这个参数不起作用。
-- step: 正整数。当metrics中包含聚合函数时，step必须指定，表示计算的时间间隔。windowSize必须是step的整数倍，否则会抛出异常。如果metrics中没有聚合函数，这个参数不起作用。
-- garbageSize: 正整数。它是可选参数，默认值是50,000。如果没有指定keyColumn，当内存中历史数据的数量超过garbageSize时，系统会清理本次计算不需要的历史数据。如果指定了keyColumn，意味着需要分组计算时，内存清理是各分组独立进行的。当一个组的历史数据记录数超出garbageSize时，会清理该组不再需要的历史数据。若一个组的历史数据记录数未超出garbageSize，则该组数据不会被清理。如果metrics中没有聚合函数，这个参数不起作用。
-- roundTime: 布尔类型，可选参数，表示对时间精度为毫秒或者秒的边界值进行规整处理时，是否需要按分钟规整。默认值为true，具体可见3. 数据窗口中的alignmentSize取值规则。
-- snapshotDir: 字符串标量, 表示保存引擎快照的文件目录，可以用于系统出现异常之后，对引擎进行恢复。该目录必须存在，否则系统会提示异常。创建流数据引擎的时候，如果指定了snapshotDir，也会检查相应的快照是否存在。如果存在，会加载该快照，恢复引擎的状态。它是可选参数。
-
-- snapshotIntervalInMsgCount: 正整数。可选参数，表示保存引擎快照的消息间隔。
+详见 [DolphinDB 用户手册](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/c/createAnomalyDetectionEngine.html)
 
 ## 6.总结
 
