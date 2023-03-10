@@ -141,7 +141,7 @@
   10.0.0.81:8901:P2-agent,agent
   10.0.0.81:8902:P2-datanode,datanode
   10.0.0.82:8901:P3-agent,agent
-  10.0.0.82:8902:P3-computenode,computenodexxxxxxxxxx
+  10.0.0.82:8902:P3-computenode,computenode
   ```
 
   - **配置数据节点和计算节点参数文件**
