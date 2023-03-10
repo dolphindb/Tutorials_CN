@@ -141,7 +141,7 @@
   10.0.0.81:8901:P2-agent,agent
   10.0.0.81:8902:P2-datanode,datanode
   10.0.0.82:8901:P3-agent,agent
-  10.0.0.82:8902:P3-computenode,computenodexxxxxxxxxx localSite,mode10.0.0.80:8901:P1-agent,agent10.0.0.80:8902:P1-datanode,datanode10.0.0.81:8901:P2-agent,agent10.0.0.81:8902:P2-datanode,datanode10.0.0.82:8901:P3-agent,agent10.0.0.82:8902:P3-computenode,computenode1localSite,mode 210.0.0.80:8901:P1-agent,agent 310.0.0.80:8902:P1-datanode,datanode 410.0.0.81:8901:P2-agent,agent 510.0.0.81:8902:P2-datanode,datanode 610.0.0.82:8901:P3-agent,agent 710.0.0.82:8902:P3-computenode,computenode
+  10.0.0.82:8902:P3-computenode,computenodexxxxxxxxxx
   ```
 
   - **配置数据节点和计算节点参数文件**
@@ -229,7 +229,7 @@
   vim ./agent.cfg
   ```
 
-  ```java
+  ```
   mode=agent
   localSite=10.0.0.82:8901:P3-agent
   controllerSite=10.0.0.80:8900:controller8900
@@ -311,7 +311,7 @@
 
   在数据节点的 Web 交互编程界面执行以下语句创建数据库和分区表：
 
-  ```sql
+  ```
   // 创建存储的数据库和分区表
   login("admin", "123456")
   dbName = "dfs://testDB"
@@ -328,7 +328,7 @@
 
   然后，执行以下语句创建 5000 个股票 1 分钟 K 线数据并写入上面创建的分区表：
 
-  ```sql
+  ```
   // 模拟数据并写入分区表
   n = 1210000
   randPrice = round(10+rand(1.0, 100), 2)
@@ -381,14 +381,14 @@
 
   在计算节点的 Web 交互编程界面执行以下语句加载分区表对象，此时只加载了分区表的元数据，并未加载分区表全量数据，所以响应时间非常快：
 
-  ```sql
+  ```
   // 加载分区表对象
   pt = loadTable("dfs://testDB", "testTB")
   ```
 
   然后，执行以下语句查询股票表中每天包含的数据条数：
 
-  ```sql
+  ```
   // SQL 返回数据量少的时候，可以直接取回客户端展示
   select count(*) from pt group by date(DateTime) as Date
   ```
@@ -399,7 +399,7 @@
 
   执行以下语句计算每支股票每天的 OHLC 值：
 
-  ```sql
+  ```
   // SQL 返回数据量较大时，可以赋值给变量，占用 server 端内存，客户端分页取回展示
   result = select first(LastPx) as Open, max(LastPx) as High, min(LastPx) as Low, last(LastPx) as Close from pt group by date(DateTime) as Date, SecurityID
   ```
