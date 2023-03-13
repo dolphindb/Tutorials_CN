@@ -91,7 +91,7 @@ setRetentionPolicy(db, 720, 0, 120)
 pnodeRun(moveHotDataToColdVolume) //在每个datanode上执行函数，手动触发迁移
 ```
 
-之后，DolphinDB 会发起最近15天到最近7天的分区的数据迁移任务。DolphinDB 使用原有的 recovery 机制实现数据的迁移，可以通过 [getRecoveryTaskStatus](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/g/getRecoveryTaskStatus.html?highlight=recovery)函数来查看 recovery 任务的执行状态：
+之后，DolphinDB 会发起最近15天到最近7天的分区的数据迁移任务。DolphinDB 使用原有的 recovery 机制实现数据的迁移，可以通过 [getRecoveryTaskStatus](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/g/getRecoveryTaskStatus.html?highlight=recovery) 函数来查看 recovery 任务的执行状态：
 
 ```
 rpc(getControllerAlias(), getRecoveryTaskStatus) //可以看到创建了最近15天到最近7天的数据迁移任务
