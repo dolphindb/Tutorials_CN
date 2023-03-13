@@ -21,7 +21,7 @@ DolphinDB 作为一款可用于搭建高可用数据集群的时序数据引擎�
 
 - **软件简介**
 
-HAProxy 是一款由 Linux 内核贡献者在2000年基于 C 语言开发的一款开源软件，用于为基于 TCP （第四层）和 HTTP（第七层）协议的应用程序提供高可用性、负载均衡和代理服务等。它具有高可用性、负载均衡、健康检查、会话保持、SSL、监控统计等多种核心功能。其良好的可扩展性、对高并发大流量的支持以及对 CPU、内存资源等的高效利用，使得其在当今诸如诸如 GitHub, Bitbucket, Stack Overflow, Reddit, Tumblr, Twitter 和 Tuenti 等的主流网站上得到了广泛应用。
+HAProxy 是一款由 Linux 内核贡献者在2000年基于 C 语言开发的一款开源软件，用于为基于 TCP （第四层）和 HTTP（第七层）协议的应用程序提供高可用性、负载均衡和代理服务等。它具有高可用性、负载均衡、健康检查、会话保持、SSL、监控统计等多种核心功能。其良好的可扩展性、对高并发大流量的支持以及对 CPU、内存资源等的高效利用，使得其在当今诸如诸如 GitHub, Bitbucket, Stack Overflow, Reddit 等主流网站上得到了广泛应用。
 
 HAProxy 作为一款类似于软件应用中间件的工具，其主要包含两个部分：前端，定义用于接收从客户端发来的请求的端口；后端，用于将从前端接收过来的请求交付于后端的应用服务处理，一般来说一个前端的代理服务端口可以对应多个后端应用服务。HAProxy 主要起到了代理服务以及负载均衡的中间件作用，实现将高并发、大流量的请求平均分配到后端多个服务上。
 
@@ -65,7 +65,7 @@ HAProxy 由 Linux 内核的核心贡献者 Willy Tarreau 于 2000 年编写，�
 
 ## 3. HAProxy 安装、部署、应用流程
 
-> 注：在流程开始前建议预先构建具有多数据节点 DolphinDB 高可用集群。具体安装方法可以参考 [DolphinDB 高可用集群部署教程](https://gitee.com/dolphindb/Tutorials_CN/blob/master/ha_cluster_deployment.md)。也可以参考[基于 Docker-Compose 的 DolphinDB 多容器集群部署](https://gitee.com/dolphindb/dolphindb-k8s/blob/master/docker-compose_high_cluster.md)。
+> 注：在流程开始前建议预先构建具有多数据节点 DolphinDB 高可用集群。具体安装方法可以参考 [DolphinDB 高可用集群部署教程](https://gitee.com/dolphindb/Tutorials_CN/blob/master/ha_cluster_deployment.md)。也可以参考 [基于 Docker-Compose 的 DolphinDB 多容器集群部署](https://gitee.com/dolphindb/dolphindb-k8s/blob/master/docker-compose_high_cluster.md)。
 
 ### 3.1 HAProxy 安装
 
@@ -167,7 +167,7 @@ listen stats
     stats admin if TRUE
 ```
 
-> 注：后端服务器四个 ip 和端口要根据实际情况进行修改。
+> 💡**注意**：后端服务器四个 ip 和端口要根据实际情况进行修改。
 
 ### 3.3 HAProxy 服务启动
 
@@ -187,7 +187,7 @@ $ docker run -itd --name ddb_haproxy -p 8080:8080 -p 1080:1080 -v /haproxy/hapro
 
 <img src="./images/haProxy_best_practices/3_1.png" width=70%>
 
-> 注：使用 DolphinDB 客户端工具连接监听的代理端口时，HAProxy 的负载均衡功能会根据相应的算法规则等自动分配连接到后端部署的其中之一节点。
+> 💡**注意**：使用 DolphinDB 客户端工具连接监听的代理端口时，HAProxy 的负载均衡功能会根据相应的算法规则等自动分配连接到后端部署的其中之一节点。
 
  
 
