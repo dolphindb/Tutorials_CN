@@ -86,7 +86,7 @@ setRetentionPolicy(db, 720, 0, 120)
 
 ### 2.3 触发数据迁移
 
-设置之后，DolphinDB 会在后台每隔1小时检查并迁移范围内的数据。这里为了演示方便，我们使用 [moveHotDataToColdVolume](https://www.dolphindb.cn/FunctionsandCommands/CommandsReferences/m/moveHotDataToColdVolume.html) 函数来手动触发迁移。
+设置之后，DolphinDB 会在后台每隔1小时检查并迁移范围内的数据。这里为了演示方便，我们使用 [moveHotDataToColdVolume](https://www.dolphindb.cn/cn/help/FunctionsandCommands/CommandsReferences/m/moveHotDataToColdVolume.html) 函数来手动触发迁移。
 
 ```
 pnodeRun(moveHotDataToColdVolume) //在每个datanode上执行函数，手动触发迁移
