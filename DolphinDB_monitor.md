@@ -37,8 +37,8 @@ DolphinDB为需要监控的服务产生相应的metrics（指标），Prometheus
 |diskWriteRate| Gauge |磁盘写速率（单位：字节/秒）|
 |networkSendRate| Gauge |网络发送速率（单位：字节/秒）|
 |networkRecvRate  | Gauge |网络接收速率（单位：字节/秒）|
-|cumMsgLatency|	Gauge |流数据订阅节点所有已接收的消息的平均延时（单位：毫秒）|
-|lastMsgLatency | Gauge |流数据订阅节点最后收到的消息的延时（单位：毫秒）|
+|cumMsgLatency|	Gauge |流数据订阅节点所有已接收的消息的平均延时（单位：纳秒）|
+|lastMsgLatency | Gauge |流数据订阅节点最后收到的消息的延时（单位：纳秒）|
 |maxLast10QueryTime  | Gauge |前10个完成的查询执行所耗费时间的最大值（单位：纳秒） |
 |medLast10QueryTime  | Gauge |前10个完成的查询执行所耗费时间的中间值（单位：纳秒） |
 |medLast100QueryTime  | Gauge |前100个完成的查询执行所耗费时间的中间值（单位：纳秒）|
