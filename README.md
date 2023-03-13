@@ -33,6 +33,7 @@
     - [DolphinDB 分布式表数据更新原理和性能介绍](dolphindb_update.md)
     - [DolphinDB TSDB 存储引擎介绍](tsdb_engine.md)
     - [DECIMAL 使用教程](DECIMAL.md)
+    - [分级存储教程](hierarchical_storage.md)
 - 编程语言
     - [脚本语言的混合范式编程](hybrid_programming_paradigms.md)
     - [函数化编程案例](functional_programming_cases.md)
