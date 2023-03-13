@@ -37,7 +37,7 @@ coldVolumes=file://home/mypath/hdd/<ALIAS>,s3://bucket1/data/<ALIAS>
 
 :exclamation:**注意**：
 
-不同数据节点需要配置不同的 `coldVolumes` 路径，否则可能会造成不同 `datanode` 间数据的相互覆盖。这里通过 `<ALIAS>` 宏定义，让每个 ·datanode· 将数据放到 */home/mypath/hdd/* 目录下按照节点别名命名的目录中。
+不同数据节点需要配置不同的 `coldVolumes` 路径，否则可能会造成不同 `datanode` 间数据的相互覆盖。这里通过 `<ALIAS>` 宏定义，让每个 `datanode` 将数据放到 */home/mypath/hdd/* 目录下按照节点别名命名的目录中。
 
 如果您配置了 S3 路径，那么还需要配置 AWS S3 插件，以及 S3 的 `AccessKeyId`，`SecretAccessKey`，`Region` 等信息：
 
