@@ -1,0 +1,189 @@
+# DolphinDB Configuration File for Data Node
+#
+############################# Thread-related Parameters #############################
+# The number of local executors. The default value is the number of CPU cores - 1.
+# e.g. if the system has 4 physical cores, the number of localExecutors will be 3 
+#localExecutors=3
+#
+# The maximum number of batch job workers. The default value is the value of workerNum.
+#maxBatchJobWorker=4
+#
+# The maximum number of dynamic workers. The default value is the value of workerNum.
+#maxDynamicWorker=4
+#
+# The size of the web worker pool to process HTTP requests. The default value is 1.
+#webWorkerNum=1
+#
+# The size of worker pool for regular interactive jobs. The default value is the number of CPU cores.
+#workerNum=4
+#
+############################# Memory-related Parameters #############################                         
+# The capacity of cache engine in units of GB. After cache engine is enabled, data is not written to disk until data in cache exceeds 30% of hunkCacheEngineMemSize. 
+# The default value is 0 indicating the cache engine is not enabled. To enable the cache engine, we must set chunkCacheEngineMemSize>0 and dataSync=1.
+chunkCacheEngineMemSize=2
+#
+# The maximum memory (in units of GB) allocated to datanode. If set to 0, it means no limits on memory usage.
+#maxMemSize=0
+#
+# The rate at which unused memory is released to the operating system. It is a floating point number between 0 and 10. 
+# memoryReleaseRate=0 means that unused memory will not be released actively; memoryReleaseRate=10 means that memory will be released at the fastest speed. 
+# The default value is 5.
+#memoryReleaseRate=5
+#
+# The limit on the memory size (in units of MB) of a regular array. Must be a power of 2. The default value is 512.
+#regularArrayMemoryLimit=256
+#
+# When memory usage exceeds warningMemSize (in units of GB) , the system will automatically clean up the cache of some databases to avoid OOM exceptions. 
+# The default value is 75% of maxMemSize.
+#warningMemSize=75
+#
+############################# Hard Disk Related Parameters #############################
+# The folder for batch job logs and results. The default value is <HomeDir>/batchJobs.
+#batchJobDir = 
+#
+# The folder for the metadata of data chunks on each data node. The default value is <HomeDir>/storage/CHUNK_METADATA. 
+#chunkMetaDir =
+#
+# If dataSync=1, DolphinDB generates redo log when the database is being updated. It can avoid data loss in the event of a system crash or power outage. 
+# The default value of dataSync is 0.
+#dataSync=0
+#
+# The path and name of the job log file that contains descriptive information of all the queries that have been executed for each node. It must be a csv file. 
+# The default folder for the job log file is the log folder. The default name of the job log file is nodeAlias_job.log.
+#jobLogFile=jobLog.csv
+#
+# The path and name of the log file. It displays the server configuration specifications, warnings and error messages.
+#logFile=DolphinDBlog
+#
+# The log file only keeps log information equal to higher than the specified level. From the lowest to the highest level, the possible values are DEBUG, INFO, WARNING and ERROR. The default value is INFO.
+#logLevel=INFO
+#
+# The system will archive the server log after the log reaches the specified size limit (in units of MB). 
+# The default value is 1024 and the minimum value is 100. The archived log file name adds a prefix to the original log file name. 
+# The prefix is in the format of <date><seq>, e.g. 20181109000. seq has 3 digits and starts with 000.
+#maxLogSize=1024
+#
+# The directory of the redo log. The default value is /log/redoLog.
+#redoLogDir =
+#
+# Clear the redo log of transactions whose data have been persisted at intervals specified by redoLogPurgeInterval in terms of seconds. The default value is 10.
+#redoLogPurgeInterval=10
+#
+#Clear the redo log of transactions whose data have been persisted if the size of the redo log exceeds redoLogPurgeLimit in terms of MB. The default value is 4000.
+#redoLogPurgeLimit=4000
+#
+# The folder where data chunks are saved in the distributed file system on a data node. The default value is <HomeDir>/<nodeAlias>/storage.
+#volumes=/hdd/hdd1/volumes,/hdd/hdd2/volumes,/hdd/hdd3/volumes,/hdd/hdd4/volumes
+#
+# The number of volumes that a data node can use.
+#diskIOConcurrencyLevel=4
+#
+############################# Network-related Parameters #############################
+# Whether to enable HTTPS protocol. The default value is false.
+#enableHTTPS=false
+#
+# The maximum number of connections (from GUI, API, other nodes, etc) to the local node.
+maxConnections=512
+#
+# The maximum number of remote nodes that can be connected to from the local node.
+#maxConnectionPerSite=2
+#
+# Whether to enable the TCP_NODELAY socket option. The default value is false.
+#tcpNoDelay=1
+#
+############################# Streaming-related Parameters on Publisher node #############################
+# The maximum number of records in a message block. The default value is 1024.
+#maxMsgNumPerBlock=1024
+#
+# The maximum depth (number of records) of a message queue to persist a stream table to disk. The default value is 10,000,000.
+#maxPersistenceQueueDepth=10000000
+#
+# The maximum depth (number of records) of a message queue on the publisher node. The default value is 10,000,000.
+#maxPubQueueDepthPerSite=10000000
+#
+# The maximum number of subscriber nodes that the publisher node can connect to. 
+# The default value is 0. For the node to server as a publisher, we must set maxPubConnections>0.
+#maxPubConnections=0
+#
+# The directory where shared streaming tables are persisted to. To enable persistence, persistenceDir must be specified. 
+#persistenceDir=/hdd/hdd5/streamingData
+#
+# The number of workers responsible for persisting streaming tables to disk in asynchronous mode. The default value is 0.
+#persistenceWorkerNum=1
+#
+############################# Streaming-related Parameters on Subscriber node #############################
+# The maximum number of publishers that the subscriber node can connec to. The default value is 64.
+#maxSubConnections=64
+#
+# The maximum depth (number of records) of a message queue on the subscriber node.
+#maxSubQueueDepth=10000000
+#
+# The directory to save the offset of the last subscribed message that has been processed. 
+# If persistOffsetDir is not specified, it will be saved under the directory specified by persistenceDir. 
+# If persistenceDir is not specified, it will be saved in the streamLog folder under the home directory.
+#persistOffsetDir=streamlog
+#
+# A Boolean value indicating whether streaming executors use pooling mode. The default value is false.
+#subExecutorPooling=true
+#
+# The number of message processing threads in the subscriber node. Only when subscription is enabled is this parameter relevant. 
+# The default value is 1. If it is set to 0, it means the thread can conduct message parsing and can also process messages.
+#subExecutors=2
+#
+# The port number that the subscription thread is listening on. This parameter must be specified to enable the node(s) to serve as subscriber(s).
+#subPort=8000
+#
+############################# System Management Parameters #############################
+# The maximum number of partitions that a single query can search. The default value is 65536.
+#maxPartitionNumPerQuery=65536
+#
+# The directory for the module files. The default value is the relative directory "modules" that needs to be created by the user. 
+# The system searches the relative directory "modules" in the following order: home directory of the node, the working directory of the node, and the directory with the DolphinDB executable.
+#moduleDir=modules
+#
+# How the system deals with new data that is outside the partition scheme for a VALUE domain (or a VALUE domain in a COMPO domain). 
+# If set to "skip", new data is not saved and no exception is thrown; if set to "fail", new data is not saved and an exception is thrown; 
+# if set to "add", new partitions are created to save the new data.
+newValuePartitionPolicy=add
+#
+# Whether to enable performance monitoring. The default value is false for the standalone mode and true for the cluster mode.
+#perfMonitoring=1
+#
+# The directory for the plugin files. The default value is the relative directory "plugins". 
+# The system searches the relative directory "plugins" in the following order: home directory of the node, the working directory of the node, and the directory with the DolphinDB executable.
+#pluginDir=plugins
+#
+# The modules or plugins that are loaded after the system starts. Use commas to separate multiple modules/plugins.
+#preloadModules=plugins::mysql, system::log::fileLog
+#
+# This file is executed when the system starts. The default file is <HomeDir>/dolphindb.dos. It usually contains definitions of system-level functions that are visible to all users and cannot be overwritten.
+#init=dolphindb.dos
+#
+# This file is executed after the system starts. The default file is <HomeDir>/startup.dos. It can be used to load plugins, load tables and share them, define and load stream tables, etc.
+#startup=startup.dos
+#
+# This file is executed after the startup script (startup.dos) is executed. The default folder is DolphinDB home directory. It can be used to schedule jobs. After this file is executed, the system terminates.
+#run=dailyJobs.dos
+#
+# The directory of the time zone database (only applies to windows). The default value is home\server\tzdb where home is the DolphinDB home directory specified by parameter home.
+#tzdb=C:\DolphinDB\server\tzdb
+#
+# The directory of the web server.
+#webRoot=/DolphinDB/server/web
+#
+# Whether a user must log in to use the web-based cluster manager. The default value is false.
+#webLoginRequired=false
+#
+############################# Streaming-related Parameters for High Availability #############################
+# The directory to keep streaming Raft log files. The default value is <HOME>/log/streamLog. Each data node should be configured with different streamingHADir.
+#streamingHADir=/home/DolphinDB/Data/NODE1/log/streamLog
+#
+# Enable high-availability for streaming.
+#streamingHAMode=raft
+#
+# nformation about Raft groups. Each Raft group is represented by group ID and aliases of data nodes in the group, separated with colon (:). 
+# Raft group ID must be an integer greater than 1. Each Raft group has at least 3 data nodes. Use comma (,) to seperate multiple Raft groups.
+#streamingRaftGroups=2:NODE1:NODE2:NODE3,3:NODE3:NODE4:NODE5
+#
+# Whether the cluster is within a LAN (local area network). lanCluster=true: use UDP for heartbeats; lanCluster=false: use TCP for heartbeats. Set lanCluster=false if the system is deployed in the cloud.The default value is true.
+lanCluster=0
