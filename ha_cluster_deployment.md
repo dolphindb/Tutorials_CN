@@ -667,14 +667,15 @@ sh stopAllNode.sh
 /DolphinDB/server/clusterDemo/data/controller1/raft
 ```
 
-登录服务器 **P1, P2 和 P3**，可进入 */DolphinDB/server/clusterDemo/data/<控制节点别名>*目录执行以下 Shell 指令进行备份：
+登录服务器 **P1, P2 和 P3**，可进入 */DolphinDB/server/clusterDemo/data/<控制节点别名>* 目录执行以下 Shell 指令进行备份：
 
 ```
 mkdir controllerBackup
 cp -r raft controllerBackup
 ```
 
-如果写入数据量超过一定的大小则还会在 */DolphinDB/server/clusterDemo/data/<控制节点别名>/dfsMeta* 目录下生成 *DFSMasterMetaCheckpoint.0* 文件。可进入 */DolphinDB/server/clusterDemo/data/<控制节点别名>*目录执行以下 Shell 指令备份到 *controllerBackup* 文件夹：
+如果写入数据量超过一定的大小则还会在 */DolphinDB/server/clusterDemo/data/<控制节点别名>/dfsMeta* 目录下生成 *DFSMasterMetaCheckpoint.0* 文件。可进入
+*/DolphinDB/server/clusterDemo/data/<控制节点别名>* 目录执行以下 Shell 指令备份到 *controllerBackup* 文件夹：
 
 ```
 cp -r dfsMeta controllerBackup
@@ -1210,5 +1211,3 @@ P2-datanode.volumes=/VOL1/P2-datanode,/VOL2/P2-datanode
 # 附录
 
 - **示例集群的配置文件**: [ha_cluster_deployment](script/ha_cluster_deployment) 
-
-- **图片**: [ha_cluster_deployment](images/ha_cluster_deployment) 
