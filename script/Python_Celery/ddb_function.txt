@@ -1,0 +1,24 @@
+login("admin","123456")
+/**
+ * 因子：WorldQuant 101 Alpha 因子指标库中的1号因子 WQAlpha1
+参数：
+       security_id：STRING VECTOR,股票代码序列
+       begin_date：DATE,区间开始日期
+       end_date：DATE,区间结束日期
+ */
+use wq101alpha
+defg get_alpha1(security_id, begin_date, end_date){
+	if (typestr(security_id) == 'STRING VECTOR' && typestr(begin_date) == `DATE && typestr(end_date) == `DATE){
+	tick_list = select * from loadTable("dfs://tick_close", "tick_close") where TradeDate >= begin_date and TradeDate <= end_date and SecurityID in security_id
+	alpha1_list=WQAlpha1(panel(tick_list.TradeDate, tick_list.SecurityID, tick_list.Value))
+	return table(alpha1_list.rowNames() as TradeDate, alpha1_list)
+	}
+	else {
+		print("What you have entered is a wrong type")
+		return `NULLValue
+	}
+}
+//将该函数加入到函数视图中
+addFunctionView(get_alpha1)
+//将该函数的调用权限赋予给admin用户
+grant("admin", VIEW_EXEC, "get_alpha1")
