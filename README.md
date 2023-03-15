@@ -156,6 +156,7 @@
     - [DolphinDB NSQ 插件最佳实践指南](best_implementation_for_NSQ_Plugin.md)
     - [通过 DolphinDB JIT 功能加速计算 ETF 期权隐含波动率和希腊值](IV_Greeks_Calculation_for_ETF_Options_Using_JIT.md)
     - [DolphinDB 流数据连接引擎应用：多数据源流式实时关联处理](streaming-real-time-correlation-processing.md)
+    - [基于 DolphinDB 与 Python Celery 框架的因子计算平台构建](Python_Celery.md)
   - 物联网：
     - [DolphinDB在工业物联网的应用](iot_demo.md)
     - [物联网时序数据查询案例](iot_query_case.md)
