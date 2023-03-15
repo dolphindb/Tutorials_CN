@@ -10,21 +10,19 @@
 本教程聚焦于因子批量化计算这一实际业务场景，将 DolphinDB 作为一个核心的计算工具引入到传统的因子平台。以DolphinDB 为核心的因子计算平台包括：数据同步模块、因子批计算模块和因子调度模块。其中 dataX 作为数据同步工具，负责将原始数据以及增量数据从关系数据库同步存储到 DolphinDB 中；DolphinDB 作为因子计算与存储模块；Celery 作为任务调度框架模块。DolphinDB 因子计算平台，可以为业务部门提供即时的因子计算服务、大数据批计算服务以及历史因子查询服务等。引入DolphinDB后，既能满足高中低频因子计算的要求，又有丰富的API以及ETL工具实现无缝集成。下文以 WorldQuant 101 Alpha 因子指标库中的1号因子 `WQAlpha1` 为例来展现出整个因子计算平台的构建流程。
 
 
-
-- [基于 DolphinDB 与 Python Celery 框架的因子计算平台构建](#基于-dolphindb-与-python-celery-框架的因子计算平台构建)
-  - [1. 总体架构](#1-总体架构)
-    - [1.1 SQL Server 概述](#11-sql-server-概述)
-    - [1.2 dataX 概述](#12-datax-概述)
-    - [1.3 DolphinDB 概述](#13-dolphindb-概述)
-    - [1.4 Celery 概述](#14-celery-概述)
-  - [2. 环境部署](#2-环境部署)
-  - [3. 开发使用范例](#3-开发使用范例)
-    - [3.1 数据介绍](#31-数据介绍)
-    - [3.2 业务场景与指标介绍](#32-业务场景与指标介绍)
-    - [3.3 dataX 同步 SQL Server 数据到 DolphinDB](#33-datax-同步-sql-server-数据到-dolphindb)
-    - [3.4 Celery 框架触发 DolphinDB 预定义函数计算](#34-celery-框架触发-dolphindb-预定义函数计算)
-  - [4. 总结](#4-总结)
-  - [附件](#附件)
+- [1. 总体架构](#1-总体架构)
+  - [1.1 SQL Server 概述](#11-sql-server-概述)
+  - [1.2 dataX 概述](#12-datax-概述)
+  - [1.3 DolphinDB 概述](#13-dolphindb-概述)
+  - [1.4 Celery 概述](#14-celery-概述)
+- [2. 环境部署](#2-环境部署)
+- [3. 开发使用范例](#3-开发使用范例)
+  - [3.1 数据介绍](#31-数据介绍)
+  - [3.2 业务场景与指标介绍](#32-业务场景与指标介绍)
+  - [3.3 dataX 同步 SQL Server 数据到 DolphinDB](#33-datax-同步-sql-server-数据到-dolphindb)
+  - [3.4 Celery 框架触发 DolphinDB 预定义函数计算](#34-celery-框架触发-dolphindb-预定义函数计算)
+- [4. 总结](#4-总结)
+- [附件](#附件)
 
 
 ## 1. 总体架构
