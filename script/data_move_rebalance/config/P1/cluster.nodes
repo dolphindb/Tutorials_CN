@@ -1,0 +1,5 @@
+localSite,mode
+10.10.11.1:8111:P1-agent,agent
+10.10.11.1:8112:P1-dn1,datanode
+10.10.11.2:8111:P2-agent,agent
+10.10.11.2:8112:P2-dn1,datanode

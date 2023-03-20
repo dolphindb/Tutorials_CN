@@ -35,6 +35,9 @@
     - [DolphinDB TSDB 存储引擎介绍](tsdb_engine.md)
     - [DECIMAL 使用教程](DECIMAL.md)
     - [分级存储](hierarchical_storage.md)
+    - [数据迁移与平衡](data_move_rebalance.md)
+    
+    
 - 编程语言
     - [脚本语言的混合范式编程](hybrid_programming_paradigms.md)
     - [函数化编程案例](functional_programming_cases.md)
