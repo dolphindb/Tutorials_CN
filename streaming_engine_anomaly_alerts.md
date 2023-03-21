@@ -1,6 +1,7 @@
 # DolphinDB 流计算应用：引擎级联监测门禁异常状态
 
 物联网的发展为智能安防和自动化监控带来了更多便利，与此同时，新型城镇建设、智慧城市与智慧社区的发展也为门禁管理等安防问题智能化提出了更高的要求。在智能化发展的背景下，门禁不仅仅是门禁，更是一套集成了访客、考勤、消费、巡更、梯控等更多功能的全面便捷的系统安全应用。目前门禁系统主要用于出入口管理，在我国加速推动智慧城市、智慧工地、智慧社区等智慧化建设发展的前提下，门禁系统智能化升级的趋势成为必然，其普及率和使用率也将更加广泛，随着接入门禁系统设备越来越多，对其产生的海量数据进行实时快速的处理也成为了日益重要的问题。DolphinDB 提供了流数据表和流计算引擎用于实时数据处理，为智能安防提供了有力支持。本教程将介绍如何使用流计算引擎多级级联实现对门禁设备异常状态的实时监测。
+
 - [1. 背景介绍](#1-背景介绍)
   - [1.1 行业背景](#11-行业背景)
   - [1.2 真实场景](#12-真实场景)
@@ -23,7 +24,6 @@
 - [7. 总结](#7-总结)
 - [参考文献](#参考文献)
 - [附录](#附录)
-
 
 ## 1. 背景介绍
 
@@ -54,26 +54,26 @@ DolphinDB 是一款高性能分布式时序数据库，集成了功能强大的�
 假定有一个监控系统，对所有门禁设备每5秒钟采集1次数据，同时开门或关门的事件会主动上报数据，采集后的数据以 `json` 格式写入 mqtt 服务器，本文使用到的数据示例如下：
 
 ```
-recordType	doorEventCode	eventDate	     readerType	  sn	doorNum	  card
-	0	        11		2022.12.01 00:00:00		false	a1008		1	ic100000
-	1	        65		2022.12.01 00:00:00		false	a1010		2	ic100000
-	3		    61		2022.12.01 00:00:53		true	a1004		1	ic100044
-	2			66		2022.12.01 00:00:53		true	a1002		2	ic100020
-	2			60		2022.12.01 00:19:54		false	a1008		1	ic100000
-	3			11		2022.12.01 00:19:54		true	a1000		2	ic100000
-	2			66		2022.12.01 00:23:21		true	a1009		1	ic100082
-	2			61		2022.12.01 00:23:21		false	a1006		2	ic100068
-	3			12		2022.12.01 00:45:26		true	a1003		1	ic100000
-	1			11		2022.12.01 00:45:26		false	a1004		2	ic100000
+  recordType	  doorEventCode	        eventDate	             readerType	 sn	     doorNum	  card
+	0	        11		2022.12.01 00:00:00		false	 a1008		1	ic100000
+	1	        65		2022.12.01 00:00:00		false	 a1010		2	ic100000
+	3		61		2022.12.01 00:00:53		true	 a1004		1	ic100044
+	2		66		2022.12.01 00:00:53		true	 a1002		2	ic100020
+	2		60		2022.12.01 00:19:54		false	 a1008		1	ic100000
+	3		11		2022.12.01 00:19:54		true	 a1000		2	ic100000
+	2		66		2022.12.01 00:23:21		true	 a1009		1	ic100082
+	2		61		2022.12.01 00:23:21		false	 a1006		2	ic100068
+	3		12		2022.12.01 00:45:26		true	 a1003		1	ic100000
+	1		11		2022.12.01 00:45:26		false	 a1004		2	ic100000
 ```
 
 本教程实现门禁异常状态检测需要用到的数据字段说明如下：
 
-| **字段名**      | **说明**                                                     |
-| :-------------- | :----------------------------------------------------------- |
+| **字段名**  | **说明**                                                                                  |
+| :---------------- | :---------------------------------------------------------------------------------------------- |
 | `doorEventCode` | `事件码``11: 合法开门 12: 密码开门 56: 按钮开门 60: 开门  61: 关门 65: 软件开门 66:软件关门 ` |
-| `eventDate`     | `事件时间 `                                                  |
-| `doorNum`       | `门号 0-4`                                                   |
+| `eventDate`     | `事件时间 `                                                                                   |
+| `doorNum`       | `门号 0-4`                                                                                    |
 
 保持门禁正常关闭状态是保证社区或楼宇内居民安全的基础需求之一，因此本案例需要实现的门禁异常状态检测需求是：开门状态连续存在超过5分钟报警。
 
@@ -132,7 +132,7 @@ st=streamTable(
     array(BOOL,0) as readerType, //进出类型 1:入 0:出
    	array(SYMBOL,0) as sn, //设备SN号
     array(INT,0) as doorNum, //门号
-    array(SYMBOL,0) as card //卡号              
+    array(SYMBOL,0) as card //卡号            
 	)
 enableTableShareAndPersistence(st,`doorRecord, false, true, 100000, 100, 0);
 ```
@@ -144,7 +144,7 @@ out1 =streamTable(10000:0,`doorNum`eventDate`doorEventCode,[INT,DATETIME, INT])
 enableTableShareAndPersistence(out1,`outputSt,false,true,100000)
 ```
 
-有关函数及各参数的详细说明，参考 <[DolphinDB用户手册](https://www.dolphindb.cn/cn/help/index.html)>。
+有关函数及各参数的详细说明，参考 [DolphinDB用户手册](https://www.dolphindb.cn/cn/help/index.html)
 
 ### 5.2 创建响应式状态引擎过滤重复数据
 
@@ -160,7 +160,7 @@ reactivEngine1 = createReactiveStateEngine(name=`reactivEngine1,metrics=<[eventD
     filter=<prev(doorEventCode)!=doorEventCode>)
 ```
 
-有关函数及各参数的详细说明，参考 <[DolphinDB用户手册](https://www.dolphindb.cn/cn/help/index.html)>。
+有关函数及各参数的详细说明，参考 [DolphinDB用户手册](https://www.dolphindb.cn/cn/help/index.html)。
 
 ### 5.3 通过级联会话窗口引擎检测状态超时数据
 
@@ -258,7 +258,7 @@ eqObj(resultTable.values(),outputSt1.values())
 
 ## 参考文献
 
-① 《智能化楼宇技术》 
+① 《智能化楼宇技术》
 
 ② 《安防&智能化》
 
@@ -270,6 +270,6 @@ eqObj(resultTable.values(),outputSt1.values())
 
 ⑥ 《浅谈智能化门禁系统的当下与未来》
 
-## 附录 
+## 附录
 
-代码： [streaming_engine_anomaly_alerts](script/streaming_engine_anomaly_alerts) 
+代码： [streaming_engine_anomaly_alerts](script/streaming_engine_anomaly_alerts)
