@@ -2,43 +2,42 @@
 
 DolphinDB提供了从基于Java的GUI, VS Code Extension, Web界面，到命令行等各种灵活友好的交互界面，具体包括以下几种客户端交互方式。
 
-
-  - [1. DolphinDB GUI](#1-dolphindb-gui)
-    - [1.1 核心概念](#11-核心概念)
-      - [Server](#server)
-      - [Login](#login)
-      - [Workspace](#workspace)
-      - [Project](#project)
-      - [File](#file)
-      - [Synchronize to server](#synchronize-to-server)
-    - [1.2 安装和启动](#12-安装和启动)
-      - [常见无法正常启动原因](#常见无法正常启动原因)
-    - [1.3 程序执行及结果查看](#13-程序执行及结果查看)
-    - [1.4 中文出现乱码](#14-中文出现乱码)
-    - [1.5 精度配置](#15-精度配置)
-    - [1.6 `java.lang.OutOfMemoryError: Java heap space`](#16-javalangoutofmemoryerror-java-heap-space)
-  - [2. VS Code Extension](#2-vs-code-extension)
-    - [2.1 下载安装插件](#21-下载安装插件)
-    - [2.2 连接DolphinDB Server](#22-连接dolphindb-server)
-      - [新增服务器](#新增服务器)
-      - [选择服务器](#选择服务器)
-      - [移除服务器](#移除服务器)
-    - [2.3 编辑和运行DolphinDB脚本](#23-编辑和运行dolphindb脚本)
-    - [2.4 观察变量](#24-观察变量)
-  - [3. DolphinDB Notebook](#3-dolphindb-notebook)
-    - [3.1 启动](#31-启动)
-    - [3.2 登录](#32-登录)
-    - [3.3 集群管理以及系统监控](#33-集群管理以及系统监控)
-      - [启动节点](#启动节点)
-    - [3.4 程序执行以及结果查看](#34-程序执行以及结果查看)
-  - [4. DolphinDB Jupyter Notebook 扩展插件](#4-dolphindb-jupyter-notebook-扩展插件)
-    - [4.1 下载安装插件](#41-下载安装插件)
-    - [4.2 配置Jupyter Notebook工作路径](#42-配置jupyter-notebook工作路径)
-    - [4.3 连接DolphinDB Server](#43-连接dolphindb-server)
-    - [4.4 编辑和运行DolphinDB脚本](#44-编辑和运行dolphindb脚本)
-  - [5. DolphinDB终端(DolphinDB Terminal)](#5-dolphindb终端dolphindb-terminal)
-  - [6. 命令行远程脚本执行](#6-命令行远程脚本执行)
-  - [7. 命令行本地脚本执行](#7-命令行本地脚本执行)
+- [1. DolphinDB GUI](#1-dolphindb-gui)
+  - [1.1 核心概念](#11-核心概念)
+    - [Server](#server)
+    - [Login](#login)
+    - [Workspace](#workspace)
+    - [Project](#project)
+    - [File](#file)
+    - [Synchronize to server](#synchronize-to-server)
+  - [1.2 安装和启动](#12-安装和启动)
+    - [常见无法正常启动原因](#常见无法正常启动原因)
+  - [1.3 程序执行及结果查看](#13-程序执行及结果查看)
+  - [1.4 中文出现乱码](#14-中文出现乱码)
+  - [1.5 精度配置](#15-精度配置)
+  - [1.6 `java.lang.OutOfMemoryError: Java heap space`](#16-javalangoutofmemoryerror-java-heap-space)
+- [2. VS Code Extension](#2-vs-code-extension)
+  - [2.1 下载安装插件](#21-下载安装插件)
+  - [2.2 连接DolphinDB Server](#22-连接dolphindb-server)
+    - [新增服务器](#新增服务器)
+    - [选择服务器](#选择服务器)
+    - [移除服务器](#移除服务器)
+  - [2.3 编辑和运行DolphinDB脚本](#23-编辑和运行dolphindb脚本)
+  - [2.4 观察变量](#24-观察变量)
+- [3. DolphinDB Notebook](#3-dolphindb-notebook)
+  - [3.1 启动](#31-启动)
+  - [3.2 登录](#32-登录)
+  - [3.3 集群管理以及系统监控](#33-集群管理以及系统监控)
+    - [启动节点](#启动节点)
+  - [3.4 程序执行以及结果查看](#34-程序执行以及结果查看)
+- [4. DolphinDB Jupyter Notebook 扩展插件](#4-dolphindb-jupyter-notebook-扩展插件)
+  - [4.1 下载安装插件](#41-下载安装插件)
+  - [4.2 配置Jupyter Notebook工作路径](#42-配置jupyter-notebook工作路径)
+  - [4.3 连接DolphinDB Server](#43-连接dolphindb-server)
+  - [4.4 编辑和运行DolphinDB脚本](#44-编辑和运行dolphindb脚本)
+- [5. DolphinDB终端(DolphinDB Terminal)](#5-dolphindb终端dolphindb-terminal)
+- [6. 命令行远程脚本执行](#6-命令行远程脚本执行)
+- [7. 命令行本地脚本执行](#7-命令行本地脚本执行)
 
 ## 1. DolphinDB GUI
 
@@ -387,12 +386,9 @@ DolphinDB终端可以让用户方便的连接到远端的DolphinDB服务器，�
 
 命令行远程脚本执行是DolphinDB终端的一个特殊应用。相对于终端模式，优点是无需在终端中输入代码，可以执行更复杂的代码，以及用于重复执行特定任务。例如，定期连接到远端服务器数据库执行脚本中的代码，执行完即退出。缺点是，没有交互模式。
 
-
 **注意：**
 
-> 通过 -run 使用远端服务器执行本地脚本文件时，如遇异常，错误返回值为 255.
-
-
+> 通过 -run 使用远端服务器执行本地脚本文件时，如遇异常，返回非0值。
 
 ## 7. 命令行本地脚本执行
 
