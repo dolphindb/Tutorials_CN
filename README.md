@@ -94,7 +94,7 @@
     - [插件开发深度解析](plugin_advance.md)
     - [amdQuote](../../../DolphinDBPlugin/blob/release200/amdQuote/README.md)
     - [AWS S3](../../../DolphinDBPlugin/blob/release200/aws/README.md)
-    - [DolphinDB VSCode 插件](vscode_extension.md)
+    - [DolphinDB VSCode 插件](https://gitee.com/dolphindb/vscode-extension/blob/master/README.zh.md)
     - [Excel](../../../excel-add-in)
     - [Feather](../../../DolphinDBPlugin/blob/release200/feather/README.md)
     - [HBase](../../../DolphinDBPlugin/blob/release200/hbase/README.md)
