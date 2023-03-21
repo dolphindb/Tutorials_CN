@@ -1,0 +1,152 @@
+login(`admin,`123456)
+try{loadPlugin(getHomeDir()+"/plugins/mqtt/PluginMQTTClient.txt")} catch(ex) {print(ex)}
+go
+use mqtt;
+// 清理环境
+def  clearEnv(){
+	try{
+		unsubscribeTable( tableName=`doorRecord, actionName="monitor")
+		if(objs(true).name.find('doorRecord')!=-1) 
+			dropStreamTable(`doorRecord)
+		if(objs(true).name.find('outputSt1')!=-1) 
+			dropStreamTable(`outputSt1)
+		if(objs(true).name.find('outputSt2')!=-1) 
+			dropStreamTable(`outputSt2)
+
+		if (getAggregatorStat().SessionWindowEngine[`name].find(`swEngine)!=-1)
+			dropAggregator(`swEngine)
+		if (getAggregatorStat().ReactiveStreamEngine[`name].find(`reactivEngine)!=-1)
+			dropAggregator(`reactivEngine)
+        if (getAggregatorStat().ReactiveStreamEngine[`name].find(`reactivEngine1)!=-1)
+        	dropAggregator(`reactivEngine1)
+         if (getAggregatorStat().ReactiveStreamEngine[`name].find(`reactivEngine2)!=-1)
+        	dropAggregator(`reactivEngine2)
+		for (id in mqtt::getSubscriberStat()[`subscriptionId]) 
+			mqtt::unsubscribe(id)
+	}catch(ex){
+		print(ex)
+	}
+	
+}
+
+// 创建门禁流表
+def createDoorRecordStreamTable(tableName){
+	st=streamTable(
+		array(INT,0) as recordType,//记录类型  0:读卡记录,1:按鋕记录，2：门磁记录 3: 软件记录 4: 报警记录 5: 系统记录
+        array(INT,0) as doorEventCode,
+        //事件码 11:合法开门 12:密码开门 56 :  按钮开门 60: 开门 61关门 64: 门未关好 65: 软件开门 66:软件关门 67:软件常开 78: 门磁报警 81:匪警报警 84:消防报警 90: 胁迫报警 94: 烟雾报警 97:防盗报警100: 黑名单报警103: 开门超时报警
+       	array(DATETIME,0) as eventDate , //事件时间 
+    	array(BOOL,0) as readerType   , //进出类型 1:入 0:出
+   		array(SYMBOL,0) as sn, //设备SN maxLength: 30
+       	array(INT,0) as doorNum, //门号 0-4
+    	array(SYMBOL,0) as card //卡号maxLength 20                
+	)
+	enableTableShareAndPersistence(st,tableName, false, true, 100000,100,0);
+}
+// 输出表的时间列若设置为第一列会导致最终输出结果被初始化
+def createInOutTable(){
+	createDoorRecordStreamTable(`doorRecord)
+	out1 =streamTable(10000:0,`doorNum`eventDate`doorEventCode,[INT,DATETIME,INT])
+	enableTableShareAndPersistence(table=out1,tableName=`outputSt1,asynWrite=false,compress=true, cacheSize=100000)
+}
+
+// 三级引擎级联检测开门状态超时数据
+def consume(){
+	//创建响应式状态引擎2 过滤掉关门告警
+	swOut1 =table(1:0,`eventDate`doorNum`doorEventCode,[DATETIME,INT,INT])
+	reactivEngine2 = createReactiveStateEngine(name=`reactivEngine2, metrics=<[eventDate,doorEventCode]>, dummyTable=swOut1,outputTable= objByName(`outputSt1),keyColumn=`doorNum,filter=<doorEventCode in [11,12,56,60,65,67]>)
+    
+	//创建会话窗口引擎检测开关门超时
+	swOut2 = table(1:0,`doorNum`eventDate`doorEventCode,[INT,DATETIME,INT])
+	swEngine = createSessionWindowEngine(name="swEngine", sessionGap=300, metrics=<last(doorEventCode)>, dummyTable=swOut2, outputTable=getStreamEngine("reactivEngine2"), timeColumn=`eventDate,keyColumn=`doorNum,useSessionStartTime=false)
+
+    // 创建响应式状态引擎1 过滤重复数据
+    reactivEngine1 = createReactiveStateEngine(name=`reactivEngine1, metrics=<[eventDate,doorEventCode]>, dummyTable=objByName(`doorRecord),outputTable= getStreamEngine("swEngine"),keyColumn=`doorNum,filter=<prev(doorEventCode)!=doorEventCode>)
+    
+	//4.4 订阅流数据
+	subscribeTable(tableName="doorRecord", actionName="monitor", offset=0, handler=append!{reactivEngine1}, msgAsTable=true)
+}
+
+//4.5 从MQTT服务器接收数据
+def writeStreamTable(host, port, topic){
+	sp = createJsonParser([INT,INT,DATETIME, BOOL,SYMBOL,INT,SYMBOL], 
+	`recordType`doorEventCode`eventDate`readerType`sn`doorNum`card)
+	mqtt::subscribe(host, port, topic, sp, objByName(`doorRecord))
+}
+
+//推送表数据到mqtt服务器
+def publishTableData(server,topic,f, batchsize,t){
+    	conn=connect(server,1883,0,f,batchsize)
+   		publish(conn,topic,t)
+    	close(conn)
+}
+
+// 模拟写入验证
+// 更新产生数据情况 需求 按照轮询时间记录 每条数据的时间都不一样 一轮引擎去掉重复数据 二轮引擎检测超时数据 三轮去掉关门告警
+def duplicateData(mutable st, num, doorCode, time){
+    for(i in 0:num){
+        eventTime = time
+        st.append!(table(rand(0..5,1) as recordType, doorCode as doorEventCode, eventTime as eventDate, rand([true,false],1) as readerType, rand(`a+string(1000..1010),1) as sn, 1 as doorNum, rand(`ic+string(100000..100000),1) as card))
+        eventTime = datetimeAdd(eventTime, 5, `s)
+    }
+}
+def genData(mutable st){
+    startEventDate = 2022.12.01T00:00:00
+    // 先生成75条代码为11的相同数据，即出现了五分钟开门超时数据 需要过滤代码重复数据才能检测出
+    duplicateData(st, 75, 11, startEventDate)
+    startEventDate=datetimeAdd(startEventDate , 375, `s)
+    // 再生成25条代码为56的相同数据
+    duplicateData(st, 25, 56, startEventDate)
+    startEventDate=datetimeAdd(startEventDate , 125, `s)
+    // 生成100条代码为61的重复数据，出现了五分钟超时的关门数据，需要后续过滤掉
+    duplicateData(st, 100, 61, startEventDate)
+    startEventDate=datetimeAdd(startEventDate , 500, `s)
+    // 生成25条代码为66的重复数据
+    duplicateData(st, 25, 66, startEventDate)
+    startEventDate=datetimeAdd(startEventDate , 125, `s)
+    // 生成70条代码为12的相同数据，出现超时开门数据
+    duplicateData(st, 70, 12, startEventDate)
+    startEventDate=datetimeAdd(startEventDate , 350, `s)
+    // 生成30条代码为60的开门数据
+    duplicateData(st, 30, 60, startEventDate)
+    startEventDate=datetimeAdd(startEventDate , 150, `s)
+    // 生成25条代码为67的开门数据
+    duplicateData(st, 25, 67, startEventDate)
+    startEventDate=datetimeAdd(startEventDate , 125, `s)
+}
+
+def main(mutable st){
+	clearEnv()
+	createInOutTable()
+	consume()
+	
+	host="127.0.0.1"
+	port=1883
+	topic="sensor/test"
+	writeStreamTable(host, port, topic)
+	
+	//产生并推送表数据到mqtt服务器
+	genData(st)
+	f = createJsonFormatter()
+	batchsize=100
+	submitJob("submit_pub1", "submit_p1", publishTableData{host,topic,f, batchsize,st})
+}
+
+st=streamTable(
+		array(INT,0) as recordType,
+        array(INT,0) as doorEventCode,
+       	array(DATETIME,0) eventDate, 
+       	array(BOOL,0) as readerType,
+       	array(SYMBOL,0) as sn,
+       	array(INT,0) as doorNum,
+       	array(SYMBOL,0) as card
+	)
+//运行
+main(st)
+
+select * from outputSt1
+
+//验证结果正确性
+t=select *,deltas(eventDate),prev(doorNum),prev(eventDate),prev(doorEventCode) from doorRecord context by doorNum 
+resultTable=select prev_doorNum as doorNum,prev_eventDate+300 as eventDate,prev_doorEventCode  as doorEventCode from t where deltas_eventDate>= 300 and prev_doorEventCode in [11,12,56,60,65,67] and prev(doorEventCode)!=doorEventCode order by eventDate
+eqObj(resultTable.values(),outputSt1.values())

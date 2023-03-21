@@ -168,6 +168,7 @@
     - [随机振动信号分析解决方案](Random_Vibration_Signal_Analysis_Solution.md)
     - [DolphinDB通过Telegraf与Grafana实现设备指标的采集监控和展示](DolphinDB_Telegraf_Grafana.md)
     - [DolphinDB 机器学习在物联网行业的应用：实时数据异常预警](knn_iot.md)
+    - [DolphinDB流计算应用：引擎级联监测门禁异常状态](streaming_engine_anomaly_alerts.md)
 - 入门和测试
     - [DolphinDB入门：量化金融范例](quant_finance_examples.md)
     - [DolphinDB入门：物联网范例](iot_examples.md)
