@@ -5,7 +5,7 @@ DolphinDB 集群包括四种类型节点：控制节点（controller）、代理
 - **控制节点**：控制节点是 DolphinDB 集群的核心部分，负责收集代理节点和数据节点的心跳，监控每个节点的工作状态，管理分布式文件系统的元数据和事务日志。高可用集群中会有多个控制节点并组成一个 Raft 组，通过 Raft 协议保证多个控制节点上元数据的强一致性。
 - **代理节点**：代理节点负责执行控制节点发出的启动和关闭数据节点或计算节点的命令。在一个集群中，每台物理服务器有且仅有一个代理节点。
 - **数据节点**：数据节点既可以存储数据，也可以用于数据的查询和计算。每台物理服务器可以配置多个数据节点。
-- **计算节点**：计算节点主要用于数据的查询和计算，包括历史数据查询、分布式表关联查询、批计算、流计算和机器学习模型训练等。计算节点不存储数据，但可以通过 [loadTable](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/l/loadTable.html) 函数加载数据进行计算。在计算节点上，可以执行创建数据库和分区表的语句，也可以调用数据写入接口往分区表写入数据，但是相比在数据节点执行写入任务，会增加一定的网络传输的开销，因为数据节点不存储数据，会把涉及存储的数据均匀地发送并存储到集群中的数据节点上。每台物理服务器可以配置多个数据节点。
+- **计算节点**：计算节点主要用于数据的查询和计算，包括历史数据查询、分布式表关联查询、批计算、流计算和机器学习模型训练等。计算节点不存储数据，但可以通过 [loadTable](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/l/loadTable.html) 函数加载数据进行计算。在计算节点上，可以执行创建数据库和分区表的语句，也可以调用数据写入接口往分区表写入数据，但是相比在数据节点执行写入任务，会增加一定的网络传输的开销，因为计算节点不存储数据，会把涉及存储的数据均匀地发送并存储到集群中的数据节点上。每台物理服务器可以配置多个计算节点。
 
 本教程用于在 Linux 操作系统上进行高可用集群的部署、升级、过期 License 升级，并对常见问题做出解答，便于用户快速上手 DolphinDB 。包含以下主题：
 
@@ -518,8 +518,6 @@ ps aux|grep dolphindb
 
 <img src="./images/ha_cluster_deployment/1_5.png" width=80%>
 
- 
-
 刷新页面后可看到对应的数据节点和计算节点已启动，如下图所示：
 
 <img src="./images/ha_cluster_deployment/1_6.png" width=80%>
@@ -732,8 +730,6 @@ sh upgrade.sh
 
 <img src="./images/ha_cluster_deployment/3_5.png" width=50%>
 
- 
-
 登录 **P1,** **P2** 和 **P3**，进入 */DolphinDB/server/clusterDemo* 目录执行以下 Shell 指令：
 
 ```
@@ -783,8 +779,6 @@ sh startagent.sh
 打开后的 Web 管理界面如下。以管理用身份（默认账号：admin，默认密码：123456）登录 Web 管理界面后，用户可以通过勾选想要启动的数据节点和计算节点，再点击启动（关闭）按键即可启动（关闭）相应的数据节点和计算节点：
 
 <img src="./images/ha_cluster_deployment/3_11.png" width=80%>
-
- 
 
 刷新页面后可看到对应的数据节点和计算节点已启动，如下图所示：
 
@@ -1210,4 +1204,4 @@ P2-datanode.volumes=/VOL1/P2-datanode,/VOL2/P2-datanode
 
 # 附录
 
-- **示例集群的配置文件**: [ha_cluster_deployment](script/ha_cluster_deployment) 
+- **示例集群的配置文件**: [ha_cluster_deployment](script/ha_cluster_deployment)
