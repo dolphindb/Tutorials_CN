@@ -70,7 +70,8 @@
     - [从一次SQL查询的全过程看DolphinDB 的线程模型](thread_model_SQL.md)
     - [DolphinDB 集群运维监控教程](cluster_monitor.md)
 - API
-    - [Python API使用教程](../../../api_python3/blob/master/README_CN.md)
+    - [DolphinDB Python API使用教程](../../../api_python3/blob/master/README_CN.md)
+    - [DolphinDB Python API离线安装](python_api_install_offline.md)
     - [Java API使用教程](../../../api-java/blob/master/README_CN.md)
     <!--先隐藏，等教程更新完毕再暴露 - [Java API使用实例](../../../api-java/blob/master/example/README_CN.md) -->
     - [JDBC](../../../jdbc/blob/master/README_CN.md)
@@ -131,7 +132,6 @@
     - [使用DolphinDB进行机器学习](machine_learning.md)
     - [DolphinDB缓存表（CachedTable）快速实现MySQL跨数据库基础信息同步功能](cachedtable.md)
     - [DolphinDB中有关时间信息的最佳实践指南](timezone.md)
-    - [DolphinDB Python API离线安装](python_api_install_offline.md)
   - 金融：
     - [在DolphinDB中计算K线](OHLC.md) 
     - [实时计算高频因子](hf_factor_streaming.md)
