@@ -1,4 +1,4 @@
-# 单节点部署 <!-- omit in toc -->
+# 单节点部署 `<!-- omit in toc -->`
 
 本教程用于单节点的部署、升级、过期 License 升级，并对常见问题做出解答，便于用户快速上手 DolphinDB。包含以下主题：
 
@@ -44,7 +44,7 @@ wget "https://www.dolphindb.cn/downloads/DolphinDB_Linux64_V2.00.9.1.zip"
 unzip DolphinDB_Linux64_V2.00.9.1.zip -d /DolphinDB
 ```
 
-> :exclamation: 安装路径的目录名中不能含有空格字符或中文字符，否则启动数据节点时会失败。
+> ❗️ 安装路径的目录名中不能含有空格字符或中文字符，否则启动数据节点时会失败。
 
 ### 第二步：更新软件授权许可
 
@@ -104,7 +104,7 @@ ps aux|grep dolphindb
 
 ![SingleNodeStatusWeb](images/deploy_standalone/checknode_status_singlenode_web.png)
 
-> :exclamation: 如果浏览器与 DolphinDB 不是部署在同一台服务器，应事先关闭防火墙或者打开对应的部署端口，Web 管理界面才能正常打开。
+> ❗️ 如果浏览器与 DolphinDB 不是部署在同一台服务器，应事先关闭防火墙或者打开对应的部署端口，Web 管理界面才能正常打开。
 
 ## 2. 在 Windows 操作系统部署 DolphinDB 单节点
 
@@ -118,7 +118,7 @@ ps aux|grep dolphindb
 C:\DolphinDB
 ```
 
-> :exclamation: 安装路径的目录名中不能含有空格字符或中文字符，否则启动数据节点时会失败。例如不要装到 Windows 系统的 *Program Files* 目录下。
+> ❗️ 安装路径的目录名中不能含有空格字符或中文字符，否则启动数据节点时会失败。例如不要装到 Windows 系统的 *Program Files* 目录下。
 
 ### 第二步：更新软件授权许可
 
@@ -166,7 +166,7 @@ tasklist|findstr "dolphindb"
 
 ![singlenode_win_web_checknode](images/deploy_standalone/singlenode_win_web_checknode.png)
 
-> :exclamation: 如果浏览器与 DolphinDB 不是部署在同一台服务器，需要关闭防火墙或者打开对应的部署端口，web 管理界面才能正常打开。
+> ❗️ 如果浏览器与 DolphinDB 不是部署在同一台服务器，需要关闭防火墙或者打开对应的部署端口，web 管理界面才能正常打开。
 
 ## 3. 单节点升级
 
@@ -200,7 +200,7 @@ cp -r local8848/dfsMeta/ backup/dfsMeta
 cp -r local8848/storage/CHUNK_METADATA/ backup/CHUNK_METADATA
 ```
 
-> :exclamation: 元数据文件可能通过配置文件指定存储在其它目录，如果在默认路径没有找到上述文件，可以通过查询配置文件中的 *dfsMetaDir* 参数和 *chunkMetaDir* 参数确认元数据文件的存储目录。若配置中未指定 *dfsMetaDir* 参数和 *chunkMetaDir* 参数，但是配置了 *volumes* 参数，则 *CHUNK_METADATA* 目录在相应的 *volumes* 参数指定的目录下。
+> ❗️ 元数据文件可能通过配置文件指定存储在其它目录，如果在默认路径没有找到上述文件，可以通过查询配置文件中的 *dfsMetaDir* 参数和 *chunkMetaDir* 参数确认元数据文件的存储目录。若配置中未指定 *dfsMetaDir* 参数和 *chunkMetaDir* 参数，但是配置了 *volumes* 参数，则 *CHUNK_METADATA* 目录在相应的 *volumes* 参数指定的目录下。
 
 **第三步：升级**
 
@@ -297,7 +297,7 @@ C:\DolphinDB\DolphinDB\server\local8848\storage\CHUNK_METADATA\
 
 ![singlenode_win_upgade_1](images/deploy_standalone/singlenode_win_upgade_1.png)
 
-> :exclamation: 元数据文件可能通过配置文件指定存储在其它目录，如果在默认路径没有找到上述文件，可以通过查询配置文件中的 *dfsMetaDir* 参数和 *chunkMetaDir* 参数确认元数据文件的存储目录。若配置中未指定 *dfsMetaDir* 参数和 *chunkMetaDir* 参数，但是配置了 *volumes* 参数，*CHUNK_METADATA* 目录在相应的 *volumes* 参数指定的目录下。
+> ❗️ 元数据文件可能通过配置文件指定存储在其它目录，如果在默认路径没有找到上述文件，可以通过查询配置文件中的 *dfsMetaDir* 参数和 *chunkMetaDir* 参数确认元数据文件的存储目录。若配置中未指定 *dfsMetaDir* 参数和 *chunkMetaDir* 参数，但是配置了 *volumes* 参数，*CHUNK_METADATA* 目录在相应的 *volumes* 参数指定的目录下。
 
 **第三步：升级**
 
@@ -343,11 +343,12 @@ updateLicense()
 ```
 
 > 注意，在线更新有如下要求：
->  * License 授权的客户名称必须与原来的 License 相同。
->  * 授权的节点个数，内存大小，CPU 核数不能比原来的小。
->  * 更新只在执行该函数的节点生效。因此在集群环境下，需要在所有控制节点、代理节点和数据节点上运行该函数。
->  * License 的类型必须是 commercial（付费）类型和 free 类型。
-  
+>
+> * License 授权的客户名称必须与原来的 License 相同。
+> * 授权的节点个数，内存大小，CPU 核数不能比原来的小。
+> * 更新只在执行该函数的节点生效。因此在集群环境下，需要在所有控制节点、代理节点、计算节点和数据节点上运行该函数。
+> * License 的类型必须是 commercial（付费）类型和 free 类型。
+
 - 离线更新
 
 关闭 DolphinDB 后，重新启动，即可完成更新。
@@ -422,4 +423,3 @@ cp -r backup/CHUNK_METADATA/ local8848/storage/CHUNK_METADATA
 
 - [中文版 DolphinDB 用户手册](https://www.dolphindb.cn/cn/help/index.html)
 - [英文版 DolphinDB 用户手册](https://www.dolphindb.com/help/index.html)
-

@@ -1,4 +1,4 @@
-# 单节点部署 (嵌入式 ARM 版本) <!-- omit in toc -->
+# 单节点部署 (嵌入式 ARM 版本) `<!-- omit in toc -->`
 
 本教程用于嵌入式 ARM 版本的单节点部署、升级、过期 License 升级，并对常见问题做出解答，便于用户快速上手 DolphinDB 。包含以下主题：
 
@@ -26,14 +26,14 @@
 
 ## 1. 系统要求
 
-| **系统要求项** | **具体指标** |
-|---|---|
-| 操作系统 | Linux（内核 3.10 及以上版本） |
-| 内存 | 2GB 及以上 |
-| Flash | 8GB 及以上 |
-| 支持的 ARM CPU | - CORTEXA15<br>- CORTEXA9<br>- ARMV7<br>- ARMV8<br>- CORTEXA53<br>- CORTEXA57<br>- CORTEXA72<br>- CORTEXA73<br>- FALKOR<br>- THUNDERX<br>- THUNDERX2T99<br>- TSV110 |
-| DolphinDB ARM 版使用的交叉编译器 32 位系统 | arm-linux-gnueabihf4.9 |
-| DolphinDB ARM 版使用的交叉编译器 64 位系统 | aarch64-linux-gnu_4.9.3 |
+| **系统要求项**                       | **具体指标**                                                                                                                                                                                              |
+| ------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 操作系统                                   | Linux（内核 3.10 及以上版本）                                                                                                                                                                                   |
+| 内存                                       | 2GB 及以上                                                                                                                                                                                                      |
+| Flash                                      | 8GB 及以上                                                                                                                                                                                                      |
+| 支持的 ARM CPU                             | - CORTEXA15`<br>`- CORTEXA9`<br>`- ARMV7`<br>`- ARMV8`<br>`- CORTEXA53`<br>`- CORTEXA57`<br>`- CORTEXA72`<br>`- CORTEXA73`<br>`- FALKOR`<br>`- THUNDERX`<br>`- THUNDERX2T99`<br>`- TSV110 |
+| DolphinDB ARM 版使用的交叉编译器 32 位系统 | arm-linux-gnueabihf4.9                                                                                                                                                                                          |
+| DolphinDB ARM 版使用的交叉编译器 64 位系统 | aarch64-linux-gnu_4.9.3                                                                                                                                                                                         |
 
 若用户在实际板子上运行时出现问题，请反馈给我们（[support@dolphindb.com](support@dolphindb.com)）。
 
@@ -54,7 +54,7 @@ wget "https://www.dolphindb.cn/downloads/DolphinDB_ARM64_V2.00.9.1.zip"
 unzip DolphinDB_ARM64_V2.00.9.1.zip -d /DolphinDB
 ```
 
-> :exclamation: 安装路径的目录名中不能含有空格字符或中文字符，否则启动数据节点时会失败。
+> ❗️ 安装路径的目录名中不能含有空格字符或中文字符，否则启动数据节点时会失败。
 
 ### 第二步：更新软件授权许可
 
@@ -136,7 +136,7 @@ ps aux|grep dolphindb
 
 ![image](./images/arm_standalone_deploy/chap2_step4_nodestatus.png)
 
-> :exclamation: 如果浏览器与 DolphinDB 不是部署在同一台服务器，需要关闭防火墙或者打开对应的部署端口，Web 管理界面才能正常打开。
+> ❗️ 如果浏览器与 DolphinDB 不是部署在同一台服务器，需要关闭防火墙或者打开对应的部署端口，Web 管理界面才能正常打开。
 
 ## 3. 单节点升级
 
@@ -159,6 +159,7 @@ ps aux|grep dolphindb
 ```sh
 /DolphinDB/server/local8848/storage/CHUNK_METADATA/
 ```
+
 可在 */DolphinDB/server* 目录执行以下 Shell 指令备份单节点元数据：
 
 ```
@@ -211,10 +212,11 @@ updateLicense()
 ```
 
 > 注意，在线更新有如下要求：
->  * License 授权的客户名称必须与原来的 License 相同。
->  * 授权的节点个数，内存大小，CPU 核数不能比原来的小。
->  * 更新只在执行该函数的节点生效。因此在集群环境下，需要在所有控制节点、代理节点和数据节点上运行该函数。
->  * License 的类型必须是 commercial（付费）类型和 free 类型。
+>
+> * License 授权的客户名称必须与原来的 License 相同。
+> * 授权的节点个数，内存大小，CPU 核数不能比原来的小。
+> * 更新只在执行该函数的节点生效。因此在集群环境下，需要在所有控制节点、代理节点、计算节点和数据节点上运行该函数。
+> * License 的类型必须是 commercial（付费）类型和 free 类型。
 
 - 离线更新
 
@@ -275,4 +277,3 @@ cp -r backup/CHUNK_METADATA/ local8848/storage/CHUNK_METADATA
 
 - [中文版 DolphinDB 用户手册](https://www.dolphindb.cn/cn/help/index.html)
 - [英文版 DolphinDB 用户手册](https://www.dolphindb.com/help/index.html)
-
