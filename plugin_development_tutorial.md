@@ -2,13 +2,54 @@
 
 DolphinDB 支持动态加载外部插件，以扩展系统功能。插件用 C\+\+ 编写，需要编译成 ".so" 或 ".dll" 共享库文件。插件使用的流程请参考 DolphinDB Plugin 的 [GitHub 页面](https://github.com/dolphindb/DolphinDBPlugin)。本文着重介绍如何开发插件，并详细介绍以下几个具体场景的插件开发流程：
 
-- [如何开发支持时间序列数据处理的插件函数](#2-如何开发支持时间序列数据处理的插件函数)
-- [如何开发用于处理分布式 SQL 的聚合函数](#3-如何开发用于处理分布式-sql-的聚合函数)
-- [如何开发支持新的分布式算法的插件函数](#4-如何开发支持新的分布式算法的插件函数)
-- [如何开发支持流数据处理的插件函数](#5-如何开发支持流数据处理的插件函数)
-- [如何开发支持外部数据源的插件函数](#6-如何开发支持外部数据源的插件函数)
 
-# 1 如何开发插件
+
+- [1. 如何开发插件](#1-如何开发插件)
+  - [1.1 基本概念](#11-基本概念)
+  - [1.2 创建变量](#12-创建变量)
+  - [1.3 异常处理和参数校验](#13-异常处理和参数校验)
+    - [1.3.1 异常处理](#131-异常处理)
+    - [1.3.2 参数校验的范例](#132-参数校验的范例)
+  - [1.4 调用 DolphinDB 内置函数](#14-调用-dolphindb-内置函数)
+- [2. 如何开发支持时间序列数据处理的插件函数](#2-如何开发支持时间序列数据处理的插件函数)
+- [3. 如何开发用于处理分布式 SQL 的聚合函数](#3-如何开发用于处理分布式-sql-的聚合函数)
+  - [3.1 聚合函数范例](#31-聚合函数范例)
+  - [3.2 在 DolphinDB 中调用函数](#32-在-dolphindb-中调用函数)
+  - [3.3 随机访问大数组](#33-随机访问大数组)
+  - [3.4 应该选择哪种方式访问向量](#34-应该选择哪种方式访问向量)
+- [4. 如何开发支持新的分布式算法的插件函数](#4-如何开发支持新的分布式算法的插件函数)
+  - [4.1 分布式算法范例](#41-分布式算法范例)
+  - [4.2 在 DolphinDB 中调用函数](#42-在-dolphindb-中调用函数)
+- [5. 如何开发支持流数据处理的插件函数](#5-如何开发支持流数据处理的插件函数)
+- [6. 如何开发支持外部数据源的插件函数](#6-如何开发支持外部数据源的插件函数)
+  - [6.1 数据格式描述](#61-数据格式描述)
+  - [6.2 `extractMyDataSchema` 函数](#62-extractmydataschema-函数)
+  - [6.3 `loadMyData` 函数](#63-loadmydata-函数)
+  - [6.4 `loadMyDataEx` 函数](#64-loadmydataex-函数)
+  - [6.5 `myDataDS` 函数](#65-mydatads-函数)
+- [7. 如何在插件代码中构造并使用 sql 语句](#7-如何在插件代码中构造并使用-sql-语句)
+  - [7.1 使用步骤](#71-使用步骤)
+    - [7.1.1 引入 *ScalarImp.h* 头文件](#711-引入-scalarimph-头文件)
+    - [7.1.2 将待查询的 Table 对象放入 Heap 中](#712-将待查询的-table-对象放入-heap-中)
+    - [7.1.3 拼接 sql 字符串](#713-拼接-sql-字符串)
+    - [7.1.4 执行 sql](#714-执行-sql)
+  - [7.2 完整代码示例](#72-完整代码示例)
+    - [7.2.1 `select * from t` 的完整代码示例](#721-select--from-t-的完整代码示例)
+    - [7.2.2 `select avg(x) from t` 的完整代码示例](#722-select-avgx-from-t-的完整代码示例)
+- [8. 常见问题](#8-常见问题)
+  - [8.1 如何处理开发的 windows 版本插件加载时的错误提示："The specified module could not be found"？](#81-如何处理开发的-windows-版本插件加载时的错误提示the-specified-module-could-not-be-found)
+  - [8.2 插件开发时需要包含哪些库和头文件？](#82-插件开发时需要包含哪些库和头文件)
+  - [8.3 编译时需要包含哪些选项？](#83-编译时需要包含哪些选项)
+  - [8.4 如何处理编译时出现包含 std::\_\_cxx11 字样的链接问题（undefined reference）？](#84-如何处理编译时出现包含-std__cxx11-字样的链接问题undefined-reference)
+  - [8.5 如何加载插件，可以卸载后重新加载吗？](#85-如何加载插件可以卸载后重新加载吗)
+  - [8.6 如何处理执行插件函数时的报错信息："Connnection refused：connect" 或节点 crash 问题？](#86-如何处理执行插件函数时的报错信息connnection-refusedconnect-或节点-crash-问题)
+  - [8.7 如何处理执行插件函数时的错误提示："Cannot recognize the token xxx"？](#87-如何处理执行插件函数时的错误提示cannot-recognize-the-token-xxx)
+- [9. 附件](#9-附件)
+
+
+
+
+# 1. 如何开发插件
 
 ## 1.1 基本概念
 
@@ -116,7 +157,7 @@ ConstantSP result = cumsum->call(heap, v, new Void());
 // 相当于 cumsum(v)，这里的 new Void() 是一个占位符，没有实际用途
 ```
 
-# 2 如何开发支持时间序列数据处理的插件函数
+# 2. 如何开发支持时间序列数据处理的插件函数
 
 DolphinDB 的特色之一在于它对时间序列有良好支持。本章以编写一个 [msum](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/m/msum.html) 函数的插件为例，介绍如何开发插件函数支持时间序列数据处理。
 
@@ -221,7 +262,7 @@ ConstantSP msum(const ConstantSP &X, const ConstantSP &window) {
 }
 ```
 
-# 3 如何开发用于处理分布式 SQL 的聚合函数
+# 3. 如何开发用于处理分布式 SQL 的聚合函数
 
 在 DolphinDB 中，SQL 的聚合函数通常接受一个或多个向量作为参数，最终返回一个标量。在开发聚合函数的插件时，需要了解如何访问向量中的元素。
 
@@ -360,7 +401,7 @@ double result = segments[index>> segmentSizeInBit][index & segmentMask];
 
 本章介绍了通过 `getDataArray` 和 `getDataSegment` 方法直接访问向量的底层存储。在某些特别的场合，例如明确知道数据存储在大数组中，且知道数据的类型，这种方法比较适合。
 
-# 4 如何开发支持新的分布式算法的插件函数
+# 4. 如何开发支持新的分布式算法的插件函数
 
 在 DolphinDB database 中，MapReduce 是执行分布式算法的通用计算框架。DolphinDB 提供了 [mr](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/m/mr.html) 函数和 [imr](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/i/imr.html) 函数，使用户能通过脚本实现分布式算法。在编写分布式算法的插件时，使用的同样是这两个函数。对通用计算的详细介绍，可以参考[通用计算教程](general_computing.md)。本章主要介绍如何用 C\+\+ 语言编写自定义的 map, reduce 等函数，并调用 `mr` 和 `imr` 这两个函数，最终实现分布式计算。
 
@@ -464,7 +505,7 @@ ds = sqlDS(<select * from t>)
 columnAvg::columnAvg(ds, `v1`v2)
 ```
 
-# 5 如何开发支持流数据处理的插件函数
+# 5. 如何开发支持流数据处理的插件函数
 
 在 DolphinDB 中，流数据订阅端可以通过一个 handler 函数处理收到的数据。订阅数据可以是一个数据表，或一个元组，由 `subscribeTable` 函数的 msgAsTable 参数决定。通常可以用 handler 函数对流数据进行过滤、插入另一张表等操作。
 
@@ -514,7 +555,7 @@ t0.append!(table(1..100 as id, take(`a`b`c`d, 100) as symbol, now() + 1..100 as 
 select * from t1
 ```
 
-# 6 如何开发支持外部数据源的插件函数
+# 6. 如何开发支持外部数据源的插件函数
 
 在为第三方数据设计可扩展的接口插件时，有几个需要关注的问题：
 
@@ -699,43 +740,159 @@ ConstantSP myDataDS(Heap *heap, vector<ConstantSP> &args) {
     return dataSources;
 }
 ```
-# 7 常见问题
 
-* 开发的 windows 版本插件加载时失败，提示：The specified module could not be found。
+# 7. 如何在插件代码中构造并使用 sql 语句
+
+DolphinDB 的脚本语言中提供了两个用于构造 SQL 语句的函数：`sql` 函数和 `parseExpr` 函数。这两个函数都能够在插件代码中构造 SQL 或在插件代码中更灵活地使用 SQL 语句。本章以 `parseExpr` 函数为例介绍如何在插件代码中使用 SQL 语句。
+
+## 7.1 使用步骤
+
+### 7.1.1 引入 *ScalarImp.h* 头文件
+
+通过 `parseExpr`函数生成 SQL 语句时，解析执行的过程中需要用到 String 类型，而 String 类型是 DolphinDB 内置的一个 Scalar 类型，其类定义在插件库中 *ScalarImp.h* 这个头文件。因此， 需要先引入该头文件：
+
+```
+#include "ScalarImp.h"
+```
+
+### 7.1.2 将待查询的 Table 对象放入 Heap 中
+
+插件中定义的函数第一个参数是 heap 对象，当通过脚本调用插件中的接口时能获取到这个对象。通过 heap 对象的 `addItem` 接口可以将 table 对象放入 heap 中维护。`addItem` 接口有两个参数：第一个参数为对象的名字，需要设置为 SQL 查询语句中 from 关键字后跟随的字符串；第二个参数为 table 对象。
+
+在以下例子中，首先通过 `heap->addItem(“t“, t)` 构造一个名为 "t"的 table 对象 t：
+
+```
+vector<string> colNames {"id", "x"};
+vector<DATA_TYPE> colTypes {DT_SYMBOL, DT_DOUBLE};
+TableSP t = Util::createTable(colNames, colTypes, 0, 8);
+heap->addItem("t", t);
+```
+
+之后就可以在以下这个 SQL 语句中使用字符串 ”t” 指代被查询的 table：
+
+```
+select * from t;
+```
+
+### 7.1.3 拼接 sql 字符串
+
+接下来，我们可以将执行 `select * from t` 的结果赋予名为 sql 的字符串，其中，字符串 "t" 用于在以下的例子中指代上一节提到的 table t：
+
+代码示例:
+
+```
+string sql = "select * from t"
+```
+
+### 7.1.4 执行 sql
+
+执行 sql 分为两步：
+
+1. 通过parseExpr函数将sql语句解析为元代码。即，在插件代码中，通过 `heap->currentSession()->getFunctionDef("parseExpr")` 获取函数对象。
+2. 通过eval函数执行解析后的元代码。即，将参数的参数组织为 `vector<ConstantSP>` 的形式用于调用。
+
+执行 sql 的示例如下：
+
+```
+string sql = "select * from t";
+ConstantSP sqlArg =  new String(DolphinString(sql));
+vector<ConstantSP> args{sqlArg};
+ObjectSP sqlObj = heap->currentSession()->getFunctionDef("parseExpr")->call(heap, args);
+vector<ConstantSP> evalArgs{sqlObj};
+ConstantSP ret = heap->currentSession()->getFunctionDef("eval")->call(heap, evalArgs);
+```
+
+## 7.2 完整代码示例
+
+### 7.2.1 `select * from t` 的完整代码示例
+
+```
+vector<string> colNames {"id", "x"};
+vector<DATA_TYPE> colTypes {DT_SYMBOL, DT_DOUBLE};
+TableSP t = Util::createTable(colNames, colTypes, 0, 8);
+ConstantSP idData = Util::createVector(DT_SYMBOL, 0, 0);
+ConstantSP xData = Util::createVector(DT_DOUBLE, 0, 0);
+string testId("APPL");
+double testX(100.1);
+((Vector*)(idData.get()))->appendString(&testId, 1);
+((Vector*)(xData.get()))->appendDouble(&testX, 1);
+vector<ConstantSP> data = {idData, xData};
+INDEX rows=0;
+string errMsg;
+t->append(data, rows, errMsg);
+heap->addItem("t", t);
+string strData = t->getString();
+string sql = "select * from t";
+ConstantSP sqlArg =  new String(DolphinString(sql));
+vector<ConstantSP> args{sqlArg};
+ObjectSP sqlObj = heap->currentSession()->getFunctionDef("parseExpr")->call(heap, args);
+vector<ConstantSP> evalArgs{sqlObj};
+ConstantSP ret = heap->currentSession()->getFunctionDef("eval")->call(heap, evalArgs);
+```
+
+### 7.2.2 `select avg(x) from t` 的完整代码示例
+
+```
+vector<string> colNames {"id", "x"};
+vector<DATA_TYPE> colTypes {DT_SYMBOL, DT_DOUBLE};
+TableSP t = Util::createTable(colNames, colTypes, 0, 8);
+ConstantSP idData = Util::createVector(DT_SYMBOL, 0, 0);
+ConstantSP xData = Util::createVector(DT_DOUBLE, 0, 0);
+string testId("APPL");
+double testX(100.1);
+((Vector*)(idData.get()))->appendString(&testId, 1);
+((Vector*)(xData.get()))->appendDouble(&testX, 1);
+vector<ConstantSP> data = {idData, xData};
+INDEX rows=0;
+string errMsg;
+t->append(data, rows, errMsg);
+heap->addItem("t", t);
+string strData = t->getString();
+string sql = "select avg(x) from t";
+ConstantSP sqlArg =  new String(DolphinString(sql));
+vector<ConstantSP> args{sqlArg};
+ObjectSP sqlObj = heap->currentSession()->getFunctionDef("parseExpr")->call(heap, args);
+vector<ConstantSP> evalArgs{sqlObj};
+ConstantSP ret = heap->currentSession()->getFunctionDef("eval")->call(heap, evalArgs);
+```
+
+# 8. 常见问题
+
+## 8.1 如何处理开发的 windows 版本插件加载时的错误提示："The specified module could not be found"？
 
 MinGW 中包含 gcc, g++ 等多种编译器，下载时请选择 x86_64-posix-seh 版本（posix 表示启用了 C++ 11 多线程特性，seh 表示异常分支处理零开销），以与 DolphinDB server 保持一致。若下载安装了 x86_64-posix-sjlj 或其他版本，某些插件能编译成功，但会加载失败，提示：The specified module could not be found。
 
-* 插件开发时需要包含哪些库和头文件。
+## 8.2 插件开发时需要包含哪些库和头文件？
 
 DolphinDB 插件代码存储于 github/gitee 的 dolphindb/DolphinDBPlugin，其中的 include 目录包含了 DolphinDB 的核心数据结构的类声明和部分工具类声明。这些类是实现插件的重要基础工具，开发插件时需要包含 include 目录下的头文件。
 
 链接时，需要包含库目录（libDolphinDB.dll/libDolphinDB.so 所在目录），即安装 DolphinDB 的目录。
 
-* 编译时需要包含哪些选项。
+## 8.3 编译时需要包含哪些选项？
 
 windows 版本要添加 “WINDOWS”，Linux 版本要添加 “LINUX”。对 release130 及以上分支，添加选项 "LOCKFREE_SYMBASE"。另外，为了兼容旧版本的编译器，libDolphinDB.so 编译时使用了 _GLIBCXX_USE_CXX11_ABI=0 的选项，因此用户在编译插件时也应该加入该选项。若 libDolphinDB.so 编译时使用 ABI=1，编译插件时则无需添加 _GLIBCXX_USE_CXX11_ABI=0 的选项。
 
-编译步骤可参考已实现的插件案例，例如 NSQ 插件的 [CMakeList.txt](https://gitee.com/dolphindb/DolphinDBPlugin/blob/release200/nsq/CMakeLists.txt)。
+编译步骤可参考已实现的插件案例，例如 NSQ 插件的 [CMakeList.txt](https://gitee.com/dolphindb/DolphinDBPlugin/blob/master/nsq/CMakeLists.txt)。
 
-* 如果编译时出现包含 std::__cxx11 字样的链接问题（undefined reference）。
+## 8.4 如何处理编译时出现包含 std::__cxx11 字样的链接问题（undefined reference）？
 
 请检查用于编译插件的 gcc 版本，建议其和编译 DolphinDB server 的 gcc 版本保持一致。例如普通的 Linux64 版本用 gcc 4.8.5 版本，jit 版本使用 gcc 6.2.0 版本。
 
-* 插件怎么加载，可以卸载后重新加载吗
+## 8.5 如何加载插件，可以卸载后重新加载吗？
 
 插件的加载方式有 2 种：第 1 种，使用 loadPlugin 函数加载插件。该函数接受一个描述插件格式的文件的路径, 例如：
 ```cpp
-loadPlugin("/YOUR_SEVER_PATH/plugins/odbc/PluginODBC.txt");
+loadPlugin("/<YOUR_SERVER_PATH>/plugins/odbc/PluginODBC.txt");
 ```
-> 注意：格式文件介绍详见插件 [插件格式](https://gitee.com/dolphindb/DolphinDBPlugin/blob/release200/README_CN.md#加载插件), 其中文件第一行规定了 lib 文件名以及路径。缺省不写路径，即需要插件库与格式文件在同一个目录。
+> 注意：格式文件介绍详见插件 [插件格式](https://gitee.com/dolphindb/DolphinDBPlugin/blob/master/README_CN.md#加载插件), 其中文件第一行规定了 lib 文件名以及路径。缺省不写路径，即需要插件库与格式文件在同一个目录。
 
-第 2 种，DolphinDB Server 1.20.0 及以上版本，可以通过 preloadModules 参数来自动加载。使用这个方法时需要保证预先加载的插件存在，否则 sever 启动时会有异常。多个插件用逗号分离。例如:
+第 2 种，DolphinDB Server 1.20.0 及以上版本，可以通过 preloadModules 参数来自动加载。使用这个方法时需要保证预先加载的插件存在，否则 server 启动时会有异常。多个插件用逗号分离。例如:
 ```
 preloadModules=plugins::mysql,plugins::odbc
 ```
 已加载的插件不能卸载。重新加载需要重启节点。
 
-* 在执行插件函数时报错：Connnection refused：connect 或节点 crash
+## 8.6 如何处理执行插件函数时的报错信息："Connnection refused：connect" 或节点 crash 问题？
 
 确保 include 下的头文件和 libDolphinDB.so 或 libDolphinDB.dll 实现保持一致。插件分支应与 DolphinDB Server 的版本相匹配，即若 DolphinDB Server 是 1.30 版本，插件应用 release130 分支，若 DolphinDB Server 是 2.00 版本，插件应该用 release200 分支，其他版本依此类推。
 
@@ -745,7 +902,7 @@ preloadModules=plugins::mysql,plugins::odbc
 
 确保编译选项中已经添加宏 LOCKFREE_SYMBASE。
 
-* 在执行插件函数时提示：Cannot recognize the token xxx。
+## 8.7 如何处理执行插件函数时的错误提示："Cannot recognize the token xxx"？
 
 使用前需引入插件的命名空间，例如：
 ```cpp
@@ -756,5 +913,6 @@ use demo;
 demo::f1();
 ```
 
+# 9. 附件
 
-附件：[插件的完整代码](https://github.com/dolphindb/Tutorials_CN/tree/master/plugin)
+- [插件的完整代码](https://github.com/dolphindb/Tutorials_CN/tree/master/plugin)
