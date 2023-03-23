@@ -148,6 +148,8 @@ Window Join 引擎在创建时通过参数 useSystemTime 指定以下两种规�
 
 ## 2.3 Equi Join 引擎（createEquiJoinEngine）
 
+*注：自 1.30.21/2.00.9 版本起，`createEqualJoinEngine` 更名为 `createEquiJoinEngine`，原函数名可继续使用。*
+
 Equi Join 引擎的连接机制类似于 SQL 中的 equi join，按连接列和时间列等值关联左右表，对于左表（或右表）中的每一条记录，当它成功匹配上右表（或左表）中连接列一致的一条记录时，引擎将输出一条结果。
 
 与SQL 中的 equi join 不同的是，因为引擎内部并不缓存所有历史数据，所以可能出现左表（或右表）中的某条记录到来后无法关联到已经从引擎缓存中清除的历史右表（或左表）记录，进而不会输出结果。这是由Equi Join 引擎的设计初衷和内部实现决定的，该引擎是为以连接列和时间列为键值的输入数据设计的，比如每支股票在每分钟有一条记录。
@@ -296,7 +298,7 @@ snapshot.append!(t1)
 
 这个场景的特征是，每支股票的行情快照分钟指标在每一分钟只有一条记录，逐笔成交分钟指标同样有这样的唯一性，并且在某一分钟的输出上，期望总是在两类指标都计算完成后再将关联输出。以下脚本用 Equi Join 引擎来实现此场景。
 
-
+*注意：如您使用的 DolphinDB 版本早于 1.30.21/2.00.9，请将脚本中的 `createEquiJoinEngine` 替换为 `createEqualJoinEngine`。自 1.30.21/2.00.9 版本起，`createEqualJoinEngine` 更名为 `createEquiJoinEngine`，原函数名可继续使用。*
 
 ```
 // create table
