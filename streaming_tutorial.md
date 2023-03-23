@@ -65,6 +65,8 @@ DolphinDB流数据模块采用发布-订阅-消费的模式。流数据首先注
 
 流数据计算引擎是专门用于处理流数据实时计算和分析的模块。DolphinDB提供`createTimeSeriesEngine`,`createDailyTimeSeriesEngine`,`createSessionWindowEngine`, `createAnomalyDetectionEngine`, `createReactiveStateEngine`, `createCrossSectionalEngine `, `createAsofJoinEngine`, `createEquiJoinEngine`, `createWindowJoinEngine`, `createLookupJoinEngine`等函数创建流数据计算引擎对流数据进行实时计算，并将计算结果持续输出到指定的数据表中。
 
+*注：自 1.30.21/2.00.9 版本起，`createEqualJoinEngine` 更名为 `createEquiJoinEngine`，原函数名可继续使用。*
+
 ## 2 核心功能
 
 要开启支持流数据功能的模块，必须对发布节点指定maxPubConnections配置参数，并对订阅节点指定subPort配置参数。以下为所有流数据相关配置参数。
