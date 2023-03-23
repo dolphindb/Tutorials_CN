@@ -7,7 +7,7 @@ DolphinDB 定时作业（scheduled job）功能，实现系统在规定时间以
 使用函数 [scheduleJob](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/s/scheduleJob.html) 创建定时作业。作业创建后，系统会序列化作业定义信息并保存到文件`<homeDir>/sysmgmt/jobEditlog.meta`。语法如下：
 
 ```
-scheduleJob(jobId, jobDesc, jobFunc, scheduledTime, startDate, endDate, frequency, [days],[onComplete])
+scheduleJob(jobId, jobDesc, jobFunc, scheduleTime, startDate, endDate, frequency, [days], [onComplete])
 ```
 
 注意：
@@ -15,7 +15,7 @@ scheduleJob(jobId, jobDesc, jobFunc, scheduledTime, startDate, endDate, frequenc
 1. *jobFun* 是一个没有参数的函数，通常是一个[部分应用](https://www.dolphindb.cn/cn/help/Functionalprogramming/PartialApplication.html)，可以设置为自定义函数、内置函数、插件函数、函数视图和模块中的函数等。这给了作业定义极大的灵活性：凡是能用函数来表示的工作，都可以作为定时任务来运行。比如用自定义函数、插件函数等做计算分析，用内置函数 [run](https://www.dolphindb.cn/cn/help/FunctionsandCommands/CommandsReferences/r/run.html) 运行一个脚本文件，用 [shell](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/s/shell.html) 函数执行操作系统管理等等。
 2. 函数返回值是定时作业的作业 ID。如果输入的 jobId 与已有定时作业的作业 ID 不重复，系统返回输入的 jobId。否则在 jobId 后面添加当前日期，"000", "001" 等作为后缀，直到产生唯一的作业 ID。
 3. 当到达设定时间，定时作业将在后台运行。
-4. 两次定时任务的执行时间（scheduledTime）的最小间隔为5分钟。
+4. 两次定时任务的执行时间（scheduleTime）的最小间隔为5分钟。
 
 - 示例1：调用自定义函数 `getMaxTemperature`，在每天0点计算前一天某个设备温度指标的最大值。
 
