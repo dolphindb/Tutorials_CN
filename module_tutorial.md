@@ -161,7 +161,7 @@ system::log::fileLog::appendLog("mylog.txt", "test my log")
 
 ## 5. GUI中远程调试模块
 
-当 GUI 所在机器与 DolphinDB 服务器不是同一台机器时，在 GUI 中编辑的模块代码，需要先上传到远程服务器的 [home]/modules 目录，才能通过 `use` 语句调用模块。
+当 GUI 所在机器与 DolphinDB 服务器不是同一台机器时，在 GUI 中编辑的模块代码，需要先上传到远程服务器的 [home]/modules 目录，才能通过 `use` 语句调用模块。其中[home]表示DolphinDB 的主目录，通过配置项 home 指定。
 
 DolphinDB GUI 从0.99.2版本开始提供了远程同步模块的功能，具体用法如下：
 
@@ -177,7 +177,7 @@ DolphinDB GUI 从0.99.2版本开始提供了远程同步模块的功能，具体
 
 假设 `Remote Directory` 设置为'[home]/modules'，本地需要同步的文件名是 "C:/users/usr1/Project/scripts/test.dos"。同步的时候，系统会在远端自动创建目录和相应文件 '[home]/modules/Project/scripts/test.dos'。
 
-同步完成后，就可以在远程服务器上执行 `use` 语句导入模块。
+同步完成后，就可以在远程服务器上执行 `use` 语句导入模块。需要注意的是，在使用模块前，需要参考[2.1 节](#21-创建模块目录)设置模块路径。
 
 ## 6. 注意事项
 
