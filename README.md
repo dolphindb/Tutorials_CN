@@ -129,6 +129,7 @@
     - [WorldQuant 101 Alpha因子指标库](../../../DolphinDBModules/blob/master/wq101alpha/README_CN.md)
     - [ops运维函数库](../../../DolphinDBModules/blob/master/ops/README.md)
     - [国泰君安191 Alpha因子库](../../../DolphinDBModules/blob/master/gtja191Alpha/README_CN.md)
+    - [StreamEngineParser 解析原理介绍](StreamEngineParser.md)
 - 应用场景示例
     - [使用DolphinDB进行机器学习](machine_learning.md)
     - [DolphinDB缓存表（CachedTable）快速实现MySQL跨数据库基础信息同步功能](cachedtable.md)
