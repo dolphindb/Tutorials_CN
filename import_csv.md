@@ -229,7 +229,7 @@ schemaTB=select * from schemaTB where name in `symbol`date`open`high`close`volum
 
 >请注意：
 >1. 列号从0开始。上例中第一列symbol列对应的列号是0。  
->2. 导入数据时不能改变各列的先后顺序。如果需要调整列的顺序，可以将数据文件加载后，再使用[`reorderColumns!`](https://www.dolphindb.cn/cn/help/FunctionsandCommands/CommandsReferences/r/reorderColumns!.html)函数。
+>2. 导入数据时不能改变各列的先后顺序。如果需要调整列的顺序，可以将数据文件加载后，再使用[`reorderColumns!`](https://www.dolphindb.cn/cn/help/FunctionsandCommands/CommandsReferences/r/reorderColumns.html)函数。
 
 最后，使用`loadText`函数，并配置schema参数，导入文本文件中指定的列。
 
@@ -326,7 +326,7 @@ symbol exchange cycle tradingDay date       time      open  high  low   close vo
 
 ### 3.1 单个文件多线程载入内存
 
-[`ploadText`](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/p/ploadText.html)函数可将一个文本文件以多线程的方式载入内存。该函数与[`loadText`](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/l/loadText.html)函数的语法是一致的，区别在于，`ploadText`函数可以快速载入大型文件，并且生成内存分区表。它充分利用了多核CPU来并行载入文件，并行程度取决于服务器本身CPU核数量和节点的localExecutors配置。
+[`ploadText`](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/p/ploadText.html)函数可将一个文本文件以多线程的方式载入内存。该函数与[`loadText`](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/l/loadText.html)函数的语法是一致的，区别在于，`ploadText`函数可以快速载入大型文件（至少16MB），并且生成内存分区表。它充分利用了多核CPU来并行载入文件，并行程度取决于服务器本身CPU核数量和节点的localExecutors配置。
 
 下面比较`loadText`函数与`ploadText`函数导入同一个文件的性能。
 
