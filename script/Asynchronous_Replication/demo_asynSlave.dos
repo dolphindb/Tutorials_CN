@@ -1,0 +1,17 @@
+/**
+ * 从集群异步复制Demo
+ */
+
+login("admin", "123456")
+
+rpc(getControllerAlias(), startClusterReplication)  // 从集群的控制节点上执行，启用异步复制功能
+// rpc(getControllerAlias(), stopClusterReplication)  // 从集群的控制节点上执行，关闭异步复制功能
+// rpc(getControllerAlias(), skipClusterReplicationTask, 1..10)  // 从集群的控制节点上执行，跳过taskID从1到10的异步复制任务，执行前先stop
+
+// 查看主集群的相关数据是否同步到从集群
+loadTable("dfs://testDB", "testTB")  // 查看库表同步情况
+select count(*) from loadTable("dfs://testDB", "testTB")  // 查看数据同步情况
+
+// 状态查看
+rpc(getControllerAlias(), getSlaveReplicationStatus)  // 查看从集群上任务执行队列的状态
+rpc(getControllerAlias(), getClusterReplicationMetrics, 30)  // 查看从节点任务执行的平均速度和状态，返回30s内的结果，若secs=-1则返回所有
