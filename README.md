@@ -156,7 +156,7 @@
     - [DolphinDB流式计算中证1000指数主买/主卖交易量](CSI_1000.md)
     - [公募基金历史数据基础分析教程](public_fund_basic_analysis.md)
     - [平均性能超Python10倍: 如何使用DolphinDB计算基金日频因子](fund_factor_contrasted_by_py.md)
-    - [DolphinDB Kafka插件最佳实践指南](kafka_plugin_guide.md)
+    <!-- - [DolphinDB Kafka插件最佳实践指南](kafka_plugin_guide.md) -->
     - [中高频多因子库存储最佳实践](best_practices_for_multi_factor.md)
     - [金融 PoC 用户历史数据导入指导手册之股票 level2 逐笔篇](LoadDataForPoc.md)
     - [DolphinDB NSQ 插件最佳实践指南](best_implementation_for_NSQ_Plugin.md)
