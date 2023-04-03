@@ -115,6 +115,9 @@
     - [MSeed](../../../DolphinDBPlugin/blob/release200/mseed/README.md)
     - [MySQL](../../../DolphinDBPlugin/blob/release200/mysql/README_CN.md)
     - [NSQ](../../../DolphinDBPlugin/blob/release200/nsq/README.md)
+    - [ODBC]
+      -  [ODBC 插件说明](../../../DolphinDBPlugin/blob/release200/odbc/README_CN.md)
+      -  [ODBC 插件使用指南](ODBC_plugin_user_guide.md)
     - [ODBC](../../../DolphinDBPlugin/blob/release200/odbc/README_CN.md)
     - [OPC](../../../DolphinDBPlugin/blob/release200/opc/README_CN.md)
     - [OPCUA](../../../DolphinDBPlugin/blob/release200/opcua/README_CN.md)
