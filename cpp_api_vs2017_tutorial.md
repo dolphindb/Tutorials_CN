@@ -1,9 +1,8 @@
-# 用VS2017编译DolphinDB C++ API动态库
+# 用Visual Studio编译调测DolphinDB C++ API实例
 
-- [用VS2017编译DolphinDB C++ API动态库](#用vs2017编译dolphindb-c-api动态库)
-
+- [用Visual Studio编译调测DolphinDB C++ API实例](#用visual-studio编译调测dolphindb-c-api实例)
   - [1. 环境准备](#1-环境准备)
-    - [1.1 下载安装VS2017](#11-下载安装vs2017)
+    - [1.1 下载安装Visual Studio 2017](#11-下载安装visual-studio-2017)
     - [1.2 安装Git](#12-安装git)
   - [2. 下载C++ API代码](#2-下载c-api代码)
   - [3. 创建和编译项目](#3-创建和编译项目)
@@ -107,7 +106,7 @@ DolphinDB api-cplusplus 项目也在 bin 子目录下提供了一个 SSL 库方�
 
 (3) 配置预处理宏定义
 
-`C/C++` -> `预处理器`：添加选项```WIN32_LEAN_AND_MEAN;_WINSOCK_DEPRECATED_NO_WARNINGS;_CRT_SECURE_NO_WARNINGS;WINDOWS;NOMINMAX;```
+`C/C++` -> `预处理器`：添加选项```WIN32_LEAN_AND_MEAN;_WINSOCK_DEPRECATED_NO_WARNINGS;_CRT_SECURE_NO_WARNINGS;WINDOWS;NOMINMAX;_DDBAPIDLL;```
 
 ![image](images/vs2017/PreprocessorDefinitions.png?raw=true)
 
@@ -138,7 +137,7 @@ DolphinDB api-cplusplus 项目也在 bin 子目录下提供了一个 SSL 库方�
 
 ## 4. 案例验证
 
-该案例的将[时序数据库DolphinDB和TimescaleDB 性能对比测试报告](https://zhuanlan.zhihu.com/p/56982951)中提到的[小数据集(4.2GB)](https://timescaledata.blob.core.windows.net/datasets/devices_big.tar.gz)导入到DolphinDB分布式数据表中。对不方便下载4.2GB数据集的用户，本文也准备了一个[样本文件](./data/devices_big_readings_samples.zip)供下载。
+该案例将[时序数据库DolphinDB和TimescaleDB 性能对比测试报告](https://zhuanlan.zhihu.com/p/56982951)中提到的[小数据集(4.2GB)](https://timescaledata.blob.core.windows.net/datasets/devices_big.tar.gz)导入到DolphinDB分布式数据表中。对不方便下载4.2GB数据集的用户，本文也准备了一个[样本文件](./data/devices_big_readings_samples.zip)供下载。
 
 程序的实现思路是利用开源软件 [rapidCsv](https://github.com/d99kris/rapidcsv) 读入csv文件，然后调用DolphinDB C++ API中的 [BatchTableWriter 对象](https://gitee.com/dolphindb/api-cplusplus/blob/master/README_CN.md#84-%E6%89%B9%E9%87%8F%E5%BC%82%E6%AD%A5%E5%86%99%E5%85%A5%E6%95%B0%E6%8D%AE)写入分布式表。
 
@@ -207,7 +206,7 @@ schema=table(1:0,`time`device_id`battery_level`battery_status`battery_temperatur
 
 运行前需要在本地部署一个 DolphinDB server，并用上述建库建表脚本先创建 `dfs://iot/readings`。
 
-在普通的台式机上，部署 [DolphinDB 单节点模式](./standalone_server.md)，采用社区版默认配置，导入上述数据集（1200万条记录），约耗时2分钟。
+在普通的台式机上，部署 [DolphinDB 单节点模式](https://gitee.com/dolphindb/Tutorials_CN/blob/master/standalone_server.md)，采用社区版默认配置，导入上述数据集（1200万条记录），约耗时2分钟。
 
 在此过程中如果遇到如下问题：
 
