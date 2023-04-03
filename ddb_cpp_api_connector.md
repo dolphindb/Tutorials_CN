@@ -4,17 +4,15 @@
 
 本文将从使用场景介绍、原理简述、函数使用、场景实践四部分进行具体阐述。
 
-
 - [一、场景介绍](#一场景介绍)
 - [二、原理简述](#二原理简述)
 - [三、函数使用](#三函数使用)
-	- [1. MultithreadedTableWriter（MTW）](#1-multithreadedtablewritermtw)
-	- [2. PartitionedTableAppender（PTA）](#2-partitionedtableappenderpta)
-	- [3. AutoFitTableAppender（AFTA）](#3-autofittableappenderafta)
-	- [4. AutoFitTableUpsert（AFTU）](#4-autofittableupsertaftu)
+  - [1. MultithreadedTableWriter（MTW）](#1-multithreadedtablewritermtw)
+  - [2. PartitionedTableAppender（PTA）](#2-partitionedtableappenderpta)
+  - [3. AutoFitTableAppender（AFTA）](#3-autofittableappenderafta)
+  - [4. AutoFitTableUpsert（AFTU）](#4-autofittableupsertaftu)
 - [四、场景实践](#四场景实践)
 - [附件](#附件)
-
 
 ## 一、场景介绍
 
@@ -41,13 +39,13 @@
 
 针对以上场景，DolphinDB C++ API 提供了多种写入方法，以实现不同来源数据的高效写入：
 
-| **设备场景**       | **写入DolphinDB表的类型** | **调用DolphinDB 函数**    | **实现方式**     |
-| ------------------------ | ------------------------------- | ------------------------------- | ---------------------- |
-| 多设备数据一条条分散写入 | ALL                             | MTW（MultithreadedTableWriter） | 缓冲行数据后并行写入   |
-| 设备数据汇总写入         | ALL                             | MTW（MultithreadedTableWriter） | 将合并的行数据并行写入 |
-| 设备数据汇总写入         | 内存表                          | tableInsert                     | 单表写入               |
-| 设备数据汇总写入         | 分布式表                        | PTA（PartitionedTableAppender） | 多线程按列批量写入     |
-| 设备数据汇总写入         | 分布式表                        | AFTA（AutoFitTableAppender）    | 单线程按列批量写入     |
+| **设备场景**       | **写入DolphinDB表的类型** | **调用DolphinDB 函数**                           | **实现方式**     |
+| ------------------------ | ------------------------------- | ------------------------------------------------------ | ---------------------- |
+| 多设备数据一条条分散写入 | ALL                             | MTW（MultithreadedTableWriter）                        | 缓冲行数据后并行写入   |
+| 设备数据汇总写入         | ALL                             | MTW（MultithreadedTableWriter）                        | 将合并的行数据并行写入 |
+| 设备数据汇总写入         | ALL                             | AFTA（AutoFitTableAppender）/ AFTU (AuoFitTableUpsert) | 单线程按列批量写入     |
+| 设备数据汇总写入         | 内存表                          | tableInsert                                            | 单表写入               |
+| 设备数据汇总写入         | 分布式表                        | PTA（PartitionedTableAppender）                        | 多线程按列批量写入     |
 
 MTW 的写入方式可以适配多种写入场景，推荐首次接触 DolphinDB 的用户使用 MTW 方法；
 
@@ -68,22 +66,18 @@ DolphinDB 采用列式存储（Column-Based），在内存中维护一个 Cache 
   <figcaption><b>行式存储和列式存储对比（图片来源于网络）</b></figcaption>
 </figure>
 
-
-
-
-
 通常我们在为大数据应用场景规划写入方式前，需要理解以上列式存储的写入方式。按列批量写入能最大化发挥列式存储的优势，而当实际场景下多个设备写入数据较为分散时，可以选择有数据缓冲的 API 方法如 MTW，以获得最佳写入性能。
 
 DolphinDB C++ API 支持多种数据写入方法，涵盖多样化的写入场景需求，主要特点如下：
 
-| **写入方式**              | **特点**                                                                                       |
-|----------------------------|-------------------------------------------------------------------------------------------------|
-| MTW                        | - 官方推荐用法<br/> - 按行接收数据<br/> - 内置数据缓冲队列<br/> - 多线程异步并发写入<br/>       |
-| tableInsert                | - 方便简单，速度快<br/> - 事务机制下，同一分区不能同时写入两条数据，因此不建议写入分布式表<br/> |
-| PTA                        | - 按表写入<br/> - 内置连接池<br/> - 自动按分区同步并行写入<br/>                                 |
-| AFTA                       | - 自动转换字段类型写入<br/> - 适用于历史数据整表落盘，追加写入<br/> - 单线程同步写入<br/>       |
-| AFTU                       | AFTA 更新写的版本                                                                               |
-| BatchTableWriter（旧版本） | - 因兼容性而保留的旧版函数<br/> - 实时数据落盘，数据按行写入<br/> - 单线程同步写入<br/>         |
+| **写入方式**         | **特点**                                                                                            |
+| -------------------------- | --------------------------------------------------------------------------------------------------------- |
+| MTW                        | - 官方推荐用法`` - 按行接收数据`` - 内置数据缓冲队列`` - 多线程异步并发写入`` |
+| tableInsert                | - 方便简单，速度快`` - 事务机制下，同一分区不能同时写入两条数据，因此不建议写入分布式表``   |
+| PTA                        | - 按表写入`` - 内置连接池`` - 自动按分区同步并行写入``                               |
+| AFTA                       | - 自动转换字段类型写入`` - 适用于历史数据整表落盘，追加写入`` - 单线程同步写入``     |
+| AFTU                       | AFTA 更新写的版本                                                                                         |
+| BatchTableWriter（旧版本） | - 因兼容性而保留的旧版函数`` - 实时数据落盘，数据按行写入`` - 单线程同步写入``       |
 
 具体而言，
 
@@ -274,10 +268,6 @@ aftu.upsert(bt);
   <figcaption><b>实时数据落盘流程图</b></figcaption>
 </figure>
 
-
-
-
-
 **数据集：**
 
 - 记录描述：100台设备，每台1000个测点，采集频率5分钟1次，采集持续10天
@@ -376,7 +366,7 @@ cout << "Unwritten data length " << unwrittenData.size() << endl;
 // 重新写入这些数据，原有的 MTW 因为异常退出已经不能用了，需要创建新的 MTW
 MultithreadedTableWriter newWriter("192.168.0.61", 8848, "admin", "123456", "dfs://test_MultithreadedTableWriter", "collect", NULL,false,NULL,10000,1,10,"deviceid", &compress);
 ErrorCodeInfo errorInfo;
-// 插入获取到的未写入数据    
+// 插入获取到的未写入数据  
 if (newWriter.insertUnwrittenData(unwrittenData, errorInfo)) {
 	// 等待写入完成后检查状态
 	newWriter.waitForThreadCompletion();
@@ -392,4 +382,4 @@ else {
 
 ## 附件
 
--  [ddb_cpp_api_connector](script/ddb_cpp_api_connector)
+- [ddb_cpp_api_connector](script/ddb_cpp_api_connector)
