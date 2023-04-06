@@ -1,0 +1,16 @@
+login('admin', 'DolphinDB123')
+pnodeRun(clearAllCache)
+undef(all)
+go;
+use addFactor::calFactorOneMinute
+login("admin", "DolphinDB123")	
+dbName_factor = "dfs://oneMinuteFactor"
+//dropDatabase(dbName_factor)
+tbName_factor = "oneMinuteFactor"
+factorTable = loadTable(dbName_factor, tbName_factor)
+MarketDays = getMarketCalendar("CFFEX")
+if(today() in MarketDays ){
+	addFactor::calFactorOneMinute::calFactorOneMinute(dbName, tbName,today(), factorTable)
+}
+
+schema(loadTable("dfs://oneMinuteFactor", "oneMinuteFactor"))

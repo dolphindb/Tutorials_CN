@@ -1,0 +1,19 @@
+login('admin', 'DolphinDB123')
+pnodeRun(clearAllCache)
+undef(all)
+go;
+use Factor::createFactorDaily
+use Factor::calFactorDaily1
+login("admin", "DolphinDB123")	
+dbName = "dfs://SH_TSDB_tick"
+tbName = "tick"
+dbName_factor = "dfs://dailyFactor"
+//dropDatabase(dbName_factor)
+tbName_factor = "dailyFactor"
+if(not existsDatabase(dbName_factor)){
+	createFactorDaily(dbName_factor, tbName_factor)
+}
+factorTable = loadTable(dbName_factor, tbName_factor)
+Factor::calFactorDaily1::calFactorDaily(dbName, tbName,factorTable)
+
+//select * from defs() where name like  "Factor::%"

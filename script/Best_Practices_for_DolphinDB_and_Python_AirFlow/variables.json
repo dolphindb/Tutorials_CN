@@ -1,0 +1,13 @@
+{
+    "ETL_dbName_factor": "dfs://oneMinuteFactor",
+    "ETL_dbName_factor_daily": "dfs://dailyFactor",
+    "ETL_dbName_origin": "dfs://TSDB_snapshot_orig",
+    "ETL_dbName_process": "dfs://TSDB_snapshot_process",
+    "ETL_end_date": "2021.01.04",
+    "ETL_filedir": "/home/appadmin/",
+    "ETL_start_date": "2021.01.04",
+    "ETL_tbName_factor": "oneMinuteFactor",
+    "ETL_tbName_factor_daily": "dailyFactor",
+    "ETL_tbName_origin": "snapshot_orig",
+    "ETL_tbName_process": "snapshot_process"
+}

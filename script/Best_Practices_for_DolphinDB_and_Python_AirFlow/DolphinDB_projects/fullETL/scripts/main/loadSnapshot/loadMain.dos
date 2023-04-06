@@ -1,0 +1,33 @@
+
+login('admin', 'DolphinDB123')
+pnodeRun(clearAllCache)
+undef(all)
+go;
+use loadSnapshot::createSnapshotTable
+use  loadSnapshot::loadSnapshotData
+
+//参数设置
+dbName="dfs://TSDB_snapshot_orig"
+//dropDatabase(dbName)
+tbName="snapshot_orig"
+startDate = 2021.01.04
+endDate = 2021.01.08
+fileDir = '/hdd/hdd1/2021shSnapshotMultiColumn'
+if(not existsDatabase(dbName)){
+	loadSnapshot::createSnapshotTable::createSnapshot(dbName, tbName)
+}
+start = now()
+for (loadDate in startDate..endDate){
+	submitJob("loadSnapshot"+year(loadDate)+monthOfYear(loadDate)+dayOfMonth(loadDate), "loadSnapshot", loadSnapshot::loadSnapshotData::loadSnapshot{, dbName, tbName, fileDir}, loadDate)
+}
+getRecentJobs()
+do{
+	cnt = exec count(*) from pnodeRun(getRecentJobs) where jobDesc="loadSnapshot" and endTime is null
+}
+while(cnt != 0)
+
+cnt = exec count(*) from pnodeRun(getRecentJobs) where jobDesc="loadSnapshot" and errorMsg is not null and receivedTime > start
+if (cnt != 0){
+	error = exec errorMsg from pnodeRun(getRecentJobs) where jobDesc="loadSnapshot" and errorMsg is not null and receivedTime > start
+	throw error[0]
+}

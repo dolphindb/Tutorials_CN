@@ -1,0 +1,16 @@
+module Factor::createFactorDaily
+
+def createFactorDaily(dbName, tbName){
+	if(existsDatabase(dbName)){
+		dropDatabase(dbName)
+	}
+	db = database(dbName, RANGE, datetimeAdd(2000.01M, 0..600, "M"),engine = `TSDB)
+	colName = `TradeDate`SecurityID`Open`High`Low`Close`Volume`Amount`Vwap
+	colType =[DATE, SYMBOL, DOUBLE, DOUBLE, DOUBLE, DOUBLE, LONG, DOUBLE, DOUBLE]
+	tbSchema = table(1:0, colName, colType)
+  	db.createPartitionedTable(table=tbSchema,tableName=tbName,partitionColumns=`TradeDate,sortColumns=`SecurityID`TradeDate,keepDuplicates=ALL)
+}
+
+//dbName = "dfs://dailyFactor"
+//tbName = "dailyFactor"
+//createDailyFactor(dbName, tbName)

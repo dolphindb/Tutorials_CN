@@ -1,0 +1,18 @@
+login('admin', 'DolphinDB123')
+pnodeRun(clearAllCache)
+undef(all)
+go;
+use Factor::createFactorOneMinute
+use Factor::calFactorOneMinute
+login("admin", "DolphinDB123")	
+dbName = "dfs://SH_TSDB_tick"
+tbName = "tick"
+dbName_factor = "dfs://oneMinuteFactor"
+//dropDatabase(dbName_factor)
+tbName_factor = "oneMinuteFactor"
+if(not existsDatabase(dbName_factor)){
+	createFactorOneMinute(dbName_factor, tbName_factor)
+}
+factorTable = loadTable(dbName_factor, tbName_factor)
+calFactorOneMinute(dbName, tbName,factorTable)
+

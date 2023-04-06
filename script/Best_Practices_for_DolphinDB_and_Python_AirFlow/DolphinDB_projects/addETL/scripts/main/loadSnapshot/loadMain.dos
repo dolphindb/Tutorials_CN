@@ -1,0 +1,16 @@
+
+login('admin', 'DolphinDB123')
+pnodeRun(clearAllCache)
+undef(all)
+go;
+use  addLoadSnapshot::loadSnapshotData
+
+//参数设置
+dbName="dfs://TSDB_snapshot_orig"
+//dropDatabase(dbName)
+tbName="snapshot_orig"
+MarketDays = getMarketCalendar("CFFEX")
+if(today() in MarketDays ){
+	fileDir = '/hdd/hdd1/2021shSnapshotMultiColumn'
+	addLoadSnapshot::loadSnapshotData::loadSnapshot(today(), dbName, tbName, fileDir)
+}

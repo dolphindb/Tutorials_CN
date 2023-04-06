@@ -1,0 +1,24 @@
+module addFactor::calFactorOneMinute
+
+def calFactorOneMinute(dbName, tbName, calDate, mutable factorTable){
+	pt = loadTable(dbName, tbName)
+	res =   select first(LastPX) as Open, max(LastPx) as High, min(LastPx) as Low, last(LastPx) as Close, sum(TotalVolumeTrade) as Volume, sum(LastPx*totalVolumeTrade) as Amount, wavg(LastPx, TotalVolumeTrade) as Vwap from pt where date(DateTime) =calDate group by date(DateTime) as TradeDate,minute(DateTime) as TradeTime, SecurityID
+	//入库前对已有数据进行清理
+	//cnt = exec count(*) from factorTable where TradeDate in days
+	//if(cnt != 0){
+	//writeLog("Start to delete the minute factor data, the delete days is: [" + concat(days, ",")+"]")
+	//delete from factorTable where TradeDate in days
+	//writeLog("Successfully deleted the minute factor data, the delete days is:  [" + concat(days, ",")+"]")
+	//}
+	writeLog("Start to append minute factor result , the days is: [" + concat(calDate, ",")+"]")
+	factorTable.append!(res)
+	writeLog("Successfully append the minute factor result to databse, the days is: [" + concat(calDate, ",")+"]")
+}
+
+//login("admin", "DolphinDB123")	
+//dbName = "dfs://SH_TSDB_tick"
+//tbName = "tick"
+//factorTable = loadTable("dfs://oneMinuteFactor","oneMinuteFactor")
+////calDate = 2021.01.04
+//calOneMinuteFactor(dbName, tbName, factorTable)
+

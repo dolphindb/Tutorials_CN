@@ -1,0 +1,36 @@
+
+
+def calOneMinuteFactor(dbName, tbName, calDate, mutable factorTable){
+	loadDate = temporalFormat(calDate, "yyyyMMdd")
+	try{
+		pt = loadTable(dbName, tbName)	
+		res =   select first(TradePrice) as Open, max(TradePrice) as High, min(TradePrice) as Low, last(TradePrice) as Close, sum(TradeQty) as Volume, sum(TradePrice*TradeQty) as Amount, wavg(TradePrice, TradeQty) as Vwap from pt where date(TradeTime) = calDate group by date(TradeTime) as TradeDate,minute(TradeTime) as TradeTime, SecurityID map
+		calCount = exec count(*) from res
+		if(calCount == 0){
+			writeLog("The tick data does not exist, the calDate is: "+loadDate)
+		}
+		else{
+			cnt = exec count(*) from factorTable where TradeDate = calDate
+			if(cnt != 0){
+				writeLog("Start to delete the factor data, the delete date is: " + loadDate)
+				delete from factorTable where TradeDate=calDate
+				writeLog("Successfully deleted the factor data, the delete date is: " + loadDate)
+			}
+			writeLog("Start to append factor result , the date is: " + loadDate)
+			factorTable.append!(res)
+			writeLog("Successfully append the factor result to databse, the calDate is: " + loadDate)
+		}
+	}
+	catch(ex){
+		//捕获异常，并打印在运行日志，输出日志是INFO级别，加入ERROR关键字
+		writeLog("ERROR: The failed caldate is: " + loadDate + ". The exception is: " + ex)
+	}
+}
+
+//login("admin", "DolphinDB123")	
+//dbName = "dfs://SH_TSDB_tick"
+//tbName = "tick"
+//factorTable = loadTable("dfs://oneMinuteFactor","oneMinuteFactor")
+//calDate = 2021.01.04
+//calOneMinuteFactor(dbName, tbName, calDate, factorTable)
+

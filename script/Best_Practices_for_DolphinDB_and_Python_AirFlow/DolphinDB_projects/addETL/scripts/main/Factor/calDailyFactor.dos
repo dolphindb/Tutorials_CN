@@ -1,0 +1,32 @@
+
+def calFactorDaily(dbName, tbName, mutable factorTable){
+	pt = loadTable(dbName, tbName)
+	dayList = exec distinct(date(TradeTime)) from pt
+	if (dayList.size() < 10) dayList = dayList.cut(dayList.size())
+	else dayList = dayList.cut(10)
+	for(days in dayList){
+		try{
+			res =   select first(TradePrice) as Open, max(TradePrice) as High, min(TradePrice) as Low, last(TradePrice) as Close, sum(TradeQty) as Volume, sum(TradePrice*TradeQty) as Amount, wavg(TradePrice, TradeQty) as Vwap from pt where date(TradeTime) in days group by date(TradeTime) as TradeDate, SecurityID 
+			cnt = exec count(*) from factorTable where TradeDate in days
+			if(cnt != 0){
+				writeLog("Start to delete the daily factor data, the delete days is: [" + concat(days, ",")+"]")
+				delete from factorTable where TradeDate in days
+				writeLog("Successfully deleted the daily factor data, the delete days is:  [" + concat(days, ",")+"]")
+			}
+			writeLog("Start to append daily factor result , the days is: [" + concat(days, ",")+"]")
+			factorTable.append!(res)
+			writeLog("Successfully append the daily factor result to databse, the days is: [" + concat(days, ",")+"]")
+		}
+		catch(ex){
+		//捕获异常，并打印在运行日志，输出日志是INFO级别，加入ERROR关键字
+		writeLog("ERROR: The failed days is: [" + concat(days, ",")+"]" + ". The exception is: " + ex)
+		}
+	}
+}
+
+//login("admin", "DolphinDB123")	
+//dbName = "dfs://SH_TSDB_tick"
+//tbName = "tick"
+//factorTable = loadTable("dfs://dailyFactor","dailyFactor")
+//calFactorDaily(dbName, tbName, factorTable)
+

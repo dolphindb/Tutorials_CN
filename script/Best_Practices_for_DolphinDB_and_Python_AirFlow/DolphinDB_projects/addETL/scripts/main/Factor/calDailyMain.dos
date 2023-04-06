@@ -1,0 +1,17 @@
+login('admin', 'DolphinDB123')
+pnodeRun(clearAllCache)
+undef(all)
+go;
+use addFactor::calFactorDaily1
+login("admin", "DolphinDB123")	
+dbName = "dfs://TSDB_snapshot_process"
+tbName = "snapshot_process"
+dbName_factor = "dfs://dailyFactor"
+//dropDatabase(dbName_factor)
+tbName_factor = "dailyFactor"
+factorTable = loadTable(dbName_factor, tbName_factor)
+MarketDays = getMarketCalendar("CFFEX")
+if(today() in MarketDays ){
+	addFactor::calFactorDaily1::calFactorDaily(dbName, tbName,today(), factorTable)
+}
+//select * from defs() where name like  "Factor::%"

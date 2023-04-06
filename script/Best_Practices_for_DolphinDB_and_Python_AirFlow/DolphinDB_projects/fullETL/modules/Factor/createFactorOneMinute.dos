@@ -1,0 +1,16 @@
+module Factor::createFactorOneMinute
+
+def createFactorOneMinute(dbName, tbName){
+	if(existsDatabase(dbName)){
+		dropDatabase(dbName)
+	}
+	db = database(dbName, VALUE, 2021.01.01..2021.01.03,engine = `TSDB)
+	colName = `TradeDate`TradeTime`SecurityID`Open`High`Low`Close`Volume`Amount`Vwap
+	colType =[DATE, MINUTE, SYMBOL, DOUBLE, DOUBLE, DOUBLE, DOUBLE, LONG, DOUBLE, DOUBLE]
+	tbSchema = table(1:0, colName, colType)
+  	db.createPartitionedTable(table=tbSchema,tableName=tbName,partitionColumns=`TradeDate,sortColumns=`SecurityID`TradeTime,keepDuplicates=ALL)
+}
+
+//dbName = "dfs://oneMinuteFactor"
+//tbName = "oneMinuteFactor"
+//createFactorOneMinute(dbName, tbName)

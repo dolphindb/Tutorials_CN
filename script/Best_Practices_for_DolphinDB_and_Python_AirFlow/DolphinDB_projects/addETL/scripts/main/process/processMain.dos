@@ -1,0 +1,15 @@
+login('admin', 'DolphinDB123')
+pnodeRun(clearAllCache)
+undef(all)
+go;
+use addProcessSnapshot::processSnapshotData
+//参数设置
+dbName_orig="dfs://TSDB_snapshot_orig"
+tbName_orig="snapshot_orig"
+dbName_process="dfs://TSDB_snapshot_process"
+//dropDatabase(dbName_process)
+tbName_process="snapshot_process"
+MarketDays = getMarketCalendar("CFFEX")
+if(today() in MarketDays ){
+	addProcessSnapshot::processSnapshotData::process(today(), dbName_orig, tbName_orig, dbName_process, tbName_process)
+}

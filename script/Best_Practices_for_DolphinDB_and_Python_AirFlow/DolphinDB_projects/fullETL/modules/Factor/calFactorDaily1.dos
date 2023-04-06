@@ -1,0 +1,26 @@
+module Factor::calFactorDaily1
+
+def calFactorDaily(dbName, tbName, mutable factorTable){
+	pt = loadTable(dbName, tbName)
+	dayList = schema(pt).partitionSchema[0]
+	if(dayList.size()>10) dayList = dayList.cut(10)
+	for(days in dayList){
+		res =   select first(LastPX) as Open, max(LastPx) as High, min(LastPx) as Low, last(LastPx) as Close, sum(TotalVolumeTrade) as Volume, sum(LastPx*totalVolumeTrade) as Amount, wavg(LastPx, TotalVolumeTrade) as Vwap from pt where date(DateTime) in days group by date(DateTime) as TradeDate, SecurityID 
+		//入库前清理数据
+		//if(cnt != 0){
+		//	writeLog("Start to delete the daily factor data, the delete days is: [" + concat(days, ",")+"]")
+		//	delete from factorTable where TradeDate in days
+		//	writeLog("Successfully deleted the daily factor data, the delete days is:  [" + concat(days, ",")+"]")
+		//}
+		writeLog("Start to append daily factor result , the days is: [" + concat(days, ",")+"]")
+		factorTable.append!(res)
+		writeLog("Successfully append the daily factor result to databse, the days is: [" + concat(days, ",")+"]")
+	}
+}
+
+//login("admin", "DolphinDB123")	
+//dbName = "dfs://TSDB_snapshot_process"
+//tbName = "snapshot_process"
+//factorTable = loadTable("dfs://dailyFactor","dailyFactor")
+//calFactorDaily(dbName, tbName, factorTable)
+

@@ -1,0 +1,14 @@
+def createDailyFactor(dbName, tbName){
+	if(existsDatabase(dbName)){
+		dropDatabase(dbName)
+	}
+	db = database(dbName, RANGE, [2000.01.01,2010.01.01,2020.01.01,2030.01.01],engine = `TSDB)
+	colName = `TradeDate`SecurityID`Open`High`Low`Close`Volume`Amount`Vwap
+	colType =[DATE, SYMBOL, DOUBLE, DOUBLE, DOUBLE, DOUBLE, LONG, DOUBLE, DOUBLE]
+	tbSchema = table(1:0, colName, colType)
+  	db.createPartitionedTable(table=tbSchema,tableName=tbName,partitionColumns=`TradeDate,sortColumns=`SecurityID`TradeDate,keepDuplicates=ALL)
+}
+
+//dbName = "dfs://dailyFactor"
+//tbName = "dailyFactor"
+//createDailyFactor(dbName, tbName)

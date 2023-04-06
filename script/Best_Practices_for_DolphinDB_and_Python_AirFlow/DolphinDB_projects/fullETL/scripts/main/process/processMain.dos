@@ -1,0 +1,27 @@
+login('admin', 'DolphinDB123')
+pnodeRun(clearAllCache)
+undef(all)
+go;
+use processSnapshot::createSnapshot_array
+use processSnapshot::processSnapshotData
+select * from defs() where name like "process%"
+//参数设置
+dbName_orig="dfs://TSDB_snapshot_orig"
+tbName_orig="snapshot_orig"
+dbName_process="dfs://TSDB_snapshot_process"
+//dropDatabase(dbName_process)
+tbName_process="snapshot_process"
+startDate = 2021.01.04
+endDate = 2021.01.08
+if(not existsDatabase(dbName_process)){
+	processSnapshot::createSnapshot_array::createProcessTable(dbName_process, tbName_process)
+}
+for (processDate in startDate..endDate){
+	submitJob("processSnapshot"+year(processDate)+monthOfYear(processDate)+dayOfMonth(processDate), "processSnapshot", processSnapshot::processSnapshotData::process{, dbName_orig, tbName_orig, dbName_process, tbName_process}, processDate)
+}
+
+do{
+	cnt = exec count(*) from pnodeRun(getRecentJobs) where jobDesc="processSnapshot" and endTime is null
+}
+while(cnt != 0)
+
