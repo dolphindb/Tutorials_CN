@@ -25,7 +25,9 @@ DolphinDB 作为一款高性能时序数据库，其在实际生产环境中常�
     - [3.4 将 start\_date 日期设为当前日期，每天运行一次，为什么当天不会运行](#34-将-start_date-日期设为当前日期每天运行一次为什么当天不会运行)
     - [3.5 DolphinDBOperator 任务运行失败如何定位失败原因](#35-dolphindboperator-任务运行失败如何定位失败原因)
   - [4. 总结](#4-总结)
+  - [法律声明](#法律声明)
   - [附件](#附件)
+
 
 ## 1. Airflow
 
@@ -837,6 +839,10 @@ DolphinDBOperator(
 ## 4. 总结
 
 ​      本教程从一个常用行情数据 ETL 案例出发，着重阐述了如何将 Airflow 调度框架与 DolphinDB 数据库结合起来进行结构化 ETL 作业管理, 以此来节省时间，提高效率，降低运维成本。同时，由于篇幅有限，涉及到DolphinDB 和 Airflow 框架的一些其它操作未能更进一步展示，用户在使用过程中需要按照实际情况进行调整。也欢迎大家对本教程中可能存在的纰漏和缺陷批评指正。
+
+## 法律声明
+
+基于Apache License 2.0的使用许可协议，本文中所涉及到的 Airflow 相关安装包及源代码，作为 DolphinDB Airflow 插件的组成部分而存在，但 Airflow 安装包或源代码的版权归属于 Apache Software Foundation。  
 
 ## 附件
 
