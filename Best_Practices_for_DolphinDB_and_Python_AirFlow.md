@@ -108,6 +108,8 @@ pip install --force-reinstall dolphindbapi-1.0.0-py3-none-any.whl
 pip install --force-reinstall apache_Airflow_providers_dolphindb-1.0.0-py3-none-any.whl
 ```
 
+> :bulb:**注意**：本教程所用 Airflow 安装包仅提供离线版安装方式，在线版安装方式会在正式发布后提供。
+
 2. 安装好 airflow.provide.dolphindb 插件后，启动 Airflow ：
 
 部署以及安装 Airflow 详情见官网：[airflow 快速入门](https://airflow.apache.org/docs/apache-airflow/stable/start.html)。以下为启动 Airflow 的核心代码:
