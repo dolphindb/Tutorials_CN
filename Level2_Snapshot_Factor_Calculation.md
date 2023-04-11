@@ -74,7 +74,7 @@ DolphinDB 内置的时间序列流计算引擎可以满足 Level-2 快照数据�
 **主要包括以下功能模块**
 - 实时数据低延时接入功能模块
   - DolphinDB API 实时数据写入接口：C++ API, Java API 等
-  - DolphinDB 实时行情接入插件：admQuote, Insight, NSQ 等
+  - DolphinDB 实时行情接入插件：amdQuote, Insight, NSQ 等
   - DolphinDB 消息中间件订阅插件：Kafka, zmq, MQTT 等
 - 历史数据回放功能模块：因子开发阶段的调试和因子回测都需要基于历史数据，DolphinDB 提供了单表和多表的严格按照时序的控速回放功能，能够便捷高效地把已经存储在 DolphinDB 数据库中的历史数据回放成流。
 - 内置流计算引擎功能模块：DolphinDB 根据各种时序数据流式计算场景，开发了多个流计算引擎。本教程中，对快照数据做滚动窗口的聚合计算（计算生成不同分钟频的因子）使用了时间序列聚合流计算引擎，进一步加工成复杂因子用了响应式状态流计算引擎。
