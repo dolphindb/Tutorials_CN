@@ -1,0 +1,5 @@
+module DolphinDBModules::SnapshotFactorCalculationPlatform::Factor1::Close
+
+def Close(){
+	return "last(LastPx)"
+}

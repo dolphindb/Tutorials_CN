@@ -1,0 +1,9 @@
+module DolphinDBModules::SnapshotFactorCalculationPlatform::Factor2::MACD
+
+@state
+def MACD(Close, SHORT_ = 12, LONG_ = 26, M = 9) {
+	DIF = ewmMean(Close, span = SHORT_, adjust = false) - ewmMean(Close, span = LONG_, adjust = false)
+	DEA = ewmMean(DIF, span = M, adjust = false)
+	MACD = (DIF - DEA) * 2
+	return round(DIF, 3), round(DEA, 3), round(MACD, 3)
+}

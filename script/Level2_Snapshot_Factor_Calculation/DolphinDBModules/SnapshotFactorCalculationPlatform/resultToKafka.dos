@@ -1,0 +1,19 @@
+module DolphinDBModules::SnapshotFactorCalculationPlatform::resultToKafka
+
+def initKafkaProducer(metadataBrokerList){
+	producerCfg = dict(STRING, ANY)
+	producerCfg["metadata.broker.list"] = metadataBrokerList
+	return kafka::producer(producerCfg)
+}
+
+def aggr1MinToKafka(producer, topic, msg){
+	startTime = now(true)
+	try {
+		for(i in msg){
+			kafka::produce(producer, "aggr1Min", 1, i, true) 
+		}		
+		cost = (now(true) - startTime)/1000
+		writeLog("[Kafka Plugin] Successed to send result : " + msg.size() + " rows, " + cost + " us.")
+	} 
+	catch(ex) {writeLog("[Kafka Plugin] Failed to send msg to kafka with error: " +ex)}
+}

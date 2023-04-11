@@ -1,0 +1,14 @@
+module DolphinDBModules::SnapshotFactorCalculationPlatform::JsonConfig::JsonGetBarMinutes
+
+def JsonGetBarMinutes(jsonPath){
+	configStringTmp = file(jsonPath).readLine()
+	configString = split(right(left(configStringTmp, strlen(configStringTmp)-2), strlen(configStringTmp)-3), "},") +"}"
+	minutes = array(INT, 0)
+	for (i in configString){
+		configJson = parseExpr(i).eval()
+		if (not (configJson[`barMinute] in minutes) && configJson[`level] == 1){
+			minutes.append!(configJson[`barMinute])
+		}
+	}
+	return minutes
+}

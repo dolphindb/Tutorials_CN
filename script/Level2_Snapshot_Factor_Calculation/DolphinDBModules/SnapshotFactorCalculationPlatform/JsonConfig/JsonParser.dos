@@ -1,0 +1,64 @@
+module DolphinDBModules::SnapshotFactorCalculationPlatform::JsonConfig::JsonParser
+
+def jsonConfigParser(jsonPath, barMinute){
+	configStringTmp = file(jsonPath).readLine()
+	configString = split(right(left(configStringTmp, strlen(configStringTmp)-2), strlen(configStringTmp)-3), "},") +"}"
+	timeSeriesString = ""
+	reactiveStateString = ""
+	colNamesLevel1 = []
+	colNamesLevel2 = []
+	for(i in configString){
+		configJson = parseExpr(i).eval()
+		if (configJson[`barMinute] == barMinute){
+			if (configJson[`level] == 1){
+				useModuleString = "use DolphinDBModules::SnapshotFactorCalculationPlatform::Factor1::" + configJson[`factor]
+				runScript(useModuleString)
+				if (configJson[`isInc]){
+					metaString = funcByName("DolphinDBModules::SnapshotFactorCalculationPlatform::Factor1::" + configJson[`factor] + "::" + configJson[`factor])()
+				}
+				else{
+					funcString = split(syntax(funcByName("DolphinDBModules::SnapshotFactorCalculationPlatform::Factor1::" + configJson[`factor] + "::" + configJson[`factor])), "(")
+					parameterString = split(strReplace(funcString[1], ")", ""), ",")
+					metaString = string()
+					for(parameter in parameterString){
+						if(parameter in configJson.keys()){
+							metaString = metaString + parameter + "=" + configJson[parameter] + ","
+						}
+						else{
+							metaString = metaString + parameter + ","
+						}
+					}
+					metaString = funcString[0] + "(" + lpad(metaString, strlen(metaString)-1) + ")"
+				}
+				timeSeriesString = timeSeriesString + metaString + ", "
+				colNamesLevel1 = colNamesLevel1.append!(configJson[`factor])
+				useSystemTime = configJson[`useSystemTime]
+			}
+			else if(configJson[`level] == 2) {
+				useModuleString = "use DolphinDBModules::SnapshotFactorCalculationPlatform::Factor2::" + configJson[`factor]
+				runScript(useModuleString)
+				funcString = split(syntax(funcByName("DolphinDBModules::SnapshotFactorCalculationPlatform::Factor2::" + configJson[`factor] + "::" + configJson[`factor])), "(")
+				parameterString = split(strReplace(funcString[1], ")", ""), ",")
+				metaString = string()
+				for(parameter in parameterString){
+					if(parameter in configJson.keys()){
+						metaString = metaString + parameter + "=" + configJson[parameter] + ","
+					}
+					else{
+						metaString = metaString + parameter + ","
+					}
+				}
+				colNameTmp = ""
+				for (colname in configJson[`colName]){
+					colNameTmp = colNameTmp + "`" + colname
+				}
+				metaString = funcString[0] + "(" + lpad(metaString, strlen(metaString)-1) + ")" + " as " + colNameTmp
+				reactiveStateString = reactiveStateString + metaString + ", "
+				for (col in configJson[`colName]){
+					colNamesLevel2 = colNamesLevel2.append!(configJson[`factor] + "_" + col)
+				}
+			}
+		}
+	}
+	return timeSeriesString, colNamesLevel1, reactiveStateString, colNamesLevel2, useSystemTime
+}

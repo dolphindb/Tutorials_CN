@@ -1,0 +1,5 @@
+module DolphinDBModules::SnapshotFactorCalculationPlatform::Factor1::Open
+
+def Open(){
+	return "first(LastPx)"
+}

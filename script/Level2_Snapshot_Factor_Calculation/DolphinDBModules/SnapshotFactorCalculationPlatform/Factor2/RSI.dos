@@ -1,0 +1,17 @@
+module DolphinDBModules::SnapshotFactorCalculationPlatform::Factor2::RSI
+
+@state
+def SMA(S, N, M = 1) {
+	return ::ewmMean(S, alpha = M \ N, adjust = false)
+}
+
+@state
+def MAX(S1, S2) {
+	return ::iif(::nullCompare(>, S1, S2), S1, S2)
+}
+
+@state
+def RSI(Close, N = 24) {
+	DIF = Close - move(Close, 1)
+	return round(SMA(MAX(DIF, 0), N, 1) \ SMA(abs(DIF), N, 1) * 100, 3)
+}

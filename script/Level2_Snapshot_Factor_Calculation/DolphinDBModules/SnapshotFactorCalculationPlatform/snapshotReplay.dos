@@ -1,0 +1,16 @@
+module DolphinDBModules::SnapshotFactorCalculationPlatform::snapshotReplay
+
+use DolphinDBModules::SnapshotFactorCalculationPlatform::TableSchema::snapshot
+
+def snapshotCsvReplay(csvPath, mutable snapshotStream){
+	schemaTB = table(createSnapshotStream().schema().colDefs.name as `name, createSnapshotStream().schema().colDefs.typeString as `type)
+	data = loadText(filename=csvPath, schema=schemaTB)
+	for(i in 0..(size(data)-1)){
+		insertData = select * from data limit i, 1
+		snapshotStream.append!(insertData)
+	}
+}
+
+def snapshotCsvReplayJob(csvPath, snapshotStream){
+	submitJob("snapshotCsvReplay", "snapshotCsvReplay", snapshotCsvReplay, csvPath, snapshotStream)
+}

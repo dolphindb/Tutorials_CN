@@ -1,0 +1,37 @@
+module DolphinDBModules::SnapshotFactorCalculationPlatform::JsonConfig::JsonConfigLoad
+
+clearCachedModules()
+use DolphinDBModules::SnapshotFactorCalculationPlatform::TableSchema::snapshot
+use DolphinDBModules::SnapshotFactorCalculationPlatform::JsonConfig::JsonParser
+use DolphinDBModules::SnapshotFactorCalculationPlatform::JsonConfig::JsonGetBarMinutes
+
+def loadJsonConfig(jsonPath, parallel, tableCapacity=100000){
+	share(createSnapshotStream(), `snapshotStream)
+	setStreamTableFilterColumn(objByName("snapshotStream"), `SecurityID)
+	go
+	barMinutes = JsonGetBarMinutes(jsonPath)
+	for (barMinute in barMinutes){
+		timeSeriesStringTmp, colNamesLevel1, reactiveStateStringTmp, colNamesLevel2, useSystemTime = jsonConfigParser(jsonPath, barMinute)
+		name = ["DateTime", "SecurityID"].append!(colNamesLevel1)
+		type = ["TIMESTAMP", "SYMBOL"].append!(take("DOUBLE", size(colNamesLevel1)))
+		share(streamTable(tableCapacity:0, name, type), "aggr"+ barMinute + "Min")
+		setStreamTableFilterColumn(objByName("aggr"+ barMinute + "Min"), `SecurityID)
+		timeSeriesString = "[" + timeSeriesStringTmp
+		timeSeriesMetrics = parseExpr(lpad(timeSeriesString, strlen(timeSeriesString)-2) + "]")
+		for(i in 1..parallel){
+			createTimeSeriesEngine(name="aggr"+barMinute+"MinKLine_"+i, windowSize=barMinute*60000, step=barMinute*60000, metrics=timeSeriesMetrics, dummyTable=objByName("snapshotStream"), outputTable=objByName("aggr"+ barMinute + "Min"), timeColumn=`DateTime, useSystemTime=useSystemTime, keyColumn=`SecurityID, useWindowStartTime=true)
+			subscribeTable(tableName="snapshotStream", actionName="aggr"+barMinute+"MinKLine_"+i, offset=-1, handler=getStreamEngine("aggr"+barMinute+"MinKLine_"+i), msgAsTable=true, batchSize=100, throttle=0.001, filter=(parallel, i-1))
+		}
+		if (strlen(reactiveStateStringTmp) != 0){
+			name = ["SecurityID", "CostTime", "BatchSize", "DateTime"].append!(colNamesLevel2)
+			type = ["SYMBOL", "LONG", "INT", "TIMESTAMP"].append!(take("DOUBLE", size(colNamesLevel2)))
+			share(streamTable(tableCapacity:0, name, type), "resultTable"+ barMinute + "Min")
+			reactiveStateString = "[DateTime, " + reactiveStateStringTmp
+			reactiveStateMetrics = parseExpr(lpad(reactiveStateString, strlen(reactiveStateString)-2) + "]")
+			for(i in 1..parallel){
+				createReactiveStateEngine(name="ReactiveStateEngine"+barMinute+"Min"+i, metrics=reactiveStateMetrics, dummyTable=objByName("aggr"+ barMinute + "Min"), outputTable=objByName("resultTable"+ barMinute + "Min"), keyColumn=`SecurityID, keepOrder=true, outputElapsedMicroseconds=true)
+				subscribeTable(tableName="aggr"+ barMinute + "Min", actionName="Reactive"+barMinute+"Min"+i, offset=-1, handler=getStreamEngine("ReactiveStateEngine"+barMinute+"Min"+i), msgAsTable=true, batchSize=100, throttle=0.001, filter=(parallel, i-1))
+			}
+		}
+	}
+}

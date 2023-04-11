@@ -1,0 +1,25 @@
+module DolphinDBModules::SnapshotFactorCalculationPlatform::JsonConfig::JsonGetFileString
+
+def JsonGetFileString(FactorLevel1, isInc, barMinutesLevel1, useSystemTime, FactorLevel2=NULL, barMinutesLevel2=NULL, colNameLevel2=NULL, paramsName=NULL, paramsValue=NULL){
+	JsonString = "["
+	for (i in 1 .. FactorLevel1.size() - 1){
+		JsonString = JsonString + '{"factor": "' + FactorLevel1[i] + '", "isInc": ' + isInc[i] + ', "barMinute": ' + barMinutesLevel1[i] + ', "level": 1, "useSystemTime": ' + useSystemTime[i] + '}, '
+	}
+	if(type(FactorLevel2)!=0){
+		for (m in 1 .. FactorLevel2.size() - 1){
+			for (i in 1 .. paramsValue[m].size() - 1){
+				colNameLevel2TmpString = ''
+				for (j in 1 .. colNameLevel2[m].size() - 1){
+					colNameLevel2TmpString = colNameLevel2TmpString + '`' + colNameLevel2[m][j] + '_' + (i + 1)
+				}
+				JsonString = JsonString + '{"factor": "' + FactorLevel2[m] + '", "level": 2, "colName": ' + colNameLevel2TmpString + ', "barMinute": ' + barMinutesLevel2[m][i]
+				for (k in 1 .. paramsName[m].size() - 1){
+					JsonString = JsonString + ', "' + paramsName[m][k] + '": ' + paramsValue[m][i][k]
+				}
+				JsonString += '}, '
+			}
+		}		
+	}
+	JsonString = lpad(JsonString, strlen(JsonString) - 2) + "]"
+	return JsonString
+}

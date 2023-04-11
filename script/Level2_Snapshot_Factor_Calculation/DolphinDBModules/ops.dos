@@ -1,0 +1,502 @@
+module DolphinDBModules::ops
+
+/* *
+*  @ brief  
+*  This module is convenient for operation team to maintain the cluster. 
+*  @ Author: DolphinDB
+*  @ Last modification time: 2022.12.19
+*  @ DolphinDB server version: 2.00.8
+*  @ FileName: ops.dos
+*/
+
+/* *
+*  @ brief  Cancel background jobs on any node in the cluster.
+*  If id is not specified, all running background jobs in the cluster will be canceled.
+*  If id is specified, running background jobs whose job IDs contain id will be canceled.
+*  @ param
+*  id indicates the job ID. It can be obtained by function getRecentJobs().
+*  @ Return NULL
+*  @ sample usage  cancelJobEx("myjob1")
+*/
+
+
+def cancelJobEx(id=NULL){
+    if (id == NULL){// delete all jobs in the cluster
+        ids = exec jobId from pnodeRun(getRecentJobs) where endTime = NULL
+    }else{// delete job by JobID. 
+        ids = exec jobId from pnodeRun(getRecentJobs) where endTime = NULL and jobId = id
+    }
+    pnodeRun(cancelJob{ids})
+}
+
+
+/* *
+*  @ brief  Close inactive sessions.
+*  @ param
+*  hours determines the interval (in hours) after which a session is determined as inactive. The default value is 12.
+*  @ Return  a table of the active connections
+*  @ sample usage  closeInactiveSessions(24)
+*/
+
+
+def closeInactiveSessions(hours=12) {
+    if(isNull(hours))
+       throw "Please input the interval (in hours)"
+    sessionIds = exec sessionId from pnodeRun(getSessionMemoryStat) where now() - localtime(lastActiveTime) > long(hours*60*60*1000)
+    pnodeRun(closeSessions{sessionIds})
+    return pnodeRun(getSessionMemoryStat)
+}
+
+
+/* *
+*  @brief Print the Data Definition Language (DDL) statement of a DFS table.
+*  @param
+*  database is the absolute path of the folder where the database is stored
+*  tableName is the name of dfs table
+*  @return print the sql statement of creating a DFS table
+*  @sample usage getDDL("dfs://demodb", "pt")
+*
+*/
+
+
+def getDDL(database, tableName){
+    // Prompt if the table does not exist
+    if(!existsTable(database, tableName)){
+        return "Please check if the table exists"
+    }
+    // get the definition  of columns
+    tSchema = schema(loadTable(database, tableName))    
+    colName = tSchema.colDefs.name
+    colType = tSchema.colDefs.typeString
+    colName = "`"+concat(colName, "`")
+    colType = "["+concat(colType, ",")+"]"
+
+    // get the column name of partition
+    partitionCol = tSchema.partitionColumnName
+    if(size(partitionCol) > 1)
+        partitionCol = "`"+concat(partitionCol, "`")
+    else
+        partitionCol = "`"+string(partitionCol)
+        
+     // todo compressMethods	
+     
+    // sortColumns, keepDuplicates, sortKeyMappingFunction
+    if(tSchema.engineType ==`TSDB){
+        sortColumns = tSchema.sortColumns
+        if(size(sortColumns) > 1)
+            sortColumns = "`"+concat(sortColumns, "`")
+        else
+            sortColumns = "`"+string(sortColumns)
+        keepDuplicates = tSchema.keepDuplicates
+        // todo sortKeyMappingFunction
+    }
+          
+    // print sql of creating table
+    print("db = database("+'\"'+database+'\")')
+    print("colName = " + colName)
+    print("colType = " + colType)
+    print("tbSchema = table(1:0, colName, colType)")
+    if(tSchema.engineType !=`TSDB){
+        if(tSchema.partitionColumnIndex.size()==1) {
+        	if(tSchema.partitionColumnIndex==-1) 
+             	print("db.createTable(table=tbSchema,tableName=`" +tableName+")")
+            else
+                print("db.createPartitionedTable(table=tbSchema,tableName=`" +tableName+",partitionColumns="+partitionCol+")")
+        }else{
+       	    print("db.createPartitionedTable(table=tbSchema,tableName=`" +tableName+",partitionColumns="+partitionCol+")")
+        }
+     } else{
+       if(tSchema.partitionColumnIndex.size()==1 ){
+             if(tSchema.partitionColumnIndex==-1) 
+                 print("db.createTable(table=tbSchema,tableName=`"+tableName+",sortColumns=" +sortColumns+",keepDuplicates="+keepDuplicates+")")
+             else
+                 print("db.createPartitionedTable(table=tbSchema,tableName=`"+tableName+",partitionColumns=" +partitionCol + ",sortColumns="+sortColumns+",keepDuplicates="+keepDuplicates+")")
+        	    	
+       }else{
+             print("db.createPartitionedTable(table=tbSchema,tableName=`"+tableName+",partitionColumns=" +partitionCol + ",sortColumns="+sortColumns+",keepDuplicates="+keepDuplicates+")")
+       }
+    }
+}
+
+
+/* *
+*  @ brief  Get the disk space occupied by the DFS table
+*  @ param
+*  database is the absolute path of the folder where the database is stored
+*  tableName is the name of dfs table
+*  byNode is a Boolean value, indicating whether the disk usage is displayed by node
+*  @ Return  a table containing the disk space occupied by the DFS table
+*  @ sample usage  getTableDiskUsage("dfs://demodb", "machines", true)
+*/
+
+
+def getTableDiskUsage(database, tableName, byNode=false){
+    if(byNode == true){
+        return select sum(diskUsage\1024\1024\1024) diskGB
+                    from pnodeRun(getTabletsMeta{"/"+substr(database, 6)+"/%", tableName, true, -1})
+                    group by node
+    }else {
+        return select sum(diskUsage\1024\1024\1024) diskGB
+                    from pnodeRun(getTabletsMeta{"/"+substr(database, 6)+"/%", tableName, true, -1})
+    }
+}
+
+
+/* *
+*  @ brief  Force delete the recovering partition.
+*  @ param  
+*  dbPath is the absolute path of the folder where the database is stored
+*  tableName is the name of dfs table, required if chunkGranularity is TABLE
+*  @ return NULL
+*  @ sample usage  dropRecoveringPartitions("dfs://compoDB")
+*/
+
+
+def dropRecoveringPartitions(dbPath , tableName=""){
+    db=database(dbPath)
+    if(db.schema().chunkGranularity=="TABLE"){
+    	if (isNull(tableName) or tableName=="")
+    		throw "Please input the table name"
+    }
+    	
+    dbName = substr(dbPath, 5)
+    partitions = exec substr(file, strlen(dbName))
+                        from rpc(getControllerAlias(), getClusterChunksStatus)
+                        where  like(file,  dbName + "%"), state != "COMPLETE"
+    if(db.schema().chunkGranularity=="TABLE")                       
+        dropPartition(db, partitions, tableName, true)
+    else
+        dropPartition(db, partitions, , true)
+}
+
+
+/* *
+*  @ brief  Get the expiration date of the license on all nodes in the cluster.
+*  @ param NULL
+*  @ return a table containing expiration date of the license on each node
+*  @ sample usage  getAllLicenses(), you should run this function on datanode or controller.
+*/
+
+def getAllLicenses(){
+    t = table(getNodeAlias() as  node,getLicenseExpiration() as end_date)
+    nodes = exec name, host, port from rpc(getControllerAlias(), getClusterPerf{true})
+    for(node in nodes){
+        if (node[`name] == getNodeAlias()){
+            continue
+        }
+        else{
+            try{
+                conn = xdb(node[`host], node[`port])
+                t1 = remoteRun(
+                conn, "table( getNodeAlias() as node ,getLicenseExpiration() as date)")
+                t.append!(t1)
+            } catch(ex){
+                print(ex)
+                writeLog(ex)
+            }
+        }
+    }
+    return t
+}
+
+
+
+/* *
+*  @ brief  Update the license on all nodes in the cluster.
+*  @ param NULL
+*  @ return  a table containing expiration date of the license on each node
+*  @ sample usage  updateAllLicenses(), Must be done after replacing the license file
+*/
+
+def updateAllLicenses(){
+    try{
+        pnodeRun(getLicenseExpiration)
+    }catch(ex){
+        print(ex)
+        writeLog(ex)
+    }
+    nodes = exec name, host, port from rpc(getControllerAlias(), getClusterPerf{true})
+    localHost = getNodeHost()
+    localPort = getNodePort()
+    for(node in nodes){
+            if(node[`host] == localHost and node[`port] == localPort){
+                    updateLicense()
+            }
+            else{
+                     try{
+                            conn = xdb(node[`host], node[`port])
+                            remoteRun(conn,updateLicense)
+                        } catch(ex){
+                                    print(ex)
+                            writeLog(ex)
+                        }
+            }
+ }
+    return getAllLicenses()
+}
+
+
+/* *
+*  @ brief  Cancel all subscription on the node
+*  @ param NULL
+*  @ return NULL
+*/
+
+def unsubscribeAll() {
+    t = getStreamingStat().pubTables
+
+    for(row in t){
+        tableName = row.tableName
+        if(string(row.actions).startsWith("[")) {
+            actions = split(substr(row.actions, 1, strlen(row.actions)-2), ",")
+        } else {
+            actions = [].append!(row.actions)
+        }
+
+        for(action in actions){
+            unsubscribeTable(tableName=tableName, actionName=action)
+        }
+    }
+}
+
+
+/**
+ * @ brief   Get the performance measures of the cluster within the given monitoring period and interval, save the result to a CSV file.  
+ * @ param  
+ * monitoringPeriod indicates the monitoring period in seconds, default is 60.
+ * scrapeInterval is the scrape interval in seconds, default is 15
+ * dir is the directory to  save the CSV file，default is /tmp.
+ * @ return NULL
+ */
+
+def gatherClusterPerf(monitoringPeriod=60, scrapeInterval=15, dir="/tmp"){
+    targetDir = dir
+    if(targetDir == "" || targetDir == string(NULL)){
+        targetDir = "/tmp"
+    }
+    schema0 = schema(rpc(getControllerAlias(), getClusterPerf))
+    colNames = [`ts]
+    colNames.append!(schema0[`colDefs][`name])
+    colTypes = [TIMESTAMP]
+    colTypes.append!(schema0[`colDefs][`typeInt])
+    statis_table = table(100000: 0, colNames, colTypes)
+    startTime = now()
+    do {
+        insert into statis_table select now() as ts, * from rpc(getControllerAlias(), getClusterPerf)
+        sleep(scrapeInterval * 1000)
+        elasped_time = (now() - startTime)/1000
+    }while(elasped_time < monitoringPeriod)
+    saveText(statis_table, targetDir + "/statis.csv")
+}
+
+
+/**
+ * @ brief Get the status of workers of the subscriber nodes within the given monitoring period and interval, save the result to a CSV file.
+ * @ param: 
+ * subNode, the nodeAlias of subscribe node
+ * monitoringPeriod indicates the monitoring period in seconds,default is 60.
+ * scrapeInterval is the scrape interval in seconds, default is 15
+ * dir is the directory to save csv file，default is /tmp.
+ * @ return NULL
+ */
+
+def gatherStreamingStat(subNode, monitoringPeriod=60, scrapeInterval=15, dir="/tmp"){
+    targetDir = dir
+    if(targetDir == "" || targetDir == string(NULL)){
+        targetDir = "/tmp"
+    }
+    schema0 = schema(rpc(subNode, getStreamingStat).subWorkers)
+    colNames = [`ts]
+    colNames.append!(schema0[`colDefs][`name])
+    colTypes = [TIMESTAMP]
+    colTypes.append!(schema0[`colDefs][`typeInt])
+    stream_statis_table = table(100000: 0, colNames, colTypes)
+    startTime = now()
+    do {
+        insert into stream_statis_table select now() as ts, * from rpc(subNode, getStreamingStat).subWorkers
+        sleep(scrapeInterval * 1000)
+        elasped_time = (now() - startTime)/1000
+    }while(elasped_time < monitoringPeriod)
+    saveText(stream_statis_table, targetDir + "/sub_worker_statis.csv")
+}
+
+/**
+ * @ brief Compares whether the data for two memory tables is the same
+ * @ param: 
+ * t1, the memory tables
+ * t2, the memory tables
+ * @ return returns records with different rows of data if different,else print Both tables are identical
+ */
+def getDifferentData(t1, t2){
+        res = each(eqObj, t1.values(), t2.values())
+        if(res.all()!=true){
+                colIndex = at(res==false)
+                comparison = each(eqObj, t1.col(colIndex[0]), t2.col(colIndex[0]))
+                rowIndex = at(comparison==false)
+                return [t1[rowIndex], t2[rowIndex]]
+        }else{
+                print "Both tables are identical"
+        }
+}
+
+
+def checkOLAPChunkReplicas(dbName, tableName, targetChunkId){
+        pathTable = select path, latestPhysicalDir from pnodeRun(getTabletsMeta) where chunkId==uuid(targetChunkId),  tableName==tableName
+        if (size(pathTable) == 1) {
+            throw "no replica found, no need to check"
+        }
+
+        symbolCols=exec  name from loadTable(dbName, tableName).schema().colDefs where typeString ="SYMBOL"
+        if(pathTable.size()!=0){
+                db=database(dbName)
+                colFiles1=exec filename from files(pathTable["path"][0]+"/"+pathTable["latestPhysicalDir"][0]) order by filename
+                colFiles2=exec filename from files(pathTable["path"][1]+"/"+pathTable["latestPhysicalDir"][1]) order by filename
+                if(colFiles1.size()!=0 && colFiles2.size()!=0){
+                        if(eqObj(colFiles1, colFiles2)==false){
+                                throw "colFiles on two replicas are not same"
+                        }else{
+                                res=array(BOOL, 0, size(colFiles1))
+                                for(colFile in colFiles1){
+                                	  colName=split(colFile,".")[0]
+                                	  if (colName in symbolCols){
+                                            res1=loadColumn(db, tableName, pathTable["path"][0]+"/"+pathTable["latestPhysicalDir"][0]+"/"+colFile,pathTable["path"][0]+"/chunk.dict")
+                                            res2=loadColumn(db, tableName, pathTable["path"][1]+"/"+pathTable["latestPhysicalDir"][1]+"/"+colFile,pathTable["path"][1]+"/chunk.dict")
+                                	  }else{
+                                             res1=loadColumn(db, tableName, pathTable["path"][0]+"/"+pathTable["latestPhysicalDir"][0]+"/"+colFile)
+                                             res2=loadColumn(db, tableName, pathTable["path"][1]+"/"+pathTable["latestPhysicalDir"][1]+"/"+colFile)                               	  	
+                                	  }
+                                        comparison=eqObj(res1, res2)
+                                        res.append!(comparison)
+                                }
+                        }
+                        if(res.all()==true){
+                                return true
+                        }else{
+                                return false
+                        }
+                }else{
+                        throw "colfiles is not exist"
+                }
+        }else{
+                throw "physicalTableDir is not exist"
+        }
+}
+
+def checkTSDBChunkReplicas(dbName, tableName, targetChunkId){
+    re = array(BOOL,0,10)
+    for(lvl in 0..3){
+        levelFileInfo = select * from pnodeRun(getTSDBMetaData) where chunkId==targetChunkId and like(table,tableName+"%") and level=lvl
+        if(levelFileInfo.size()!=0){
+                levelFilesSize = size(split(levelFileInfo[`files][0],","))-1
+                
+                for(i in 0..(levelFilesSize-1)){
+                        res1 = rpc(levelFileInfo[`node][0],getLevelFileData,levelFileInfo[`chunkPath][0]+"/"+levelFileInfo[`table][0]+"/"+split(levelFileInfo[`files][0],",")[i])
+                        res2 = rpc(levelFileInfo[`node][1],getLevelFileData,levelFileInfo[`chunkPath][1]+"/"+levelFileInfo[`table][1]+"/"+split(levelFileInfo[`files][1],",")[i])
+                        comparison = eqObj(res1.values(), res2.values())
+                        re.append!(comparison)
+                }
+        }
+    }
+    if(re.all()==true)
+            return true
+    return false
+
+}
+
+/**
+ * @ brief Compares whether the data for two chunk replicas is the same
+ * @ param: 
+*  dbPath is the absolute path of the folder where the database is stored
+*  tableName is the name of dfs table
+ * @ return true if the same ,false if different 
+ */
+def checkChunkReplicas(dbPath, tableName, targetChunkId){
+	if(database(dbPath).schema().engineType ==`TSDB)
+		return checkTSDBChunkReplicas(dbPath, tableName, targetChunkId);
+	else
+		return checkOLAPChunkReplicas(dbPath, tableName, targetChunkId);
+}
+
+/* *
+*  @ Function name: clearAllSubscriptions
+*  @ Brief: clear all subscriptions of the current node
+*  @ Param:
+*  none
+*  @ Return: print cleared subscription information
+*  @ Sample usage: clearAllSubscriptions()
+*/
+def clearAllSubscriptions(){
+	if(getStreamingStat().pubTables.rows() > 0){
+		do{
+			try{
+				tableName = getStreamingStat().pubTables[0,0]
+				actionName =  getStreamingStat().pubTables[0,3]
+				actionName = strReplace(actionName,"[","")
+				actionName = strReplace(actionName,"]","")
+				arr = actionName.split(',')
+			}
+			catch(ex){
+				print(ex)
+			}
+			for(actionName in arr){
+				try{	
+					print("unsub: " + tableName + ", "  + actionName)
+					unsubscribeTable(tableName=tableName, actionName=actionName)
+					sleep(10)
+				}
+				catch(ex){
+					print(ex)
+				}
+			}
+	
+		}
+		while(getStreamingStat().pubTables.rows() != 0)
+	}
+	print("All subscriptions have been cleared !")
+}
+
+def clearAllEngines(){
+	if(getStreamEngineStat().rows() > 0){
+		engineTypes = getStreamEngineStat().keys()
+		for(engineType in engineTypes){
+			engineNum = size(getStreamEngineStat()[engineType])
+			i = 0
+			do{	
+				print("Drop Stream Engine: " + getStreamEngineStat()[engineType].name[0])
+				i = i +1
+				try{
+				dropStreamEngine(getStreamEngineStat()[engineType].name[0])
+				}
+				catch(ex){
+					print(ex)
+				}
+			}
+			while(i < engineNum)
+		}
+	}
+	print("All engines have been dropped !")
+}
+
+def existsShareVariable(varName){
+     return objs(true).name.find(varName)>=0
+}
+
+def clearAllSharedTables(){
+	sharedTables = exec name from objs(true) where form="TABLE", shared=true
+	for(sharedTable in sharedTables){
+		print("Undef Shared Table: " + sharedTable)
+		try{
+			undef(sharedTable, SHARED)
+		}
+		catch(ex){
+			print(ex)
+		}
+	}
+	print("All shared table have been cleared !")
+}
+
+def clearAllStreamEnv(){
+	clearAllSubscriptions()
+	clearAllEngines()
+	clearAllSharedTables()
+}
