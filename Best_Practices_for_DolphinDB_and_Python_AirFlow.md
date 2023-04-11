@@ -25,7 +25,9 @@ DolphinDB 作为一款高性能时序数据库，其在实际生产环境中常�
     - [3.4 将 start\_date 日期设为当前日期，每天运行一次，为什么当天不会运行](#34-将-start_date-日期设为当前日期每天运行一次为什么当天不会运行)
     - [3.5 DolphinDBOperator 任务运行失败如何定位失败原因](#35-dolphindboperator-任务运行失败如何定位失败原因)
   - [4. 总结](#4-总结)
+  - [法律声明](#法律声明)
   - [附件](#附件)
+
 
 ## 1. Airflow
 
@@ -45,9 +47,9 @@ Airflow 是一个可编程，调度和监控的工作流平台，基于有向无
 
 DolphinDBOperator 是 Airflow 的 operator 一种，通过 DolphinDBOperator 可以在 Airflow 连接 DolphinDB 进行数据写入、查询、计算等操作。DolphinDBOperator 特有的参数有：
 
-- dolphindb_conn_id: 用于指定 DolphinDB 连接，可在 connection 中设置
-- sql: 指定需要运行的 DolphinDB 脚本
-- file_path: 可以指定 DolphinDB dos 文件运行脚本
+- `dolphindb_conn_id`: 用于指定 DolphinDB 连接，可在 connection 中设置
+- `sql`: 指定需要运行的 DolphinDB 脚本
+- `file_path`: 可以指定 DolphinDB dos 文件运行脚本
 
 ​     DolphinDBOperator 使用示例如下：
 - 通过 sql 参数指定任务内容运行脚本：
@@ -107,6 +109,8 @@ pip install --force-reinstall dolphindb
 pip install --force-reinstall dolphindbapi-1.0.0-py3-none-any.whl
 pip install --force-reinstall apache_Airflow_providers_dolphindb-1.0.0-py3-none-any.whl
 ```
+
+> :bulb:**注意**：本教程所用 Airflow 安装包仅提供离线版安装方式，在线版安装方式会在正式发布后提供。
 
 2. 安装好 airflow.provide.dolphindb 插件后，启动 Airflow ：
 
@@ -748,17 +752,17 @@ addLoadSnapshot = DolphinDBOperator(
 
 - **第一步 DolphinDB 项目部署**
 
-将 DolphinDB 项目中的 addETL 和 fullETL 项目分别导入 DolphinDB GUI (DolphinDB 客户端工具)中：
+将 DolphinDB 项目中的 *addETL* 和 *fullETL* 项目分别导入 DolphinDB GUI (DolphinDB 客户端工具)中：
 
 <img src="./images/Best_Practices_for_DolphinDB_and_Python_AirFlow/2_7.png" width=50%>
 
-将 addETL 及 fullETL 项目中的 module 模块上传至 Airflow 中已建立连接的 DolphinDB server 中：
+将 *addETL* 及 *fullETL* 项目中的 module 模块上传至 Airflow 中已建立连接的 DolphinDB server 中：
 
 <img src="./images/Best_Practices_for_DolphinDB_and_Python_AirFlow/2_8.png" width=60%>
 
 - **第二步 python 项目部署**
 
-将 python 项目中的 python 脚本放置到 *<Airflow_install_Dir/airflow/dags>* 目录下。注意，新建的 DAG 任务并不会马上出现在界面上，默认需要等待5分钟后刷新，也可修改 *airflow.cfg* 文件中的 *dag_dir_list_interval* 调整刷新间隔。
+将 *python* 项目中的 python 脚本放置到 *<Airflow_install_Dir/airflow/dags>* 目录下。注意，新建的 DAG 任务并不会马上出现在界面上，默认需要等待5分钟后刷新，也可修改 *airflow.cfg* 文件中的 *dag_dir_list_interval* 调整刷新间隔。
 
 - **第三步 Airflow 变量导入**
 
@@ -768,7 +772,7 @@ addLoadSnapshot = DolphinDBOperator(
 
 - **第四步 上传原始数据文件**
 
-将数据文件上传至服务器，并根据数据文件的实际存放路径，在 Airflow 中修改 ETL_filedir 变量。如运行增量ETL 任务，需要将数据文件名中的日期改为当前日期，如：*20230330snapshot.csv*，以避免无数据导致任务失败。
+将数据文件上传至服务器，并根据数据文件的实际存放路径，在 Airflow 中修改 `ETL_filedir` 变量。如运行增量 ETL 任务，需要将数据文件名中的日期改为当前日期，如：*20230330snapshot.csv*，以避免无数据导致任务失败。
 
 最终实现 DAG 如下所示：
 
@@ -820,7 +824,7 @@ DolphinDBOperator(
 
 ### 3.4 将 start_date 日期设为当前日期，每天运行一次，为什么当天不会运行
 
-- 在 Airflow 中一个定时调度任务的最早开始时间为 start_date + scheduler_interval，例如：start_date = 2023.03.16，每天调用一次，则最早一次任务调度为 2023.03.17，所以当天的任务无法执行。
+- 在 Airflow 中一个定时调度任务的最早开始时间为 start_date + scheduler_interval，例如：`start_date = 2023.03.16`，每天调用一次，则最早一次任务调度为 2023.03.17，所以当天的任务无法执行。
 
 ### 3.5 DolphinDBOperator 任务运行失败如何定位失败原因
 
@@ -835,6 +839,10 @@ DolphinDBOperator(
 ## 4. 总结
 
 ​      本教程从一个常用行情数据 ETL 案例出发，着重阐述了如何将 Airflow 调度框架与 DolphinDB 数据库结合起来进行结构化 ETL 作业管理, 以此来节省时间，提高效率，降低运维成本。同时，由于篇幅有限，涉及到DolphinDB 和 Airflow 框架的一些其它操作未能更进一步展示，用户在使用过程中需要按照实际情况进行调整。也欢迎大家对本教程中可能存在的纰漏和缺陷批评指正。
+
+## 法律声明
+
+基于Apache License 2.0的使用许可协议，本文中所涉及到的 Airflow 相关安装包及源代码，作为 DolphinDB Airflow 插件的组成部分而存在，但 Airflow 安装包或源代码的版权归属于 Apache Software Foundation。  
 
 ## 附件
 
