@@ -160,7 +160,7 @@ select * from loadTable("dfs://order", "order") where Date = 2020.12.31 order by
 select * from loadTable("dfs://order", "order") where Date = 2020.12.31, 09:15:00.000 <= Time < 09:18:27.001 order by Time
 ```
 
-后文的 [4. 性能测试](#4 - 性能测试) 章节利用本节的脚本进行了性能测试，最终总耗时 4m18s，内存占用峰值 4.7GB。内存主要由回放过程中的 SQL 查询和输出表等占用，通过对数据源进行切割以及对输出表进行持久化能有效控制内存使用。
+后文的 [4. 性能测试](#4-性能测试) 章节利用本节的脚本进行了性能测试，最终总耗时 4m18s，内存占用峰值 4.7GB。内存主要由回放过程中的 SQL 查询和输出表等占用，通过对数据源进行切割以及对输出表进行持久化能有效控制内存使用。
 
 作业运维：在 submitJob 函数提交后，通过 getRecentJobs 函数可以查看后台作业的状态，如果 endTime 和 errorMsg 为空，说明任务正在正常运行中。也可以用 cancelJob 函数取消回放，其输入参数 jobId 通过 getRecentJobs 获取。
 
@@ -237,7 +237,7 @@ handler 参数是一元函数或数据表，用于处理订阅的数据。当它
 subscribeTable(tableName="messageStream", actionName="tradeJoinSnapshot", offset=-1, handler=engine, msgAsTable=true, reconnect=true)
 ```
 
-设置参数 offset 为 - 1，订阅将会从提交订阅时流数据表的当前行开始。为了消费到完整的数据，建议先执行此处脚本以提交订阅，再提交后台回放作业，参考 3.3.1 小节。
+设置参数 offset 为 -1，订阅将会从提交订阅时流数据表的当前行开始。为了消费到完整的数据，建议先执行此处脚本以提交订阅，再提交后台回放作业，参考 3.3.1 小节。
 
 - 查看计算结果
 
@@ -305,7 +305,7 @@ handler 参数是一元函数或数据表，用于处理订阅的数据。当它
 subscribeTable(tableName="messageStream", actionName="sendMsgToKafka", offset=-1, handler=engine, msgAsTable=true, reconnect=true)
 ```
 
-设置参数 offset 为 - 1，订阅将会从提交订阅时流数据表的当前行开始。为了消费到完整的数据，建议先执行此处脚本以提交订阅，再提交后台回放作业，参考 3.3.1 小节。
+设置参数 offset 为 -1，订阅将会从提交订阅时流数据表的当前行开始。为了消费到完整的数据，建议先执行此处脚本以提交订阅，再提交后台回放作业，参考 3.3.1 小节。
 
 - 在终端查看发送结果
 
@@ -432,7 +432,7 @@ DolphinDB GUI 安装教程：[GUI 教程](https://www.dolphindb.cn/cn/gui/index.
 
 > Kafka 插件版本建议按 DolphinDB server 版本选择，如 2.00.6 版本的 server 安装 release200 分支的插件
 
-Kafka 插件教程：[Kafka 插件教程](https://gitee.com/dolphindb/DolphinDBPlugin/blob/release200/kafka/README_CN.md)
+Kafka 插件教程：[Kafka 插件教程](https://gitee.com/dolphindb/DolphinDBPlugin/blob/master/kafka/README.md)
 
 **Kafka server 部署**
 
