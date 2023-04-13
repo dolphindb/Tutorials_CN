@@ -2,42 +2,34 @@
 
 DolphinDB提供了从基于Java的GUI, VS Code Extension, Web界面，到命令行等各种灵活友好的交互界面，具体包括以下几种客户端交互方式。
 
-- [1. DolphinDB GUI](#1-dolphindb-gui)
-  - [1.1 核心概念](#11-核心概念)
-    - [Server](#server)
-    - [Login](#login)
-    - [Workspace](#workspace)
-    - [Project](#project)
-    - [File](#file)
-    - [Synchronize to server](#synchronize-to-server)
-  - [1.2 安装和启动](#12-安装和启动)
-    - [常见无法正常启动原因](#常见无法正常启动原因)
-  - [1.3 程序执行及结果查看](#13-程序执行及结果查看)
-  - [1.4 中文出现乱码](#14-中文出现乱码)
-  - [1.5 精度配置](#15-精度配置)
-  - [1.6 `java.lang.OutOfMemoryError: Java heap space`](#16-javalangoutofmemoryerror-java-heap-space)
-- [2. VS Code Extension](#2-vs-code-extension)
-  - [2.1 下载安装插件](#21-下载安装插件)
-  - [2.2 连接DolphinDB Server](#22-连接dolphindb-server)
-    - [新增服务器](#新增服务器)
-    - [选择服务器](#选择服务器)
-    - [移除服务器](#移除服务器)
-  - [2.3 编辑和运行DolphinDB脚本](#23-编辑和运行dolphindb脚本)
-  - [2.4 观察变量](#24-观察变量)
-- [3. DolphinDB Notebook](#3-dolphindb-notebook)
-  - [3.1 启动](#31-启动)
-  - [3.2 登录](#32-登录)
-  - [3.3 集群管理以及系统监控](#33-集群管理以及系统监控)
-    - [启动节点](#启动节点)
-  - [3.4 程序执行以及结果查看](#34-程序执行以及结果查看)
-- [4. DolphinDB Jupyter Notebook 扩展插件](#4-dolphindb-jupyter-notebook-扩展插件)
-  - [4.1 下载安装插件](#41-下载安装插件)
-  - [4.2 配置Jupyter Notebook工作路径](#42-配置jupyter-notebook工作路径)
-  - [4.3 连接DolphinDB Server](#43-连接dolphindb-server)
-  - [4.4 编辑和运行DolphinDB脚本](#44-编辑和运行dolphindb脚本)
-- [5. DolphinDB终端(DolphinDB Terminal)](#5-dolphindb终端dolphindb-terminal)
-- [6. 命令行远程脚本执行](#6-命令行远程脚本执行)
-- [7. 命令行本地脚本执行](#7-命令行本地脚本执行)
+**目录**
+
+  - [1. DolphinDB GUI](#1-dolphindb-gui)
+    - [1.1 核心概念](#11-核心概念)
+    - [1.2 安装和启动](#12-安装和启动)
+    - [1.3 程序执行及结果查看](#13-程序执行及结果查看)
+    - [1.4 中文出现乱码](#14-中文出现乱码)
+    - [1.5 精度配置](#15-精度配置)
+    - [1.6 `java.lang.OutOfMemoryError: Java heap space`](#16-javalangoutofmemoryerror-java-heap-space)
+  - [2. VS Code Extension](#2-vs-code-extension)
+    - [2.1 下载安装插件](#21-下载安装插件)
+    - [2.2 连接DolphinDB Server](#22-连接dolphindb-server)
+    - [2.3 编辑和运行DolphinDB脚本](#23-编辑和运行dolphindb脚本)
+    - [2.4 观察变量](#24-观察变量)
+  - [3. DolphinDB Notebook](#3-dolphindb-notebook)
+    - [3.1 启动](#31-启动)
+    - [3.2 登录](#32-登录)
+    - [3.3 集群管理以及系统监控](#33-集群管理以及系统监控)
+    - [3.4 程序执行以及结果查看](#34-程序执行以及结果查看)
+  - [4. DolphinDB Jupyter Notebook 扩展插件 （已停止维护）](#4-dolphindb-jupyter-notebook-扩展插件-已停止维护)
+    - [4.1 下载安装插件](#41-下载安装插件)
+    - [4.2 配置Jupyter Notebook工作路径](#42-配置jupyter-notebook工作路径)
+    - [4.3 连接DolphinDB Server](#43-连接dolphindb-server)
+    - [4.4 编辑和运行DolphinDB脚本](#44-编辑和运行dolphindb脚本)
+  - [5. DolphinDB终端(DolphinDB Terminal)](#5-dolphindb终端dolphindb-terminal)
+  - [6. 命令行远程脚本执行](#6-命令行远程脚本执行)
+  - [7. 命令行本地脚本执行](#7-命令行本地脚本执行)
+
 
 ## 1. DolphinDB GUI
 
@@ -242,9 +234,16 @@ DolphinDB Notebook 最主要的功能是用于集群节点管理、系统监控�
 
 ![image](images/Notebook/code_editing.JPG?raw=true)
 
-## 4. DolphinDB Jupyter Notebook 扩展插件
+## 4. DolphinDB Jupyter Notebook 扩展插件 （已停止维护）
 
 Jupyter Notebook 是基于网页的用于交互计算的应用程序，可被应用于全过程计算：开发、文档编写、运行代码和展示结果。用户可以直接通过浏览器编辑和交互式运行代码。DolphinDB database 提供了Jupyter Notebook 的插件。
+
+**注意**：DolphinDB 已停止对该插件的研发和维护。有关最新版本 DolphinDB server 的使用及其他应用教程，请参考：
+
+* [DolphinDB VSCode 插件说明](https://github.com/dolphindb/vscode-extension/blob/master/README.zh.md "DolphinDB VSCode 插件说明")
+* [DolphinDB GUI使用手册](https://www.dolphindb.cn/cn/gui/index.html "DolphinDB GUI使用手册")
+* [DolphinDB 用户手册](https://www.dolphindb.cn/cn/help/200/index.html "DolphinDB 用户手册")
+* [DolphinDB 教程](https://gitee.com/dolphindb/Tutorials_CN/tree/master "DolphinDB 教程")
 
 DolphinDB Jupyter Notebook 扩展插件提供以下功能：
 
