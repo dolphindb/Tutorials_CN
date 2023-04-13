@@ -4,7 +4,7 @@ DolphinDB database 提供了强大、灵活、安全的权限控制系统。
 
 权限控制系统的主要功能：
 * 提供用户和组角色，方便权限控制
-* 提供9种权限控制类别，适应各种场景
+* 提供多种权限控制类别，适应各种场景
 * 丰富的权限控制函数
 * 函数视图兼顾保护数据隐私与提供分析结果
 * 对任务调度和流数据任务动态鉴权，保证系统安全
@@ -121,14 +121,24 @@ grant("group2",TABLE_WRITE,"dfs://db1/t2")
 DolphinDB 提供以下权限类别:
 
 1. TABLE_READ：读取表中数据
-2. TABLE_WRITE：向表中写入数据 
-3. DBOBJ_CREATE：在某个数据库中创建数据表
-4. DBOBJ_DELETE：删除某个数据库中的数据表 
-5. VIEW_EXEC：执行视图 
-6. DB_MANAGE：创建以及删除数据库。可删除任何人所建数据库，包括具有 DB_OWNER 权限之用户所建数据库。
-7. DB_OWNER：创建数据库并管理其创建的数据库，包括删除数据库、创建或删除数据表、增加或删除分区、可赋予、禁止或取消其他用户对自己创建的数据库的以下权限：TABLE_READ, TABLE_WRITE, DBOBJ_CREATE, DBOBJ_DELETE。
-8. SCRIPT_EXEC：运行脚本文件 
-9. TEST_EXEC：执行测试脚本
+2. TABLE_WRITE：向表中写入数据
+3. TABLE_INSERT：向表中追加数据
+4. TABLE_UPDATE：更新表中数据
+5. TABLE_DELETE：删除表中数据
+6. DBOBJ_CREATE：在数据库中创建数据表
+7. DBOBJ_DELETE：删除数据库中的数据表 
+8. DB_READ：读取数据库中所有表
+9. DB_WRITE：对数据库中所有表的写入权限（包含增删改操作）
+10. DB_INSERT：向数据库中所有表追加数据
+11. DB_UPDATE：更新数据库中所有表
+12. DB_DELETE：删除数据库中所有表
+13. VIEW_EXEC：执行视图 
+14. DB_MANAGE：删除数据库。可删除任何人所建数据库，包括具有 DB_OWNER 权限之用户所建数据库
+15. DB_OWNER：创建数据库并管理其创建的数据库，包括删除数据库、创建或删除数据表、增加或删除分区、可赋予、禁止或取消其他用户对自己创建的数据库的以下权限：TABLE_READ, TABLE_WRITE, DBOBJ_CREATE, DBOBJ_DELETE
+16. SCRIPT_EXEC：运行脚本文件 
+17. TEST_EXEC：执行测试脚本
+18. QUERY_RESULT_MEM_LIMIT：限制用户的查询内存大小
+19. TASK_GROUP_MEM_LIMIT：限制用户发送的批量子查询占用的内存大小
 
 
 请注意，以上权限类别均适用于分布式（DFS）数据库和表；TABLE_READ 和 TABLE_WRITE 权限亦适用于共享内存表、流数据表与流数据引擎。
@@ -159,7 +169,7 @@ createUser("NickFoles","AB123!@")
 ```
 grant("NickFoles",TABLE_READ,"*") 
 ```
-禁止用户 NickFoles 创建或删除数据库：
+禁止用户 NickFoles 删除数据库：
 ```
 deny("NickFoles",DB_MANAGE)   
 ```
@@ -186,7 +196,7 @@ grant("football", TABLE_READ, "dfs://TAQ/quotes")
 grant("DeionSanders", DB_MANAGE)  
 ```
 
-该例子创建了3个用户（EliManning, JoeFlacco, DeionSanders）和1个组（football），并且这三个用户属于该组。赋予此组可读数据表”dfs://TAQ/quotes" 的权限，同时只赋予用户 DeionSanders 创建和删除数据库的权限。
+该例子创建了3个用户（EliManning, JoeFlacco, DeionSanders）和1个组（football），并且这三个用户属于该组。赋予此组可读数据表”dfs://TAQ/quotes" 的权限，同时只赋予用户 DeionSanders 删除数据库的权限。
 
 **例子3**
 
