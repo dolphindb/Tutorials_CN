@@ -19,7 +19,8 @@
 
   - [DolphinDB Docker单机部署方案](../../../dolphindb-k8s/blob/master/docker_single_deployment.md)
   - [基于Docker-Compose的DolphinDB多容器集群部署](../../../dolphindb-k8s/blob/master/docker-compose_high_cluster.md)
-  - [快速上手 DolphinDB-Mgr](../../../dolphindb-k8s/blob/master/deploy_k8s_quickly.md)
+  - [DolphinDB 套件简介](../../../dolphindb-k8s/blob/master/suite_brief_introduction.md)
+  - [快速上手 DolphinDB MGR](../../../dolphindb-k8s/blob/master/deploy_k8s_quickly.md)
   - [自托管的 Kubernetes 部署 DolphinDB 集群](../../../dolphindb-k8s/blob/master/k8s_deployment.md)
   - [AWS Markeplace上的DolphinDB MGR快速上手](../../../dolphindb-k8s/blob/master/k8s_deployment_in_AWS.md)
   - [基于阿里云K8S的DolphinDB套件部署教程](../../../dolphindb-k8s/blob/master/k8s_deployment_in_Aliyun.md)
