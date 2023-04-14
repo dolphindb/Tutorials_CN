@@ -14,6 +14,7 @@
   - [用新服务器从零开始部署 DolphinDB](deploy_dolphindb_on_new_server.md)
   - [高可用集群灰度升级](gray_scale_upgrade_ha.md)
   - [HAProxy 在 DolphinDB 中的最佳实践](haProxy_best_practices.md)
+  - [计算节点使用指南](Compute_Node.md)
   
 - 云上部署 DolphinDB
 
