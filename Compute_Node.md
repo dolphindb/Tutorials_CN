@@ -64,7 +64,7 @@ DolphinDB 自版本1.30.14，2.00.1开始支持计算节点，能够有效地解
 不存储分布式表数据、元数据文件，是一个轻状态的服务组件。计算节点的启停流程十分精简，任何故障都可以通过重启节点来进行快速修复。同时，计算节点可以进行快速地[扩缩容](#44-计算节点扩缩容)。
 有关计算节点的启停步骤，参考：[启动数据节点和计算节点](https://gitee.com/dolphindb/Tutorials_CN/blob/master/multi_machine_cluster_deployment.md#%E7%AC%AC%E5%9B%9B%E6%AD%A5%E5%90%AF%E5%8A%A8%E9%9B%86%E7%BE%A4)
 
-如下图所示3个数据节点、3个数据节点的集群：  
+如下图所示3个数据节点、3个计算节点的集群：  
 
 <figure align="left">
 <img src="./images/Compute_Node/1_1.png" width=50%>  
