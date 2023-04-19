@@ -205,6 +205,7 @@
     - [DolphinDB通过Telegraf与Grafana实现设备指标的采集监控和展示](DolphinDB_Telegraf_Grafana.md)
     - [DolphinDB 机器学习在物联网行业的应用：实时数据异常预警](knn_iot.md)
     - [DolphinDB流计算应用：引擎级联监测门禁异常状态](streaming_engine_anomaly_alerts.md)
+    - [基于 DolphinDB 机器学习的出租车行程时间预测](Forecast_of_Taxi_Trip_Duration.md)
 
 - 入门和测试
 

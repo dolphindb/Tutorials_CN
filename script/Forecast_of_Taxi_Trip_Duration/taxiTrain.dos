@@ -1,0 +1,373 @@
+// server version 200.9.1
+/******** 行程时间预测训练模型 ********/ 
+undef(all)
+clearAllCache()
+go;
+if(existsDatabase("dfs://taxi")) dropDatabase("dfs://taxi")
+unsubscribeTable(, `orderTable, `saveToDisk)
+unsubscribeTable(, `traitTable, `predict)
+unsubscribeTable(, `orderTable, `orderProcess)
+
+try{ dropStreamTable(`orderTable) } catch(ex) { print(ex) }
+try{ dropStreamTable(`traitTable) } catch(ex) { print(ex) }
+try{ dropStreamTable(`predictTable) } catch(ex) { print(ex) }
+go;
+
+test = loadText("./taxidata/test.csv")
+train = loadText("./taxidata/train.csv") 
+select top 1 * from test
+select top 1 * from train
+
+test.schema().colDefs
+train.schema().colDefs
+
+// 按范围共分两个分区
+db = database("dfs://taxi", partitionType=RANGE, partitionScheme=sort(2016.01.01 2016.03.31 2016.06.30), engine='TSDB')
+
+db.createPartitionedTable(table=test, tableName=`testData, partitionColumns=`pickup_datetime, sortColumns=`pickup_datetime, compressMethods={datetime:"delta"}).append!(test)
+db.createPartitionedTable(table=train, tableName=`trainData, partitionColumns=`pickup_datetime, sortColumns=`pickup_datetime, compressMethods={datetime:"delta"}).append!(train)
+
+testTable = loadTable("dfs://taxi", `testData)
+trainTable = loadTable("dfs://taxi", `trainData)
+
+testData = select * from testTable
+trainData = select * from trainTable
+trainData.schema().colDefs
+// 空值检查
+sum(isNull(testData))  // 0
+sum(isNull(trainData))  // 0
+
+test_n = size(testData)
+train_n = size(trainData)
+
+// log(trip_duration)
+trainData[`log_trip_duration] = log(double(trainData[`trip_duration]) + 1)
+// cast char to int
+trainData[`store_and_fwd_flag_int] = iif(trainData[`store_and_fwd_flag] == 'N', int(0), int(1))
+testData[`store_and_fwd_flag_int] = iif(testData[`store_and_fwd_flag] == 'N', int(0), int(1))
+
+select max(trip_duration / 3600) from trainData
+
+// 添加时间特征
+trainData['pickup_date'] = date(trainData['pickup_datetime'])
+testData['pickup_date'] = date(testData['pickup_datetime'])
+
+trainData['pickup_weekday'] = weekday(trainData['pickup_datetime'])
+trainData['pickup_hour_weekofyear'] = weekOfYear(trainData['pickup_datetime'])
+trainData['pickup_hour'] = hour(trainData['pickup_datetime'])
+trainData['pickup_minute'] = long(minute(trainData['pickup_datetime']))
+trainData['pickup_week_hour'] = trainData['pickup_weekday'] * 24 + trainData['pickup_hour']
+
+testData['pickup_weekday'] = weekday(testData['pickup_datetime'])
+testData['pickup_hour_weekofyear'] = weekOfYear(testData['pickup_datetime'])
+testData['pickup_hour'] = hour(testData['pickup_datetime'])
+testData['pickup_minute'] = int(minute(testData['pickup_datetime']))
+testData['pickup_week_hour'] = testData['pickup_weekday'] * 24 + testData['pickup_hour']
+
+/* PCA */
+PCApara = table(1:0, `latitude`longitude, [DOUBLE, DOUBLE])
+trainPickPara = table(trainData[`pickup_latitude] as latitude, trainData[`pickup_longitude] as longitude)
+trainDropPara = table(trainData[`dropoff_latitude] as latitude, trainData[`dropoff_longitude] as longitude)
+testPickPara = table(testData[`pickup_latitude] as latitude, testData[`pickup_longitude] as longitude)
+testDropPara = table(testData[`dropoff_latitude] as latitude, testData[`dropoff_longitude] as longitude)
+PCApara.append!(trainPickPara)
+PCApara.append!(trainDropPara)
+PCApara.append!(testPickPara)
+PCApara.append!(testDropPara)
+
+// 训练PCA模型
+timer { pca_model = pca(sqlDS(<select * from PCApara>)) }
+saveText(pca_model.components, "./taxidata/PCA.model")
+// PCA transform: https://github.com/scikit-learn/scikit-learn/blob/9aaed4987/sklearn/decomposition/_base.py#L100
+// 计算新特征
+pca_trainpick = dot((matrix(trainPickPara) - repmat(matrix(avg(trainPickPara)), train_n, 1)), pca_model.components)
+pca_traindrop = dot((matrix(trainDropPara) - repmat(matrix(avg(trainDropPara)), train_n, 1)), pca_model.components)
+pca_testpick = dot((matrix(testPickPara) - repmat(matrix(avg(testPickPara)), test_n, 1)), pca_model.components)
+pca_testdrop = dot((matrix(testDropPara) - repmat(matrix(avg(testDropPara)), test_n, 1)), pca_model.components)
+
+trainData[`pca_trainpick_0] = flatten(pca_trainpick[:, 0])
+trainData[`pca_trainpick_1] = flatten(pca_trainpick[:, 1])
+trainData[`pca_traindrop_0] = flatten(pca_traindrop[:, 0])
+trainData[`pca_traindrop_1] = flatten(pca_traindrop[:, 1])
+testData[`pca_testpick_0] = flatten(pca_testpick[:, 0])
+testData[`pca_testpick_1] = flatten(pca_testpick[:, 1])
+testData[`pca_testdrop_0] = flatten(pca_testdrop[:, 0])
+testData[`pca_testdrop_1] = flatten(pca_testdrop[:, 1])
+
+// 原始数据
+ox = select top 500 pickup_latitude as pickup_position from trainData
+oy = flatten(matrix(select top 500 pickup_longitude from trainData))
+plot(ox, oy, chartType=SCATTER)
+
+// after PCA
+x = select top 500 pca_trainpick_1 as pickup_position from trainData
+y = flatten(matrix(select top 500 pca_trainpick_0 from trainData))
+plot(x, y, chartType=SCATTER)
+
+/* kmeans */
+// 随机取500000数据训练kmeans模型
+kmeans_set = PCApara[rand(size(PCApara)-1, 500000)]
+timer { kmeans_model = kmeans(kmeans_set, 100, maxIter=100, init='k-means++') }
+saveModel(kmeans_model, "./taxidata/KMeans.model")
+
+trainData['pickup_cluster'] = kmeans_model.predict(select pickup_latitude, pickup_longitude from trainData)
+trainData['dropoff_cluster'] = kmeans_model.predict(select dropoff_latitude, dropoff_longitude from trainData)
+testData['pickup_cluster'] = kmeans_model.predict(select pickup_latitude, pickup_longitude from testData)
+testData['dropoff_cluster'] = kmeans_model.predict(select dropoff_latitude, dropoff_longitude from testData)
+// saveText(<select pickup_cluster, pickup_latitude, pickup_longitude from trainData>, "/home/t.csv")
+t = select count(*) from trainData group by pickup_cluster order by pickup_cluster
+plot(select count from t, chartType=BAR)
+/* 位置特征工程 */
+// haversine公式计算两经纬度点距离
+def haversine_array(lat1_, lng1_, lat2_, lng2_) {
+   lat1, lng1, lat2, lng2 = double(deg2rad([lat1_, lng1_, lat2_, lng2_]))
+   // print(lat1, lng1, lat2, lng2)
+   AVG_EARTH_RADIUS = 6371 // in km
+   lat = lat2 - lat1
+   lng = lng2 - lng1
+   d = sin(lat * 0.5) * sin(lat * 0.5) + cos(lat1) * cos(lat2) * sin(lng * 0.5) * sin(lng * 0.5)
+   h = 2 * AVG_EARTH_RADIUS * asin(sqrt(d))
+   return h
+}
+// 两个经纬度之间的Manhattan距离计算
+def dummy_manhattan_distance(lat1, lng1, lat2, lng2) {
+   a = haversine_array(lat1, lng1, lat1, lng2) // latitude 方向
+   b = haversine_array(lat1, lng1, lat2, lng1) // longitude 方向
+   return a + b
+}
+
+// 两个经纬度之间的方位信息
+def bearing_array(lat1_, lng1_, lat2_, lng2_) {
+    AVG_EARTH_RADIUS = 6371 // in km
+    lng_delta_rad = deg2rad(lng2_ - lng1_)
+    lat1, lng1, lat2, lng2 = deg2rad([lat1_, lng1_, lat2_, lng2_])
+    y = sin(lng_delta_rad) * cos(lat2)
+    x = cos(lat1) * sin(lat2) - sin(lat1) * cos(lat2) * cos(lng_delta_rad)
+    return rad2deg(atan(y/x))
+}
+
+// 添加空间特征
+trainData['distance_haversine'] = haversine_array(trainData['pickup_latitude'], trainData['pickup_longitude'], trainData['dropoff_latitude'], trainData['dropoff_longitude'])
+trainData['distance_dummy_manhattan'] = dummy_manhattan_distance(trainData['pickup_latitude'], trainData['pickup_longitude'], trainData['dropoff_latitude'], trainData['dropoff_longitude'])
+trainData['direction'] = bearing_array(trainData['pickup_latitude'], trainData['pickup_longitude'], trainData['dropoff_latitude'], trainData['dropoff_longitude'])
+trainData['pca_manhattan'] = abs(trainData['pca_traindrop_1'] - trainData['pca_trainpick_1']) + abs(trainData['pca_traindrop_0'] - trainData['pca_trainpick_0'])
+
+testData['distance_haversine'] = haversine_array(testData['pickup_latitude'], testData['pickup_longitude'], testData['dropoff_latitude'], testData['dropoff_longitude'])
+testData['distance_dummy_manhattan'] = dummy_manhattan_distance(testData['pickup_latitude'], testData['pickup_longitude'], testData['dropoff_latitude'], testData['dropoff_longitude'])
+testData['direction'] = bearing_array(testData['pickup_latitude'], testData['pickup_longitude'], testData['dropoff_latitude'], testData['dropoff_longitude'])
+testData['pca_manhattan'] = abs(testData['pca_testdrop_1'] - testData['pca_testpick_1']) + abs(testData['pca_testdrop_0'] - testData['pca_testpick_0'])
+
+// 中心点
+trainData['center_latitude'] = (trainData['pickup_latitude'] + trainData['dropoff_latitude']) / 2
+trainData['center_longitude'] = (trainData['pickup_longitude'] + trainData['dropoff_longitude']) / 2
+testData['center_latitude'] = (testData['pickup_latitude'] + testData['dropoff_latitude']) / 2
+testData['center_longitude'] = (testData['pickup_longitude'] + testData['dropoff_longitude']) / 2
+
+// 添加速度特征
+trainData['avg_speed_h'] = 1000 * trainData['distance_haversine'] / trainData['trip_duration']
+trainData['avg_speed_m'] = 1000 * trainData['distance_dummy_manhattan'] / trainData['trip_duration']
+
+// 按时间、聚类等信息处理速度、行驶时间，产生新特征
+// trainData['pickup_dt_bin'] = (trainData['pickup_dt'] / (3 * 3600))
+// testData['pickup_dt_bin'] = (testData['pickup_dt'] / (3 * 3600))
+for(gby_col in ['pickup_hour', 'pickup_date', 'pickup_week_hour', 'pickup_cluster', 'dropoff_cluster']) {
+    for(gby_para in ['avg_speed_h', 'avg_speed_m', 'log_trip_duration']) {
+        gby = groupby(avg, trainData[gby_para], trainData[gby_col])
+        gby.rename!(`avg_ + gby_para, gby_para + '_gby_' + gby_col)
+        trainData = fj(trainData, gby, gby_col)
+        testData = fj(testData, gby, gby_col)
+    }
+    trainData.dropColumns!(`gby_ + gby_col)
+    testData.dropColumns!(`gby_ + gby_col)
+}
+// 保存训练集特征
+db = database("dfs://taxi")
+db.createPartitionedTable(table=trainData, tableName=`traitData, partitionColumns=`pickup_datetime, sortColumns=`pickup_datetime, compressMethods={datetime:"delta"}).append!(trainData)
+
+/* Xgboost */
+// 数据集划分
+trainRatio = 0.8
+trainSize = size(trainData)
+num = (0..(trainSize-1)).shuffle()
+trainId = num[0:int(trainSize*trainRatio)]
+validId = num[int(trainSize*trainRatio):trainSize]
+train = trainData[trainId]
+ytrain = log(double(trainData[trainId][`trip_duration]) + 1)
+valid = trainData[validId]
+yvalid = log(double(trainData[validId][`trip_duration]) + 1)
+// 删除非特征数据
+feature_filter = ['id', 'log_trip_duration', 'pickup_datetime', 'dropoff_datetime',
+                    'trip_duration', 'store_and_fwd_flag',
+                    'pickup_date', 'avg_speed_h', 'avg_speed_m']
+for(col in feature_filter) {
+    train.dropColumns!(col)
+    valid.dropColumns!(col)
+}
+test = testData
+test_feature_filter = ['id', 'pickup_datetime', 'store_and_fwd_flag', 'pickup_date']
+for(col in test_feature_filter) {
+    test.dropColumns!(col)
+}
+
+// loadPlugin("./plugins/xgboost/PluginXgboost.txt")
+// xgb 参数设置
+xgb_pars = {'min_child_weight': 50, 'eta': 0.3, 'colsample_bytree': 0.3, 'max_depth': 10,
+            'subsample': 0.8, 'lambda': 1., 'nthread': 4, 'booster' : 'gbtree', 'silent': 1,
+            'eval_metric': 'rmse', 'objective': 'reg:linear', 'nthread': 48}
+// Xgb 训练耗时 37.315s
+// xgbModel = xgboost::loadModel("./taxidata/XGBoost.model")
+timer { xgbModel = xgboost::train(ytrain, train, xgb_pars, 60) }
+
+yvalid_ = xgboost::predict(xgbModel, valid)
+
+xgboost::saveModel(xgbModel, "./taxidata/XGBoost.model")
+
+saveText(table(yvalid), "./taxidata/001.csv")
+saveText(table(yvalid_), "./taxidata/001.csv")
+
+def RMSE(y_true, y_pred) {
+    return sqrt(avg((y_true - y_pred) * (y_true - y_pred)))
+}
+
+N = 5000
+plot(yvalid[:N], yvalid_[:N], chartType=SCATTER)
+print(RMSE(yvalid, yvalid_))
+// 预测测试集的行驶时间
+y = xgboost::predict(xgbModel, test)
+
+testData[`predict_trip_duration] = y
+// 导出预测结果
+saveText(testData, "./taxidata/submission.csv")
+// 同时可以将结果存入分布式数据库
+db.createPartitionedTable(table=testData, tableName=`submission, partitionColumns=`pickup_datetime, sortColumns=`pickup_datetime, compressMethods={datetime:"delta"}).append!(testData)
+// 预测数据已入库表
+t = loadTable("dfs://taxi", "submission")
+t.schema().colDefs.name
+
+/******** 流数据预测 ********/ 
+undef(all)
+clearAllCache()
+go;
+// 创建流表，模拟接受订单行程数据
+orderColName = `id`vendor_id`pickup_datetime`passenger_count`pickup_longitude`pickup_latitude`dropoff_longitude`dropoff_latitude`store_and_fwd_flag
+orderColType = `SYMBOL`INT`DATETIME`INT`DOUBLE`DOUBLE`DOUBLE`DOUBLE`CHAR
+traitColName = `id`vendor_id`pickup_datetime`passenger_count`pickup_longitude`pickup_latitude`dropoff_longitude`dropoff_latitude`store_and_fwd_flag`store_and_fwd_flag_int`pickup_weekday`pickup_hour_weekofyear`pickup_hour`pickup_minute`pickup_week_hour`pca_testpick_0`pca_testpick_1`pca_testdrop_0`pca_testdrop_1`pickup_cluster`dropoff_cluster`distance_haversine`distance_dummy_manhattan`direction`pca_manhattan`center_latitude`center_longitude`avg_speed_h_gby_pickup_hour`avg_speed_m_gby_pickup_hour`log_trip_duration_gby_pickup_hour`avg_speed_h_gby_pickup_date`avg_speed_m_gby_pickup_date`log_trip_duration_gby_pickup_date`avg_speed_h_gby_pickup_week_hour`avg_speed_m_gby_pickup_week_hour`log_trip_duration_gby_pickup_week_hour`avg_speed_h_gby_pickup_cluster`avg_speed_m_gby_pickup_cluster`log_trip_duration_gby_pickup_cluster`avg_speed_h_gby_dropoff_cluster`avg_speed_m_gby_dropoff_cluster`log_trip_duration_gby_dropoff_cluster
+traitColType = `SYMBOL`INT`DATETIME`INT`DOUBLE`DOUBLE`DOUBLE`DOUBLE`CHAR`INT`INT`INT`INT`INT`INT`INT`DOUBLE`DOUBLE`DOUBLE`DOUBLE`INT`INT`DOUBLE`DOUBLE`DOUBLE`DOUBLE`DOUBLE`DOUBLE`DOUBLE`DOUBLE`DOUBLE`DOUBLE`DOUBLE`DOUBLE`DOUBLE`DOUBLE`DOUBLE`DOUBLE`DOUBLE`DOUBLE`DOUBLE`DOUBLE
+predictColName = `id`vendor_id`pickup_datetime`passenger_count`pickup_longitude`pickup_latitude`dropoff_longitude`dropoff_latitude`store_and_fwd_flag`duration
+predictColType = `SYMBOL`INT`DATETIME`INT`DOUBLE`DOUBLE`DOUBLE`DOUBLE`CHAR`DOUBLE
+// 订单信息表
+share streamTable(100000:0, orderColName, orderColType) as orderTable
+// 特征表
+share streamTable(100000:0, traitColName, traitColType) as traitTable
+// 预测结果表
+share streamTable(100000:0, predictColName, predictColType) as predictTable
+
+// 两个经纬度之间的haversine距离计算
+def haversine_array(lat1_, lng1_, lat2_, lng2_) {
+    lat1, lng1, lat2, lng2 = double(deg2rad([lat1_, lng1_, lat2_, lng2_]))
+    // print(lat1, lng1, lat2, lng2)
+    AVG_EARTH_RADIUS = 6371 // in km
+    lat = lat2 - lat1
+    lng = lng2 - lng1
+    d = sin(lat * 0.5) * sin(lat * 0.5) + cos(lat1) * cos(lat2) * sin(lng * 0.5) * sin(lng * 0.5)
+    h = 2 * AVG_EARTH_RADIUS * asin(sqrt(d))
+    return h
+}
+// 两个经纬度之间的Manhattan距离计算
+def dummy_manhattan_distance(lat1, lng1, lat2, lng2) {
+    a = haversine_array(lat1, lng1, lat1, lng2) // latitude 方向
+    b = haversine_array(lat1, lng1, lat2, lng1) // longitude 方向
+    return a + b
+}
+
+// 两个经纬度之间的方位信息
+def bearing_array(lat1_, lng1_, lat2_, lng2_) {
+    AVG_EARTH_RADIUS = 6371 // in km
+    lng_delta_rad = deg2rad(lng2_ - lng1_)
+    lat1, lng1, lat2, lng2 = deg2rad([lat1_, lng1_, lat2_, lng2_])
+    y = sin(lng_delta_rad) * cos(lat2)
+    x = cos(lat1) * sin(lat2) - sin(lat1) * cos(lat2) * cos(lng_delta_rad)
+    return rad2deg(atan(y/x))
+}
+// 数据处理和特征生成，流表将使用该函数处理订阅的数据
+def process(mutable traitTable, mutable hisData, msg) {
+    t = msg
+    sz = size(msg)
+    pca_component = loadText("./taxidata/PCA.model")
+    kmeans_model = loadModel("./taxidata/KMeans.model")
+    t[`store_and_fwd_flag_int] = iif(t[`store_and_fwd_flag] == 'N', int(0), int(1))
+    t['pickup_date'] = date(t['pickup_datetime'])
+    t['pickup_weekday'] = weekday(t['pickup_datetime'])
+    t['pickup_hour_weekofyear'] = weekOfYear(t['pickup_datetime'])
+    t['pickup_hour'] = hour(t['pickup_datetime'])
+    t['pickup_minute'] = int(minute(t['pickup_datetime']))
+    // t['pickup_dt'] = int(second((t['pickup_datetime'] - datetime(2016.01.01))))
+    t['pickup_week_hour'] = t['pickup_weekday'] * 24 + t['pickup_hour']
+    pca_component = matrix(pca_component)
+    avg_pick_pos = matrix(avg(table(hisData[`pickup_latitude] as latitude, hisData[`pickup_longitude] as longitude)))
+    avg_drop_pos = matrix(avg(table(hisData[`dropoff_latitude] as latitude, hisData[`dropoff_longitude] as longitude)))
+    pca_pick = dot((matrix(table(t[`pickup_latitude] as latitude, t[`pickup_longitude] as longitude)) - repmat(avg_pick_pos, sz, 1)), pca_component)
+    pca_drop = dot((matrix(table(t[`dropoff_latitude] as latitude, t[`dropoff_longitude] as longitude)) - repmat(avg_drop_pos, sz, 1)), pca_component)
+
+    t[`pca_testpick_0] = flatten(pca_pick[:, 0])
+    t[`pca_testpick_1] = flatten(pca_pick[:, 1])
+    t[`pca_testdrop_0] = flatten(pca_drop[:, 0])
+    t[`pca_testdrop_1] = flatten(pca_drop[:, 1])
+    t['pickup_cluster'] = kmeans_model.predict(select pickup_latitude, pickup_longitude from t)
+    t['dropoff_cluster'] = kmeans_model.predict(select dropoff_latitude, dropoff_longitude from t)
+    t['distance_haversine'] = haversine_array(t['pickup_latitude'], t['pickup_longitude'], t['dropoff_latitude'], t['dropoff_longitude'])
+    t['distance_dummy_manhattan'] = dummy_manhattan_distance(t['pickup_latitude'], t['pickup_longitude'], t['dropoff_latitude'], t['dropoff_longitude'])
+    t['direction'] = bearing_array(t['pickup_latitude'], t['pickup_longitude'], t['dropoff_latitude'], t['dropoff_longitude'])
+    t['pca_manhattan'] = abs(t['pca_testdrop_1'] - t['pca_testpick_1']) + abs(t['pca_testdrop_0'] - t['pca_testpick_0'])
+    t['center_latitude'] = (t['pickup_latitude'] + t['dropoff_latitude']) / 2
+    t['center_longitude'] = (t['pickup_longitude'] + t['dropoff_longitude']) / 2
+    // t['pickup_dt_bin'] = (t['pickup_dt'] / (3 * 3600))
+    hisData.schema().colDefs
+    gby = t[`id]
+    for(gby_col in ['pickup_hour', 'pickup_date', 'pickup_week_hour', 'pickup_cluster', 'dropoff_cluster']) {
+        for(gby_para in ['avg_speed_h', 'avg_speed_m', 'log_trip_duration']) {
+            gby = groupby(avg, hisData[gby_para], hisData[gby_col])
+            gby.rename!(`avg_ + gby_para, gby_para + '_gby_' + gby_col)
+            t = lsj(t, gby, gby_col)
+        }
+    }
+    t.dropColumns!(`pickup_date)
+    traitTable.append!(t)
+    return traitTable
+}
+// 订阅订单表，使用 PCA KMeans 等构建新特征，输出特征表
+// 历史数据
+hisData = loadTable("dfs://taxi", `traitData)
+hisData = select * from hisData
+subscribeTable(tableName="orderTable", actionName="orderProcess", offset=0, handler=process{traitTable, hisData}, msgAsTable=true, batchSize=1, throttle=1, hash=0, reconnect=true)
+
+// 使用 XGBoost 预测行程时间
+def predictDuration(mutable predictTable, msg) {
+    x = msg
+    feature = select id, pickup_datetime, store_and_fwd_flag from x
+    for(col in ['id', 'pickup_datetime', 'store_and_fwd_flag']) {
+        x.dropColumns!(col)
+    }
+    xgboost_model = xgboost::loadModel("./taxidata/XGBoost.model")
+    y = xgboost::predict(xgboost_model, x)
+    for(col in [`id, 'pickup_datetime', 'store_and_fwd_flag']) {
+        x[col] = feature[col]
+    }
+    predict = select id, vendor_id, pickup_datetime, passenger_count ,pickup_longitude, pickup_latitude, dropoff_longitude, dropoff_latitude, store_and_fwd_flag, y as duration from x
+    predictTable.append!(predict)
+    return predictTable
+}
+
+// 订阅特征流表，使用 XGBoost 预测模型，输出行程时间预测值
+subscribeTable(tableName="traitTable", actionName="predict", offset=0, handler=predictDuration{predictTable}, msgAsTable=true, hash=1, reconnect=true)
+
+// 回放数据，模拟实时产生数据
+data = loadTable("dfs://taxi", `testData)
+data = select * from data
+submitJob("replay", "trade",  replay{inputTables=data, outputTables=orderTable, dateColumn=`pickup_datetime, timeColumn=`pickup_datetime, replayRate=25, absoluteRate=true, parallelLevel=1})
+
+// 实时订单数据落盘
+db = database("dfs://taxi")
+if(existsTable("dfs://taxi", "newData")) { dropTable(db, "newData") }
+db.createPartitionedTable(table=table(1:0, orderTable.schema().colDefs.name, orderTable.schema().colDefs.typeString), tableName=`newData, partitionColumns=`pickup_datetime, sortColumns=`pickup_datetime, compressMethods={datetime:"delta"})
+subscribeTable(tableName="orderTable", actionName="saveToDisk", offset=0, handler=loadTable("dfs://taxi", "newData"), msgAsTable=true, batchSize=100000, throttle=1, reconnect=true)
