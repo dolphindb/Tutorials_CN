@@ -422,9 +422,9 @@ ccsRank = createCrossSectionalAggregator(name="alpha1CCS", metrics=<[sym, rank(m
 
 @state
 def wqAlpha1TS(close){
-ret = ratios(close) - 1
-v = iif(ret < 0, mstd(ret, 20), close)
-return mimax(signum(v)*v*v, 5)
+    ret = ratios(close) - 1
+    v = iif(ret < 0, mstd(ret, 20), close)
+    return mimax(signum(v)*v*v, 5)
 }
 
 //创建响应式状态引擎，输出到前面的横截面引擎ccsRank
@@ -439,9 +439,9 @@ rse = createReactiveStateEngine(name="alpha1", metrics=<[time, wqAlpha1TS(close)
 ```
 @state
 def wqAlpha1TS(close){
-ret = ratios(close) - 1
-v = iif(ret < 0, mstd(ret, 20), close)
-return mimax(signum(v)*v*v, 5)
+    ret = ratios(close) - 1
+    v = iif(ret < 0, mstd(ret, 20), close)
+    return mimax(signum(v)*v*v, 5)
 }
 
 //构建计算因子
@@ -702,14 +702,23 @@ clears(`mem_stream_f,`action_to_ticksStream_tfe)
 <-->
 ## 7 状态监控
 
-当通过订阅方式对流数据进行实时处理时，所有的计算都在后台进行，用户无法直观的看到运行的情况。DolphinDB提供[getStreamingStat](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/g/getStreamingStat.html)函数，可以查看系统中定义的全部流计算引擎、各个引擎的内存占用等状态，每一类引擎对应一张表，全方位监控流数据处理过程。该函数返回的是一个dictionary，包含pubConns, subConns, persistWorkers, subWorkers, pubTables五个表。
-* pubConns表会列出该节点所有的订阅节点信息，发布队列情况，以及流数据表名称。
-* subConns列出每个本地节点订阅的所有发布节点的连接状态和有关接收消息的统计信息。
-* 只有持久化启用后，才能通过`getStreamingStat`获取persistWorkers表。这张表的记录数等于persistenceWorkerNum配置值。若要并行处理持久化数据表的任务，可设置persistenceWorkerNum>1。
-* subWorkers表监控流数据订阅工作线程。当有流数据进入时，可以通过该表观察到已处理数据的信息。
-* pubTables表监控流数据表被订阅情况
+当通过订阅方式对流数据进行实时处理时，所有的计算都在后台进行，用户无法直观的看到运行的情况。DolphinDB提供以下函数监控流数据处理及流计算引擎的状态：
 
+* [getStreamingStat](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/g/getStreamingStat.html)：全方位监控流数据处理过程。
+* [getStreamEngineStat](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/g/getStreamEngineStat.html)：可以查看系统中定义的全部流计算引擎、各个引擎的内存占用等状态，每一类引擎对应一张表。
+
+### 7.1 流数据处理状态
+
+`getStreamingStat` 函数返回一个dictionary，包含以下五个表：
+
+* pubConns：列出该节点所有的订阅节点信息，发布队列情况，以及流数据表名称。
+* subConns：列出每个本地节点订阅的所有发布节点的连接状态和有关接收消息的统计信息。
+* persistWorkers：只有持久化启用后，才能通过`getStreamingStat`获取persistWorkers表。这张表的记录数等于persistenceWorkerNum配置值。若要并行处理持久化数据表的任务，可设置persistenceWorkerNum>1。
+* subWorkers：表监控流数据订阅工作线程。当有流数据进入时，可以通过该表观察到已处理数据的信息。
+* pubTables：表监控流数据表被订阅情况
+* 
 在调用`subscribeTable`函数后，通过 getStreamingStat().pubTables 可以立刻查看到对应的订阅任务。在工作线程实际处理到数据后，才可以在 getStreamingStat().subWorkers 中查看到对应的工作线程的状态。
+
 <!--和手册内容重复，考虑删除>
 ### 7.1 流计算状态
 
@@ -827,7 +836,8 @@ act_getdata"。那么当订阅完成之后，用getStreamingStat().pubTables 查
 
 ![image](./images/streaming/pubtables1.png)
 <-->
-### 7.1 流数据引擎状态
+
+### 7.2 流数据引擎状态
 
 调用 [getStreamEngineStat()](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/g/getStreamEngineStat.html) 会返回一个字典，其key为引擎类型名称，value为一个表，包含key对应引擎的状态。
 
@@ -866,4 +876,4 @@ act_getdata"。那么当订阅完成之后，用getStreamingStat().pubTables 查
 
 - 趋势监控：把新产生的数据附加到原有的数据上并以可视化图表的方式实时更新。
 
-很多数据可视化的平台都能支持流数据的实时监控，比如当前流行的开源数据可视化框架Grafana。DolphinDB database 已经实现了Grafana的服务端和客户端的接口，具体配置可以参考[grafana教程](https://gitee.com/dolphindb/grafana-datasource/blob/master/README.zh.md)
+很多数据可视化的平台都能支持流数据的实时监控，比如当前流行的开源数据可视化框架Grafana。DolphinDB database 已经实现了Grafana的服务端和客户端的接口，具体配置可以参考[grafana教程](../../grafana-datasource/blob/master/README.zh.md)
