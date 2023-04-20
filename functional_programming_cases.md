@@ -217,10 +217,10 @@ DolphinDB 中可以创建自定义函数，可以是命名函数或者匿名函�
 
 ```shell
 x = 1..10
-each(x -> pow(x,2), x)
+each(x -> pow(x,2) + 3*x + 4.0, x)
 ```
 
-上例定义了一个 lambda 表达式: `x -> pow(x,2)`，作为高阶函数 `each` 的参数，来计算每一个元素的平方。
+上例定义了一个 lambda 表达式: `x -> pow(x,2) + 3*x + 4.0`，作为高阶函数 `each` 的参数，来计算每一个元素的平方。
 
 接下去的例子中，也会有其它的 lambda 函数案例。
 
@@ -494,7 +494,7 @@ each(parse_signals{tbl_value}, [v1, v2]);
 Not allowed to create void vector
 ```
 
-`each` 作为高阶函数，会并行执行多个计算任务。第一个任务的结果类型将决定整个函数的运行结果的类型。若单个任务返回一个 scalar，那么 `each` 返回一个 vector；若单个任务返回 vector，那么 `each` 返回一个 matrix；若单个任务返回字典 `each`，那么 `each` 返回一个 table。
+`each` 作为高阶函数，会并行执行多个计算任务。第一个任务的结果类型将决定整个函数的运行结果的类型。若单个任务返回一个 scalar，那么 `each` 返回一个 vector；若单个任务返回 vector，那么 `each` 返回一个 matrix；若单个任务返回字典，那么 `each` 返回一个 table。
 
 该问题中的 parse_signals 函数没有任何返回值（也就是返回一个 NOTHING 标量），所以 `each` 试图去创建一个类型为 void 的 vector，这在 DolphinDB 中是不被允许的。
 
@@ -548,7 +548,7 @@ update t set signal = moving(rangeTest, [close, downAvgPrice, upAvgPrice], 21)
 t=table(rand("d"+string(1..n),n) as ts_code, nanotimestamp(2008.01.10+1..n) as trade_date, rand(n,n) as open, rand(n,n) as high, rand(n,n) as low, rand(n,n) as close, rand(n,n) as pre_close, rand(n,n) as change, rand(n,n) as pct_change, rand(n,n) as vol, rand(n,n) as amount, rand(n,n) as downAvgPrice, rand(n,n) as upAvgPrice, rand(1 0,n) as singna)
 ```
 
-rolling 和 moving 类似，都将函数运算符应用到滑动窗口，进行窗口计算。两者也有细微区别： [`rolling`]((https://www.dolphindb.cn/cn/help/Functionalprogramming/TemplateFunctions/rolling.html?highlight=rolling)) 可以指定步长 step，moving 的步长为 1；且两者对空值的处理也不相同。详情可参考 [rolling 的空值处理](./window_cal.md#52-rolling%E7%9A%84%E7%A9%BA%E5%80%BC%E5%A4%84%E7%90%86)。
+rolling 和 moving 类似，都将函数运算符应用到滑动窗口，进行窗口计算。两者也有细微区别： [`rolling`]((https://www.dolphindb.cn/cn/help/Functionalprogramming/TemplateFunctions/rolling.html?highlight=rolling)) 可以指定步长 step，moving 的步长为 1；且两者对空值的处理也不相同。详情可参考 [rolling 的空值处理](https://gitee.com/dolphindb/Tutorials_CN/blob/master/window_cal.md#52-rolling%E7%9A%84%E7%A9%BA%E5%80%BC%E5%A4%84%E7%90%86)。
 
 
 #### 3.4.2 moving(sum) 和 msum 性能差距
@@ -1030,7 +1030,7 @@ share streamTable(100:0, x.name, x.typeString) as quotes1
 history = dict(STRING, ANY)
 ```
 
-该字典的键值为 STRING 类型，值为元组（tuple）类型，存储股票字段，值为元组（tuple）类型，存储卖价的历史数据。
+该字典的键值为 STRING 类型，存储股票字段，值为元组（tuple）类型，存储卖价的历史数据。
 
 下例调用 `dictUpdate!` 函数更新字典，然后循环计算每只股票的因子，并通过表存储因子的计算结果。然后订阅流表，通过数据回放向流表注入数据，每到来一条新数据都将触发因子的计算。
 
@@ -1174,7 +1174,7 @@ benchX = 10 15 7 8 9 1 2.0
 
 DolphinDB 提供了最小二乘回归函数 [`ols`](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/o/ols.html?highlight=ols)。
 
-先将表中参与计算的字段转化成矩阵：
+先将表中参与计算的字段值转化成矩阵：
 
 ```shell
 mt = matrix(t[`past1`past3`past5`past10`past20`past30`past60]).transpose()
