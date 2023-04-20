@@ -186,7 +186,7 @@ schema=table(1:0,`time`device_id`battery_level`battery_status`battery_temperatur
 
 (2) 配置预处理宏定义
 
-`C/C++` ->`预处理器`：添加选项```WIN32_LEAN_AND_MEAN;_WINSOCK_DEPRECATED_NO_WARNINGS;_CRT_SECURE_NO_WARNINGS;WINDOWS;NOMINMAX;_DDBAPIDLL;```
+`C/C++` ->`预处理器`：添加选项```WIN32_LEAN_AND_MEAN;_WINSOCK_DEPRECATED_NO_WARNINGS;_CRT_SECURE_NO_WARNINGS;WINDOWS;NOMINMAX;```
 
 > 注意：x86平台还要添加选项`BIT32`。
 
