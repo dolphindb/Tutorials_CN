@@ -1,4 +1,4 @@
-# 单节点部署 (嵌入式 ARM 版本) `<!-- omit in toc -->`
+# 单节点部署 (嵌入式 ARM 版本) 
 
 本教程用于嵌入式 ARM 版本的单节点部署、升级、过期 License 升级，并对常见问题做出解答，便于用户快速上手 DolphinDB 。包含以下主题：
 
@@ -35,7 +35,7 @@
 | DolphinDB ARM 版使用的交叉编译器 32 位系统 | arm-linux-gnueabihf4.9                                                                                                                                                                                          |
 | DolphinDB ARM 版使用的交叉编译器 64 位系统 | aarch64-linux-gnu_4.9.3                                                                                                                                                                                         |
 
-若用户在实际板子上运行时出现问题，请反馈给我们（[support@dolphindb.com](support@dolphindb.com)）。
+若用户在实际板子上运行时出现问题，请反馈给我们（support@dolphindb.com）。
 
 ## 2. 部署 DolphinDB 单节点
 
