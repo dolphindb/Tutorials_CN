@@ -177,7 +177,7 @@ Level 2 行情快照数据包含10档价位上的委卖价格、委托量和委�
 
 <img src="./images/Level-2_stock_data_processing/3_2.png" width=50%>
 
-$logQuoteSlope_{t}$ 衡量 t 时刻的订单斜率。其中，$Bid_{t}$ 和 $Ask_{t}$ 分别表示买一价和卖一价，$BidQty_{t}$ 和 $AskQty_{t}$ 分别表示买一量和卖一量。
+$logQuoteSlope_{t}$ 衡量 t 时刻的订单斜率。其中， $Bid_{t}$ 和 $Ask_{t}$ 分别表示买一价和卖一价， $BidQty_{t}$ 和 $AskQty_{t}$ 分别表示买一量和卖一量。
 
 ```
 @state
@@ -198,7 +198,7 @@ defg timeWeightedOrderSlope(Bid,BidQty,Ask,AskQty,lag=20){
 
 <img src="./images/Level-2_stock_data_processing/3_3.png" width=40%>
 
-表示 $t$ 时刻第 i 档的订单失衡率因子。其中 $BidQty_{i,t}$，$AskQty_{i,t}$ 表示第 i 档买方委托量和卖方委托量。为了充分利用各档数据信息，计算各档位加权和订单失衡率因子时，根据买卖压力的影响力赋予不同档位相应的权重。通常，靠近交易价格的档位被赋予更高的权重。计算公式如下：
+表示 $t$ 时刻第 i 档的订单失衡率因子。其中 $BidQty_{i,t}$， $AskQty_{i,t}$ 表示第 i 档买方委托量和卖方委托量。为了充分利用各档数据信息，计算各档位加权和订单失衡率因子时，根据买卖压力的影响力赋予不同档位相应的权重。通常，靠近交易价格的档位被赋予更高的权重。计算公式如下：
 
 <img src="./images/Level-2_stock_data_processing/3_4.png" width=40%>
 
