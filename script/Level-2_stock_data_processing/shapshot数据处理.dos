@@ -1,0 +1,105 @@
+/*
+ *移动平均时间加权订单斜率
+ */
+
+dbName="dfs://level_2"
+snapshotTBname="snapshot"
+idate=2022.04.14
+//snapshotTB=select* from loadTable(dbName,snapshotTBname) where date(DateTime)=idate 
+
+ @state
+defg timeWeightedOrderSlope(Bid,BidQty,Ask,AskQty,lag=20){
+	temp=(log(iif(Ask==0,Bid,Ask))-log(iif(Bid==0,Ask,
+	Bid)))\(log(AskQty)-log(BidQty))
+	mtemp=temp.ffill().mavg(lag,1)
+	factorValue=iif(isNanInf(mtemp, true),0,mtemp)
+	return factorValue
+	}
+/*
+ * 逐档订单失衡率因子
+ * 订单薄上的委托量反应了交易者们对股价未来的预期，当交易者预期股票价格上升，他们将通过下买单持有更多的股票多头头寸，
+ * 这将导致买盘的委托量增加，反之亦然。因此，买卖盘的委托量的不平衡可以反应市场的总体情绪和方向
+ */
+def sOIR(BidQty,AskQty){
+	 BidQty_ = array(DOUBLE[], 0).append!(BidQty)
+	 AskQty_ = array(DOUBLE[], 0).append!(AskQty)
+	 factorValue =rowWavg((BidQty_-AskQty_)\(BidQty_+AskQty_),
+	 10 9 8 7 6 5 4 3 2 1)
+ 	return factorValue
+}
+@state
+def wavgSOIR(BidQty,AskQty,lag=20){
+	Imbalance_=SOIR(BidQty,AskQty)
+	Imbalance= ffill(Imbalance_).nullFill(0)
+	mean = mavg(prev(Imbalance), (lag-1), 2)
+	std = mstdp(prev(Imbalance) *1000000, (lag-1),2) \ 1000000
+	factorValue = iif(std >= 0.0000001,(Imbalance - mean) \ std, NULL)
+	return ffill(factorValue).nullFill(0)
+}
+/*
+ * 成交价加权净委买比例
+ */
+ @state
+def traPriceWeightedNetBuyQuoteVolumeRatio(Bid,BidQty,Ask,AskQty,TotalValTrd,TotalVolTrd,lag=20){
+	prevBid=prev(Bid)
+	prevBidQty=prev(BidQty)
+	prevAsk=prev(Ask)
+	prevAskQty=prev(AskQty)
+	bidchg=iif(round(Bid-prevBid,2)>0,BidQty,iif(round(Bid-prevBid,2)<0,-prevBidQty,BidQty-prevBidQty))
+	offerchg=iif(iif(Ask==0,iif(prevAsk>0,1,0),Ask-prevAsk)>0,prevAskQty,iif(iif(prevAsk==0,
+	iif(Ask>0,-1,0),iif(Ask>0,Ask-prevAsk,1))<0,AskQty,(AskQty-prevAskQty)))
+	avgprice=deltas(TotalValTrd)\deltas(TotalVolTrd)
+	mavgprice=msum(avgprice,lag,1)
+	factorValue=(bidchg-offerchg)\(abs(bidchg)+abs(offerchg))*avgprice
+	mfactorValue=msum(factorValue,lag,1)\mavgprice
+	
+	return nullFill!(mfactorValue,0)
+}
+
+
+/*
+ * 10档委买、卖增额
+ */
+@state
+def level10_Diff(Price, qty, buy,lag=20){
+        PrevPrice = Price.prev()
+        left, right = rowAlign(Price, PrevPrice, how=iif(buy, "Bid", "Ask"))
+        qtyDiff = (qty.rowAt(left).nullFill(0) - qty.prev().rowAt(right).nullFill(0)) 
+        amtDiff = rowSum(nullFill(Price.rowAt(left), PrevPrice.rowAt(right)) * qtyDiff)
+        factorValue=msum(amtDiff,lag,1)
+        return nullFill!(factorValue,0)
+}
+
+def inferPrice(Bid,Ask,BidQty,AskQty){
+	 bid = array(DOUBLE[], 0).append!(Bid)
+	 ask = array(DOUBLE[], 0).append!(Ask)
+	  bidQty = array(DOUBLE[], 0).append!(BidQty)
+	 askQty = array(DOUBLE[], 0).append!(AskQty)
+	inferprice=(rowSum(Bid*BidQty)+rowSum(Ask*AskQty))\(rowSum(BidQty)+rowSum(AskQty))
+ 	return inferprice
+}
+@state
+def level10_InferPriceTrend(Bid,Ask,BidQty,AskQty,lag1=60,lag2=20){
+	price=InferPrice(Bid,Ask,BidQty,AskQty)
+	price_=iif(Bid[0] <=0 or Ask[0]<=0, NULL, price)
+	ffprice=price_.ffill()
+	trend_=linearTimeTrend(price_,lag1)[1]
+	mtrend=nullFill(trend_,0).mavg(lag2,1)
+	return nullFill!(mtrend,0)
+}
+
+////Time elapsed: 9101.371 ms,32
+////Time elapsed: 13913.538 ms  ,16
+////Time elapsed: 21270.213 ms  ,8
+////Time elapsed: 35511.821 ms  ,4
+
+timer {
+	res=select SecurityID,DateTime,timeWeightedOrderSlope(BidPrice[0],BidOrderQty[0],OfferPrice[0],OfferOrderQty[0])  as TimeWeightedOrderSlope,
+level10_InferPriceTrend(BidPrice,OfferPrice,BidOrderQty,OfferOrderQty,60,20) as Level10_InferPriceTrend,
+level10_Diff(BidPrice, BidOrderQty, true,20) as Level10_Diff,
+traPriceWeightedNetBuyQuoteVolumeRatio(BidPrice[0],BidOrderQty[0],OfferPrice[0],OfferOrderQty[0],TotalValueTrade,
+totalVolumeTrade) as TraPriceWeightedNetBuyQuoteVolumeRatio,
+wavgSOIR( BidOrderQty,OfferOrderQty,20) as HeightImbalance
+from  loadTable(dbName,snapshotTBname) where date(DateTime)=idate context by SecurityID csort DateTime map }
+
+

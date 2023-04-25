@@ -1,0 +1,68 @@
+ idate=2022.04.14
+tradeTB=select * from loadTable("dfs://level_2", "trade") where DateTime.date()=idate and  SecurityID in ["600094.SH"]
+entrust=select * from loadTable("dfs://level_2", "entrust") where DateTime.date()=idate and  SecurityID in ["600094.SH"]
+trade=select * from loadTable("dfs://level_2", "trade") where DateTime.date()=idate and  SecurityID in ["600094.SH"]
+entrust= loadTable("dfs://level_2", "entrust") 
+trade= loadTable("dfs://level_2", "trade") 
+/*
+ * 单笔订单主动买入均价,单笔订单主动卖出均价
+ */
+def singleOrderAveragePrice(BuyNo,SellNo,TradePrice,TradeQty,BSFlag="B"){
+	if(BSFlag=="B"){
+		 totolMoney=groupby(sum,iif(BuyNo>SellNo,TradePrice*TradeQty,0),BuyNo).values()[1]
+		 totolqty=groupby(sum,iif(BuyNo>SellNo,TradeQty,0),BuyNo).values()[1]
+	}
+	else{
+		 totolMoney=groupby(sum,iif(BuyNo<SellNo,TradePrice*TradeQty,0),SellNo).values()[1]
+		 totolqty=groupby(sum,iif(BuyNo<SellNo,TradeQty,0),SellNo).values()[1]
+		}
+	
+	 return totolMoney\totolqty
+}
+
+def singleOrderAvgPrice(t){
+	res=select avg(singleOrderAveragePrice(BidApplSeqNum,OfferApplSeqNum,
+	TradePrice,TradeQty,"B")) as ActBuySingleOrderAveragePriceFactor,
+	avg(singleOrderAveragePrice(BidApplSeqNum,OfferApplSeqNum,
+	TradePrice,TradeQty,"S")) as ActSellSingleOrderAveragePriceFactor from 
+	t group by SecurityID cgroup by minute(DateTime) as minute order by  minute
+	return res
+
+	}
+ds = sqlDS(<select * from loadTable("dfs://level_2", "trade") where DateTime.date()=2022.04.14 and ExecType!=52>)     
+timer trade= mr(ds, singleOrderAvgPrice, , unionAll{,false})
+
+/////Time elapsed: 32959.228 ms
+
+
+/*
+ * 延时订单
+ */
+def delayedTradeOrder(TradeTime,TransactTime,SeqNo,TradeQty){    
+    tb=select max(TradeTime) as TradeTime,min(TransactTime) as TransactTime,
+    sum(TradeQty) as TradeQty from table(TradeTime as TradeTime,
+    TransactTime as TransactTime,SeqNo as SeqNo,TradeQty as TradeQty)  group by SeqNo 
+    
+    tb=select count(iif(TradeTime-TransactTime>60000,SeqNo,NULL)) ,
+    sum(iif(TradeTime-TransactTime>60000,TradeQty,NULL)) from tb
+    return tb.values()
+}
+
+
+timer{
+t1=select  delayedTradeOrder(DateTime,entrust.DateTime,BidApplSeqNum,TradeQty)  as `DelayedTradeBuyOrderNum`DelayedTradeBuyOrderQty from lsj(loadTable("dfs://level_2", "trade") as trade,loadTable("dfs://level_2", "entrust") as entrust,['SecurityID', 'BidApplSeqNum'], ['SecurityID', 'ApplSeqNum']) where 
+trade.DateTime.date()=2022.04.14 and TradePrice>0 group by SecurityID,trade.DateTime.date() as DateTime  map
+
+t2=select  delayedTradeOrder(DateTime,entrust.DateTime,OfferApplSeqNum,TradeQty)  as  `DelayedTradeBuyOrderNum`DelayedTradeSellOrderQty  from lsj(loadTable("dfs://level_2", "trade") as trade,loadTable("dfs://level_2", "entrust") as entrust,['SecurityID', 'OfferApplSeqNum'], ['SecurityID', 'ApplSeqNum']) where trade.DateTime.date()=2022.04.14 and TradePrice>0 group by SecurityID ,trade.DateTime.date() as DateTime map
+tt=select * from lj(t1,t2,`SecurityID`DateTime)
+}
+///
+
+
+
+
+
+
+
+
+
