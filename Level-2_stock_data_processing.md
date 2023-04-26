@@ -175,19 +175,15 @@ Level 2 行情快照数据包含10档价位上的委卖价格、委托量和委�
 
 订单斜率因子衡量订单价差对订单量差的敏感度。其计算公式如下：
 
-<img src="./images/Level-2_stock_data_processing/3_2.png" width=50%>
+<img src="./images/Level-2_stock_data_processing/3_2.png" width=40%>
 
-$logQuoteSlope_{t}$ 衡量 t 时刻的订单斜率。其中， $Bid_{t}$ 和 $Ask_{t}$ 分别表示买一价和卖一价， $BidQty_{t}$ 和 $AskQty_{t}$ 分别表示买一量和卖一量。
+$logQuoteSlope_{t}$ 衡量 t 时刻的订单斜率。其中， $bid_{t}$ 和 $ask_{t}$ 分别表示买一价和卖一价， $bidQty_{t}$ 和 $askQty_{t}$ 分别表示买一量和卖一量。
 
 ```
-@state
-defg timeWeightedOrderSlope(Bid,BidQty,Ask,AskQty,lag=20){
-	temp=(log(iif(Ask==0,Bid,Ask))-log(iif(Bid==0,Ask,
-	Bid)))\(log(AskQty)-log(BidQty))
-	mtemp=temp.ffill().mavg(lag,1)
-	factorValue=iif(isNanInf(mtemp, true),0,mtemp)
-	return factorValue
-	}
+ @state
+def timeWeightedOrderSlope(bid,bidQty,ask,askQty,lag=20){
+	return (log(iif(ask==0,bid,ask))-log(iif(bid==0,ask,bid)))\(log(askQty)-log(bidQty)).ffill().mavg(lag, 1).nullFill(0)
+}
 ```
 
 使用函数 [`mavg`](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/m/mavg.html?highlight=mavg) 计算过去20行的移动平均时间加权订单斜率，其中 `@state` 表示用户自定义的状态函数。状态算子计算时需要用到历史状态，DolphinDB 在流式计算中对自定义状态函数，通过增量的方式实现，性能有很大的提升。
@@ -198,32 +194,23 @@ defg timeWeightedOrderSlope(Bid,BidQty,Ask,AskQty,lag=20){
 
 <img src="./images/Level-2_stock_data_processing/3_3.png" width=40%>
 
-表示 $t$ 时刻第 i 档的订单失衡率因子。其中 $BidQty_{i,t}$， $AskQty_{i,t}$ 表示第 i 档买方委托量和卖方委托量。为了充分利用各档数据信息，计算各档位加权和订单失衡率因子时，根据买卖压力的影响力赋予不同档位相应的权重。通常，靠近交易价格的档位被赋予更高的权重。计算公式如下：
+表示 $t$ 时刻第 i 档的订单失衡率因子。其中 $bidQty_{i,t}$， $askQty_{i,t}$ 表示第 i 档买方委托量和卖方委托量。为了充分利用各档数据信息，计算各档位加权和订单失衡率因子时，根据买卖压力的影响力赋予不同档位相应的权重。通常，靠近交易价格的档位被赋予更高的权重。计算公式如下：
 
 <img src="./images/Level-2_stock_data_processing/3_4.png" width=40%>
 
 SOIR 反应盘口各档综合的买卖委托量不均衡程度。如果 SOIR 为正，则说明市场买压大于卖压，未来价格趋势上涨的概率较高。此外，SOIR 值越大，上涨的概率越高，反之亦然。
 
 ```
-def sOIR(BidQty,AskQty){
-	 BidQty_ = array(DOUBLE[], 0).append!(BidQty)
-	 AskQty_ = array(DOUBLE[], 0).append!(AskQty)
-	 factorValue =rowWavg((BidQty_-AskQty_)\(BidQty_+AskQty_),
-	 10 9 8 7 6 5 4 3 2 1)
- 	return factorValue
-}
 @state
-def wavgSOIR(BidQty,AskQty,lag=20){
-	Imbalance_=SOIR(BidQty,AskQty)
-	Imbalance= ffill(Imbalance_).nullFill(0)
-	mean = mavg(prev(Imbalance), (lag-1), 2)
-	std = mstdp(prev(Imbalance) *1000000, (lag-1),2) \ 1000000
-	factorValue = iif(std >= 0.0000001,(Imbalance - mean) \ std, NULL)
-	return ffill(factorValue).nullFill(0)
+def wavgSOIR(bidQty,askQty,lag=20){
+	imbalance= rowWavg((bidQty - askQty)\(bidQty + askQty), 10 9 8 7 6 5 4 3 2 1).ffill().nullFill(0)
+	mean = mavg(prev(imbalance), (lag-1), 2)
+	std = mstdp(prev(imbalance) * 1000000, (lag-1), 2) \ 1000000
+	return iif(std >= 0.0000001,(imbalance - mean) \ std, NULL).ffill().nullFill(0)
 }
 ```
 
-BidQty, AskQty 为[数组向量](https://www.dolphindb.cn/cn/help/DataTypesandStructures/DataForms/Vector/arrayVector.html?highlight=toarray#array-vector)数据类型，分别为买方十档委托量和卖方十档委托数量。使用数组向量进行加减运算非常便捷，而使用 [`rowWavg`](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/r/rowWavg.html?highlight=rowwavg) 函数则可轻松计算加权平均值。在本例中，我们使用 `rowWavg` 函数计算各档加权平均的买卖委托量不均衡程度因子，即订单失衡率因子。最后对一段时间的指标进行移动标准化处理。
+bidQty, askQty 为[数组向量](https://www.dolphindb.cn/cn/help/DataTypesandStructures/DataForms/Vector/arrayVector.html?highlight=toarray#array-vector)数据类型，分别为买方十档委托量和卖方十档委托数量。使用数组向量进行加减运算非常便捷，而使用 [`rowWavg`](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/r/rowWavg.html?highlight=rowwavg) 函数则可轻松计算加权平均值。在本例中，我们使用 `rowWavg` 函数计算各档加权平均的买卖委托量不均衡程度因子，即订单失衡率因子。最后对一段时间的指标进行移动标准化处理。
 
 ### 3.1.3 成交价加权净委买比例
 
@@ -233,24 +220,21 @@ BidQty, AskQty 为[数组向量](https://www.dolphindb.cn/cn/help/DataTypesandSt
 
  
 
-$chg(BidQty_{i})$ 和 $chg(AskQty_{i})$ 分别表示在 i 时刻盘口买一和卖一变化量，而 $avgPrice_{i}$ 表示在 i-1 时刻到 i 时刻成交的平均价格。
+$chg(bidQty_{i})$ 和 $chg(askQty_{i})$ 分别表示在 i 时刻盘口买一和卖一变化量，而 $avgPrice_{i}$ 表示在 i-1 时刻到 i 时刻成交的平均价格。
 
 ```
- @state
-def traPriceWeightedNetBuyQuoteVolumeRatio(Bid,BidQty,Ask,AskQty,TotalValTrd,TotalVolTrd,lag=20){
-	prevBid=prev(Bid)
-	prevBidQty=prev(BidQty)
-	prevAsk=prev(Ask)
-	prevAskQty=prev(AskQty)
-	bidchg=iif(round(Bid-prevBid,2)>0,BidQty,iif(round(Bid-prevBid,2)<0,-prevBidQty,BidQty-prevBidQty))
-	offerchg=iif(iif(Ask==0,iif(prevAsk>0,1,0),Ask-prevAsk)>0,prevAskQty,iif(iif(prevAsk==0,
-	iif(Ask>0,-1,0),iif(Ask>0,Ask-prevAsk,1))<0,AskQty,(AskQty-prevAskQty)))
-	avgprice=deltas(TotalValTrd)\deltas(TotalVolTrd)
-	mavgprice=msum(avgprice,lag,1)
-	factorValue=(bidchg-offerchg)\(abs(bidchg)+abs(offerchg))*avgprice
-	mfactorValue=msum(factorValue,lag,1)\mavgprice
-	
-	return nullFill!(mfactorValue,0)
+  @state
+def traPriceWeightedNetBuyQuoteVolumeRatio(bid,bidQty,ask,askQty,TotalValTrd,TotalVolTrd,lag=20){
+	prevbid = prev(bid)
+	prevbidQty = prev(bidQty)
+	prevask = prev(ask)
+	prevaskQty = prev(askQty)
+	bidchg = iif(round(bid-prevbid,2)>0, bidQty, iif(round(bid-prevbid,2)<0, -prevbidQty, bidQty-prevbidQty))
+	offerchg = iif(iif(ask==0,iif(prevask>0,1,0), ask-prevask)>0, prevaskQty, iif(iif(prevask==0,
+		iif(ask>0,-1,0), iif(ask>0,ask-prevask,1))<0, askQty, askQty-prevaskQty))
+	avgprice = deltas(TotalValTrd)\deltas(TotalVolTrd)
+	factorValue = (bidchg-offerchg)\(abs(bidchg)+abs(offerchg))*avgprice
+	return nullFill(msum(factorValue,lag,1)\msum(avgprice,lag,1), 0)
 }
 ```
 
@@ -268,13 +252,12 @@ def traPriceWeightedNetBuyQuoteVolumeRatio(Bid,BidQty,Ask,AskQty,TotalValTrd,Tot
 
 ```
 @state
-def level10_Diff(Price, qty, buy,lag=20){
-        PrevPrice = Price.prev()
-        left, right = rowAlign(Price, PrevPrice, how=iif(buy, "Bid", "Ask"))
+def level10_Diff(price, qty, buy, lag=20){
+        prevPrice = price.prev()
+        left, right = rowAlign(price, prevPrice, how=iif(buy, "bid", "ask"))
         qtyDiff = (qty.rowAt(left).nullFill(0) - qty.prev().rowAt(right).nullFill(0)) 
-        amtDiff = rowSum(nullFill(Price.rowAt(left), PrevPrice.rowAt(right)) * qtyDiff)
-        factorValue=msum(amtDiff,lag,1)
-        return nullFill!(factorValue,0)
+        amtDiff = rowSum(nullFill(price.rowAt(left), prevPrice.rowAt(right)) * qtyDiff)
+        return msum(amtDiff, lag, 1).nullFill(0)
 }
 ```
 
@@ -289,26 +272,15 @@ def level10_Diff(Price, qty, buy,lag=20){
 十档买卖委托均价线性回归斜率为十档买卖委托均价对时间t的线性回归的斜率。
 
 ```
-def inferPrice(Bid,Ask,BidQty,AskQty){
-	 bid = array(DOUBLE[], 0).append!(Bid)
-	 ask = array(DOUBLE[], 0).append!(Ask)
-	  bidQty = array(DOUBLE[], 0).append!(BidQty)
-	 askQty = array(DOUBLE[], 0).append!(AskQty)
-	inferprice=(rowSum(Bid*BidQty)+rowSum(Ask*AskQty))\(rowSum(BidQty)+rowSum(AskQty))
- 	return inferprice
-}
 @state
-def level10_InferPriceTrend(Bid,Ask,BidQty,AskQty,lag1=60,lag2=20){
-	price=InferPrice(Bid,Ask,BidQty,AskQty)
-	price_=iif(Bid[0] <=0 or Ask[0]<=0, NULL, price)
-	ffprice=price_.ffill()
-	trend_=linearTimeTrend(price_,lag1)[1]
-	mtrend=nullFill(trend_,0).mavg(lag2,1)
-	return nullFill!(mtrend,0)
+def level10_InferPriceTrend(bid, ask, bidQty, askQty, lag1=60, lag2=20){
+	inferPrice = (rowSum(bid*bidQty)+rowSum(ask*askQty))\(rowSum(bidQty)+rowSum(askQty))
+	price = iif(bid[0] <=0 or ask[0]<=0, NULL, inferPrice)
+	return price.ffill().linearTimeTrend(lag1).at(1).nullFill(0).mavg(lag2, 1).nullFill(0)
 }
 ```
 
-以上代码，Bid, Ask, BidQty 和 AskQty 均为[数组向量](https://www.dolphindb.cn/cn/help/DataTypesandStructures/DataForms/Vector/arrayVector.html?highlight=toarray#array-vector)数据类型，分别为买卖十档价格和十档委托数量。通过 [`linearTimeTrend`](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/l/linearTimeTrend.html?highlight=lineartimetrend#lineartimetrend) 函数获取因子值对时间 t 的滑动线性回归斜率，该函数返回线性回归的截距和斜率。`linearTimeTrend(price_,lag1)[1]` 表示获取十档买卖委托均价对时间t的线性回归的斜率。
+以上代码，bid, ask, bidQty 和 askQty 均为[数组向量](https://www.dolphindb.cn/cn/help/DataTypesandStructures/DataForms/Vector/arrayVector.html?highlight=toarray#array-vector)数据类型，分别为买卖十档价格和十档委托数量。通过 [`linearTimeTrend`](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/l/linearTimeTrend.html?highlight=lineartimetrend#lineartimetrend) 函数获取因子值对时间 t 的滑动线性回归斜率，该函数返回线性回归的截距和斜率。`linearTimeTrend(price_,lag1)[1]` 表示获取十档买卖委托均价对时间t的线性回归的斜率。
 
 ### 3.1.6 性能测试
 
@@ -316,13 +288,14 @@ A 股 Level 2 行情快照数据一天的数据量超过10G，因此金融量化
 
 ```
 timer {
-	res=select SecurityID,DateTime,timeWeightedOrderSlope(BidPrice[0],BidOrderQty[0],OfferPrice[0],OfferOrderQty[0])  as TimeWeightedOrderSlope,
-    level10_InferPriceTrend(BidPrice,OfferPrice,BidOrderQty,OfferOrderQty,60,20) as Level10_InferPriceTrend,
-    level10_Diff(BidPrice, BidOrderQty, true,20) as Level10_Diff,
-    traPriceWeightedNetBuyQuoteVolumeRatio(BidPrice[0],BidOrderQty[0],OfferPrice[0],OfferOrderQty[0],TotalValueTrade,
-    totalVolumeTrade) as TraPriceWeightedNetBuyQuoteVolumeRatio,
-    wavgSOIR( BidOrderQty,OfferOrderQty,20) as HeightImbalance
-from  loadTable(dbName,snapshotTBname) where date(DateTime)=idate context by SecurityID csort DateTime map }
+	res=select SecurityID,DateTime,timeWeightedOrderSlope(bidPrice[0],bidOrderQty[0],OfferPrice[0],OfferOrderQty[0])  as TimeWeightedOrderSlope,
+	level10_InferPriceTrend(bidPrice,OfferPrice,bidOrderQty,OfferOrderQty,60,20) as Level10_InferPriceTrend,
+	level10_Diff(bidPrice, bidOrderQty, true,20) as Level10_Diff,
+	traPriceWeightedNetBuyQuoteVolumeRatio(bidPrice[0],bidOrderQty[0],OfferPrice[0],OfferOrderQty[0],TotalValueTrade,
+	totalVolumeTrade) as TraPriceWeightedNetBuyQuoteVolumeRatio,
+	wavgSOIR( bidOrderQty,OfferOrderQty,20) as HeightImbalance
+	from  loadTable(dbName,snapshotTBname) where date(DateTime)=idate context by SecurityID csort DateTime map 
+}
 ```
 
 - 计算结果展示
@@ -353,8 +326,8 @@ from  loadTable(dbName,snapshotTBname) where date(DateTime)=idate context by Sec
 | TimeWeightedOrderSlope                 | 136.726ms       | 7.745ms            | 17.6       |
 | WavgSOIR                               | 432.329ms       | 11.805ms           | 36.6       |
 | TraPriceWeightedNetBuyQuoteVolumeRatio | 144.154ms       | 8.339ms            | 17.3       |
-| Level10_InferPriceTrend                | 1.267870s       | 20.324ms           | 73.7       |
 | Level10_Diff                           | 34.120026s      | 13.025ms           | 2619.2     |
+| Level10_InferPriceTrend                | 1.267870s       | 20.324ms           | 73.7       |
 
 ## 3.2 逐笔成交数据的因子计算
 
@@ -373,16 +346,15 @@ from  loadTable(dbName,snapshotTBname) where date(DateTime)=idate context by Sec
 $n$ 表示截至 t 时刻主买、主卖订单数量，$avgTradePrice$ 表示单笔订单主买、主卖的成交均价。
 
 ```
-def singleOrderAveragePrice(BuyNo,SellNo,TradePrice,TradeQty,BSFlag="B"){
+def singleOrderAveragePrice(buyNo,sellNo,tradePrice,tradeQty,BSFlag="B"){
 	if(BSFlag=="B"){
-		 totolMoney=groupby(sum,iif(BuyNo>SellNo,TradePrice*TradeQty,0),BuyNo).values()[1]
-		 totolqty=groupby(sum,iif(BuyNo>SellNo,TradeQty,0),BuyNo).values()[1]
+		 totolMoney=groupby(sum,iif(buyNo>sellNo,tradePrice*tradeQty,0),buyNo).values()[1]
+		 totolqty=groupby(sum,iif(buyNo>sellNo,tradeQty,0),buyNo).values()[1]
 	}
 	else{
-		 totolMoney=groupby(sum,iif(BuyNo<SellNo,TradePrice*TradeQty,0),SellNo).values()[1]
-		 totolqty=groupby(sum,iif(BuyNo<SellNo,TradeQty,0),SellNo).values()[1]
+		 totolMoney=groupby(sum,iif(buyNo<sellNo,tradePrice*tradeQty,0),sellNo).values()[1]
+		 totolqty=groupby(sum,iif(buyNo<sellNo,tradeQty,0),sellNo).values()[1]
 		}
-	
 	 return totolMoney\totolqty
 }
 res=select avg(singleOrderAveragePrice(BidApplSeqNum,OfferApplSeqNum,TradePrice,TradeQty,"B")) as ActBuySingleOrderAveragePriceFactor,
@@ -490,20 +462,15 @@ DolphinDB 的响应式状态引擎（Reactive State Engine），接收一个在�
 十档平均委卖订单斜率因子流式计算实现如下：
 
 ```
-def sOIR(BidQty,AskQty){
-	 BidQty_ = array(DOUBLE[], 0).append!(BidQty)
-	 AskQty_ = array(DOUBLE[], 0).append!(AskQty)
-	 factorValue =rowWavg((BidQty_-AskQty_)\(BidQty_+AskQty_),
-	 10 9 8 7 6 5 4 3 2 1)
- 	return factorValue
-}
 @state
-def wavgSOIRStream(BidQty,AskQty,lag=20){
-	Imbalance_=SOIR(BidQty,AskQty)
+def wavgSOIRStream(bidQty,askQty,lag=20){
+	Imbalance_=rowWavg((bidQty-askQty)\(bidQty+askQty),
+	 10 9 8 7 6 5 4 3 2 1)
 	Imbalance= ffill(Imbalance_).nullFill(0)
 	mean = mavg(prev(Imbalance), (lag-1), 2)
 	std = mstdp(prev(Imbalance) *1000000, (lag-1),2) \ 1000000
-	factorValue = conditionalIterate(std >= 0.0000001,(Imbalance - mean) \ std, cumlastNot)
+	factorValue = conditionalIterate(std >= 0.0000001,
+	(Imbalance - mean) \ std, cumlastNot)
 	return ffill(factorValue).nullFill(0)
 }
 ```
@@ -659,16 +626,16 @@ subscribeTable(tableName="RSEresult", actionName="TSengine", offset=0, handler=a
 
 # 6. 附件
 
-快照批处理脚本： [shapshot数据处理.dos](script/Level-2_stock_data_processing/shapshot数据处理.dos) 
+快照批处理脚本：  [shapshot数据处理.dos](script/Level-2_stock_data_processing/shapshot数据处理.dos) 
 
-逐笔数据批计算脚本： [entrust数据处理.dos](script/Level-2_stock_data_processing/entrust数据处理.dos)
+逐笔数据批计算脚本： [entrust数据处理.dos](script/Level-2_stock_data_processing/entrust数据处理.dos) 
 
 成交表数据批计算脚本： [trade数据处理.dos](script/Level-2_stock_data_processing/trade数据处理.dos) 
 
 快照流式计算脚本： [shapshot数据流式计算.dos](script/Level-2_stock_data_processing/shapshot数据流式计算.dos) 
 
-延时订单因子流式实现： [延时订单因子流式实现.dos](script/Level-2_stock_data_processing/延时订单因子流式实现.dos) 
+延时订单因子流式实现：  [延时订单因子流式实现.dos](script/Level-2_stock_data_processing/延时订单因子流式实现.dos) 
 
 与python性能比对： [与python性能比对](script/Level-2_stock_data_processing/与python性能比对) 
 
-python实现脚本： [python实现脚本.py](script/Level-2_stock_data_processing/python实现脚本.py) 
+python实现脚本： [python实现脚本.py](script/Level-2_stock_data_processing/python实现脚本.py)  
