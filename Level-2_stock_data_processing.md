@@ -220,7 +220,7 @@ bidQty, askQty 为[数组向量](https://www.dolphindb.cn/cn/help/DataTypesandSt
 
  
 
-$chg(bidQty_{i})$ 和 $chg(askQty_{i})$ 分别表示在 i 时刻盘口买一和卖一变化量，而 $avgPrice_{i}$ 表示在 i-1 时刻到 i 时刻成交的平均价格。
+ $chg(bidQty_{i})$ 和 $chg(askQty_{i})$ 分别表示在 i 时刻盘口买一和卖一变化量，而 $avgPrice_{i}$ 表示在 i-1 时刻到 i 时刻成交的平均价格。
 
 ```
   @state
@@ -343,7 +343,7 @@ timer {
 
 <img src="./images/Level-2_stock_data_processing/3_11.png" width=50%>
 
-$n$ 表示截至 t 时刻主买、主卖订单数量，$avgTradePrice$ 表示单笔订单主买、主卖的成交均价。
+$n$ 表示截至 t 时刻主买、主卖订单数量， $avgTradePrice$ 表示单笔订单主买、主卖的成交均价。
 
 ```
 def singleOrderAveragePrice(buyNo,sellNo,tradePrice,tradeQty,BSFlag="B"){
