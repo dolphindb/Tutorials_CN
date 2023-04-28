@@ -7,62 +7,59 @@ trade= loadTable("dfs://level_2", "trade")
 /*
  * 单笔订单主动买入均价,单笔订单主动卖出均价
  */
-def singleOrderAveragePrice(BuyNo,SellNo,TradePrice,TradeQty,BSFlag="B"){
+def singleOrderAvgPrice(buyNo,sellNo,tradePrice,tradeQty,BSFlag="B"){
 	if(BSFlag=="B"){
-		 totolMoney=groupby(sum,iif(BuyNo>SellNo,TradePrice*TradeQty,0),BuyNo).values()[1]
-		 totolqty=groupby(sum,iif(BuyNo>SellNo,TradeQty,0),BuyNo).values()[1]
+		 totolMoney=groupby(sum,iif(buyNo>sellNo,tradePrice*tradeQty,0),buyNo).values()[1]
+		 totolqty=groupby(sum,iif(buyNo>sellNo,tradeQty,0),buyNo).values()[1]
 	}
 	else{
-		 totolMoney=groupby(sum,iif(BuyNo<SellNo,TradePrice*TradeQty,0),SellNo).values()[1]
-		 totolqty=groupby(sum,iif(BuyNo<SellNo,TradeQty,0),SellNo).values()[1]
+		 totolMoney=groupby(sum,iif(buyNo<sellNo,tradePrice*tradeQty,0),sellNo).values()[1]
+		 totolqty=groupby(sum,iif(buyNo<sellNo,tradeQty,0),sellNo).values()[1]
 		}
 	
 	 return totolMoney\totolqty
 }
+t=select avg(singleOrderAvgPrice(BidApplSeqNum,OfferApplSeqNum,
+	tradePrice,tradeQty,"B")) as ActBuySingleOrderAvgPriceFactor,
+	avg(singleOrderAvgPrice(BidApplSeqNum,OfferApplSeqNum,
+	tradePrice,tradeQty,"S")) as ActSellSingleOrderAvgPriceFactor from trade where SecurityID in ["000001.SZ","000040.SZ"]
+	group by SecurityID cgroup by minute(DateTime) as minute order by  minute
 
-def singleOrderAvgPrice(t){
-	res=select avg(singleOrderAveragePrice(BidApplSeqNum,OfferApplSeqNum,
-	TradePrice,TradeQty,"B")) as ActBuySingleOrderAveragePriceFactor,
-	avg(singleOrderAveragePrice(BidApplSeqNum,OfferApplSeqNum,
-	TradePrice,TradeQty,"S")) as ActSellSingleOrderAveragePriceFactor from 
-	t group by SecurityID cgroup by minute(DateTime) as minute order by  minute
-	return res
 
-	}
-ds = sqlDS(<select * from loadTable("dfs://level_2", "trade") where DateTime.date()=2022.04.14 and ExecType!=52>)     
-timer trade= mr(ds, singleOrderAvgPrice, , unionAll{,false})
 
-/////Time elapsed: 32959.228 ms
 
 
 /*
  * 延时订单
+ * 
  */
-def delayedTradeOrder(TradeTime,TransactTime,SeqNo,TradeQty){    
-    tb=select max(TradeTime) as TradeTime,min(TransactTime) as TransactTime,
-    sum(TradeQty) as TradeQty from table(TradeTime as TradeTime,
-    TransactTime as TransactTime,SeqNo as SeqNo,TradeQty as TradeQty)  group by SeqNo 
-    
-    tb=select count(iif(TradeTime-TransactTime>60000,SeqNo,NULL)) ,
-    sum(iif(TradeTime-TransactTime>60000,TradeQty,NULL)) from tb
-    return tb.values()
+
+trade=select * from loadTable("dfs://level_2", "trade") where DateTime.date()=2022.04.14 and SecurityID in[ `600000.SH,`000001.SZ] and DateTime>2022.04.14T09:30:00.000
+entrust=select * from loadTable("dfs://level_2", "entrust")   where DateTime.date()=2022.04.14 and SecurityID in[ `600000.SH,`000001.SZ]and DateTime>2022.04.14T09:30:00.000
+@state
+def delayedTradeNum(bsFlag, flag, side){
+      return iif(bsFlag==side && flag<=1, flag, 0).cumsum()
+
 }
 
-
+@state
+def delayedTradeQty(bsFlag, flag, tradeQty, cumTradeQty, side){
+        return iif(bsFlag==side && flag>1, tradeQty, iif(bsFlag==side && flag==1, cumTradeQty, 0)).cumsum()
+}
 timer{
-t1=select  delayedTradeOrder(DateTime,entrust.DateTime,BidApplSeqNum,TradeQty)  as `DelayedTradeBuyOrderNum`DelayedTradeBuyOrderQty from lsj(loadTable("dfs://level_2", "trade") as trade,loadTable("dfs://level_2", "entrust") as entrust,['SecurityID', 'BidApplSeqNum'], ['SecurityID', 'ApplSeqNum']) where 
-trade.DateTime.date()=2022.04.14 and TradePrice>0 group by SecurityID,trade.DateTime.date() as DateTime  map
-
-t2=select  delayedTradeOrder(DateTime,entrust.DateTime,OfferApplSeqNum,TradeQty)  as  `DelayedTradeBuyOrderNum`DelayedTradeSellOrderQty  from lsj(loadTable("dfs://level_2", "trade") as trade,loadTable("dfs://level_2", "entrust") as entrust,['SecurityID', 'OfferApplSeqNum'], ['SecurityID', 'ApplSeqNum']) where trade.DateTime.date()=2022.04.14 and TradePrice>0 group by SecurityID ,trade.DateTime.date() as DateTime map
-tt=select * from lj(t1,t2,`SecurityID`DateTime)
+///买方
+///step 1,标记延时状态，计算笔订单的累计成交量
+t1 = select SecurityID,DateTime,entrust.DateTime as time,"B" as bsFlag,tradeQty, cumsum(iif(DateTime-entrust.DateTime>60000,1,0)) as delayedTraderflag, cumsum(tradeQty) as cumTradeQty from lsj(trade, entrust, ['SecurityID', 'BidApplSeqNum'], ['SecurityID', 'ApplSeqNum']) where tradePrice>0 context by  SecurityID,BidApplSeqNum
+/////step 2,统计每只股票累计的延时成交订单数，和延时成交订单量
+t2 = select SecurityID,DateTime,delayedTradeNum(bsFlag, delayedTraderflag, "B") as DelayedTraderBuyOrderNum ,
+ delayedTradeQty(bsFlag,delayedTraderflag, tradeQty, cumTradeQty, "B") as DelayedTraderBuyOrderQty from t1 context by SecurityID limit -1
+ ///卖方
+///step 1,标记延时状态，计算笔订单的累计成交量
+t1 = select SecurityID,DateTime,"S" as bsFlag,tradeQty, cumsum(iif(DateTime-entrust.DateTime>60000,1,0)) as delayedTraderflag, cumsum(tradeQty) as cumTradeQty from lsj(trade, entrust, ['SecurityID', 'OfferApplSeqNum'], ['SecurityID', 'ApplSeqNum']) where tradePrice>0 context by SecurityID, OfferApplSeqNum
+/////step 2,统计每只股票累计的延时成交订单数，和延时成交订单量
+t3 = select SecurityID,DateTime,delayedTradeNum(bsFlag, delayedTraderflag, "S") as DelayedTraderSellOrderNum ,
+ delayedTradeQty(bsFlag,delayedTraderflag , tradeQty, cumTradeQty, "S") as DelayedTraderSellOrderQty from t1 context  by SecurityID limit -1
+ t2=lsj(t2,t3,`SecurityID`DateTime)
 }
-///
-
-
-
-
-
-
-
 
 

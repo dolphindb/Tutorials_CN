@@ -2,50 +2,46 @@
 /*
  * 流式实现
  */
-
-
-
 try{dropAggregator("lsjEngineBid")}catch(ex){ print(ex) }
 try{dropAggregator("lsjEngineOffer")}catch(ex){ print(ex) }
 try{dropAggregator("second_reactiveDemo")}catch(ex){ print(ex) }
-try{dropAggregator("first_reactiveDemo")}catch(ex){ print(ex) }
+try{dropAggregator("reactiveDemo")}catch(ex){ print(ex) }
+try{dropAggregator("TSengine")}catch(ex){ print(ex) }
 try{unsubscribeTable(tableName="tradeTable", actionName="Bid")}catch(ex){ print(ex) }
 try{unsubscribeTable(tableName="entrustTable", actionName="Bid")}catch(ex){ print(ex) }
 try{unsubscribeTable(tableName="tradeTable", actionName="Offer")}catch(ex){ print(ex) }
 try{unsubscribeTable(tableName="entrustTable", actionName="Offer")}catch(ex){ print(ex) }
 try{unsubscribeTable(tableName=`lsjoutput, actionName="DelayedTraderByApplSeqNum")}catch(ex){ print(ex) }
-try{unsubscribeTable(tableName=`firstReactiveresult, actionName="DelayedTrader")}catch(ex){ print(ex) }
+try{unsubscribeTable(tableName="RSEresult", actionName="TSengine")}catch(ex){ print(ex) }
+try{unsubscribeTable(tableName=`lsjoutput, actionName="DelayedTrader")}catch(ex){ print(ex) }
 try{dropStreamTable(`tradeTable)}catch(ex){ print(ex) }
 try{dropStreamTable(`entrustTable)}catch(ex){ print(ex) }
 try{dropStreamTable(`lsjoutput)}catch(ex){ print(ex) }
 try{dropStreamTable(`firstReactiveresult)}catch(ex){ print(ex) }
 try{dropStreamTable(`result)}catch(ex){ print(ex) }
 
+go
+trade=select * from loadTable("dfs://level_2", "trade") where DateTime.date()=2022.04.14 and SecurityID in[ `600000.SH,`000001.SZ]  and tradePrice>0 and DateTime>2022.04.14T09:30:00.000
+entrust=select * from loadTable("dfs://level_2", "entrust")   where DateTime.date()=2022.04.14 and SecurityID in[ `600000.SH,`000001.SZ]and DateTime>2022.04.14T09:30:00.000
 
-tradeTB=select * from loadTable("dfs://level_2", "trade") where SecurityID in ["600000.SH","000001.SZ"]
-entrustTB=select * from loadTable("dfs://level_2", "entrust") where SecurityID in ["600000.SH","000001.SZ"]
-
-
-t11=select  DelayedTradeOrder(DateTime,entrustTB.DateTime,BidApplSeqNum,TradeQty)  as `DelayedTradeBuyOrderNum`DelayedTradeBuyOrderQty from lsj(tradeTB,entrustTB,['SecurityID', 'BidApplSeqNum'], ['SecurityID', 'ApplSeqNum']) group by SecurityID
-
-t21=select  DelayedTradeOrder(DateTime,entrustTB.DateTime,OfferApplSeqNum,TradeQty)  as  `DelayedTradeBuyOrderNum`DelayedTradeSellOrderQty  from lsj(tradeTB,entrustTB,['SecurityID', 'OfferApplSeqNum'], ['SecurityID', 'ApplSeqNum']) group by SecurityID
 ////定义流表
-share streamTable(5000000:0, schema(tradeTB).colDefs.name, schema(tradeTB).colDefs.typeString) as tradeTable
-share streamTable(5000000:0, schema(entrustTB).colDefs.name, schema(entrustTB).colDefs.typeString) as entrustTable
-share streamTable(5000000:0, `code`ApplSeqNum`TradeTime`OrderTime`TradePrice`TradeQty`DelayedTraderFlag`BuySellFlag, [ SYMBOL, INT, TIMESTAMP,TIMESTAMP,DOUBLE,DOUBLE,INT,SYMBOL]) lsjoutput
-share streamTable(5000000:0, `code`ApplSeqNum`TradeTime`DelayedTraderFlag`FirstDelayedTraderFlag`cumTradeQty`TradeQty`BuySellFlag, [SYMBOL,INT,TIMESTAMP, INT,INT,INT,INT,SYMBOL]) firstReactiveresult
-share streamTable(5000000:0, `code`TradeTime`DelayedTraderBuyOrderNum`DelayedTraderSellOrderNum`DelayedTraderBuyOrderQty`DelayedTraderSellOrderQty, [SYMBOL,TIMESTAMP, INT,INT, INT,INT]) result
+share streamTable(5000000:0, schema(trade).colDefs.name, schema(trade).colDefs.typeString) as tradeTable
+share streamTable(5000000:0, schema(entrust).colDefs.name, schema(entrust).colDefs.typeString) as entrustTable
+share streamTable(5000000:0, `code`ApplSeqNum`TradeTime`OrderTime`TradePrice`TradeQty`DelayedTradeFlag`BuySellFlag`cumTradeQty, [SYMBOL,INT,TIMESTAMP,TIMESTAMP, DOUBLE,LONG,INT,SYMBOL,LONG]) as lsjoutput
+share streamTable(5000000:0, `code`TradeTime`DelayedTradeBuyOrderNum`DelayedTradeSellOrderNum`DelayedTradeBuyOrderQty`DelayedTradeSellOrderQty, [SYMBOL,TIMESTAMP, LONG,LONG, LONG,LONG])  as RSEresult
+share streamTable(5000000:0, `TradeTime`code`DelayedTradeBuyOrderNum`DelayedTradeSellOrderNum`DelayedTradeBuyOrderQty`DelayedTradeSellOrderQty, [TIMESTAMP,SYMBOL, LONG,LONG, LONG,LONG])  as result
 ////定义引擎
 /////第一层
+go
 metrics = [
 <tradeTable.DateTime>,
 <entrustTable.DateTime>,
 <TradePrice>,
 <TradeQty>,
-<iif((tradeTable.DateTime-entrustTable.DateTime)>60000,1,0) as DelayedTraderflag>,
-<Side>]
+<cumsum(iif((tradeTable.DateTime-entrustTable.DateTime)>60000,1,0)) as DelayedTraderflag>,
+<Side>,
+<cumsum(TradeQty)>]
 lsjEngineBid=createLeftSemiJoinEngine("lsjEngineBid", tradeTable, entrustTable, lsjoutput, metrics,[[`SecurityID,`BidApplSeqNum],[`SecurityID,`ApplSeqNum]],50000000,true)
-
 subscribeTable(tableName="tradeTable", actionName="Bid", offset=0, handler=appendForJoin{lsjEngineBid, true}, msgAsTable=true)
 subscribeTable(tableName="entrustTable", actionName="Bid", offset=0, handler=appendForJoin{lsjEngineBid, false}, msgAsTable=true)
 
@@ -55,38 +51,37 @@ subscribeTable(tableName="entrustTable", actionName="Offer", offset=0, handler=a
 
 
 /////第二层
-rse = createReactiveStateEngine(name="first_reactiveDemo", metrics =[<TradeTime>,<cumsum(DelayedTraderFlag)>,<iif(cumsum(DelayedTraderFlag)>1,0,DelayedTraderFlag)>,<cumsum(TradeQty)>,<TradeQty>,<BuySellFlag>], dummyTable=lsjoutput, outputTable=firstReactiveresult, keyColumn=["code","ApplSeqNum"])
-subscribeTable(tableName=`lsjoutput, actionName="DelayedTraderByApplSeqNum", handler=tableInsert{rse})
 
 @state
-def DelayedTraderNum(BuySellFlag,FirstDelayedTraderFlag){
-	buy=iif(BuySellFlag=="B",FirstDelayedTraderFlag,0)
-	sell=iif(BuySellFlag=="S",FirstDelayedTraderFlag,0)
-	buyDelayedTraderNum=cumsum(buy)
-	sellDelayedTraderNum=cumsum(sell)
-	return buyDelayedTraderNum,sellDelayedTraderNum
-	}
+def delayedTradeNum(bsFlag, flag, side){
+      return iif(bsFlag==side && flag<=1, flag, 0).cumsum()
+
+}
+
 @state
-def DelayedTraderQty(BuySellFlag,DelayedTraderFlag,TradeQty,cumTradeQty){
-	buy=iif((BuySellFlag=="B")&&(DelayedTraderFlag>1),TradeQty,iif((BuySellFlag=="B")&&(DelayedTraderFlag==1),DelayedTraderFlag*cumTradeQty,0))
-	sell=iif((BuySellFlag=="S")&&(DelayedTraderFlag>1),TradeQty,iif((BuySellFlag=="S")&&(DelayedTraderFlag==1),DelayedTraderFlag*cumTradeQty,0))
-	buyDelayedTraderQty=cumsum(buy)
-	sellDelayedTraderQty=cumsum(sell)
-	return buyDelayedTraderQty,sellDelayedTraderQty
-	}
+def delayedTradeQty(bsFlag, flag, tradeQty, cumTradeQty, side){
+        return iif(bsFlag==side && flag>1, tradeQty, iif(bsFlag==side && flag==1, cumTradeQty, 0)).cumsum()
+}
 metrics = array(ANY, 5)	
 metrics[0]=<TradeTime>
-metrics[1]=<DelayedTraderNum(BuySellFlag,FirstDelayedTraderFlag)[0]>
-metrics[2]=<DelayedTraderNum(BuySellFlag,FirstDelayedTraderFlag)[1]>
-metrics[3]=<DelayedTraderQty(BuySellFlag,DelayedTraderFlag,TradeQty,cumTradeQty)[0]>
-metrics[4]=<DelayedTraderQty(BuySellFlag,DelayedTraderFlag,TradeQty,cumTradeQty)[1]>
+metrics[1]=<delayedTradeNum(BuySellFlag,DelayedTradeFlag,"B")>
+metrics[2]=<delayedTradeNum(BuySellFlag,DelayedTradeFlag,"S")>
+metrics[3]=<delayedTradeQty(BuySellFlag,DelayedTradeFlag,TradeQty,cumTradeQty,"B")>
+metrics[4]=<delayedTradeQty(BuySellFlag,DelayedTradeFlag,TradeQty,cumTradeQty,"S")>
+
+secondrse = createReactiveStateEngine(name="reactiveDemo", metrics =metrics, dummyTable=lsjoutput, outputTable=RSEresult, keyColumn=["code"],filter=<TradePrice>0>)
+subscribeTable(tableName=`lsjoutput, actionName="DelayedTrader", handler=tableInsert{secondrse})
+
+
 /////第三层
-secondrse = createReactiveStateEngine(name="second_reactiveDemo", metrics =metrics, dummyTable=firstReactiveresult, outputTable=result, keyColumn=["code"])
-subscribeTable(tableName=`firstReactiveresult, actionName="DelayedTrader", handler=tableInsert{secondrse})
-
+tsengine = createTimeSeriesEngine(name="TSengine", windowSize=60000, step=60000, metrics=<[last(DelayedTradeBuyOrderNum),last(DelayedTradeSellOrderNum),last(DelayedTradeBuyOrderQty),last(DelayedTradeSellOrderQty)]>, dummyTable=RSEresult, outputTable=result, timeColumn=`TradeTime, useSystemTime=false, keyColumn=`code, garbageSize=50, useWindowStartTime=false)
+subscribeTable(tableName="RSEresult", actionName="TSengine", offset=0, handler=append!{tsengine}, msgAsTable=true);
 ////append数据
-tradeTable.append!(tradeTB)
-entrustTable.append!(entrustTB)
 
+tradeTable.append!(trade)
+entrustTable.append!(entrust)
 
 res1=select * from result context by code having TradeTime=max(TradeTime) limit -1
+
+
+

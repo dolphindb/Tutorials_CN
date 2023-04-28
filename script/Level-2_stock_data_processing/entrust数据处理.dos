@@ -1,46 +1,29 @@
 idate=2022.04.14
-entrustTB=loadTable("dfs://level_2", "entrust")
-tradeTB=loadTable("dfs://level_2", "trade")
+entrustTB=select * from loadTable("dfs://level_2", "entrust")where DateTime.date()=2022.04.14 and  SecurityID in ["000001.SZ","000040.SZ"]
+tradeTB=select * from  loadTable("dfs://level_2", "trade")where DateTime.date()=2022.04.14 and  SecurityID in ["000001.SZ","000040.SZ"] and  ExecType!=52
 /*
- * 计算深交所股票每分钟的委托金额
+ * 计算深交所股票每分钟的买卖委托金额
  */
-ds=sqlDS(<select  SecurityID,DateTime,  Price,OrderQty,ApplSeqNum,OrderType,side from entrustTB where DateTime.date()=2022.04.14 and SecurityID like "%.SZ">)
-def calcSZOrderValue(t,tradeTB){
-	codes=exec distinct(SecurityID) from t
-	idate=date(exec max(DateTime) from t)
-	tb=select * from tradeTB where DateTime.date()=idate and SecurityID in codes and TradePrice>0
-	t1=select * from t where Price>0
-	t2=select SecurityID,DateTime, TradePrice as Price,OrderQty,ApplSeqNum,OrderType,side 
-	from aj((select * from t where Price==0 ),tb ,`SecurityID`ApplSeqNum) 
-	t1=t1.append!(t2)
-	t2=NULL
-	res=select sum(iif(side=="B",Price*OrderQty,NULL)).nullFill(0) as BuyOrderValue,
-	sum(iif(side=="S",Price*OrderQty,NULL)).nullFill(0) as SellOrderValue  
-	from t1 group by SecurityID,bar(DateTime,1m) as DateTime
-	return res
+defg calcSZOrderValue(side, price, orderQty, tradePrice, orderType, bsFlag){
+	price_ = iif(orderType =="50",price,NULL).nullFill(tradePrice)
+	return sum(iif(side==bsFlag,price_*orderQty,NULL)).nullFill(0)
 }
-timer trade= mr(ds, calcSZOrderValue{,tradeTB}, , unionAll{,false})
-
+res=select calcSZOrderValue(side,price,orderQty,tradePrice,orderType,"B") as BuyOrderValue, 
+calcSZOrderValue(side,price,orderQty,tradePrice,orderType,"S") as SellOrderValue
+from aj(entrustTB,tradeTB,`SecurityID`ApplSeqNum) group by SecurityID,bar(DateTime,1m) as DateTime
 
 /*
  * 买卖撤单金额
  */
-ds=sqlDS(<select  SecurityID,DateTime,BidApplSeqNum,OfferApplSeqNum,TradeQty from tradeTB where DateTime.date()=idate and SecurityID like "%.SZ"  and ExecType=52>)
-def calcSZwithdrawOrderValue(t,entrustTB){
-	codes=exec distinct(SecurityID) from t
-	idate=date(exec max(DateTime) from t)
-	tb=select SecurityID,ApplSeqNum, Price from entrustTB where DateTime.date()=idate and SecurityID in codes and Price>0
-	buy=select * ,"B" as side from lj((select * from t where BidApplSeqNum>0) ,tb,`SecurityID`BidApplSeqNum,`SecurityID`ApplSeqNum) 
-	sell=select *,"S" as side from lj((select * from t where OfferApplSeqNum>0) ,tb,`SecurityID`OfferApplSeqNum,`SecurityID`ApplSeqNum) 
-	temp=buy.append!(sell)
-	buy=NULL
-	sell=NULL
-	return select sum(iif(side=="B",Price*TradeQty,NULL)).nullFill(0) as buywithdrawOrderValue,sum(iif(side=="S",Price*TradeQty,NULL)).nullFill(0) as sellwithdrawOrderValue 
-	from temp group by SecurityID,bar(DateTime,1m) as DateTime
-	}
 
-timer res= mr(ds, calcSZwithdrawOrderValue{,entrustTB}, , unionAll{,false})
-//////Time elapsed: 7889.028 ms
-select top 20 * from res where datetime>2022.04.14T09:57:00.000
+entrustTB=select * from loadTable("dfs://level_2", "entrust")where DateTime.date()=2022.04.14 and  SecurityID in ["000001.SZ","000040.SZ"]
+tradeTB=select * from   loadTable("dfs://level_2", "trade")where DateTime.date()=2022.04.14 and  SecurityID in ["000001.SZ","000040.SZ"] 
+
+trade=select SecurityID,DateTime, max(BidApplSeqNum,OfferApplSeqNum) as ApplSeqNum,TradeQty from tradeTB where  ExecType=52
+entrust=select  SecurityID,ApplSeqNum, Price,Side from entrustTB
+select  sum(iif(side=="B",Price*TradeQty,NULL)).nullFill(0) as buywithdrawOrderValue,
+sum(iif(side=="S",Price*TradeQty,NULL)).nullFill(0) as sellwithdrawOrderValue 
+from lsj(trade,entrust,`SecurityID`ApplSeqNum) group by SecurityID,bar(DateTime,1m) as DateTime
+
 
 

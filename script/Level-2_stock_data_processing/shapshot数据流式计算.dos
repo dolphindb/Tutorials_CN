@@ -1,14 +1,9 @@
 
-def sOIR(BidQty,AskQty){
-	 BidQty_ = array(DOUBLE[], 0).append!(BidQty)
-	 AskQty_ = array(DOUBLE[], 0).append!(AskQty)
-	 factorValue =rowWavg((BidQty_-AskQty_)\(BidQty_+AskQty_),
-	 10 9 8 7 6 5 4 3 2 1)
- 	return factorValue
-}
+
 @state
-def wavgSOIRStream(BidQty,AskQty,lag=20){
-	Imbalance_=SOIR(BidQty,AskQty)
+def wavgSOIRStream(bidQty,askQty,lag=20){
+	Imbalance_=rowWavg((bidQty-askQty)\(bidQty+askQty),
+	 10 9 8 7 6 5 4 3 2 1)
 	Imbalance= ffill(Imbalance_).nullFill(0)
 	mean = mavg(prev(Imbalance), (lag-1), 2)
 	std = mstdp(prev(Imbalance) *1000000, (lag-1),2) \ 1000000
@@ -19,18 +14,18 @@ def wavgSOIRStream(BidQty,AskQty,lag=20){
 
 metrics = array(ANY, 5)	
 metrics[0]=<DateTime>
-metrics[1] = <timeWeightedOrderSlope(BidPrice[0],BidOrderQty[0],OfferPrice[0],OfferOrderQty[0],20)>
-metrics[2] =<level10_InferPriceTrend(BidPrice,OfferPrice,BidOrderQty,OfferOrderQty,60,20)>
-metrics[3] =<traPriceWeightedNetBuyQuoteVolumeRatio(BidPrice[0],BidOrderQty[0],OfferPrice[0],OfferOrderQty[0],TotalValueTrade,TotalVolumeTrade,20)> 
-metrics[4] =<wavgSOIRStream( BidOrderQty,OfferOrderQty,20)>
+metrics[1] = <timeWeightedOrderSlope(bidPrice[0],bidOrderQty[0],OfferPrice[0],OfferOrderQty[0],20)>
+metrics[2] =<level10_InferPriceTrend(bidPrice,OfferPrice,bidOrderQty,OfferOrderQty,60,20)>
+metrics[3] =<traPriceWeightedNetBuyQuoteVolumeRatio(bidPrice[0],bidOrderQty[0],OfferPrice[0],OfferOrderQty[0],TotalValueTrade,TotalVolumeTrade,20)> 
+metrics[4] =<wavgSOIRStream( bidOrderQty,OfferOrderQty,20)>
 
-share streamTable(1:0, `SecurityID`DateTime`BidPrice`OfferPrice`BidOrderQty`OfferOrderQty`TotalValueTrade`TotalVolumeTrade, [STRING,TIMESTAMP,DOUBLE[],DOUBLE[],DOUBLE[],DOUBLE[],INT,INT]) as Streamdata
+share streamTable(1:0, `SecurityID`DateTime`bidPrice`OfferPrice`bidOrderQty`OfferOrderQty`TotalValueTrade`TotalVolumeTrade, [STRING,TIMESTAMP,DOUBLE[],DOUBLE[],DOUBLE[],DOUBLE[],INT,INT]) as Streamdata
 
 result = table(1000:0, `SecurityID`DateTime`TimeWeightedOrderSlope`Level10_InferPriceTrend`TraPriceWeightedNetBuyQuoteVolumeRatio`height_Imbalance, [STRING,TIMESTAMP,DOUBLE,DOUBLE,DOUBLE,DOUBLE])
 rse = createReactiveStateEngine(name="reactiveDemo", metrics =metrics, dummyTable=Streamdata, outputTable=result, keyColumn="SecurityID")
 subscribeTable(tableName=`Streamdata, actionName="factors", handler=tableInsert{rse})
 snapshotTB=select* from loadTable("dfs://TSDB_snapshot","snapshot") where date(TradeTime)=2022.04.14 and SecurityID in [`600000,`000001]
-data1=select SecurityID,TradeTime as DateTime,BidPrice,OfferPrice,BidOrderQty,OfferOrderQty,TotalValueTrade,TotalVolumeTrade from snapshotTB 
+data1=select SecurityID,TradeTime as DateTime,bidPrice,OfferPrice,bidOrderQty,OfferOrderQty,TotalValueTrade,TotalVolumeTrade from snapshotTB 
 Streamdata.append!(data1)
 
 

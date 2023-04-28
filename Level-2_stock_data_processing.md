@@ -220,7 +220,7 @@ bidQty, askQty 为[数组向量](https://www.dolphindb.cn/cn/help/DataTypesandSt
 
  
 
- $chg(bidQty_{i})$ 和 $chg(askQty_{i})$ 分别表示在 i 时刻盘口买一和卖一变化量，而 $avgPrice_{i}$ 表示在 i-1 时刻到 i 时刻成交的平均价格。
+$chg(bidQty_{i})$ 和 $chg(askQty_{i})$ 分别表示在 i 时刻盘口买一和卖一变化量，而 $avgPrice_{i}$ 表示在 i-1 时刻到 i 时刻成交的平均价格。
 
 ```
   @state
@@ -323,11 +323,11 @@ timer {
 
 | **因子名**                             | **Python 耗时** | **DolphinDB 耗时** | **耗时比** |
 | :------------------------------------- | :-------------- | :----------------- | :--------- |
-| TimeWeightedOrderSlope                 | 136.726ms       | 7.745ms            | 17.6       |
-| WavgSOIR                               | 432.329ms       | 11.805ms           | 36.6       |
-| TraPriceWeightedNetBuyQuoteVolumeRatio | 144.154ms       | 8.339ms            | 17.3       |
-| Level10_Diff                           | 34.120026s      | 13.025ms           | 2619.2     |
-| Level10_InferPriceTrend                | 1.267870s       | 20.324ms           | 73.7       |
+| timeWeightedOrderSlope                 | 136.726ms       | 7.745ms            | 17.6       |
+| wavgSOIR                               | 432.329ms       | 11.805ms           | 36.6       |
+| traPriceWeightedNetBuyQuoteVolumeRatio | 144.154ms       | 8.339ms            | 17.3       |
+| level10_Diff                           | 34.120026s      | 13.025ms           | 2619.2     |
+| level10_InferPriceTrend                | 1.267870s       | 20.324ms           | 73.7       |
 
 ## 3.2 逐笔成交数据的因子计算
 
@@ -373,22 +373,35 @@ tradeTB where  TradePrice>0 group by SecurityID cgroup by minute(DateTime) as mi
 延时成交挂单数和成交量，一定程度上能反应大单或者机构成交情况。本节统计从下单到成交的时间间隔超过1分钟的订单数和成交量。
 
 ```
-def delayedTradeOrder(TradeTime,TransactTime,SeqNo,TradeQty){    
-    tb=select max(TradeTime) as TradeTime,min(TransactTime) as TransactTime,
-    sum(TradeQty) as TradeQty from table(TradeTime as TradeTime,
-    TransactTime as TransactTime,SeqNo as SeqNo,TradeQty as TradeQty)  group by SeqNo 
-    
-    tb=select count(iif(TradeTime-TransactTime>60000,SeqNo,NULL)) ,
-    sum(iif(TradeTime-TransactTime>60000,TradeQty,NULL)) from tb
-    return tb.values()
+@state
+def delayedTradeNum(bsFlag, flag, side){
+      return iif(bsFlag==side && flag<=1, flag, 0).cumsum()
+
 }
-t1=select  DelayedTradeOrder(DateTime,entrust.DateTime,BidApplSeqNum,TradeQty)  as `DelayedTradeBuyOrderNum`DelayedTradeBuyOrderQty from lsj( trade,entrust,['SecurityID', 'BidApplSeqNum'], ['SecurityID', 'ApplSeqNum']) where trade.DateTime.date()=idate and TradePrice>0  group by SecurityID,trade.DateTime.date() as DateTime
-t2=select  DelayedTradeOrder(DateTime,entrust.DateTime,OfferApplSeqNum,TradeQty)  as  `DelayedTradeSellOrderNum`DelayedTradeSellOrderQty  from lsj(trade,entrust,['SecurityID', 'OfferApplSeqNum'], ['SecurityID', 'ApplSeqNum']) where trade.DateTime.date()=idate  and TradePrice>0 group by SecurityID ,trade.DateTime.date() as DateTime map
+
+@state
+def delayedTradeQty(bsFlag, flag, tradeQty, cumTradeQty, side){
+        return iif(bsFlag==side && flag>1, tradeQty, iif(bsFlag==side && flag==1, cumTradeQty, 0)).cumsum()
+}
+///买方
+///step 1,标记延时状态，计算笔订单的累计成交量
+t1 = select SecurityID,DateTime,entrust.DateTime as time,"B" as bsFlag,tradeQty, cumsum(iif(DateTime-entrust.DateTime>60000,1,0)) as delayedTraderflag, cumsum(tradeQty) as cumTradeQty from lsj(trade, entrust, ['SecurityID', 'BidApplSeqNum'], ['SecurityID', 'ApplSeqNum']) where tradePrice>0 context by  SecurityID,BidApplSeqNum 
+/////step 2,统计每只股票累计的延时成交订单数，和延时成交订单量
+tt2 = select SecurityID,DateTime,delayedTradeNum(bsFlag, delayedTraderflag, "B") as DelayedTraderBuyOrderNum ,
+ delayedTradeQty(bsFlag,delayedTraderflag, tradeQty, cumTradeQty, "B") as DelayedTraderBuyOrderQty from t1 context by SecurityID limit -1
+ ///卖方
+///step 1,标记延时状态，计算笔订单的累计成交量
+t1 = select SecurityID,DateTime,"S" as bsFlag,tradeQty, cumsum(iif(DateTime-entrust.DateTime>60000,1,0)) as delayedTraderflag, cumsum(tradeQty) as cumTradeQty from lsj(trade, entrust, ['SecurityID', 'OfferApplSeqNum'], ['SecurityID', 'ApplSeqNum']) where tradePrice>0 context by SecurityID, OfferApplSeqNum
+/////step 2,统计每只股票累计的延时成交订单数，和延时成交订单量
+t3 = select SecurityID,DateTime,delayedTradeNum(bsFlag, delayedTraderflag, "S") as DelayedTraderSellOrderNum ,
+ delayedTradeQty(bsFlag,delayedTraderflag , tradeQty, cumTradeQty, "S") as DelayedTraderSellOrderQty from t1 context  by SecurityID limit -1
+ t2=lsj(t2,t3,`SecurityID`DateTime)
+
 ```
 
 下单信息记录在逐笔委托表里，如果统计下单到成交之间的时间间隔，则需要把逐笔成交表和逐笔委托表进行关联。这里首先通过[左半连接](https://www.dolphindb.cn/cn/help/SQLStatements/TableJoiners/leftjoin.html?highlight=lsj#left-join) (`lsj`) 返回逐笔成交表中所有与逐笔委托表匹配的记录，如果逐笔委托表中有多条匹配记录（如上交所的下单和撤单记录），`lsj` 将会取第一条（下单时的订单记录）匹配记录。因此，`lsj` 可以把订单委托下单的时间以及下单量准确关联到成交记录中。DolphinDB 提供很多表关联函数，具体可参考：[表连接 — DolphinDB 2.0 documentation](https://www.dolphindb.cn/cn/help/200/SQLStatements/TableJoiners/index.html#id1) 
 
-在计算股票延时成交订单因子的自定义函数中，先按每个订单号分组，计算订单下单到该笔订单最后成交时的最大时间差和订单的总成交量；然后根据最大延时是否超过1分钟来计算股票的延时订单数量和成交总量。
+计算股票延时成交订单因子的步骤为，首先根据成交表的买卖单号与委托表的订单委托号建立连接，并计算改订单的累计延时成交次数和订单的累计成交量；其次通过自定义函数，计算股票的延时成交订单数以及延时成交的订单量。
 
 ## 3.3 逐笔委托数据的因子计算
 
@@ -400,49 +413,31 @@ Level 2 行情逐笔委托数据包含所有的委托订单信息（除了上交
 
 ### 3.3.1 委买委卖金额
 
-委托买卖金额是对一段时间内委托订单的买卖方向的资金总量进行统计。由于深交所的市价订单的价格在逐笔委托表里标记为0，因此计算委托金额时，我们需要在逐笔成交记录中找到最近的成交价格来作为其近似值。
+委托买卖金额是对一段时间内委托订单的买卖方向的资金总量进行统计。由于深交所的市价订单的价格在逐笔委托表里的价格不是一个成交价格（一般标记为0）。因此统计计算委托金额时，我们需要在逐笔成交记录中找到最近的成交价格来作为其近似值。
 
 ```
-ds=sqlDS(<select  SecurityID,DateTime,  Price,OrderQty,ApplSeqNum,OrderType,side from entrustTB where DateTime.date()=idate and SecurityID like "%.SZ">)
-def calcSZOrderValue(t,tradeTB){
-	codes=exec distinct(SecurityID) from t
-	idate=date(exec max(DateTime) from t)
-	tb=select * from tradeTB where DateTime.date()=idate and SecurityID in codes and TradePrice>0
-	t1=select * from t where Price>0
-	t2=select SecurityID,DateTime, TradePrice as Price,OrderQty,ApplSeqNum,OrderType,side 
-	from aj((select * from t where Price==0 ),tb ,`SecurityID`ApplSeqNum) 
-	t1=t1.append!(t2)
-	t2=NULL
-	res=select sum(iif(side=="B",Price*OrderQty,NULL)).nullFill(0) as BuyOrderValue,
-	sum(iif(side=="S",Price*OrderQty,NULL)).nullFill(0) as SellOrderValue  
-	from t1 group by SecurityID,bar(DateTime,1m) as DateTime
-	return res
+defg calcSZOrderValue(side,price,orderQty,tradePrice,orderType,bsFlag){
+	price_=iif(orderType =="50",price,NULL).nullFill(tradePrice)
+	return sum(iif(side==bsFlag,price_*orderQty,NULL)).nullFill(0)
 }
-trade= mr(ds, calcSZOrderValue{,tradeTB}, , unionAll{,false})
+res=select calcSZOrderValue(side,price,orderQty,tradePrice,orderType,"B") as BuyOrderValue, 
+calcSZOrderValue(side,price,orderQty,tradePrice,orderType,"S") as SellOrderValue
+from aj(entrustTB,tradeTB,`SecurityID`ApplSeqNum) group by SecurityID,bar(DateTime,1m) as DateTime
 ```
 
-这里通过 `aj`（[asof join](https://www.dolphindb.cn/cn/help/SQLStatements/TableJoiners/asofjoin.html?highlight=asof%20join)）把市价订单信息与逐笔成交关联，以获取最新的成交价格作为当前市价委托单的委托价格，最后计算股票每分钟内的买卖委托金额。
+这里通过 `aj`（[asof join](https://www.dolphindb.cn/cn/help/SQLStatements/TableJoiners/asofjoin.html?highlight=asof%20join)）把逐笔成交里的最新价格关联到逐笔成交中；对市价订单，以获取最新的成交价格作为当前市价委托单的委托价格，最后计算股票每分钟内的买卖委托金额。
 
 ### 3.3.2 买卖撤单金额
 
-深交所的撤单标记记录在逐笔成交表中，撤单时的价格标记为0，而委托价格记录在逐笔委托表中，因此计算买卖方撤单金额时需要将逐笔成交表和逐笔委托表进行关联。
+深交所的撤单标记记录在逐笔成交表中，撤单时的价格一般标记为0，而委托价格记录在逐笔委托表中，因此计算买卖方撤单金额时需要将逐笔成交表和逐笔委托表进行关联。
 
 ```
-ds=sqlDS(<select  SecurityID,DateTime,BidApplSeqNum,OfferApplSeqNum,TradeQty from tradeTB where DateTime.date()=idate and SecurityID like "%.SZ"  and ExecType=52>)
-def calcSZwithdrawOrderValue(t,entrustTB){
-	codes=exec distinct(SecurityID) from t
-	idate=date(exec max(DateTime) from t)
-	tb=select SecurityID,ApplSeqNum, Price from entrustTB where DateTime.date()=idate and SecurityID in codes and Price>0
-	buy=select * ,"B" as side from lj((select * from t where BidApplSeqNum>0) ,tb,`SecurityID`BidApplSeqNum,`SecurityID`ApplSeqNum) 
-	sell=select *,"S" as side from lj((select * from t where OfferApplSeqNum>0) ,tb,`SecurityID`OfferApplSeqNum,`SecurityID`ApplSeqNum) 
-	temp=buy.append!(sell)
-	buy=NULL
-	sell=NULL
-	return select sum(iif(side=="B",Price*TradeQty,NULL)).nullFill(0) as buywithdrawOrderValue,sum(iif(side=="S",Price*TradeQty,NULL)).nullFill(0) as sellwithdrawOrderValue 
-	from temp group by SecurityID,bar(DateTime,1m) as DateTime
-	}
 
-res= mr(ds, calcSZwithdrawOrderValue{,entrustTB}, , unionAll{,false})
+trade = select SecurityID,DateTime, max(BidApplSeqNum,OfferApplSeqNum) as ApplSeqNum,TradeQty from tradeTB where  ExecType=52
+entrust = select  SecurityID,ApplSeqNum, Price,Side from entrustTB
+res = select  sum(iif(side=="B",Price*TradeQty,NULL)).nullFill(0) as buywithdrawOrderValue,
+sum(iif(side=="S",Price*TradeQty,NULL)).nullFill(0) as sellwithdrawOrderValue 
+from lsj(trade,entrust,`SecurityID`ApplSeqNum) group by SecurityID,bar(DateTime,1m) as DateTime
 ```
 
 这里通过 `lj`（[left join](https://www.dolphindb.cn/cn/help/SQLStatements/TableJoiners/leftjoin.html#left-join)）分别把买卖撤单的委托价格关联到撤单信息表中，然后计算每只股票每分钟的买卖撤单金额。
@@ -517,14 +512,13 @@ DolphinDB 内置的流计算引擎除了响应式状态引擎外，还有时间�
 
 整体计算流程如下图所示：
 
-<img src="./images/Level-2_stock_data_processing/4_2.png" width=50%>
+<img src="./images/Level-2_stock_data_processing/4_2.png" width=70%>
 
 涉及到的流数据引擎有：[左半等值连接引擎](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/c/createLeftSemiJoinEngine.html#createleftsemijoinengine)，[响应式状态引擎](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/c/createReactiveStateEngine.html#createreactivestateengine)，[时间序列引擎](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/c/createTimeSeriesEngine.html#createtimeseriesengine)。
 
 流程说明：
 
-- 左半等值连接引擎，把逐笔成交与逐笔委托数据关联，并标记此成交订单是否为延时成交订单；
-- 用响应式状态引擎，计算每订单的累计成交量以及判断此订单是否为延时订单；
+- 左半等值连接引擎，把逐笔成交与逐笔委托数据关联，并计算延时成交订单的累计值和订单累计成交量；
 - 用响应式状态引擎，计算每只股票延时订单因子和延时订单成交量；
 - 用时间序列引擎 获取最新一分钟的延时订单因子和延时订单成交量，并输出结果。
 
@@ -542,10 +536,10 @@ metrics = [
 <entrustTable.DateTime>,
 <TradePrice>,
 <TradeQty>,
-<iif((tradeTable.DateTime-entrustTable.DateTime)>60000,1,0) as DelayedTraderflag>,
-<Side>]
+<cumsum(iif((tradeTable.DateTime-entrustTable.DateTime)>60000,1,0)) as DelayedTraderflag>,
+<Side>,
+<cumsum(TradeQty)>]
 lsjEngineBid=createLeftSemiJoinEngine("lsjEngineBid", tradeTable, entrustTable, lsjoutput, metrics,[[`SecurityID,`BidApplSeqNum],[`SecurityID,`ApplSeqNum]],50000000,true)
-
 subscribeTable(tableName="tradeTable", actionName="Bid", offset=0, handler=appendForJoin{lsjEngineBid, true}, msgAsTable=true)
 subscribeTable(tableName="entrustTable", actionName="Bid", offset=0, handler=appendForJoin{lsjEngineBid, false}, msgAsTable=true)
 
@@ -556,67 +550,47 @@ subscribeTable(tableName="entrustTable", actionName="Offer", offset=0, handler=a
 
 左半等值连接引擎返回一个左、右表关联后的表对象。对于左表每一条数据，都去匹配右表相同 matchingColumn 的数据，若无匹配的右表记录，则不输出。若匹配多条右表记录，则由 *updateRightTable* 参数决定连接右表的第一条记录还是最后一条记录。*updateRightTable* 为可选参数，默认为 false，表示右表存在多条相同 matchingColumn 的记录时，是保留第一条（false）还是最后一条记录（true）。这里订单成交时间需要与订单的最早委托时间关联，所以 *updateRightTable* 取默认值即可。
 
-metrics 中计算订单的成交量、成交时间和委托时间差是否大于1分钟的指标和订单的买卖方向等指标。
+metrics 中计算订单的成交量、订单的累计成交量，成交时间和委托时间差是否大于1分钟的累计次数和订单的买卖方向等指标。
 
 - 第二步：
-
-通过响应式状态引擎，计算每一笔订单的累计成交量，计算该订单是否是延时订单以及当前的成交量等指标。
-
-```
-rse = createReactiveStateEngine(name="first_reactiveDemo", metrics =[<TradeTime>,<cumsum(DelayedTraderFlag)>,<iif(cumsum(DelayedTraderFlag)>1,0,DelayedTraderFlag)>,<cumsum(TradeQty)>,<TradeQty>,<BuySellFlag>], dummyTable=lsjoutput, outputTable=firstReactiveresult, keyColumn=["code","ApplSeqNum"])
-subscribeTable(tableName=`lsjoutput, actionName="DelayedTraderByApplSeqNum", handler=tableInsert{rse})
-```
-
-这里响应式状态引擎中的 keyColumn 指定为股票代码 code 和订单号 ApplSeqNum，即表示按股票和订单号分组计算。
-
-metrics 中表达式 ` iif(cumsum(DelayedTraderFlag)>1,0,DelayedTraderFlag)` 用来判断该订单是否为延时订单，以便后面引擎可以直接统计计算该股票的延时订单数量。
-
-- 第三步：
 
 通过响应式状态引擎，计算每一只股票的买卖延时订单数量和买卖延时订单成交量指标。
 
 ```
 @state
-def DelayedTraderNum(BuySellFlag,FirstDelayedTraderFlag){
-	buy=iif(BuySellFlag=="B",FirstDelayedTraderFlag,0)
-	sell=iif(BuySellFlag=="S",FirstDelayedTraderFlag,0)
-	buyDelayedTraderNum=cumsum(buy)
-	sellDelayedTraderNum=cumsum(sell)
-	return buyDelayedTraderNum,sellDelayedTraderNum
-	}
+def delayedTradeNum(bsFlag, flag, side){
+      return iif(bsFlag==side && flag<=1, flag, 0).cumsum()
+
+}
 @state
-def DelayedTraderQty(BuySellFlag,DelayedTraderFlag,TradeQty,cumTradeQty){
-	buy=iif((BuySellFlag=="B")&&(DelayedTraderFlag>1),TradeQty,iif((BuySellFlag=="B")&&(DelayedTraderFlag==1),DelayedTraderFlag*cumTradeQty,0))
-	sell=iif((BuySellFlag=="S")&&(DelayedTraderFlag>1),TradeQty,iif((BuySellFlag=="S")&&(DelayedTraderFlag==1),DelayedTraderFlag*cumTradeQty,0))
-	buyDelayedTraderQty=cumsum(buy)
-	sellDelayedTraderQty=cumsum(sell)
-	return buyDelayedTraderQty,sellDelayedTraderQty
-	}
+def delayedTradeQty(bsFlag, flag, tradeQty, cumTradeQty, side){
+        return iif(bsFlag==side && flag>1, tradeQty, iif(bsFlag==side && flag==1, cumTradeQty, 0)).cumsum()
+}
 metrics = array(ANY, 5)	
 metrics[0]=<TradeTime>
-metrics[1]=<DelayedTraderNum(BuySellFlag,FirstDelayedTraderFlag)[0]>
-metrics[2]=<DelayedTraderNum(BuySellFlag,FirstDelayedTraderFlag)[1]>
-metrics[3]=<DelayedTraderQty(BuySellFlag,DelayedTraderFlag,TradeQty,cumTradeQty)[0]>
-metrics[4]=<DelayedTraderQty(BuySellFlag,DelayedTraderFlag,TradeQty,cumTradeQty)[1]>
+metrics[1]=<delayedTradeNum(BuySellFlag,DelayedTradeFlag,"B")>
+metrics[2]=<delayedTradeNum(BuySellFlag,DelayedTradeFlag,"S")>
+metrics[3]=<delayedTradeQty(BuySellFlag,DelayedTradeFlag,TradeQty,cumTradeQty,"B")>
+metrics[4]=<delayedTradeQty(BuySellFlag,DelayedTradeFlag,TradeQty,cumTradeQty,"S")>
 
-secondrse = createReactiveStateEngine(name="second_reactiveDemo", metrics =metrics, dummyTable=firstReactiveresult, outputTable=result, keyColumn=["code"])
-subscribeTable(tableName=`firstReactiveresult, actionName="DelayedTrader", handler=tableInsert{secondrse})
+secondrse = createReactiveStateEngine(name="reactiveDemo", metrics =metrics, dummyTable=lsjoutput, outputTable=RSEresult, keyColumn=["code"],filter=<TradePrice>0>)
+subscribeTable(tableName=`lsjoutput, actionName="DelayedTrader", handler=tableInsert{secondrse})
 ```
 
-FirstDelayedTraderFlag 指标用于标记订单是否为延时订单。如果一个订单有多次成交，该标记记录的是第一次判断为延时订单的标记，之前及之后的成交都标记为0，所以计算股票的延时成交因子只需用 [`cumsum`](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/c/cumsum.html?highlight=cumsum) 函数进行计算即可。
+DelayedTradeFlag 指标为订单延时成交累计记录。统计股票的延时订单数时，对每笔订单只需统计一次，计算股票的延时成交订单数只需计算 `iif(bsFlag==side&&flag<=1,flag,0)` 的累计值。
 
 ```
 iif((BuySellFlag=="B")&&(DelayedTraderFlag>1),TradeQty,iif((BuySellFlag=="B")&&(DelayedTraderFlag==1),DelayedTraderFlag*cumTradeQty,0))
 ```
 
-使用订单延时成交累计记录指标 DelayedTraderFlag 来计算延时订单的成交量。当首次记录为延时成交时，成交量为订单的累计成交量，当 DelayedTraderFlag>1 时，成交量只需加上当前的交易量。
+使用订单延时成交累计记录指标 DelayedTradeFlag 来计算延时订单的成交量。当首次记录为延时成交时，成交量为订单的累计成交量，当 DelayedTradeFlag>1 时，成交量只需加上当前的交易量。
 
-- 第四步：
+- 第三步：
 
 通过时间序列引擎引擎，计算每一分钟每只股票最新的买卖延时订单数量和买卖延时订单成交量指标。
 
 ```
-tsengine = createTimeSeriesEngine(name="TSengine", windowSize=60000, step=60000, metrics=<[last(DelayedTraderBuyOrderNum),last(DelayedTraderSellOrderNum),last(DelayedTraderBuyOrderQty),last(DelayedTraderSellOrderQty)]>, dummyTable=RSEresult, outputTable=result, timeColumn=`TradeTime, useSystemTime=false, keyColumn=`code, garbageSize=50, useWindowStartTime=false)
+tsengine = createTimeSeriesEngine(name="TSengine", windowSize=60000, step=60000, metrics=<[last(DelayedTradeBuyOrderNum),last(DelayedTradeSellOrderNum),last(DelayedTradeBuyOrderQty),last(DelayedTradeSellOrderQty)]>, dummyTable=RSEresult, outputTable=result, timeColumn=`TradeTime, useSystemTime=false, keyColumn=`code, garbageSize=50, useWindowStartTime=false)
 subscribeTable(tableName="RSEresult", actionName="TSengine", offset=0, handler=append!{tsengine}, msgAsTable=true);
 ```
 
@@ -626,16 +600,16 @@ subscribeTable(tableName="RSEresult", actionName="TSengine", offset=0, handler=a
 
 # 6. 附件
 
-快照批处理脚本：  [shapshot数据处理.dos](script/Level-2_stock_data_processing/shapshot数据处理.dos) 
+快照批处理脚本：   [shapshot数据处理.dos](script/Level-2_stock_data_processing/shapshot数据处理.dos) 
 
-逐笔数据批计算脚本： [entrust数据处理.dos](script/Level-2_stock_data_processing/entrust数据处理.dos) 
+逐笔数据批计算脚本：  [entrust数据处理.dos](script/Level-2_stock_data_processing/entrust数据处理.dos) 
 
-成交表数据批计算脚本： [trade数据处理.dos](script/Level-2_stock_data_processing/trade数据处理.dos) 
+成交表数据批计算脚本：  [trade数据处理.dos](script/Level-2_stock_data_processing/trade数据处理.dos) 
 
-快照流式计算脚本： [shapshot数据流式计算.dos](script/Level-2_stock_data_processing/shapshot数据流式计算.dos) 
+快照流式计算脚本：  [shapshot数据流式计算.dos](script/Level-2_stock_data_processing/shapshot数据流式计算.dos) 
 
-延时订单因子流式实现：  [延时订单因子流式实现.dos](script/Level-2_stock_data_processing/延时订单因子流式实现.dos) 
+延时订单因子流式实现：   [延时订单因子流式实现.dos](script/Level-2_stock_data_processing/延时订单因子流式实现.dos) 
 
-与python性能比对： [与python性能比对](script/Level-2_stock_data_processing/与python性能比对) 
+与python性能比对：  [与python性能比对](script/Level-2_stock_data_processing/与python性能比对) 
 
-python实现脚本： [python实现脚本.py](script/Level-2_stock_data_processing/python实现脚本.py)  
+python实现脚本：  [python实现脚本.py](script/Level-2_stock_data_processing/python实现脚本.py) 

@@ -3,37 +3,38 @@ snapshotTBname="snapshot"
 idate=2022.04.14
 snapshotTB=select* from loadTable(dbName,snapshotTBname) where date(DateTime)=idate and SecurityID in [`600000.SH,`000001.SZ]
 timer {
-	res=select SecurityID, DateTime,TimeWeightedOrderSlope(BidPrice[0],BidOrderQty[0],OfferPrice[0],OfferOrderQty[0],
+	res=select SecurityID, DateTime,timeWeightedOrderSlope(BidPrice[0],BidOrderQty[0],OfferPrice[0],OfferOrderQty[0],
 	20) as  TimeWeightedOrderSlopeFactor from snapshotTB context by SecurityID csort DateTime
 }
 timer {
-	 res=select SecurityID, DateTime,Level10_InferPriceTrend(BidPrice,OfferPrice,BidOrderQty,OfferOrderQty,60,20) as Level10_InferPriceTrend
+	 res=select SecurityID, DateTime,level10_InferPriceTrend(BidPrice,OfferPrice,BidOrderQty,OfferOrderQty,60,20) as Level10_InferPriceTrend
 	 from snapshotTB context by SecurityID csort DateTime
 }
 
  timer {
-	res=select SecurityID, DateTime, Level10_Diff(BidPrice, BidOrderQty, true,20) as Level10_Diff from snapshotTB context by SecurityID csort DateTime
+	res=select SecurityID, DateTime, level10_Diff(BidPrice, BidOrderQty, true,20) as Level10_Diff from snapshotTB context by SecurityID csort DateTime
 }
 timer {
-	 res=select SecurityID, DateTime,TraPriceWeightedNetBuyQuoteVolumeRatio(BidPrice[0],BidOrderQty[0],OfferPrice[0],OfferOrderQty[0],TotalValueTrade,
+	 res=select SecurityID, DateTime,traPriceWeightedNetBuyQuoteVolumeRatio(BidPrice[0],BidOrderQty[0],OfferPrice[0],OfferOrderQty[0],TotalValueTrade,
 TotalVolumeTrade) as TraPriceWeightedNetBuyQuoteVolumeRatio from snapshotTB context by SecurityID csort DateTime
 }
 timer {
-	res=select SecurityID, DateTime,WavgSOIR( BidOrderQty,OfferOrderQty,20) as HeightImbalance from snapshotTB context by SecurityID csort DateTime
+	res=select SecurityID, DateTime,wavgSOIR( BidOrderQty,OfferOrderQty,20) as HeightImbalance from snapshotTB context by SecurityID csort DateTime
 }
 
 
 entrustTB=select SecurityID,DateTime,Price,OrderQty,ApplSeqNum,OrderType,side from loadTable( "dfs://level_2","entrust") where DateTime.date()=2022.04.14 and SecurityID in ["000001.SZ","000040.SZ"]
 tradeTB =select * from loadTable("dfs://level_2","trade") where DateTime.date()=2022.04.14 and SecurityID in ["000001.SZ","000040.SZ"]
 timer {
-	t=CalcSZOrderValue(entrustTB,tradeTB)
+	t=calcSZOrderValue(entrustTB,tradeTB)
 }
 timer{
 	t1=select * from tradeTB where ExecType == 52
 	t2=select * from entrustTB where Price>0
-	t=CalcSZwithdrawOrderValue(t1,t2)
+	t=calcSZwithdrawOrderValue(t1,t2)
 }
 
 
 
-//clearAllCache()
+
+
