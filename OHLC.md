@@ -195,7 +195,7 @@ mr(ds, calcOHLC, +)
 
 DolphinDB中计算实时K线的流程如下图所示：
 
-![avatar](images/K-line.png)
+![avatar](./images/K-line.png)
 
 实时数据供应商一般会提供基于Python、Java或其他常用语言的API的数据订阅服务。本例中使用Python来模拟接收市场数据，通过DolphinDB Python API写入流数据表中。DolphinDB的流数据时序聚合引擎可按照指定的频率与移动窗口实时计算K线。
 
@@ -276,9 +276,9 @@ subscribeTable(tableName="Trade", actionName="act_tsAggr2", offset=0, handler=ap
 
 例如，要计算1分钟窗口的K线，但当前1分钟的K线不希望等到窗口结束后再计算，而是希望新数据进入后最迟2秒钟就计算。可通过如下步骤实现。
 
-首先，创建一个键值表作为输出表，并将时间列和股票代码列作为主键。
+首先，创建一个键值流表作为输出表，并将时间列和股票代码列作为主键。
 ```
-share keyedTable(`datetime`Symbol, 100:0, `datetime`Symbol`open`high`low`close`volume,[DATETIME,SYMBOL,DOUBLE,DOUBLE,DOUBLE,DOUBLE,LONG]) as OHLC
+share keyedStreamTable(`datetime`Symbol, 100:0, `datetime`Symbol`open`high`low`close`volume,[DATETIME,SYMBOL,DOUBLE,DOUBLE,DOUBLE,DOUBLE,LONG]) as OHLC
 ```
 
 使用以下脚本定义时序聚合引擎。其中指定updateTime参数取值为1(秒)。useWindowStartTime参数设为true，表示输出表第一列为数据窗口的起始时间。
