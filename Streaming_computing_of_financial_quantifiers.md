@@ -28,7 +28,7 @@ DolphinDB 是一款高性能分布式时序数据库。与传统的关系数据�
 
 DolphinDB 内置的流数据框架支持流数据的发布，订阅，预处理，实时内存计算，复杂指标的滚动窗口计算、滑动窗口计算、累计窗口计算等，是一个运行高效、使用便捷的流数据处理框架。
 
-<img src="./images/Streaming_computing_of_financial_quantifiers/1_1.png" width=67%>
+<img src="./images/Streaming_computing_of_financial_quantifiers/1_1.png" width=67% scale=80%>
 
 本教程主要介绍如何在 **“流数据表 ——> 订阅者(内置流计算引擎) ——> 计算结果”** 这段过程中，利用内置流计算引擎实现金融量化因子并优化之。
 
@@ -68,12 +68,12 @@ DolphinDB 提供了存储可变长二维数组的数据类型 array vector。在
 因此，level 2 快照行情的多档数据可以选择：①多列存储；② 用 array vector 存为一列。
 
 <figure align="left">
-<img src="./images/Streaming_computing_of_financial_quantifiers/1_2.png" width=79%>  
+<img src="./images/Streaming_computing_of_financial_quantifiers/1_2.png" width=79% scale=80%>  
     <figcaption><b>多档多列存储，共194列</b></figcaption>
 </figure>
 
 <figure align="left">
-<img src="./images/Streaming_computing_of_financial_quantifiers/1_3.png" width=79%>  
+<img src="./images/Streaming_computing_of_financial_quantifiers/1_3.png" width=79% scale=80%>  
     <figcaption><b>array vector 存储，共42列</b></figcaption>
 </figure>
 
