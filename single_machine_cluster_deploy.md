@@ -386,12 +386,12 @@
 
   - 备份控制节点元数据
 
-  控制节点元数据默认存储在服务器的 */DolphinDB/server/clusterDemo/data* 目录下的 *DFSMetaLog.0* 文件，如果数据量超过一定的大小则还会生成 *DFSMasterMetaCheckpoint.0* 文件。本教程示例集群的控制节点元数据的默认存储目录：
+  控制节点元数据默认存储在服务器的 */DolphinDB/server/clusterDemo/dfsMeta* 目录下的 *DFSMetaLog.0* 文件，如果数据量超过一定的大小则还会生成 *DFSMasterMetaCheckpoint.0* 文件。本教程示例集群的控制节点元数据的默认存储目录：
 
   ```
-  /DolphinDB/server/clusterDemo/data
+  /DolphinDB/server/clusterDemo/dfsMeta
   ```
-  可进入 */DolphinDB/server/clusterDemo/data* 目录执行以下 Shell 指令进行备份：
+  可进入 */DolphinDB/server/clusterDemo/dfsMeta* 目录执行以下 Shell 指令进行备份：
 
   ```
   mkdir backup
@@ -503,12 +503,12 @@
 
   - 备份控制节点元数据
 
-  控制节点元数据默认存储在服务器的 *C:\DolphinDB\server\clusterDemo\data* 目录下的 *DFSMetaLog.0* 文件，如果数据量超过一定的大小则还会生成 *DFSMasterMetaCheckpoint.0* 文件。本教程示例集群的控制节点元数据的默认存储目录：
+  控制节点元数据默认存储在服务器的 *C:\DolphinDB\server\clusterDemo\dfsMeta* 目录下的 *DFSMetaLog.0* 文件，如果数据量超过一定的大小则还会生成 *DFSMasterMetaCheckpoint.0* 文件。本教程示例集群的控制节点元数据的默认存储目录：
 
   ```
-  C:\DolphinDB\server\clusterDemo\data
+  C:\DolphinDB\server\clusterDemo\dfsMeta
   ```
-  在该目录下创建文件夹 *backup*，然后把 *C:\DolphinDB\server\clusterDemo\data* 文件夹下的 *DFSMetaLog.0* 文件及 *DFSMasterMetaCheckpoint.0* 文件复制到上面创建的 *back* 文件夹下，如下图所示：
+  在该目录下创建文件夹 *backup*，然后把 *C:\DolphinDB\server\clusterDemo\dfsMeta* 文件夹下的 *DFSMetaLog.0* 文件及 *DFSMasterMetaCheckpoint.0* 文件复制到上面创建的 *back* 文件夹下，如下图所示：
 
   <img src="./images/single_machine_cluster_deploy/3_10.png" width=70%>
 
@@ -724,7 +724,7 @@
 
   **第一步：恢复旧版本元数据文件**
 
-  在 */DolphinDB/server/clusterDemo/data* 目录执行以下 shell 指令恢复已备份的控制节点和数据节点元数据：
+  在 */DolphinDB/server/clusterDemo/dfsMeta* 目录执行以下 shell 指令恢复已备份的控制节点和数据节点元数据：
 
   ```
   cp -r backup/DFSMetaLog.0 ./
@@ -741,7 +741,7 @@
 
   **第一步：恢复旧版本元数据文件**
 
-  把升级前备份在 *C:\DolphinDB\server\clusterDemo\data\backup* 目录下的 *DFSMetaLog.0* 和 *DFSMasterMetaCheckpoint.0* （若存在）文件复制替换 *C:\DolphinDB\server\clusterDemo\data* 目录下的 *DFSMetaLog.0 和 DFSMasterMetaCheckpoint.0* 文件。
+  把升级前备份在 *C:\DolphinDB\server\clusterDemo\dfsMeta\backup* 目录下的 *DFSMetaLog.0* 和 *DFSMasterMetaCheckpoint.0* （若存在）文件复制替换 *C:\DolphinDB\server\clusterDemo\dfsMeta* 目录下的 *DFSMetaLog.0 和 DFSMasterMetaCheckpoint.0* 文件。
 
   把升级前备份在 *C:\DolphinDB\server\clusterDemo\data\backup* 目录下的 *CHUNK_METADATA* 文件复制替换  *C:\DolphinDB\server\clusterDemo\data\dnode1\storage* 目录下的 *CHUNK_METADATA* 文件。
 
