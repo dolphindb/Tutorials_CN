@@ -136,7 +136,7 @@ DolphinDB 目前已经实现了 [WorldQuant 101 Alpha 因子库](https://gitee.c
 
 ## 2.1 实现示例
 
-以 WorldQuant Alpha 101 和国泰君安 191 中的因子为例，说明日频因子流式实现方法。
+本节以 WorldQuant Alpha 101 和国泰君安 191 中的因子为例，说明日频因子流式实现方法。
 
 ### **2.1.1 WorldQuant Alpha 1**
 
@@ -187,7 +187,7 @@ alpha1Parser1admin OK                0       2          securityid...keyCount   
 
 其中 securityID 作为分组键，dateTime 是时间列，输入的消息格式同内存表 `inputTable`，需要计算的指标定义在 `metrics` 里，结果输出到内存表 `resultTable` 中。横截面数据计算的触发方式是 keyCount，即当前时间的数据累积超过 3000 条或者新时间点的数据到来才会触发一次计算。
 
-创建完引擎之后，即可往引擎中插入几条数据，并观察计算结果。
+创建引擎之后，即可向引擎中插入几条数据，并观察计算结果。
 
 ```
 // 向引擎添加数据
@@ -272,7 +272,7 @@ gtja1Parser1 admin OK                0       3          securityID...keyCount   
 */
 ```
 
-上述代码创建了一个名为 “gtja1Parser” 的引擎流水线。通过 `getStreamEngineStat` 函数可以观察到，该引擎流水线由一个名为 “gtja1Parser0” 的响应式状态引擎，一个名为 “gtja1Parser1” 的横截面引擎和一个名为 “gtja1Parser2” 的响应式状态引擎组成。
+上述代码创建了一个名为 “gtja1Parser” 的引擎流水线。通过 `getStreamEngineStat` 函数可以观察到，该引擎流水线由一个名为 “gtja1Parser0” 的响应式状态引擎、一个名为 “gtja1Parser1” 的横截面引擎和一个名为 “gtja1Parser2” 的响应式状态引擎组成。
 
 其中 securityID 作为分组键，dateTime 是时间列，输入的消息格式同内存表 `inputTable`，需要计算的指标定义在 `metrics` 里，结果输出到内存表 `resultTable` 中。横截面数据计算的触发方式是 keyCount，即当前时间的数据累积超过 3000 条或者新时间点的数据到来才会触发一次计算。
 
@@ -343,7 +343,7 @@ def gtjaAlpha1(open, close, vol){
 
 （1）横截面引擎的 *timeColumn* 参数只支持 TIMESTAMP 类型。
 
- （2）因为不同引擎的输出表的各列顺序不同，所以输出表结构的定义需要根据因子的最后一步逻辑来决定。
+（2）因为不同引擎的输出表的各列顺序不同，所以输出表结构的定义需要根据因子的最后一步逻辑来决定。
 
 - 时序聚合引擎：输出表的各列的顺序为：时间列，分组列，计算结果列。
 - 响应式状态引擎：输出表的各列的顺序为：分组列，时间列，计算结果列。（响应式状态引擎的输出表中时间列不是必须的，但是因为时间序列聚合引擎以及横截面引擎的输入输出表需包含时间列，所以流水线中的响应式状态引擎输出时会自动增加时间列。）
@@ -472,7 +472,7 @@ securityID dateTime                factor
 
 无状态函数是指不需要回溯历史数据，仅根据当前时刻传入的参数即可获得计算结果的函数。适合封装不依赖历史数据的计算逻辑。比如 [3.1.2 章节](#312-加权平均价格)中的加权平均价格。
 
-:note: **注意**：
+:bulb: **注意**：
 
 如果在  `createReactiveStateEngine` 里面指定了 *keyColumn* 参数，则响应式状态引擎内会进行分组计算。以 `keyColumn="securityID"` 为例，引擎内会根据股票代码分组计算。那么对于同一个股票代码的数据，引擎内会逐条计算；但对于不同股票代码的数据，无状态函数在引擎内会采取向量化计算。所以传入无状态函数的参数都是向量。
 
@@ -569,7 +569,7 @@ metrics = <[dateTime, factorWeightedAveragedPrice(bidPrice0, bidOrderQty0, offer
 
 状态函数是指计算中不仅用到当前数据，还会用到历史数据的函数。比如 [3.1.1 章节](#311-价格涨跌幅)中的价格涨跌幅，不仅需要当前的价格数据，还需要前 lag 条的历史价格数据。
 
-:note: **注意**：
+:bulb: **注意**：
 
 （1）状态函数需要用 @state 声明。
 
