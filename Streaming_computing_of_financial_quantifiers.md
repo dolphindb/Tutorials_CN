@@ -504,7 +504,7 @@ offerOrderQty0 = rand(200, n)
 testData = table(securityID, dateTime, bidPrice0, bidOrderQty0, offerPrice0, offerOrderQty0)
 ```
 
-<img src="./images/Streaming_computing_of_financial_quantifiers/3_1.png" width=35%>
+<img src="./images/Streaming_computing_of_financial_quantifiers/3_1.png" width=45%>
 
 构建响应式状态引擎，并输入这批数据：
 
@@ -523,7 +523,7 @@ rse = createReactiveStateEngine(name="reactiveDemo", metrics =metrics, dummyTabl
 tableInsert(rse, testData.flip())
 ```
 
-<img src="./images/Streaming_computing_of_financial_quantifiers/3_2.png" width=25%>
+<img src="./images/Streaming_computing_of_financial_quantifiers/3_2.png" width=35%>
 
 如上所示，传入的 *bidPrice0* 是向量，并且这一批的 10 条数据会分两次计算（前 7 条不同股票代码的数据计算一次，后 3 条数据计算一次）。
 
@@ -650,7 +650,7 @@ securityID tradeTime               factor
 
 Step1：计算买卖压力指标（[买卖压力指标](https://gitee.com/dolphindb/Tutorials_CN/blob/master/sql_performance_optimization_wap_di_rv.md#2-指标定义)）
 
-<img src="./images/Streaming_computing_of_financial_quantifiers/3_3.png" width=23%>
+<img src="./images/Streaming_computing_of_financial_quantifiers/3_3.png" width=28%>
 
 Step2：使用 `mavg` 计算过去 lag 行的移动平均买卖压力指标
 
@@ -806,7 +806,7 @@ securityID tradeTime               sum    avg    sum_avg                 anyVect
 */
 ```
 
-<img src="./images/Streaming_computing_of_financial_quantifiers/3_4.png" width=20%>
+<img src="./images/Streaming_computing_of_financial_quantifiers/3_4.png" width=27%>
 
 ② 状态函数内调用自定义函数时，不支持用多个变量接收函数多个返回值（即 `a,b = foo(...)` 的写法）。如果无状态函数需要返回多个值，则需要用 `fixedLengthArrayVector` 将返回结果组装成 array Vector 返回。在状态函数内，用一个变量接收，之后可以用 res[index] 的方式将返回的多个结果拆分。（可以参考上面注意事项① 中的例子）
 
