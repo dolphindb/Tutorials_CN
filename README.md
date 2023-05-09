@@ -196,6 +196,7 @@
     - [基于 DolphinDB 与 Python Celery 框架的因子计算平台构建](Python_Celery.md)
     - [快速搭建 Level-2 快照数据流批一体因子计算平台最佳实践](Level2_Snapshot_Factor_Calculation.md)
     - [DolphinDB 与 Python AirFlow 最佳实践](Best_Practices_for_DolphinDB_and_Python_AirFlow.md)
+    - [金融因子流式实现](Streaming_computing_of_financial_quantifiers.md)
   - 物联网：
     - [DolphinDB在工业物联网的应用](iot_demo.md)
     - [物联网时序数据查询案例](iot_query_case.md)
