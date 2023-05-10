@@ -69,6 +69,7 @@
   - [历史数据回放教程](historical_data_replay.md)
   - [流数据高可用](haStreamingTutorial.md)
   - [StreamEngineParser 解析原理介绍](StreamEngineParser.md)
+  - [流数据状态函数插件](PluginReactiveState.md)
   
 - 系统管理
 
@@ -136,6 +137,7 @@
     - [Insight 插件说明（介绍如何在 Linux 下通过该插件获取交易所行情数据）](../../../DolphinDBPlugin/blob/release200/insight/README.md "用于获取交易所行情数据，仅限 Linux 系统")
     - [Matching Engine 插件使用说明（用于为股票市场、商品市场或其他金融交易所匹配和执行买入和卖出订单）](../../../DolphinDBPlugin/blob/release200/MatchingEngine/README.md "用于为股票市场、商品市场或其他金融交易所匹配和执行买入和卖出订单")
     - [NSQ 插件使用说明（用于获取上海和深圳交易市场的行情数据）](../../../DolphinDBPlugin/blob/release200/nsq/README.md "用于获取上海和深圳交易市场的行情数据")
+    - [流数据状态函数插件](PluginReactiveState.md "用于有状态的高频因子流计算")
   - 物联网数据处理与传输
     - [OPC 插件使用说明（用于访问并采集自动化行业 OPC 服务器的数据）](../../../DolphinDBPlugin/blob/release200/opc/README_CN.md "用于访问并采集自动化行业 OPC 服务器的数据")
     - [OPCUA 插件使用说明（用于与自动化行业 OPC UA 服务器之间的数据传输）](../../../DolphinDBPlugin/blob/release200/opcua/README_CN.md "用于与与自动化行业 OPC UA 服务器之间的数据传输")
