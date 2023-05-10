@@ -417,10 +417,10 @@
 
   - 备份控制节点元数据
 
-  控制节点元数据默认存储在控制节点服务器的 */DolphinDB/server/clusterDemo/data* 目录下的 *DFSMetaLog.0* 文件，如果数据量超过一定的大小则还会生成 *DFSMasterMetaCheckpoint.0* 文件。控制节点元数据的默认存储目录：
+  控制节点元数据默认存储在控制节点服务器的 */DolphinDB/server/clusterDemo/dfsMeta* 目录下的 *DFSMetaLog.0* 文件，如果数据量超过一定的大小则还会生成 *DFSMasterMetaCheckpoint.0* 文件。控制节点元数据的默认存储目录：
 
   ```
-  /DolphinDB/server/clusterDemo/data
+  /DolphinDB/server/clusterDemo/dfsMeta
   ```
   登录控制节点所在的服务器 **P1** ，可进入上述目录执行以下 Shell 指令进行备份：
 
@@ -777,7 +777,7 @@
 
   - 恢复控制节点元数据
 
-  登录控制节点的服务器，在 */DolphinDB/server/clusterDemo/data* 目录执行以下 Shell 指令恢复已备份的控制节点元数据：
+  登录控制节点的服务器，在 */DolphinDB/server/clusterDemo/dfsMeta* 目录执行以下 Shell 指令恢复已备份的控制节点元数据：
 
   ```
   cp -r backup/DFSMetaLog.0 ./
