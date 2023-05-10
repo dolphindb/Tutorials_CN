@@ -659,21 +659,21 @@ sh stopAllNode.sh
 
 - 备份控制节点元数据
 
-高可用集群控制节点 Raft 组元数据默认存储在每个控制节点服务器的 */DolphinDB/server/clusterDemo/data/<控制节点别名>/raft* 目录下。以 **P1** 为例，控制节点 Raft 组元数据的默认存储目录：
+高可用集群控制节点 Raft 组元数据默认存储在每个控制节点服务器的 */DolphinDB/server/clusterDemo/dfsMeta/<控制节点别名>/raft* 目录下。以 **P1** 为例，控制节点 Raft 组元数据的默认存储目录：
 
 ```
-/DolphinDB/server/clusterDemo/data/controller1/raft
+/DolphinDB/server/clusterDemo/dfsMeta/controller1/raft
 ```
 
-登录服务器 **P1, P2 和 P3**，可进入 */DolphinDB/server/clusterDemo/data/<控制节点别名>* 目录执行以下 Shell 指令进行备份：
+登录服务器 **P1, P2 和 P3**，可进入 */DolphinDB/server/clusterDemo/dfsMeta/<控制节点别名>* 目录执行以下 Shell 指令进行备份：
 
 ```
 mkdir controllerBackup
 cp -r raft controllerBackup
 ```
 
-如果写入数据量超过一定的大小则还会在 */DolphinDB/server/clusterDemo/data/<控制节点别名>/dfsMeta* 目录下生成 *DFSMasterMetaCheckpoint.0* 文件。可进入
-*/DolphinDB/server/clusterDemo/data/<控制节点别名>* 目录执行以下 Shell 指令备份到 *controllerBackup* 文件夹：
+如果写入数据量超过一定的大小则还会在 */DolphinDB/server/clusterDemo/dfsMeta/<控制节点别名>/dfsMeta* 目录下生成 *DFSMasterMetaCheckpoint.0* 文件。可进入
+*/DolphinDB/server/clusterDemo/dfsMeta/<控制节点别名>* 目录执行以下 Shell 指令备份到 *controllerBackup* 文件夹：
 
 ```
 cp -r dfsMeta controllerBackup
@@ -1111,7 +1111,7 @@ DolphinDB 正常启动后，在浏览器输入控制节点正确的访问地址�
 
 - 恢复控制节点元数据
 
-登录控制节点的服务器（以 **P1** 为例），在 */DolphinDB/server/clusterDemo/data/controller1* 目录执行以下 Shell 指令恢复已备份的控制节点元数据：
+登录控制节点的服务器（以 **P1** 为例），在 */DolphinDB/server/clusterDemo/dfsMeta/controller1* 目录执行以下 Shell 指令恢复已备份的控制节点元数据：
 
 ```
 cp -r backup/raft ./
