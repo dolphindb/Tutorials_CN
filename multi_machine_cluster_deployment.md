@@ -558,6 +558,11 @@
   - 在线更新
 
   打开 Web 管理界面，在任一节点交互编程界面执行以下代码完成更新，代码成功运行会返回新授权许可证的到期时间：
+  
+  ```
+  use ops
+  updateAllLicenses()
+  ```
 
   <img src="./images/multi_machine_cluster_deployment/4_2.png" width=40%>
 
@@ -598,14 +603,14 @@
   ```
   说明控制节点的 *cluster.nodes* 的第一行为空行，这种情况下只需将文件中的空行删除，再重新启动节点即可。
 
-  - **宏变量 `<ALIAS>`在明确节点的情况下使用无效**
+  - **宏变量 `<ALIAS>` 在明确节点的情况下使用无效**
 
-  查看控制节点下的配置文件 *cluster.cfg*，若在明确了节点的情况下使用宏变量 `<ALIAS>`，如： P1-datanode.persistenceDir = /hdd/hdd1/streamCache/`<ALIAS>` , 则会导致该节点无法正常启动。这种情况下只需要把 `<ALIAS>` 删除，替换成特定节点即可，如：
+  查看控制节点下的配置文件 *cluster.cfg*，若在明确了节点的情况下使用宏变量 `<ALIAS>`，如： P1-datanode.persistenceDir = /hdd/hdd1/streamCache/\<ALIAS> ：
 
   ```
   P1-datanode.persistenceDir = /hdd/hdd1/streamCache/<ALIAS>
   ```
-  则会导致该节点无法正常启动。这种情况下只需要把删除，替换成特定节点即可，如：
+  则会导致该节点无法正常启动。这种情况下只需要把 `<ALIAS>` 删除，替换成特定节点即可，如：
 
   ```
   P1-datanode.persistenceDir = /hdd/hdd1/streamCache/P1-datanode

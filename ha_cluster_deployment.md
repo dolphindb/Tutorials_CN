@@ -212,7 +212,7 @@ maxMemSize=4
 lanCluster=0
 ```
 
-在这里必须修改的是 *localSite, controllerSite* 和 *sites*。 *localSite* 配置代理节点信息，用户需要根据实际环境指定代理节点的 IP 地址、端口号和别名。*controllerSite* 配置代理节点第一次与集群中通信的控制节点的信息，必须与 P1 的 *controller.cfg* 中的 *localSite* 保持一致。*sites* 配置当前代理节点和集群中所有控制节点的信息，需要依次填写该代理节点和所有控制节点的 IP 地址、端口号和别名。其余参数用户可根据实际情况进行调整。若控制节点 *controller.cfg* 中的参数 *localSite* 有变化，即使只是节点别名有改变，所有代理节点的配置文件 *agent.cfg* 中的参数 *controllerSite* 和 *sites* 都应当做相应的改变。其余参数用户可根据实际情况进行调整。
+在这里必须修改的是 *localSite, controllerSite* 和 *sites*。 *localSite* 配置代理节点信息，用户需要根据实际环境指定代理节点的 IP 地址、端口号和别名。*controllerSite* 配置代理节点第一次与集群中通信的控制节点的信息，必须与 P1 的 *controller.cfg* 中的 *localSite* 保持一致。*sites* 配置当前代理节点和集群中所有控制节点的信息，需要依次填写该代理节点和所有控制节点的 IP 地址、端口号和别名。若控制节点 *controller.cfg* 中的参数 *localSite* 有变化，即使只是节点别名有改变，所有代理节点的配置文件 *agent.cfg* 中的参数 *controllerSite* 和 *sites* 都应当做相应的改变。其余参数用户可根据实际情况进行调整。
 
 ### （2）P2 需要配置的文件
 
@@ -335,7 +335,7 @@ maxMemSize=4
 lanCluster=0
 ```
 
-在这里必须修改的是 *localSite, controllerSite* 和 *sites*。 *localSite* 配置代理节点信息，用户需要根据实际环境指定代理节点的 IP 地址、端口号和别名。*controllerSite* 配置代理节点第一次与集群中通信的控制节点的信息，必须与 P1 的 *controller.cfg* 中的 *localSite* 保持一致。*sites* 配置当前代理节点和集群中所有控制节点的信息，需要依次填写该代理节点和所有控制节点的 IP 地址、端口号和别名。其余参数用户可根据实际情况进行调整。若控制节点 *controller.cfg* 中的参数 *localSite* 有变化，即使只是节点别名有改变，所有代理节点的配置文件 *agent.cfg* 中的参数 *controllerSite* 和 *sites* 都应当做相应的改变。其余参数用户可根据实际情况进行调整。
+在这里必须修改的是 *localSite, controllerSite* 和 *sites*。 *localSite* 配置代理节点信息，用户需要根据实际环境指定代理节点的 IP 地址、端口号和别名。*controllerSite* 配置代理节点第一次与集群中通信的控制节点的信息，必须与 P2 的 *controller.cfg* 中的 *localSite* 保持一致。*sites* 配置当前代理节点和集群中所有控制节点的信息，需要依次填写该代理节点和所有控制节点的 IP 地址、端口号和别名。若控制节点 *controller.cfg* 中的参数 *localSite* 有变化，即使只是节点别名有改变，所有代理节点的配置文件 *agent.cfg* 中的参数 *controllerSite* 和 *sites* 都应当做相应的改变。其余参数用户可根据实际情况进行调整。
 
 ### （3）P3 需要配置的文件
 
@@ -458,7 +458,7 @@ maxMemSize=4
 lanCluster=0
 ```
 
-在这里必须修改的是 *localSite, controllerSite* 和 *sites*。 *localSite* 配置代理节点信息，用户需要根据实际环境指定代理节点的 IP 地址、端口号和别名。*controllerSite* 配置代理节点第一次与集群中通信的控制节点的信息，必须与 P1 的 *controller.cfg* 中的 *localSite* 保持一致。*sites* 配置当前代理节点和集群中所有控制节点的信息，需要依次填写该代理节点和所有控制节点的 IP 地址、端口号和别名。其余参数用户可根据实际情况进行调整。若控制节点 *controller.cfg* 中的参数 *localSite* 有变化，即使只是节点别名有改变，所有代理节点的配置文件 *agent.cfg* 中的参数 *controllerSite* 和 *sites* 都应当做相应的改变。其余参数用户可根据实际情况进行调整。
+在这里必须修改的是 *localSite, controllerSite* 和 *sites*。 *localSite* 配置代理节点信息，用户需要根据实际环境指定代理节点的 IP 地址、端口号和别名。*controllerSite* 配置代理节点第一次与集群中通信的控制节点的信息，必须与 P3 的 *controller.cfg* 中的 *localSite* 保持一致。*sites* 配置当前代理节点和集群中所有控制节点的信息，需要依次填写该代理节点和所有控制节点的 IP 地址、端口号和别名。若控制节点 *controller.cfg* 中的参数 *localSite* 有变化，即使只是节点别名有改变，所有代理节点的配置文件 *agent.cfg* 中的参数 *controllerSite* 和 *sites* 都应当做相应的改变。其余参数用户可根据实际情况进行调整。
 
 ## 第四步：启动集群
 
