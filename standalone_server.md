@@ -250,7 +250,7 @@ cp -r local8848/storage/CHUNK_METADATA/ backup/CHUNK_METADATA
 
 ![singlenode_linux_upgrade_offline_3](images/deploy_standalone/singlenode_linux_upgrade_offline_3.png)
 
-输入 1 选择离线更新，并点击回车后会出现如下提示：
+输入 2 选择离线更新，并点击回车后会出现如下提示：
 
 ![singlenode_linux_upgrade_offline_4](images/deploy_standalone/singlenode_linux_upgrade_offline_4.png)
 
