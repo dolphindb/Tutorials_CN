@@ -13,7 +13,7 @@
 
 ## 1.简介
 
-在数据库领域，分级存储是一种常见的需求，即将一部分较旧的数据转存至本地其他磁盘卷（通常是更低速的磁盘卷）或对象存储方案中。较旧的数据（冷数据）通常不会被用户频繁查询或计算，但是存储在本地会占用大量磁盘资源，因此将不常用的数据存储在对象存储中，或将其从高速磁盘（如 ssd）转存至较低速的磁盘（如 hdd），可以有效节约资源开销。本文将介绍 DolphinDB 的分级存储功能的基本原理和如何使用。
+在数据库领域，分级存储是一种常见的需求，即将一部分较旧的数据转存至本地其他磁盘卷（通常是更低速的磁盘卷）或对象存储方案中。较旧的数据（冷数据）通常不会被用户频繁查询或计算，但是存储在本地会占用大量磁盘资源，因此将不常用的数据存储在对象存储中，或将其从高速磁盘（如 SSD）转存至较低速的磁盘（如 HDD），可以有效节约资源开销。本文将介绍 DolphinDB 的分级存储功能的基本原理和如何使用。
 
 ## 2.使用介绍
 
@@ -115,7 +115,7 @@ rpc(getControllerAlias(), getRecoveryTaskStatus) //可以看到创建了最近15
 
 ```
 select * from tbl where cdate = date(now()) - 10 //查询迁移后的数据
-update tbl set val = 0 where cdate = date(now()) - 10 //更新迁移后的数据。会报错 “chunk {ChunkID} is not allowed to write.”
+update tbl set val = 0 where cdate = date(now()) - 10 //更新迁移后的数据。会报错 “Writing to chunk {ChunkID} is not allowed.”
 ```
 
 特殊地，我们使用 `dropTable`，`dropParititon`，`dropDatabase` 等 drop DDL 操作来进行数据的整体删除时，对象存储上对应的分区数据也会被删除。这里不再赘述。
@@ -139,13 +139,13 @@ rpc(getControllerAlias(), getClusterChunksStatus)
 
 ### 3.1 自动数据迁移触发机制
 
-使用 [setRetentionPolicy](https://www.dolphindb.cn/cn/help/FunctionsandCommands/CommandsReferences/s/setRetentionPolicy.html) 函数设置好后，DolphinDB 会使用后台工作线程，每隔1小时按照数据库的时间分区检查在（当前时间 - *hoursToColdVolume* - 10天，当前时间 - *hoursToColdVolume*）范围内是否存在需要被迁移的数据，如果存在，则触发数据迁移，生成对应的 recovery 任务。在触发时，工作线程可能不会一次性将所有的符合条件的分区全部迁移，而是以 DB 为单位，每隔一小时迁移一部分 DB 的数据。这样可以减少 recovery 的压力，提高可用性。
+使用 [setRetentionPolicy](https://www.dolphindb.cn/cn/help/FunctionsandCommands/CommandsReferences/s/setRetentionPolicy.html) 函数设置好后，DolphinDB 会使用后台工作线程，每隔1小时按照数据库的时间分区检查在 [当前时间 - *hoursToColdVolume* - 10天，当前时间 - *hoursToColdVolume*) 范围内是否存在需要被迁移的数据，如果存在，则触发数据迁移，生成对应的 recovery 任务。在触发时，工作线程可能不会一次性将所有的符合条件的分区全部迁移，而是以 DB 为单位，每隔一小时迁移一个DB下所有待迁移的数据，从而减少 recovery 的压力，提高可用性。
 
 举例来说，假设有两个DB：`dfs://db1`，`dfs://db2`。它们都按照时间分区。*hoursToColdVolume* 设置120h，即保留5天内的数据：
 
-- 在2023.02.20 17:00时，工作线程可能会将 db1 下所有2023.02.05~2024.02.15（但不包含02.15）的分区进行迁移。
-- 在2023.02.20 18:00时，可能会将 db2 下的所有2023.02.05~2024.02.15（但不包含02.15）的分区进行迁移。
-- 如果工作线程的检查覆盖完整的一天，会保证在2023.02.20这一天结束前将所有 db 的2023.02.05~2024.02.15（但不包含02.15）的分区进行迁移。
+- 在2023.02.20 17:00时，工作线程可能会将 db1 下所有2023.02.05~2023.02.15（但不包含02.15）的分区进行迁移。
+- 在2023.02.20 18:00时，可能会将 db2 下的所有2023.02.05~2023.02.15（但不包含02.15）的分区进行迁移。
+- 如果工作线程的检查覆盖完整的一天，会保证在2023.02.20这一天结束前将所有 db 的2023.02.05~2023.02.15（但不包含02.15）的分区进行迁移。
 
 
 
@@ -153,9 +153,9 @@ rpc(getControllerAlias(), getClusterChunksStatus)
 
 分级存储依托于 DolphinDB 的 recovery 机制，以分区为单位，将每个节点的分区副本迁移到低速磁盘或者 S3 对象存储中。数据迁移内部的大致流程：
 
-1. 用户使用 [setRetentionPolicy](https://www.dolphindb.cn/cn/help/FunctionsandCommands/CommandsReferences/s/setRetentionPolicy.html) 函数设置 *hoursToColdVolume* 来配置数据的保留时间
-2. DDB 后台线程根据时间分区检查需要被迁移的数据，创建 recovery 任务
-3. recovery 任务执行，上传或拷贝对应的数据文件到对应的 *S3/* 本地路径。
+1. 用户使用 [setRetentionPolicy](https://www.dolphindb.cn/cn/help/FunctionsandCommands/CommandsReferences/s/setRetentionPolicy.html) 函数设置 *hoursToColdVolume* 来配置数据的保留时间。
+2. DolphinDB 后台线程根据时间分区检查需要被迁移的数据，创建 recovery 任务。
+3. 执行 recovery 任务，上传或拷贝对应的数据文件到对应的 *S3/* 本地路径。
 4. 修改分区元数据，更新分区路径，修改分区权限为 `READ_ONLY`。
 
 ### 3.3 数据读取机制
@@ -166,4 +166,4 @@ rpc(getControllerAlias(), getClusterChunksStatus)
 
 ## 4. 总结
 
-DolphinDB 的分级存储功能，能够将冷数据定期迁移至低速磁盘或云端，同时支持 `select` 语句进行正常的读取、计算，能够满足金融及物联网用户节省高速存储资源，降低无谓资源开销的需求。
+DolphinDB 的分级存储功能，能够将冷数据定期迁移至低速磁盘或云端，同时支持 `select` 语句进行正常的读取、计算，能够满足金融及物联网用户节省高速存储资源、降低无谓资源开销的需求。
