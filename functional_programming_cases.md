@@ -6,9 +6,9 @@
 
 - 用户可以自定义函数，通过传递参数的方法动态执行命令，减少了重复代码的编写。 --->
 
-DolphinDB支持函数化编程：函数对象可以作为高阶函数的参数。这提高了代码表达能力，可以简化代码，复杂的任务可以通过一行或几行代码完成。
+DolphinDB支持函数化编程：函数对象可以作为高阶函数的参数。这提高了代码表达能力，简化了代码，复杂的任务可以通过一行或几行代码完成。
 
-本教程介绍了一些常见场景下的函数化编程案例，重点介绍 DolphinDB 的高阶函数及其使用场景。包括以下内容：
+本教程介绍了一些常见场景下的函数化编程案例，重点介绍 DolphinDB 的高阶函数及其使用场景。包括以下内容：   
 
 - [1. 数据导入](#1-%E6%95%B0%E6%8D%AE%E5%AF%BC%E5%85%A5)
   * [1.1 整型时间转化为 TIME 格式并导入](#11-%E6%95%B4%E5%9E%8B%E6%97%B6%E9%97%B4%E8%BD%AC%E5%8C%96%E4%B8%BA-time-%E6%A0%BC%E5%BC%8F%E5%B9%B6%E5%AF%BC%E5%85%A5)
@@ -213,16 +213,16 @@ pt=loadTextEx(dbHandle=db,tableName=`nx , partitionColumns=`SendingTimeInNano`se
 
 ## 2. Lambda 表达式
 
-DolphinDB 中可以创建自定义函数，可以是命名函数或者匿名函数（通常为 lambda 表达式）。
+在 DolphinDB 中可以使用命名函数或匿名函数（通常为 lambda 表达式）来创建自定义函数。例如：
 
 ```shell
 x = 1..10
-each(x -> pow(x,2) + 3*x + 4.0, x)
+each(x -> x + 1, [1, 2, 3])
 ```
 
-上例定义了一个 lambda 表达式: `x -> pow(x,2) + 3*x + 4.0`，作为高阶函数 `each` 的参数，来计算每一个元素的平方。
+在这个例子中使用了一个 lambda 表达式（`x -> x + 1, [1, 2, 3]`）作为高阶函数 `each` 的参数，其中，该 lambda 表达式接受一个输入 x 并返回 x + 1。它与 each 函数一起使用的结果是，将 1 添加到数组 [1, 2, 3] 中的每个元素。
 
-接下去的例子中，也会有其它的 lambda 函数案例。
+后续章节将介绍其他 lambda 函数案例。
 
 ## 3. 高阶函数使用案例
 
@@ -267,7 +267,7 @@ cross(covar, matt)
 ```
 #### 3.1.2 计算股票两两之间的相关性
 
-本例中，我们使用金融大数据开放社区 Tushare 的沪深股票 [日线行情](https://waditu.com/document/2?doc_id=27) 数据，来计算股票间的两两相关性。
+本例中，我们使用金融大数据开放社区 Tushare 的沪深股票 [日线行情](https://tushare.pro/document/2?doc_id=27) 数据，来计算股票间的两两相关性。
 
 首先我们定义一个数据库和表，来存储沪深股票日线行情数据。相关语句如下：
 
@@ -278,19 +278,19 @@ yearRange=date(2008.01M + 12*0..22)
 if(existsDatabase(dbPath)){
 	dropDatabase(dbPath)
 }
-columns1=`ts_code`trade_date`open`high`low`close`pre_close`change`pct_change`vol`amount
+columns1=`ts_code`trade_date`open`high`low`close`pre_close`change`pct_chg`vol`amount
 type1=`SYMBOL`NANOTIMESTAMP`DOUBLE`DOUBLE`DOUBLE`DOUBLE`DOUBLE`DOUBLE`DOUBLE`DOUBLE`DOUBLE
 db=database(dbPath,RANGE,yearRange)
 hushen_daily_line=db.createPartitionedTable(table(100000000:0,columns1,type1),`hushen_daily_line,`trade_date)
 ```
-> 上面的表是按照 [日线行情](https://waditu.com/document/2?doc_id=27) 里的结构说明定义的。
+> 上面的表是按照 [日线行情](https://tushare.pro/document/2?doc_id=27) 里的结构说明定义的。
 
-定义好表结构后，如需获取对应的数据，可前往 [Tushare](https://tushare.pro/document/1?doc_id=39) 平台注册账户，获取 TOKEN，然后参考 [案例脚本](./script/getTushareDailyLine.py) 进行数据导入操作。本案例使用 DolphinDB 的 [Python API](https://gitee.com/dolphindb/api_python3/blob/master/README_CN.md) 获取数据，用户也可参考 Tushare 的说明文档的说明文档使用其它语言或库。本例使用 2008 年到 2017 年的日线行情进行说明。
+定义好表结构后，如需获取对应的数据，可前往 [Tushare](https://tushare.pro/document/1?doc_id=39) 平台注册账户，获取 TOKEN，并参考 [案例脚本](./script/getTushareDailyLine.py) 进行数据导入操作。本案例使用 DolphinDB 的 [Python API](https://gitee.com/dolphindb/api_python3/blob/master/README_CN.md) 获取数据，用户也可参考 Tushare 的说明文档使用其它语言或库。本例使用 2008 年到 2017 年的日线行情进行说明。
 
 在计算两两相关性时，首先使用 exec + pivot by 生成股票回报率矩阵:
 
 ```shell
-retMatrix=exec pct_change/100 as ret from daily_line pivot by trade_date, ts_code
+retMatrix=exec pct_chg/100 as ret from daily_line pivot by trade_date, ts_code
 ```
 
 `exec` 和 `pivot by` 是 DolphinDB 编程语言的特点之一。`exec` 与 `select` 的用法相同，但 `select` 语句仅可生成表, `exec` 语句可以生成向量。`pivot by` 用于重整维度，与 `exec` 一起使用时会生成一个矩阵。
@@ -340,7 +340,7 @@ ts_code   valueType  value
 login("admin","123456")
 daily_line= loadTable("dfs://tushare","hushen_daily_line")
 
-retMatrix=exec pct_change/100 as ret from daily_line pivot by trade_date,ts_code
+retMatrix=exec pct_chg/100 as ret from daily_line pivot by trade_date,ts_code
 corrMatrix=cross(corr,retMatrix)
 
 syms=(exec count(*) from daily_line group by ts_code).ts_code
@@ -350,7 +350,7 @@ mostCorrelated=select * from table(corrMatrix.columnNames() as ts_code, corrMatr
 
 ### 3.2 each 使用案例
 
-某些场景需要把函数应用到指定参数中的每个元素。若不使用函数化编程，需要使用 for 循环。DolphinDB 提供的高阶函数，例如 [`each`]((https://www.dolphindb.cn/cn/help/Functionalprogramming/TemplateFunctions/each.html)), `peach`, `loop`, `ploop` 等，可以简化代码。
+某些场景需要把函数应用到指定参数中的每个元素。若不使用函数化编程，需要使用 for 循环。DolphinDB 提供的高阶函数，例如 [`each`](https://www.dolphindb.cn/cn/help/Functionalprogramming/TemplateFunctions/each.html), `peach`, `loop`, `ploop` 等，可以简化代码。
 
 #### 3.2.1 获取数据表各个列的 NULL 值个数
 
@@ -466,43 +466,50 @@ all(each(eqObj, t1.values(), t2.values()))
 
 #### 3.3.1 loop 与 each 的区别
 
-高阶函数 [`loop`](https://www.dolphindb.cn/cn/help/Functionalprogramming/TemplateFunctions/loopPloop.html?highlight=loop) 与 `each` 相似, 区别在于结果的格式和类型。
+高阶函数 [`loop`](https://www.dolphindb.cn/cn/help/Functionalprogramming/TemplateFunctions/loopPloop.html?highlight=loop) 与 `each` 相似, 区别在于函数返回值的格式和类型。
 
-`each` 中 *func* 的第一个返回值数据格式和类型决定了所有返回值数据格式和类型。而 `loop` 没有这样的限制，适用于函数返回值类型不同的情况。
+`each` 高阶函数根据每个子任务计算结果的数据类型和形式，决定返回值的数据形式：
 
-```shell
-def parse_signals(mutable tbl_value, value){
-    kvs = split(value, ',');
-    d = dict(STRING, STRING);
-    for(kv in kvs) {
-        sp = split(kv, ':');
-        d[sp[0]] = sp[1];
-    }
-    insert into tbl_value values(date(d[`tradingday]), d[`signal_id], d[`index], d[`underlying], d[`symbol], int(d[`volume]), int(d[`buysell]), int(d[`openclose]), temporalParse(d[`signal_time], "HHmmssSSS"));
-}
-tbl_value=table(100:0, [`tradingday,`signal_id,`index,`underlying,`symbol,`volume,`buysell,`openclose,`signal_time],[DATE,SYMBOL,SYMBOL,SYMBOL,SYMBOL,INT,INT,INT,TIME]);
+- 若单个任务返回一个 scalar，则 `each` 返回一个 vector；
+- 若单个任务返回 vector，那么 `each` 返回一个 matrix；
+- 若单个任务返回字典，那么 `each` 返回一个 table。
 
-v1="tradingday:2020.06.03,signal_id:1,index:000300,underlying:510300,symbol:10002985,volume:2,buysell:0,openclose:0,signal_time:093000120";
-v2="tradingday:2020.06.04,signal_id:2,index:000500,underlying:510050,symbol:10002986,volume:3,buysell:1,openclose:1,signal_time:093100120"
-parse_signals(tbl_value, v1);
-each(parse_signals{tbl_value}, [v1, v2]);
-```
-
-上面案例中，若使用 `each` 函数会报错：
+若所有子任务的数据类型和形式都相同， 则返回 Vector 或 Matrix，否则返回 Tuple。例如：
 
 ```shell
-Not allowed to create void vector
+m=1..12$4:3;
+m;
+each(add{1 2 3 4}, m);
 ```
+得到以下结果：
 
-`each` 作为高阶函数，会并行执行多个计算任务。第一个任务的结果类型将决定整个函数的运行结果的类型。若单个任务返回一个 scalar，那么 `each` 返回一个 vector；若单个任务返回 vector，那么 `each` 返回一个 matrix；若单个任务返回字典，那么 `each` 返回一个 table。
+| col1 | col2 | col3 |
+|---|---|---|
+| 2 | 6 | 10 |
+| 4 | 8 | 12 |
+| 6 | 10 | 14 |
+| 8 | 12 | 16 |
 
-该问题中的 parse_signals 函数没有任何返回值（也就是返回一个 NOTHING 标量），所以 `each` 试图去创建一个类型为 void 的 vector，这在 DolphinDB 中是不被允许的。
-
-将 `each` 替换为 `loop`。`loop` 返回一个 tuple，每个单独任务的返回值作为 tuple 的一个元素。
+而 `loop` 总是返回 Tuple。例如，使用 `loop` 计算每一列的最大值：
 
 ```shell
-loop(parse_signals{tbl_value}, [v1, v2]);
+t = table(1 2 3 as id, 4 5 6 as value, `IBM`MSFT`GOOG as name);
+t;
+loop(max, t.values());
 ```
+得到以下结果：
+
+| offset | 0 | 1 | 2 |
+|---|---|---|---|
+| 0 | 3 | 6 | MSFT |
+
+
+
+
+
+
+
+
 
 #### 3.3.2 导入多个文件
 
@@ -545,7 +552,7 @@ update t set signal = moving(rangeTest, [close, downAvgPrice, upAvgPrice], 21)
 下例模拟行情数据，创建一个测试表 t：
 
 ```shell
-t=table(rand("d"+string(1..n),n) as ts_code, nanotimestamp(2008.01.10+1..n) as trade_date, rand(n,n) as open, rand(n,n) as high, rand(n,n) as low, rand(n,n) as close, rand(n,n) as pre_close, rand(n,n) as change, rand(n,n) as pct_change, rand(n,n) as vol, rand(n,n) as amount, rand(n,n) as downAvgPrice, rand(n,n) as upAvgPrice, rand(1 0,n) as singna)
+t=table(rand("d"+string(1..n),n) as ts_code, nanotimestamp(2008.01.10+1..n) as trade_date, rand(n,n) as open, rand(n,n) as high, rand(n,n) as low, rand(n,n) as close, rand(n,n) as pre_close, rand(n,n) as change, rand(n,n) as pct_chg, rand(n,n) as vol, rand(n,n) as amount, rand(n,n) as downAvgPrice, rand(n,n) as upAvgPrice, rand(1 0,n) as singna)
 ```
 
 rolling 和 moving 类似，都将函数运算符应用到滑动窗口，进行窗口计算。两者也有细微区别： [`rolling`]((https://www.dolphindb.cn/cn/help/Functionalprogramming/TemplateFunctions/rolling.html?highlight=rolling)) 可以指定步长 step，moving 的步长为 1；且两者对空值的处理也不相同。详情可参考 [rolling 的空值处理](https://gitee.com/dolphindb/Tutorials_CN/blob/master/window_cal.md#52-rolling%E7%9A%84%E7%A9%BA%E5%80%BC%E5%A4%84%E7%90%86)。
@@ -650,6 +657,11 @@ imax(m.transpose())
 
 ```shell
 byRow(imax, m)
+```
+以上操作亦可用行计算函数 `rowImax` 来实现：
+
+```shell
+print rowImax(m)
 ```
 
 ### 3.7 segmentby 使用案例
@@ -1174,7 +1186,7 @@ benchX = 10 15 7 8 9 1 2.0
 
 DolphinDB 提供了最小二乘回归函数 [`ols`](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/o/ols.html?highlight=ols)。
 
-先将表中参与计算的字段值转化成矩阵：
+先将表中参与计算的以下列转化成矩阵：
 
 ```shell
 mt = matrix(t[`past1`past3`past5`past10`past20`past30`past60]).transpose()
