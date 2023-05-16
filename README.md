@@ -197,6 +197,7 @@
     - [DolphinDB 流数据连接引擎应用：多数据源流式实时关联处理](streaming-real-time-correlation-processing.md)
     - [基于 DolphinDB 与 Python Celery 框架的因子计算平台构建](Python_Celery.md)
     - [快速搭建 Level-2 快照数据流批一体因子计算平台最佳实践](Level2_Snapshot_Factor_Calculation.md)
+    - [DolphinDB 处理 Level 2 行情数据实例](Level-2_stock_data_processing.md)
     - [DolphinDB 与 Python AirFlow 最佳实践](Best_Practices_for_DolphinDB_and_Python_AirFlow.md)
     - [金融因子流式实现](Streaming_computing_of_financial_quantifiers.md)
   - 物联网：
