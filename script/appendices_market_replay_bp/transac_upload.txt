@@ -1,0 +1,41 @@
+def transacUpload(dbName, tbName)
+{
+    path="C:/Users/myhu/Desktop/transaction.csv"
+
+    db1 = database(, VALUE, 2021.12.01..2021.12.31)
+    db2 = database(, HASH, [SYMBOL, 25])
+    db = database(dbName, COMPO, [db1, db2], , 'TSDB')
+
+    schemaTable = table(
+        array(SYMBOL, 0) as SecurityID,
+        array(DATE, 0) as MDDate,
+        array(TIME, 0) as MDTime,
+        array(TIMESTAMP, 0) as DataTimestamp,
+        array(SYMBOL, 0) as SecurityIDSource,
+        array(SYMBOL, 0) as SecurityType,
+        array(LONG, 0) as TradeIndex,
+        array(LONG, 0) as TradeBuyNo,
+        array(LONG, 0) as TradeSellNo,
+        array(INT, 0) as TradeType,
+        array(INT, 0) as TradeBSFlag,
+        array(LONG, 0) as TradePrice,
+        array(LONG, 0) as TradeQty,
+        array(LONG, 0) as TradeMoney,
+        array(LONG, 0) as ApplSeqNum,
+        array(INT, 0) as ChannelNo,
+        array(DATE, 0) as ExchangeDate,
+        array(TIME, 0) as Exchanime
+    )
+    
+    db.createPartitionedTable(table=schemaTable, tableName=tbName, partitionColumns=`MDDate`SecurityID, sortColumns=`SecurityID`MDTime, keepDuplicates=ALL,compressMethods={MDDate:"delta", MDTime:"delta",DataTimestamp:"delta",ExchangeDate:"delta",Exchanime:"delta"})
+    
+    schema = extractTextSchema(path)
+    update schema set type = "TIMESTAMP" where name = "DataTimestamp"
+    update schema set type = "DATE" where name = "ExchangeDate"
+    transaction = loadTextEx(dbHandle=db, tableName=`transaction, partitionColumns=`MDDate`SecurityID, filename=path, schema=schema, sortColumns=`SecurityID`MDTime, arrayDelimiter=",")
+    
+}
+
+dbName = "dfs://Test_transaction"
+tbName = "transaction"
+transacUpload(dbName, tbName)

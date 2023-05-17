@@ -1,0 +1,37 @@
+def orderCreate(dbName, tbName)
+{
+    if(existsDatabase(dbName))
+    {
+        dropDatabase(dbName)
+    }
+
+    db1 = database(, VALUE, 2021.12.01..2021.12.31)
+    db2 = database(, HASH, [SYMBOL, 25])
+    db = database(dbName, COMPO, [db1, db2], , 'TSDB')
+
+    schemaTable = table(
+        array(SYMBOL, 0) as SecurityID,
+        array(DATE, 0) as MDDate,
+        array(TIME, 0) as MDTime,
+        array(TIMESTAMP, 0) as DataTimestamp,
+        array(SYMBOL, 0) as SecurityIDSource,
+        array(SYMBOL, 0) as SecurityType,
+        array(LONG, 0) as OrderIndex,
+        array(INT, 0) as OrderType,
+        array(LONG, 0) as OrderPrice,
+        array(LONG, 0) as OrderQty,
+        array(INT, 0) as OrderBSFlag,
+        array(INT, 0) as ChannelNo,
+        array(DATE, 0) as ExchangeDate,
+        array(TIME, 0) as Exchanime,
+        array(LONG, 0) as OrderNO,
+        array(LONG, 0) as ApplSeqNum,
+        array(SYMBOL, 0) as SecurityStatus
+    )
+
+    db.createPartitionedTable(table=schemaTable, tableName=tbName, partitionColumns=`MDDate`SecurityID, sortColumns=`SecurityID`MDTime, keepDuplicates=ALL,compressMethods={MDDate:"delta", MDTime:"delta",DataTimestamp:"delta",ExchangeDate:"delta",Exchanime:"delta"})
+}
+
+dbName = "dfs://Test_order"
+tbName = "order"
+orderCreate(dbName, tbName)

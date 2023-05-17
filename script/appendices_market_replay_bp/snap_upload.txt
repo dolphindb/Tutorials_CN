@@ -1,0 +1,102 @@
+def snapUpload(dbName, tbName)
+{
+    path="C:/Users/myhu/Desktop/snapshot.csv"    
+
+    db1 = database(, VALUE, 2021.12.01..2021.12.31)
+    db2 = database(, HASH, [SYMBOL, 20])
+    db = database(dbName, COMPO, [db1, db2], , "TSDB")
+
+    schemaTable = table(
+        array(SYMBOL, 0) as SecurityID,
+        array(DATE, 0) as MDDate,
+        array(TIME, 0) as MDTime,
+        array(TIMESTAMP, 0) as DataTimestamp,
+        array(SYMBOL, 0) as TradingPhaseCode,
+        array(SYMBOL, 0) as SecurityIDSource,
+        array(SYMBOL, 0) as SecurityType,
+        array(INT, 0) as MaxPx,
+        array(INT, 0) as MinPx,
+        array(INT, 0) as PreClosePx,
+        array(INT, 0) as NumTrades,
+        array(INT, 0) as TotalVolumeTrade,
+        array(INT, 0) as TotalValueTrade,
+        array(INT, 0) as LastPx,
+        array(INT, 0) as OpenPx,
+        array(INT, 0) as ClosePx,
+        array(INT, 0) as HighPx,
+        array(INT, 0) as LowPx,
+        array(INT, 0) as DiffPx1,
+        array(INT, 0) as DiffPx2,
+        array(INT, 0) as TotalBuyQty,
+        array(INT, 0) as TotalSellQty,
+        array(INT, 0) as WeightedAvgBuyPx,
+        array(INT, 0) as WeightedAvgSellPx,
+        array(INT, 0) as WithdrawBuyNumber,
+        array(INT, 0) as WithdrawBuyAmount,
+        array(INT, 0) as WithdrawBuyMoney,
+        array(INT, 0) as WithdrawSellNumber,
+        array(INT, 0) as WithdrawSellAmount,
+        array(INT, 0) as WithdrawSellMoney,
+        array(INT, 0) as TotalBuyNumber,
+        array(INT, 0) as TotalSellNumber,
+        array(INT, 0) as BuyTradeMaxDuration,
+        array(INT, 0) as SellTradeMaxDuration,
+        array(INT, 0) as NumBuyOrders,
+        array(INT, 0) as NumSellOrders,
+        array(INT, 0) as NorminalPx,
+        array(INT, 0) as ShortSellSharesTraded,
+        array(INT, 0) as ShortSellTurnover,
+        array(INT, 0) as ReferencePx,
+        array(TIMESTAMP, 0) as ComplexEventStartTime,
+        array(TIMESTAMP, 0) as ComplexEventEndTime,
+        array(DATE, 0) as ExchangeDate,
+        array(TIME, 0) as ExchangeTime,
+        array(INT, 0) as AfterHoursNumTrades,
+        array(INT, 0) as AfterHoursTotalVolumeTrade,
+        array(INT, 0) as AfterHoursTotalValueTrade,
+        array(INT, 0) as ChannelNo,
+        array(INT[], 0) as BuyPriceQueue,
+        array(INT[], 0) as BuyOrderQtyQueue,
+        array(INT[], 0) as SellPriceQueue,
+        array(INT[], 0) as SellOrderQtyQueue,
+        array(INT[], 0) as BuyOrderQueue,
+        array(INT[], 0) as SellOrderQueue,
+        array(INT[], 0) as BuyNumOrdersQueue,
+        array(INT[], 0) as SellNumOrdersQueue,
+        array(INT, 0) as MaxBuyPrice,
+        array(INT, 0) as MinBuyPrice,
+        array(INT, 0) as MaxSellPrice,
+        array(INT, 0) as MinSellPrice,
+        array(INT, 0) as PreMarketLastPx,
+        array(INT, 0) as PreMarketTotalVolumeTrade,
+        array(INT, 0) as PreMarketTotalValueTrade,
+        array(INT, 0) as PreMarketHighPx,
+        array(INT, 0) as PreMarketLowPx,
+        array(INT, 0) as AfterHoursLastPx,
+        array(INT, 0) as AfterHoursHighPx,
+        array(INT, 0) as AfterHoursLowPx,
+        array(SYMBOL, 0) as MarketPhaseCode
+    )
+
+    db.createPartitionedTable(table=schemaTable, tableName=tbName, partitionColumns=`MDDate`SecurityID, sortColumns=`SecurityID`MDTime, keepDuplicates=ALL,compressMethods={MDDate:"delta", MDTime:"delta",DataTimestamp:"delta",ComplexEventStartTime:"delta",ComplexEventEndTime:"delta",ExchangeDate:"delta",ExchangeTime:"delta"})
+    
+    schema = extractTextSchema(path)
+    update schema set type = "TIMESTAMP" where name = "DataTimestamp"
+    update schema set type = "SYMBOL" where name = "TradingPhaseCode"
+    update schema set type = "TIMESTAMP" where name = "ComplexEventStartTime"
+    update schema set type = "TIMESTAMP" where name = "ComplexEventEndTime"
+    update schema set type = "DATE" where name = "ExchangeDate"
+    update schema set type = "INT[]" where name = "BuyPriceQueue"
+    update schema set type = "INT[]" where name = "BuyOrderQtyQueue"
+    update schema set type = "INT[]" where name = "SellPriceQueue"
+    update schema set type = "INT[]" where name = "SellOrderQtyQueue"
+    update schema set type = "INT[]" where name = "BuyOrderQueue"
+    update schema set type = "INT[]" where name = "SellOrderQueue"
+    update schema set type = "INT[]" where name = "BuyNumOrdersQueue"
+    update schema set type = "INT[]" where name = "SellNumOrdersQueue"
+    snapshot = loadTextEx(dbHandle=db, tableName=`snapshot, partitionColumns=`MDDate`SecurityID, filename=path, schema=schema, sortColumns=`SecurityID`MDTime, arrayDelimiter=",")
+}
+
+dbName = "dfs://Test_snapshot"
+tbName = "snapshot"
+snapUpload(dbName, tbName)
