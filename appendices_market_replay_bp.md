@@ -53,7 +53,7 @@
 本教程示例 DolphinDB 搭建的行情回放服务架构如下图所示：
 
 <figure align="left">
-<img src="./images/appendices_market_replay_bp/1_1.png" width=50%>
+<img src="./images/appendices_market_replay_bp/1_1.png" width=65%>
     <figcaption>行情回放服务架构</figcaption>
 </figure>
 
@@ -66,7 +66,7 @@
 本教程示例 DolphinDB 搭建行情回放服务的具体操作步骤如下图所示：
 
 <figure align="left">
-<img src="./images/appendices_market_replay_bp/1_2.png" width=50%>
+<img src="./images/appendices_market_replay_bp/1_2.png" width=65%>
     <figcaption>搭建步骤</figcaption>
 </figure>
 
@@ -485,7 +485,7 @@ auto myHandler = [&](vector<Message> msgs)
 根据 5.1.4 构造的消费函数，两支股票（“000616.SZ” &“000681.SZ”）最大速度回放三张表一天数据输出如下图所示：
 
 <figure align="left">
-<img src="./images/appendices_market_replay_bp/5_1.png" width=60%>
+<img src="./images/appendices_market_replay_bp/5_1.png" width=70%>
     <figcaption>消费输出结果</figcaption>
 </figure>
 
@@ -542,7 +542,7 @@ def myHandler(lst):
 根据 5.2.3 构造的消费函数，两支股票（“000616.SZ” &“000681.SZ”）最大速度回放三张表一天数据输出如下图所示：
 
 <figure align="left">
-<img src="./images/appendices_market_replay_bp/5_2.png" width=60%>
+<img src="./images/appendices_market_replay_bp/5_2.png" width=70%>
     <figcaption>消费输出结果</figcaption>
 </figure>
 
@@ -722,7 +722,7 @@ Python API 教程：[Python API 教程](https://gitee.com/dolphindb/api_python3/
 2. 使用 7z 等解压缩软件提取名为 *data_pack.zip.001* 分卷，得到 *data_pack* 文件夹。
 3. 在 *data_pack* 文件夹中，解压 *data.zip* 即可得到原始行情数据文件。
 <figure align="left">
-<img src="./images/appendices_market_replay_bp/unzip_datapack.png" width=60%>
+<img src="./images/appendices_market_replay_bp/unzip_datapack.png" width=70%>
     <figcaption>分卷提取</figcaption>
 </figure>
 
