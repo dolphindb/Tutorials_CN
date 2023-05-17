@@ -708,7 +708,7 @@ Python API 教程：[Python API 教程](https://gitee.com/dolphindb/api_python3/
 - [逐笔委托建库建表脚本](script/appendices_market_replay_bp/order_create.txt) 
 - [逐笔成交建库建表脚本](script/appendices_market_replay_bp/transac_create.txt) 
 - [快照建库建表脚本](script/appendices_market_replay_bp/snap_create.txt) 
-- [逐笔委托示例导入脚本](script\appendices_market_replay_bp\order_upload.txt) 
+- [逐笔委托示例导入脚本](script/appendices_market_replay_bp/order_upload.txt) 
 - [逐笔成交示例导入脚本](script/appendices_market_replay_bp/transac_upload.txt) 
 - [快照示例导入脚本](script/appendices_market_replay_bp/snap_upload.txt) 
 - [行情回放函数](script/appendices_market_replay_bp/replay.txt) 
