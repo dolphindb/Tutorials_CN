@@ -414,6 +414,9 @@
   >
 
   **第三步：升级**
+  > 注意：
+  >
+  > 当 server 升级到某个版本后，使用的插件也应升级到与此对应的版本。
 
   - 在线升级
 
@@ -530,6 +533,9 @@
 
   - 下载所需升级版本的安装包，官方下载地址：[http://www.dolphindb.cn/downloads.html](https://gitee.com/link?target=http%3A%2F%2Fwww.dolphindb.cn%2Fdownloads.html)
   - 将新版本 *server* 目录下除 *dolphindb.cfg*, *clusterDemo* 以及 *dolphindb.lic* 外的所有文件覆盖替换旧版文件
+  > 注意：
+  >
+  > 当 server 升级到某个版本后，使用的插件也应升级到与此对应的版本。
 
   **第四步：重新启动集群**
 

@@ -202,7 +202,10 @@ cp -r local8848/storage/CHUNK_METADATA/ backup/CHUNK_METADATA
 
 > ❗️ 元数据文件可能通过配置文件指定存储在其它目录，如果在默认路径没有找到上述文件，可以通过查询配置文件中的 *dfsMetaDir* 参数和 *chunkMetaDir* 参数确认元数据文件的存储目录。若配置中未指定 *dfsMetaDir* 参数和 *chunkMetaDir* 参数，但是配置了 *volumes* 参数，则 *CHUNK_METADATA* 目录在相应的 *volumes* 参数指定的目录下。
 
-**第三步：升级**
+**第三步：升级**  
+> 注意：
+>
+> 当 server 升级到某个版本后，使用的插件也应升级到与此对应的版本。
 
 - 在线升级
 

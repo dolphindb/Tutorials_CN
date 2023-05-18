@@ -24,6 +24,9 @@
 因此，对于版本跨度较大的升级，建议联系 DolphinDB 的技术支持工程师进行风险评估后再进行升级。
 
 ## 3. 升级步骤
+> 注意：
+>
+> 当 server 升级到某个版本后，使用的插件也应升级到与此对应的版本。
 
 本例中，需要将版本为 2.00.7.4 的高可用集群升级到 2.00.8.12 版本。
 
@@ -113,7 +116,7 @@ select * from rpc(getControllerAlias(), getClusterChunksStatus) where state != "
 第二步，执行以下脚本获取元数据文件的存储目录。
 
 ```
-pnodeRun(getConfig{`chunkMetaDir})`
+pnodeRun(getConfig{`chunkMetaDir})
 ```
 
 ```sh
@@ -124,7 +127,7 @@ pnodeRun(getConfig{`chunkMetaDir})`
 ```
 
 ```sh
-rpc(getControllerAlias(),getConfig{`dfsMetaDir})`
+rpc(getControllerAlias(),getConfig{`dfsMetaDir})
 ```
 
 ```
