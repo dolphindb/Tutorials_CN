@@ -35,7 +35,7 @@ NSQ 插件目前支持版本：[relsease200](https://gitee.com/dolphindb/Dolphin
 以 Linux 单节点为例，下载好插件文件后，需要添加动态库地址到环境变量中。注意插件的安装路径`<PluginDir>`，需要根据实际环境修改，本例中插件的安装路径为 `/DolphinDB/server/plugins/nsq`，启动 server 前需要执行如下命令：
 
 ```
-export LD_LIBRARY_PATH="LD_LIBRARY_PATH:/DolphinDB/server/plugins/nsq"
+export LD_LIBRARY_PATH="$LD_LIBRARY_PATH:/DolphinDB/server/plugins/nsq"
 ```
 
 进入 server 安装目录，执行如下命令启动 server：
