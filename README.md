@@ -232,3 +232,4 @@
   - [从 InfluxDB 迁移数据到 DolphinDB](Migrate_data_from_InfluxDB_to_DolphinDB.md)
   - [从 Redshift 迁移数据到 DolphinDB](Migrate_data_from_Redshift_to_DolphinDB.md)
   - [基于 DataX 的 DolphinDB 数据导入工具](../../../datax-writer)
+  - [从 OceanBase 迁移到 DolphinDB](OceanBase_to_DolphinDB.md)

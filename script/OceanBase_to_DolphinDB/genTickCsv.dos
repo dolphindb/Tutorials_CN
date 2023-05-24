@@ -1,0 +1,103 @@
+/**
+ * print out msg and thow exeception
+ */
+
+def simulateStockDataLog(funcName, msg) {
+	formattedMsg = stringFormat("[DolphinDBModules::simulateStockData::%W] : [ERRORINFO]: %W", funcName, msg)
+	throw(formattedMsg)
+}
+
+/**
+ * validate the date argument, return valid value,
+ * otherwise return null and throw exception
+ */
+def validateDateAndScalarParam(funcName, Param) {
+	if( form(Param) == 0 ){
+		if( type(Param) in [6] ){
+			return Param
+		}else{
+			simulateStockDataLog(funcName, "The inputParam  must be date type")
+		}
+	}else{
+		simulateStockDataLog(funcName, "The inputParam  must be scalar")
+		return
+	}
+}
+
+/**
+ * validate the date argument, return valid value,
+ * otherwise return null and throw exception
+ */
+def validateSecurityIdParam(funcName, Param) {
+	if( form(Param) in [0,1] ){
+		if( type(Param) in [17,18] ){
+			return Param
+		}else{
+			simulateStockDataLog(funcName, "The inputParam must be string or symbol type")
+		}
+	}else{
+		simulateStockDataLog(funcName, "The inputParam  must be scalaror vector")
+		return
+	}
+}
+/**
+ * simulates the trade data of multiple stocks a day
+ */
+def genStockOneDayTrade(SecurityIDPara,
+			       tradeDatePara){
+	//校验日期参数入参是否为标量，是否为日期类型
+	funcName = "genStockOneDayTrade"
+	tradeDate = validateDateAndScalarParam(funcName, tradeDatePara)
+	//校验入参股票是否为STRING或者SYMBOL
+	SecurityID = validateSecurityIdParam(funcName, SecurityIDPara)
+	//每天每股tick个数，每秒2个
+	tradeMin = table((09:30:00.000+0..14400*500) join (13:00:00.000+0..14400*500) as tradeMin)
+	
+	//第二列，时刻，按范围造
+	 tmpTradeDate = table(tradeDate as tmpTradeDate)
+	 tradetime = select concatDateTime(tmpTradeDate,tradeMin) as tradetime from cj(tmpTradeDate,tradeMin)
+	tmpTable = cj(table(SecurityID as securityid),tradetime as tradeTime)
+	oneDayTickCount = tmpTable.size()
+	//第三列，成交价格，按范围造
+	yesterdayClose=2.0
+	rands=rand(2.0,oneDayTickCount)-1
+	coef=rands*0.1
+	targetCoef=1+coef
+	priceSeries=yesterdayClose*targetCoef
+	
+	//第四列，成交手数，按p=0.5二项分布的右半边造
+	volumeRand=randBinomial(30,0.5,oneDayTickCount)-15//要正数的右半边
+	volumePool=volumeRand[volumeRand>0]//只取正数的
+	volumes=rand(volumePool,oneDayTickCount)//按手数池子取随机数
+	stockVolumes=volumes*100//手数*100=股数
+	//plot(volumes,tradetime,"testing")
+	sellSideOrderRefCount=oneDayTickCount/4 //卖单号张数
+	buySideOrderRefCount=sellSideOrderRefCount //买单号张数
+	allOrderPool=rand(1..oneDayTickCount,oneDayTickCount) //卖单号池子
+	modes=allOrderPool%2
+	oddNumbers=allOrderPool[bool(modes)]//奇数作为买单号池子
+	evenNumbers=allOrderPool[bool(modes==0)]//偶数作为买单号池子
+	buyOrderPool=oddNumbers
+	sellOrderPool=evenNumbers
+	randBuyNo=rand(buyOrderPool,oneDayTickCount)
+	randSellNo=rand(sellOrderPool,oneDayTickCount)
+	
+	//返回最终数据
+	onedayTradeTable = select *,
+			priceSeries as TradePrice,
+			stockVolumes as TradeQty,
+			priceSeries*stockVolumes as TradeAmount,
+			randBuyNo as BuyNo,
+			randSellNo as SellNo,
+			2.0 + rand(200,oneDayTickCount) as TradeIndex,
+			rand(1..6,oneDayTickCount) as ChannelNo ,
+			rand(`S`B,oneDayTickCount) as TradeBSFlag,                     
+			rand(1 .. oneDayTickCount,oneDayTickCount) as BizIndex 
+			from tmpTable
+	return onedayTradeTable
+}
+securityid =("sh" + lpad(string(600001..602400), 6, `0)).join!("sz"+lpad(string(000001..002400), 6, `0))
+timer onedayTradeTable = genStockOneDayTrade(SecurityIDPara = securityid,
+			       tradeDatePara = 2020.01.04)
+
+onedayTradeTable.saveText("./trade.csv")			   

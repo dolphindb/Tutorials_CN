@@ -1,0 +1,93 @@
+{
+    "job": {
+        "setting": {
+            "speed": {
+		"channel":1
+            }
+        },
+        "content": [
+            {
+                "writer": {
+                    "parameter": {
+                        "dbPath": "dfs://TSDB_Tick",
+                        "tableName": "tick",
+                        "userId": "admin",
+                        "pwd": "123456",
+                        "host": "127.0.0.1",
+			"batchSize": 200000,
+                        "table": [
+                            {
+                                "type": "DT_SYMBOL",
+                                "name": "SecurityID"
+                            },
+                            {
+                                "type": "DT_TIMESTAMP",
+                                "name": "TradeTime"
+                            },
+                            {
+                                "type": "DT_DOUBLE",
+                                "name": "TradePrice"
+                            },
+                            {
+                                "type": "DT_INT",
+                                "name": "TradeQty"
+                            },
+                            {
+                                "type": "DT_DOUBLE",
+                                "name": "TradeAmount"
+                            },
+                            {
+                                "type": "DT_INT",
+                                "name": "BuyNo"
+                            },
+                            {
+                                "type": "DT_INT",
+                                "name": "SellNo"
+                            },
+                            {
+                                "type": "DT_INT",
+                                "name": "TradeIndex"
+                            },
+                            {
+                                "type": "DT_INT",
+                                "name": "ChannelNo"
+                            },
+                            {
+                                "type": "DT_SYMBOL",
+                                "name": "TradeBSFlag"
+                            },
+                            {
+                                "type": "DT_INT",
+                                "name": "BizIndex"
+                            }
+                        ],
+                        "port": 8800
+                    },
+                    "name": "dolphindbwriter"
+                },
+                "reader": {
+                    "name": "oceanbasev10reader",
+                    "parameter": {
+                        "username": "root",
+                        "password": "123456",
+			"batchSize":10000,
+                        "column": [
+                            "*"
+                        ],
+                        "connection": [
+                            {
+                                "table": [
+                                    "tick"
+                                ],
+                                "jdbcUrl": [
+                                    "jdbc:oceanbase://127.0.0.1:2883/db1"
+                                ]
+                            }
+                        ]
+                    }
+                }
+            }
+        ]
+    }
+}
+

@@ -1,0 +1,19 @@
+login('admin','123456')
+
+loadPlugin("/ssd/ssd3/pocTest/server/plugins/mysql/PluginMySQL.txt")
+
+//全量同步
+conn = mysql::connect(`127.0.0.1,2881,`root,`123456,`db1)
+timer{
+	mysql::loadEx(conn, database('dfs://TSDB_Tick'), `tick, `TradeTime`SecurityID,"tick")
+}
+
+//增量同步
+def scheduleLoad(){
+	sqlQuery = "select * from tick where date(TradeTime) =  '" +temporalFormat(today()-1, 'y-MM-dd') +"' ;"
+	mysql::loadEx(conn, database('dfs://TSDB_Tick'), `tick, `TradeTime`SecurityID,sqlQuery)
+}
+scheduleJob(jobId=`test, jobDesc="test",jobFunc=scheduleLoad,scheduleTime=00:05m,startDate=2023.04.04, endDate=2024.01.01, frequency='D')
+
+
+
