@@ -346,7 +346,7 @@ lanCluster=0
 执行以下 Shell 指令修改 *controller.cfg* 配置文件：
 
 ```
-vim ./controller.cfgxxxxxxxxxx vim ./controller.cfg1vim ./controller.cfg
+vim ./controller.cfg
 ```
 
 ```
