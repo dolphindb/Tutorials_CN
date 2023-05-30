@@ -814,7 +814,7 @@
 
   可以参考 DolphinDB 官方参数配置说明进行配置参数调优：[参数配置 — DolphinDB 2.0 documentation](https://www.dolphindb.cn/cn/help/200/DatabaseandDistributedComputing/Configuration/index.html)
 
-  如果遇到性能问题，请添加微信号 13362150840（仅用于添加微信）或扫描下面二维码，客服会邀您进群，由DolphinDB的技术支持工程师会解答您的问题。
+  如果遇到性能问题，请添加微信号 13306510479（仅用于添加微信）或扫描下面二维码，客服会邀您进群，由DolphinDB的技术支持工程师会解答您的问题。
 
   <img src="./images/multi_machine_cluster_deployment/5_2.png" width=40%>
 
