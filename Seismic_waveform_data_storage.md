@@ -101,15 +101,7 @@ DolphinDB解决方案架构图如下：
 
 存储方案与数据的写入、查询、更新、删除常见操作密切相关，合理的存储方案能极大地提升效率，并且在一定程度上节约硬件资源。因此，在实施整个解决方案之前，需先设计合理的的存储方案。常见的地震数据表结构如表1所示：
 
-<style type="text/css">
-.tg  {border-collapse:collapse;border-spacing:0;}
-.tg td{border-color:black;border-style:solid;border-width:1px;font-family:Arial, sans-serif;font-size:14px;
-  overflow:hidden;padding:10px 5px;word-break:normal;}
-.tg th{border-color:black;border-style:solid;border-width:1px;font-family:Arial, sans-serif;font-size:14px;
-  font-weight:normal;overflow:hidden;padding:10px 5px;word-break:normal;}
-.tg .tg-0e7o{background-color:#F4F5F7;border-color:inherit;color:#172B4D;font-weight:bold;text-align:center;vertical-align:top}
-.tg .tg-9uk5{background-color:#FFF;border-color:inherit;color:#172B4D;text-align:center;vertical-align:top}
-</style>
+
 <table class="tg">
 <caption align="bottom">表1：常见地震数据表结构</caption>
 <thead>
@@ -160,17 +152,7 @@ DolphinDB解决方案架构图如下：
 但由于地震数据查询场景中数据过滤条件过多，按照上述方式设计分区方案，会有多个分区列，导致分区数量过多，降低检索效率。因此，一张表存储所有字段的建表方式会降低查询效率。
 
 考虑到在实际生产环境中，台网、台站、位置、通道等基本信息的取值是固定的并且取值范围较小，因此可以设计维度表存储这些基本信息，然后再建立一张分区表，存储时间、采样值等信息。这种表结构不仅能提升写入、查询、更新、删除等操作的性能，还能避免数据重复，节约磁盘资源。基于此，重新设计的分区表结构与维度表结构如表2、表3所示。
-<style type="text/css">
-.tg  {border-collapse:collapse;border-spacing:0;}
-.tg td{border-color:black;border-style:solid;border-width:1px;font-family:Arial, sans-serif;font-size:14px;
-  overflow:hidden;padding:10px 5px;word-break:normal;}
-.tg th{border-color:black;border-style:solid;border-width:1px;font-family:Arial, sans-serif;font-size:14px;
-  font-weight:normal;overflow:hidden;padding:10px 5px;word-break:normal;}
-.tg .tg-hy65{background-color:#F4F5F7;color:#172B4D;font-weight:bold;text-align:center;vertical-align:top}
-.tg .tg-0e7o{background-color:#F4F5F7;border-color:inherit;color:#172B4D;font-weight:bold;text-align:center;vertical-align:top}
-.tg .tg-9uk5{background-color:#FFF;border-color:inherit;color:#172B4D;text-align:center;vertical-align:top}
-.tg .tg-ns82{background-color:#FFF;color:#172B4D;text-align:center;vertical-align:top}
-</style>
+
 <table class="tg">
 <caption align="bottom">表2 分区表结构</caption>
 <thead>
@@ -212,16 +194,7 @@ DolphinDB解决方案架构图如下：
 </table>
 
 
-<style type="text/css">
-.tg  {border-collapse:collapse;border-spacing:0;}
-.tg td{border-color:black;border-style:solid;border-width:1px;font-family:Arial, sans-serif;font-size:14px;
-  overflow:hidden;padding:10px 5px;word-break:normal;}
-.tg th{border-color:black;border-style:solid;border-width:1px;font-family:Arial, sans-serif;font-size:14px;
-  font-weight:normal;overflow:hidden;padding:10px 5px;word-break:normal;}
-.tg .tg-0e7o{background-color:#F4F5F7;border-color:inherit;color:#172B4D;font-weight:bold;text-align:center;vertical-align:top}
-.tg .tg-9uk5{background-color:#FFF;border-color:inherit;color:#172B4D;text-align:center;vertical-align:top}
-.tg .tg-ns82{background-color:#FFF;color:#172B4D;text-align:center;vertical-align:top}
-</style>
+
 <table class="tg">
 <caption align="bottom">表3 维度表结构</caption>
 <thead>
@@ -395,16 +368,7 @@ enableTableShareAndPersistence(table=st4, tableName=`abnormalStream, asynWrite=t
 
 dataStream 表结构见表2，metaStream、delayStream、abnormalStream 表结构分别见表4、表5、表6。
 
-<style type="text/css">
-.tg  {border-collapse:collapse;border-spacing:0;}
-.tg td{border-color:black;border-style:solid;border-width:1px;font-family:Arial, sans-serif;font-size:14px;
-  overflow:hidden;padding:10px 5px;word-break:normal;}
-.tg th{border-color:black;border-style:solid;border-width:1px;font-family:Arial, sans-serif;font-size:14px;
-  font-weight:normal;overflow:hidden;padding:10px 5px;word-break:normal;}
-.tg .tg-viy4{background-color:#FFF;color:#172B4D;text-align:left;vertical-align:top}
-.tg .tg-9xye{background-color:#F4F5F7;border-color:inherit;color:#172B4D;font-weight:bold;text-align:left;vertical-align:top}
-.tg .tg-qdev{background-color:#FFF;border-color:inherit;color:#172B4D;text-align:left;vertical-align:top}
-</style>
+
 <table class="tg">
 <caption align="bottom">表4 metaStream 表结构</caption>
 <thead>
@@ -453,16 +417,7 @@ dataStream 表结构见表2，metaStream、delayStream、abnormalStream 表结�
 </tbody>
 </table>
 
-<style type="text/css">
-.tg  {border-collapse:collapse;border-spacing:0;}
-.tg td{border-color:black;border-style:solid;border-width:1px;font-family:Arial, sans-serif;font-size:14px;
-  overflow:hidden;padding:10px 5px;word-break:normal;}
-.tg th{border-color:black;border-style:solid;border-width:1px;font-family:Arial, sans-serif;font-size:14px;
-  font-weight:normal;overflow:hidden;padding:10px 5px;word-break:normal;}
-.tg .tg-viy4{background-color:#FFF;color:#172B4D;text-align:left;vertical-align:top}
-.tg .tg-9xye{background-color:#F4F5F7;border-color:inherit;color:#172B4D;font-weight:bold;text-align:left;vertical-align:top}
-.tg .tg-qdev{background-color:#FFF;border-color:inherit;color:#172B4D;text-align:left;vertical-align:top}
-</style>
+
 <table class="tg">
 <caption align="bottom">表5 delayStream 表结构</caption>
 <thead>
@@ -501,16 +456,7 @@ dataStream 表结构见表2，metaStream、delayStream、abnormalStream 表结�
 </tbody>
 </table>
 
-<style type="text/css">
-.tg  {border-collapse:collapse;border-spacing:0;}
-.tg td{border-color:black;border-style:solid;border-width:1px;font-family:Arial, sans-serif;font-size:14px;
-  overflow:hidden;padding:10px 5px;word-break:normal;}
-.tg th{border-color:black;border-style:solid;border-width:1px;font-family:Arial, sans-serif;font-size:14px;
-  font-weight:normal;overflow:hidden;padding:10px 5px;word-break:normal;}
-.tg .tg-viy4{background-color:#FFF;color:#172B4D;text-align:left;vertical-align:top}
-.tg .tg-9xye{background-color:#F4F5F7;border-color:inherit;color:#172B4D;font-weight:bold;text-align:left;vertical-align:top}
-.tg .tg-qdev{background-color:#FFF;border-color:inherit;color:#172B4D;text-align:left;vertical-align:top}
-</style>
+
 <table class="tg">
 <caption align="bottom">表6 abnormalStream 表结构</caption>
 <thead>
@@ -669,16 +615,7 @@ for(i in 0..(filePathListGroup.size()-1)){
 
 调用 MiniSeed 插件的 `parseStream` 函数解析4.3节模拟的 MiniSeed 实时流，结果注入 dataStream、metaStream。dataStream、metaStream 接收到的数据如表7、表8所示
 
-<style type="text/css">
-.tg  {border-collapse:collapse;border-spacing:0;}
-.tg td{border-color:black;border-style:solid;border-width:1px;font-family:Arial, sans-serif;font-size:14px;
-  overflow:hidden;padding:10px 5px;word-break:normal;}
-.tg th{border-color:black;border-style:solid;border-width:1px;font-family:Arial, sans-serif;font-size:14px;
-  font-weight:normal;overflow:hidden;padding:10px 5px;word-break:normal;}
-.tg .tg-0e7o{background-color:#F4F5F7;border-color:inherit;color:#172B4D;font-weight:bold;text-align:center;vertical-align:top}
-.tg .tg-9uk5{background-color:#FFF;border-color:inherit;color:#172B4D;text-align:center;vertical-align:top}
-.tg .tg-ns82{background-color:#FFF;color:#172B4D;text-align:center;vertical-align:top}
-</style>
+
 <table class="tg">
     <caption align="bottom">表7 dataStream 表示例</caption>
 <thead>
@@ -722,17 +659,7 @@ for(i in 0..(filePathListGroup.size()-1)){
 </tbody>
 </table>
 
-<style type="text/css">
-.tg  {border-collapse:collapse;border-spacing:0;}
-.tg td{border-color:black;border-style:solid;border-width:1px;font-family:Arial, sans-serif;font-size:14px;
-  overflow:hidden;padding:10px 5px;word-break:normal;}
-.tg th{border-color:black;border-style:solid;border-width:1px;font-family:Arial, sans-serif;font-size:14px;
-  font-weight:normal;overflow:hidden;padding:10px 5px;word-break:normal;}
-.tg .tg-hy65{background-color:#F4F5F7;color:#172B4D;font-weight:bold;text-align:center;vertical-align:top}
-.tg .tg-0e7o{background-color:#F4F5F7;border-color:inherit;color:#172B4D;font-weight:bold;text-align:center;vertical-align:top}
-.tg .tg-9uk5{background-color:#FFF;border-color:inherit;color:#172B4D;text-align:center;vertical-align:top}
-.tg .tg-ns82{background-color:#FFF;color:#172B4D;text-align:center;vertical-align:top}
-</style>
+
 <table class="tg">
     <caption align="bottom">表8 metaStream 示例</caption>
 <thead>
@@ -877,17 +804,7 @@ receivedTime-(startTime+(actualCount)*10)
 
 然后，再通过 `subscribeTable` 函数订阅 metaStream，将计算结果注入 delayStream，实现时延计算。时延计算结果示例如表9所示：
 
-<style type="text/css">
-.tg  {border-collapse:collapse;border-spacing:0;}
-.tg td{border-color:black;border-style:solid;border-width:1px;font-family:Arial, sans-serif;font-size:14px;
-  overflow:hidden;padding:10px 5px;word-break:normal;}
-.tg th{border-color:black;border-style:solid;border-width:1px;font-family:Arial, sans-serif;font-size:14px;
-  font-weight:normal;overflow:hidden;padding:10px 5px;word-break:normal;}
-.tg .tg-hy65{background-color:#F4F5F7;color:#172B4D;font-weight:bold;text-align:center;vertical-align:top}
-.tg .tg-0e7o{background-color:#F4F5F7;border-color:inherit;color:#172B4D;font-weight:bold;text-align:center;vertical-align:top}
-.tg .tg-9uk5{background-color:#FFF;border-color:inherit;color:#172B4D;text-align:center;vertical-align:top}
-.tg .tg-ns82{background-color:#FFF;color:#172B4D;text-align:center;vertical-align:top}
-</style>
+
 <table class="tg">
     <caption align="bottom">表9 delayStream 示例</caption>
 <thead>
@@ -968,17 +885,7 @@ createAnomalyDetectionEngine(name,metrics,dummyTable,outputTable,timeColumn,[key
 
 
 
-<style type="text/css">
-.tg  {border-collapse:collapse;border-spacing:0;}
-.tg td{border-color:black;border-style:solid;border-width:1px;font-family:Arial, sans-serif;font-size:14px;
-  overflow:hidden;padding:10px 5px;word-break:normal;}
-.tg th{border-color:black;border-style:solid;border-width:1px;font-family:Arial, sans-serif;font-size:14px;
-  font-weight:normal;overflow:hidden;padding:10px 5px;word-break:normal;}
-.tg .tg-hy65{background-color:#F4F5F7;color:#172B4D;font-weight:bold;text-align:center;vertical-align:top}
-.tg .tg-0e7o{background-color:#F4F5F7;border-color:inherit;color:#172B4D;font-weight:bold;text-align:center;vertical-align:top}
-.tg .tg-9uk5{background-color:#FFF;border-color:inherit;color:#172B4D;text-align:center;vertical-align:top}
-.tg .tg-ns82{background-color:#FFF;color:#172B4D;text-align:center;vertical-align:top}
-</style>
+
 <table class="tg">
     <caption align="bottom">表10 abnormalStream 示例</caption>
 <thead>
@@ -1045,17 +952,7 @@ subscribeTable(tableName="dataStream", actionName="abnormalDetect", offset=0, ha
 
 性能测试结果如表11所示：
 
-<style type="text/css">
-.tg  {border-collapse:collapse;border-spacing:0;}
-.tg td{border-color:black;border-style:solid;border-width:1px;font-family:Arial, sans-serif;font-size:14px;
-  overflow:hidden;padding:10px 5px;word-break:normal;}
-.tg th{border-color:black;border-style:solid;border-width:1px;font-family:Arial, sans-serif;font-size:14px;
-  font-weight:normal;overflow:hidden;padding:10px 5px;word-break:normal;}
-.tg .tg-hy65{background-color:#F4F5F7;color:#172B4D;font-weight:bold;text-align:center;vertical-align:top}
-.tg .tg-0e7o{background-color:#F4F5F7;border-color:inherit;color:#172B4D;font-weight:bold;text-align:center;vertical-align:top}
-.tg .tg-9uk5{background-color:#FFF;border-color:inherit;color:#172B4D;text-align:center;vertical-align:top}
-.tg .tg-ns82{background-color:#FFF;color:#172B4D;text-align:center;vertical-align:top}
-</style>
+
 <table class="tg">
     <caption align="bottom">表11 查询与导出性能测试结果</caption>
 <thead>
