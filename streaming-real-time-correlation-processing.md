@@ -49,7 +49,7 @@ select *  from aj(t1, t2, `Time)
 
 <img src="./images/streaming-real-time-correlation-processing/1_1.png" width=70%>
 
-asof join 能够关联距离当前时刻最近的数据。指定连接列为 Time 字段后，如上图所示，t1 表的每行记录总是关联 t2 表中 Time 值小于它的 Time 值的那一行 t2 记录。关联后的结果如下：
+asof join 能够关联当前时刻或距离当前时刻最近时刻的数据。指定连接列为 Time 字段后，如上图所示，t1 表的每行记录总是关联 t2 表中 Time 值小于它的 Time 值的那一行 t2 记录。关联后的结果如下：
 
 <img src="./images/streaming-real-time-correlation-processing/1_2.png" width=50%>
 
@@ -110,7 +110,7 @@ trade.append!(t1)
    1. 在数据注入引擎时立即计算输出
    2. 等待到匹配数据后才计算输出，同时辅以超时强制触发的规则
 
-关联规则和触发规则最终决定了引擎的计算结果，下面我们详细介绍每一个连接引擎的原理和关联效果。
+关联规则和触发规则决定了引擎的计算结果，下面我们详细介绍每一个连接引擎的原理和关联效果。
 
 ## 2.1 Asof Join 引擎（createAsofJoinEngine）
 
@@ -129,7 +129,7 @@ Asof join 引擎在创建时通过参数 useSystemTime 指定以下两种规则�
 
 ## 2.2 Window Join 引擎（createWindowJoinEngine）
 
-Window Join 引擎的连接机制类似于 SQL 中的 window join，上一小节的 Asof Join 引擎可以看做是Window Join 引擎的一个特例。按连接列分组，在每个分组内按时间邻近关联右表一个时间窗口内的数据，这个窗口由左表的每一条记录的时刻和创建引擎时指定的窗口（参数 window）决定。引擎默认左右表是有序的，在连接列分组内，对于左表中的每一条记录，当引擎判断窗口结束的时刻到来后，会在右表缓存中选取由左表的时刻确定的窗口范围内的记录，可能会找到 0 至多条记录，引擎将输出一条结果，这条结果由多条右表记录聚合为一条后与左表拼接而成。
+Window Join 引擎的连接机制类似于 SQL 中的 window join，上一小节的 Asof Join 引擎可以看做是Window Join 引擎的一个特例。按连接列分组，在每个分组内按时间邻近关联右表一个时间窗口内的数据，这个窗口由左表的每一条记录的时刻和创建引擎时指定的窗口（参数 window）决定。引擎默认左右表是有序的，在连接列分组内，对于左表中的每一条记录，会在右表缓存中选取由左表的时刻确定的窗口范围内的记录，可能会找到 0 至多条记录，引擎将输出一条结果，这条结果由多条右表记录聚合为一条后与左表拼接而成。
 
 Window Join 引擎在创建时通过参数 useSystemTime 指定以下两种规则中的一种，用于判断临近时刻是否到来：
 
@@ -158,7 +158,7 @@ Equi Join 引擎的连接机制类似于 SQL 中的 equi join，按连接列和�
 
 <img src="./images/streaming-real-time-correlation-processing/2_5.png" width=60%>
 
-建议按推荐场景使用Equi Join 引擎，即对连接列和时间列唯一的数据使用本引擎。若非推荐场景，为了理解输出效果，可以参考如下设计原理：Equi Join 引擎内部分别为左右表数据维护两个以连接列和时间列作为键值的键值表作为缓存，并对每条记录标识是否关联过。下面以左表为例介绍，右表同理。当一条左表记录注入引擎，则到查找右表缓存， 若能成功匹配则输出一条结果，并在右表缓存中标识对应记录为已关联，这时左表缓存中不会保存这条立刻关联输出的左表记录（此原理会导致上图中后续的灰色数据(A,t1,4)无法匹配而不输出），若未能匹配成功，则将该条左表记录加入左表缓存，并标识为未关联。
+建议按推荐场景使用Equi Join 引擎，即对连接列和时间列唯一的数据使用本引擎。若非推荐场景，为了理解输出效果，可以参考如下设计原理：Equi Join 引擎内部分别为左右表数据维护两个以连接列和时间列作为键值的键值表作为缓存，并对每条记录标识是否关联过。下面以左表为例介绍，右表同理。当一条左表记录注入引擎，则查找右表缓存， 若能成功匹配则输出一条结果，并在右表缓存中标识对应记录为已关联，这时左表缓存中不会保存这条立刻关联输出的左表记录（此原理会导致上图中后续的灰色数据(A,t1,4)无法匹配而不输出），若未能匹配成功，则将该条左表记录加入左表缓存，并标识为未关联。
 
 需要注意，对于缓存中的已关联、未关联的数据，Equi Join 引擎都会进行过期清理，清理原理可参考用户手册 [createEquiJoinEngine](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/c/createEquiJoinEngine.html)。若遵循推荐场景使用此引擎，但是引擎输出结果与 SQL equi join 结果仍不完全一致，则是设置的清理规则导致的差异。
 
@@ -210,7 +210,7 @@ subscribeTable(tableName="snapshot", actionName="appendRightStream", handler=get
 
 - 逐笔成交数据 trades 注入引擎的左表，报价数据 snapshot 注入引擎的右表。
 - 引擎参数 useSystemTime=false 表示通过数据中的时间列（左表为 TradeTime 字段，右表为 Time 字段）来判断左右表中记录的时序关系。
-- 引擎参数 delayedTime 是对默认触发机制的补充，以超时强制触发的方式保证左表及时匹配并输出。若未设置 delayTime 是默认触发机制，对于任意一条左表记录，它必须等到右表出现一条时间戳大于它的记录才输出。但考虑到实际的应用场景中，某条右表记录可能迟迟未能到达或者始终不可能出现一条大于某些左表数据的右表记录，同时期望左表中每条记录都能匹配并输出，那么建议设置 dalayTime ，在这种情况下将以左表出现更新的数据或者系统时间超时来强制触发计算。
+- 引擎参数 delayedTime 是对默认触发机制的补充，以超时强制触发的方式保证左表及时匹配并输出。若未设置 delayedTime 是默认触发机制，对于任意一条左表记录，它必须等到右表出现一条时间戳大于它的记录才输出。但考虑到实际的应用场景中，某条右表记录可能迟迟未能到达或者始终不可能出现一条大于某些左表数据的右表记录，同时期望左表中每条记录都能匹配并输出，那么建议设置 dalayTime ，在这种情况下将以左表出现更新的数据或者系统时间超时来强制触发计算。
 - 引擎参数 metrics 中 snapshot.Time 表示取右表 snapshot 中的 Time 字段，因为左表 trades 中也具有 Time 字段，若不加前缀、直接写 Time，则默认取左表的 Time 字段。
 - 上例中创建引擎时未显式指定 garbageSize ，则使用默认值，garbageSize 不论大小均不改变计算结果，只影响引擎的内存占用。
 
@@ -232,7 +232,7 @@ trades.append!(t1)
 
 <img src="./images/streaming-real-time-correlation-processing/3_1.png" width=70%>
 
-关联得到的结果表 output 如下，左表中全部 7 条数据都有对应的输出。本例中，在创建引擎时指定了 delayTime 参数，因此对于分组 B ，即使右表 snapshot 中没有比 10:00:06.200 更大的时间戳， 右表 trades 中最后一条数据(B,10:00:06.200, 7.6) 仍然能够在注入引擎 2s 后强制输出。
+关联得到的结果表 output 如下，左表中全部 7 条数据都有对应的输出。本例中，在创建引擎时指定了 delayedTime 参数，因此对于分组 B ，即使右表 snapshot 中没有比 10:00:06.200 更大的时间戳， 左表 trades 中最后一条数据(B,10:00:06.200, 7.6) 仍然能够在注入引擎 2s 后强制输出。
 
 <img src="./images/streaming-real-time-correlation-processing/3_2.png" width=50%>
 
@@ -262,7 +262,7 @@ subscribeTable(tableName="snapshot", actionName="appendLeftStream", handler=getL
 subscribeTable(tableName="trades", actionName="appendRightStream", handler=getRightStream(wjEngine), msgAsTable=true, offset=-1, hash=1)
 ```
 
-- 行情快照数据 snapshot 注入引擎的左表，逐笔成交数据 trades 注入引擎的左表。
+- 行情快照数据 snapshot 注入引擎的左表，逐笔成交数据 trades 注入引擎的右表。
 - 引擎参数 useSystemTime=false 表示通过数据中的时间列（左表为 Time 字段，右表为 TradeTime 字段）来判断左右表中记录的时序关系。
 - 引擎参数 window=0:0 表示右表 trades 的计算窗口将由左表 snapshot 当前和其上一条数据的时间戳划定。
 - 引擎参数 metrics 表示计算指标，如 Open 表示取左表 snapshot 中 Open 字段，sum(iif(Side==1, TradeQty, 0)) 表示对右表 trades 在窗口内的数据做聚合计算。注意，TradeQty 是右表 trades 中的字段，且此处对 TradeQty 没有使用聚合函数，则表示对右表 trades 在窗口内的全部 TradeQty 值保留明细，对应的输出为一个数据类型为 array vector 的字段。
@@ -323,7 +323,7 @@ subscribeTable(tableName="snapshot", actionName="minAggr", handler=tsEngine2, ms
 - 首先用两个独立的时序聚合引擎（[createTimeSeriesEngine](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/c/createTimeSeriesEngine.html)）对原始的快照和成交数据流按数据中的时间戳做实时聚合、输出每一分钟的指标，之后通过引擎级联的方式，将两个时序聚合引擎的输出分别作为左右表注入连接引擎。引擎级联更详细的介绍见 [流数据教程：4.1 流水线处理](https://gitee.com/dolphindb/Tutorials_CN/blob/master/streaming_tutorial.md#41_流水线处理) 。
 - Equi Join 引擎对左、右表的处理是完全相同的，即上例中在 createEquiJoinEngine 时交换左右表不会影响关联结果。
 
-构造数据写入作为原始输入的 2 个流数据表，先写入右表，再写入左表：
+构造数据写入作为原始输入的 2 个流数据表：
 
 
 
@@ -412,7 +412,7 @@ subscribeTable(tableName="orders", actionName="appendRightStreamForSell", handle
 subscribeTable(tableName="orders", actionName="appendRightStreamForBuy", handler=getRightStream(ljEngineBuy), msgAsTable=true, offset=-1) 
 ```
 
-- 数据流向：首先，将 trades 和 orders 分为作为左、右表注入引擎 leftJoinSell，此次以 trades 数据中的卖单号关联 oders 中的对应订单。之后，将上述引擎的输出作为左表直接注入引擎 leftJoinBuy ，该引擎的右表仍然设置为 orders，此次以 trades 数据中的买单号关联 oders 中的对应订单。
+- 数据流向：首先，将 trades 和 orders 分为作为左、右表注入引擎 leftJoinSell，此次以 trades 数据中的卖单号关联 orders 中的对应订单。之后，将上述引擎的输出作为左表直接注入引擎 leftJoinBuy ，该引擎的右表仍然设置为 orders，此次以 trades 数据中的买单号关联 orders 中的对应订单。
 - 内存管理：上例中创建引擎时未显式指定 garbageSize ，则使用默认值，garbageSize 不论大小均不改变计算结果。注意，和其他连接引擎不同，该函数的 garbageSize 参数只用于清理左表的历史数据，右表的历史数据不进行回收，因此上述案例中两个引擎至少分别占用一个 orders 表大小的内存。
 
 构造数据写入作为原始输入的 2 个流数据表：
@@ -468,8 +468,8 @@ subscribeTable(tableName="stockKline", actionName="appendStock", handler=getLeft
 
 ```
 
-- 数据流向：首先，股票数据 stockKline 注入连接引擎 leftJoinIndex1 的左表，指数数据经过滤后注入该引擎的右表，这一步将股票与指数的分钟指标关联。之后，将上述连接引擎的输出直接注入响应式状态引擎（[createReactiveStateEngine](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/c/createReactiveStateEngine.html)），利用响应式状态引擎内置的 mccor 和 ratio 函数计算股票与指数的相关性指标。多个引擎之间采用了引擎级联的方式处理，引擎级联更详细的介绍见 [流数据教程：4.1 流水线处理](https://gitee.com/dolphindb/Tutorials_CN/blob/master/streaming_tutorial.md#41_流水线处理) 。响应式状态引擎教程见 [金融高频因子的流批统一计算：DolphinDB响应式状态引擎介绍](https://gitee.com/dolphindb/Tutorials_CN/blob/master/reactive_state_engine.md) 。
-- 订阅指数数据 indexKline 时指定 hanlder 为自定义函数 appendIndex ，是指不断地收到 indexKline 数据后，首先过滤出指数数据中指数名为 idx1 的数据，然后再注入连接引擎的右表。
+- 数据流向：首先，股票数据 stockKline 注入连接引擎 leftJoinIndex1 的左表，指数数据经过滤后注入该引擎的右表，这一步将股票与指数的分钟指标关联。之后，将上述连接引擎的输出直接注入响应式状态引擎（[createReactiveStateEngine](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/c/createReactiveStateEngine.html)），利用响应式状态引擎内置的 mcorr 和 ratios 函数计算股票与指数的相关性指标。多个引擎之间采用了引擎级联的方式处理，引擎级联更详细的介绍见 [流数据教程：4.1 流水线处理](https://gitee.com/dolphindb/Tutorials_CN/blob/master/streaming_tutorial.md#41_流水线处理) 。响应式状态引擎教程见 [金融高频因子的流批统一计算：DolphinDB响应式状态引擎介绍](https://gitee.com/dolphindb/Tutorials_CN/blob/master/reactive_state_engine.md) 。
+- 订阅指数数据 indexKline 时指定 handler 为自定义函数 appendIndex ，是指不断地收到 indexKline 数据后，首先过滤出指数数据中指数名为 idx1 的数据，然后再注入连接引擎的右表。
 
 构造数据写入作为原始输入的 2 个流数据表：
 
