@@ -254,7 +254,7 @@ share streamTable(1:0, `Time`Sym`Open`High`Low`Close`BuyQty`SellQty`TradeQtyList
 
 // create engine
 wjMetrics = <[Open, High, Low, Close, sum(iif(Side==1, TradeQty, 0)), sum(iif(Side==2, TradeQty, 0)), TradeQty, TradeTime]>
-fillArray = [00:00:00.000, "", 0, 0, 0, 0, 0, 0, [[]], [[]]]
+fillArray = [00:00:00.000, "", 0, 0, 0, 0, 0, 0, [], []]
 wjEngine = createWindowJoinEngine(name="windowJoin", leftTable=snapshot, rightTable=trades, outputTable=output, window=0:0, metrics=wjMetrics, matchingColumn=`Sym, timeColumn=`Time`TradeTime, useSystemTime=false, nullFill=fillArray)
 
 // subscribe topic
