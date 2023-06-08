@@ -127,7 +127,7 @@ airflow users create  --username admin  --firstname Peter  --lastname Parker  --
 airflow webserver --port 8080 -D
 
 # 守护进程运行 scheduler
-airflow scheduler -D1#初始化数据库 2airflow db init 3 4#创建用户 5airflow users create  --username admin  --firstname Peter  --lastname Parker  --role Admin  --email spiderman@superhero.org  --password admin 6 7# 守护进程运行webserve 8airflow webserver --port 8080 -D 9 10# 守护进程运行scheduler 11airflow scheduler -D 
+airflow scheduler -D1
 ```
 
 3. 执行以下命令验证 Airflow 是否成功启动：
