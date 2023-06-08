@@ -1,0 +1,29 @@
+login("admin","123456")
+
+
+def flow(buy_vol, sell_vol, askPrice1, bidPrice1){
+	buy_vol_ma = round(mavg(buy_vol, 60), 5)
+	sell_vol_ma = round(mavg(sell_vol, 60), 5)
+	buy_prop = iif(abs(buy_vol_ma+sell_vol_ma) < 0, 0.5 , buy_vol_ma/ (buy_vol_ma+sell_vol_ma))
+	spd_tmp = askPrice1 - bidPrice1
+	spd = iif(spd_tmp  < 0, 0, spd_tmp)
+	spd_ma = round(mavg(spd, 60), 5)
+	return iif(spd_ma == 0, 0, buy_prop / spd_ma)
+}
+def mathWghtCovar(x, y, w){
+	v = (x - rowWavg(x, w)) * (y - rowWavg(y, w))
+	return rowWavg(v, w)
+}
+def mathWghtSkew(x, w){
+	x_var = mathWghtCovar(x, x, w)
+	x_std = sqrt(x_var)
+	x_1 = x - rowWavg(x, w)
+	x_2 = x_1*x_1
+	len = size(w)
+	adj = sqrt((len - 1) * len) \ (len - 2)
+	skew = rowWsum(x_2, x_1) \ (x_var * x_std) * adj \ len
+	return iif(x_std==0, 0, skew)
+}
+m = 2020.01.02:2020.01.06setMaxJobParallelism("admin",1)
+w = 10 9 8 7 6 5 4 3 2 1
+timer res = select dbtime, SecurityID,flow(BidSize1,OfferSize1, OfferPX1, BidPX1) as Flow_val,mathWghtSkew(matrix(BidPX1,BidPX2,BidPX3,BidPX4,BidPX5,BidPX6,BidPX7,BidPX8,BidPX9,BidPX10),w) as Skew_val  from loadTable("dfs://LEVEL2_SZ","Snap") where TradeDate between  m context by SecurityID

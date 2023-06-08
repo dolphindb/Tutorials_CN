@@ -1,0 +1,29 @@
+login(`admin,`123456)
+
+//创建快照表 database
+def createDb(dfsPath){
+	if(existsDatabase(dfsPath)){
+		return 
+	}	
+	db_date=database(,VALUE,2022.07.01..2022.09.30)
+	db_code=database(,HASH, [SYMBOL,20])
+	dbHandle = database(dfsPath,COMPO,[db_date,db_code],engine='OLAP')
+
+	return dbHandle
+}
+// 创建快照表
+def createSnapTable(dfsPath,tableName){
+	//表已存在
+	if (existsTable(dfsPath,tableName)){
+		return
+	}
+	dbHandle=database(dfsPath)
+            dbHandle.createPartitionedTable(table(1:0,`TradeDate`OrigTime`SendTime`Recvtime`dbtime`ChannelNo`SecurityID`SecurityIDSource`MDStreamID`OfferPX1`BidPX1`OfferSize1`BidSize1`OfferPX2`BidPX2`OfferSize2`BidSize2`OfferPX3`BidPX3`OfferSize3`BidSize3`OfferPX4`BidPX4`OfferSize4`BidSize4`OfferPX5`BidPX5`OfferSize5`BidSize5`OfferPX6`BidPX6`OfferSize6`BidSize6`OfferPX7`BidPX7`OfferSize7`BidSize7`OfferPX8`BidPX8`OfferSize8`BidSize8`OfferPX9`BidPX9`OfferSize9`BidSize9`OfferPX10`BidPX10`OfferSize10`BidSize10`NUMORDERS_B1`NOORDERS_B1`ORDERQTY_B1`NUMORDERS_S1`NOORDERS_S1`ORDERQTY_S1,[DATE,TIMESTAMP,TIMESTAMP,TIMESTAMP,TIMESTAMP,INT,SYMBOL,SYMBOL,SYMBOL,DOUBLE,DOUBLE,INT,INT,DOUBLE,DOUBLE,INT,INT,DOUBLE,DOUBLE,INT,INT,DOUBLE,DOUBLE,INT,INT,DOUBLE,DOUBLE,INT,INT,DOUBLE,DOUBLE,INT,INT,DOUBLE,DOUBLE,INT,INT,DOUBLE,DOUBLE,INT,INT,DOUBLE,DOUBLE,INT,INT,DOUBLE,DOUBLE,INT,INT,INT,INT,STRING,INT,INT,STRING]),tableName,`TradeDate`SecurityID)
+}
+
+dfsPath="dfs://LEVEL2_SZ"
+tbName="Snap"
+createDb(dbName)
+createSnapTable(dfsPath,tbName)
+
+

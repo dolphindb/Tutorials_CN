@@ -202,6 +202,7 @@
     - [DolphinDB 处理 Level 2 行情数据实例](Level-2_stock_data_processing.md)
     - [DolphinDB 与 Python AirFlow 最佳实践](Best_Practices_for_DolphinDB_and_Python_AirFlow.md)
     - [金融因子流式实现](Streaming_computing_of_financial_quantifiers.md)
+    - [Python + HDF5 因子计算与 DolphinDB 一体化因子计算方案对比](Python+HDF5_vs_DolphinDB.md)
   - 物联网：
     - [DolphinDB在工业物联网的应用](iot_demo.md)
     - [物联网时序数据查询案例](iot_query_case.md)
