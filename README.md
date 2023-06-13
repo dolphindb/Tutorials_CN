@@ -150,7 +150,7 @@
     - [XGBoost 插件使用说明（用于机器学习数据的训练、预测、模型保存和加载）](../../../DolphinDBPlugin/blob/release200/xgboost/README_CN.md "用于机器学习数据的训练、预测、模型保存和加载")
   - 其他工具
     - [Py 插件使用说明（介绍如何在 DolphinDB 内调用 Python 环境中的第三方库）](../../../DolphinDBPlugin/blob/release200/py/README_CN.md "介绍如何在 DolphinDB 内调用 Python 环境中的第三方库")
-    - [ZLib 插件使用说明（用于文件到文件的 zlib 压缩与解压缩）](../../../DolphinDBPlugin/blob/release200/zlib/README_CN.md "用于文件到文件的 zlib 压缩与解压缩")  
+    - [ZLib 插件使用说明（用于文件到文件的 zlib 压缩与解压缩）](../../../DolphinDBPlugin/blob/release200/zlib/README.md "用于文件到文件的 zlib 压缩与解压缩")  
     - [GP 插件使用说明（用于利用DolphinDB vector 和 table 中的数据绘图）](../../../DolphinDBPlugin/blob/release200/gp/README.md "用于利用DolphinDB vector 和 table 中的数据绘图") 
 
 - 模块
