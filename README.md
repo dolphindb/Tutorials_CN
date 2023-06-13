@@ -92,7 +92,7 @@
 
   <!--先隐藏，等教程更新完毕再暴露 - [Java API使用实例](../../../api-java/blob/master/example/README_CN.md) -->
 
-  - [JDBC](../../../jdbc/blob/master/README_CN.md)
+  - [JDBC API使用教程](../../../jdbc/blob/master/README_CN.md)
   - [C# API使用教程](../../../api-csharp/blob/master/README_CN.md)
   - [C++ API使用教程](../../../api-cplusplus/blob/master/README_CN.md)
   - [C++ API 数据写入使用指南](ddb_cpp_api_connector.md)
