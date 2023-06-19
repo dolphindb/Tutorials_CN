@@ -20,25 +20,25 @@ DolphinDB中的即时编译功能显著提高了for循环，while循环和if-els
 
 ```
 def sum_without_jit(v) {
-  s = 0l
-  i = 1
+  s = 0F
+  i = 0
   n = size(v)
   do {
     s += v[i]
     i += 1
-  } while(i <= n)
+  } while(i < n)
   return s
 }
 
 @jit
 def sum_with_jit(v) {
-  s = 0l
-  i = 1
+  s = 0F
+  i = 0
   n = size(v)
   do {
     s += v[i]
     i += 1
-  } while(i <= n)
+  } while(i < n)
   return s
 }
 
@@ -52,13 +52,7 @@ timer(100) sum_with_jit(vec)        //    217 ms
 
 请注意，以上例子仅是为了展示在do-while循环中JIT的性能优势。实际应用中，类似上例的简单循环计算，一般应当优先使用DolphinDB的内置函数进行向量化运算，这是由于很多内置函数采用了进一步的优化，而且使用内置函数更为方便。上例中，若使用 `sum` 函数，耗时是JIT的20%左右。一般来说，循环的操作与计算越复杂，JIT相对于使用内置函数的优势越大。
 
-<!-- 这里内置函数比JIT快是因为JIT生成的代码中有很多检查NULL值的指令，内置的sum函数如果发现输入的array没有NULL值则会省略这一步操作。
 
-<!-- 如果加上NULL值，内置sum的速度是JIT的2.5倍左右，这是由于内置sum还进行了一些手动的展开优化。如果函数内涉及到更多的复杂计算，那么JIT的速度则会超过向量化运算，这个我们在下面会提到。
-
-<!-- 向量化有点难 -->
-
-<!-- 若任务可以使用向量化计算，视情况可以不使用JIT，但是在诸如如高频因子生成等实际应用中，如何把循环计算转化为向量化运算需要一定的技巧。-->
 
 在[知乎上的一篇专栏](https://zhuanlan.zhihu.com/p/77988657)中，我们展示了如何使用在DolphinDB中使用向量化运算，其中计算交易信号的式子如下：
 
@@ -108,7 +102,7 @@ timer calculate_with_jit(signal, size(signal), t1, t10, t20, t2)        //    17
 timer calculate_without_jit(signal, size(signal), t1, t10, t20, t2)               //  14044.0641 ms
 ```
 
-本例中，使用JIT的速度向量化运算的2.4倍，是不用JIT的82倍。这里JIT的速度比向量化运算还要快，是因为向量化运算中调用了很多次DolphinDB的内置函数，产生了很多中间结果，
+本例中，使用JIT的速度是向量化运算的2.4倍，是不用JIT的82倍。这里JIT的速度比向量化运算还要快，是因为向量化运算中调用了很多次DolphinDB的内置函数，产生了很多中间结果，
 涉及到多次内存分配以及虚拟函数调用，而JIT生成的代码则没有这些额外的开销。
 
 某些计算无法使用向量化，比如计算期权隐含波动率(implied volatility)时，需要使用牛顿法，无法使用向量化运算。这种情况下如果需要满足一定的实时性，可以选择使用DolphinDB的[插件](https://github.com/dolphindb/DolphinDBPlugin)，亦可使用JIT。两者的区别在于，在任何场景下都可以使用插件，但是需要使用C++语言编写，比较复杂；JIT的编写相对而言较为容易，但是适用的场景较为有限。JIT的运行速度与使用C++插件的速度非常接近。
@@ -215,17 +209,21 @@ DolphinDB支持在JIT中以上语句的任意嵌套。
 
 ### 3.3 支持的运算符和函数
 
-<!-- add, sub, multi, div, bitor, bitand, bitxor, seq, eq, neq, lt, le, gt, ge, neg, at, mod -->
+
 目前DolphinDB支持在JIT中使用以下的运算符：add(+), sub(-), multiply(*), divide(/), and(&&), or(||), bitand(&), bitor(|), bitxor(^), eq(==), neq(!=), ge(>=), gt(>), le(<=), lt(<), neg(-), mod(%), seq(..), at([])，以上运算在所有数据类型下的实现都与非JIT的实现一致。
 
-目前DolphinDB支持在JIT中使用以下的数学函数： `exp` , `log` , `sin` , `asin` , `cos` , `acos` , `tan` , `atan` , `abs` , `ceil` , `floor` , `sqrt` 。以上数学函数在JIT中出现时，
-如果接受的参数为scalar，那么在最后生成的机器码中会调用glibc中对应的函数或者经过优化的C实现的函数；如果接收的参数为array，那么最后会调用DolphinDB
-提供的数学函数。这样的好处是通过直接调用C实现的代码提升函数运行效率，减少不必要的虚拟函数调用和内存分配。
+目前DolphinDB支持在JIT中使用以下的数学函数： `exp` , `log` , `sin` , `asin` , `cos` , `acos` , `tan` , `atan` , `abs` , `ceil` , `floor` , `sqrt`。以上数学函数在JIT中出现时，
+如果接受的参数为scalar，那么在最后生成的机器码中会调用glibc中对应的函数或者经过优化的C实现的函数；如果接收的参数为array，那么最后会调用DolphinDB提供的数学函数。这样的好处是通过直接调用C实现的代码提升函数运行效率，减少不必要的虚拟函数调用和内存分配。
 
-目前DolphinDB支持在JIT中使用以下的内置函数：`take`, `seq` , `array`, `size`, `isValid`, `rand`, `cdfNormal`, `cdfBeta`, `cdfBinomial`, `cdfChiSquare`, `cdfExp`, `cdfF`, `cdfGamma`, `cdfKolmogorov`, `cdfcdfLogistic`, `cdfNormal`, `cdfUniform`, `cdfWeibull`, `cdfZipf`, `invBeta`, `invBinomial`, `invChiSquare`, `invExp`, `invF`, `invGamma`, `invLogistic`, `invNormal`, `invPoisson`, `invStudent`, `invUniform`, `invWeibull`, `cbrt`, `deg2rad`, `rad2deg`, `det`, `dot`, `flatten`。
+
+目前DolphinDB支持在JIT中使用以下的内置函数：`take`, `seq` , `array`, `size`, `isValid`, `rand`, `cdfNormal`, `cdfBeta`, `cdfBinomial`, `cdfChiSquare`, `cdfExp`, `cdfF`, `cdfGamma`, `cdfKolmogorov`, `cdfcdfLogistic`, `cdfNormal`, `cdfUniform`, `cdfWeibull`, `cdfZipf`, `invBeta`, `invBinomial`, `invChiSquare`, `invExp`, `invF`, `invGamma`, `invLogistic`, `invNormal`, `invPoisson`, `invStudent`, `invUniform`, `invWeibull`, `cbrt`, `deg2rad`, `rad2deg`, `det`, `dot`, `flatten`, `sum`, `avg`, `count`, `size`, `min`, `max`, `iif`, `round`。
 
 需要注意，`array` 函数的第一个参数必须直接指定具体的数据类型，不能通过变量传递指定。这是由于JIT编译时必须知道所有变量的类型，而 `array` 函数返回结果的类型由第一个参数指定，因此编译时必须该值必须已知。
+此外，[`round`](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/r/round.html) 函数在使用时必须指定第二个参数，且该参数须大于0。
 
+目前DolphinDB已支持cum系列函数，但须注意目前仅支持输入类型为 Vector。
+支持的单目函数有：`cummax`, `cummin`, `cummed`, `cumfirstNot`, `cumlastNot`, `cumrank`, `cumcount`, `cumpercentile`, `cumstd`, `cumstdp`, `cumvar`, `cumvarp`, `cumsum`, `cumsum2`, `cumsum3`, `cumsum4`, `cumavg`, `cumprod`, `cumPositiveStreak`。
+支持的双目函数有：`cumbeta`, `cumwsum`, `cumwavg`, `cumcovar`, `cumcorr`。
 ### 3.4 空值的处理
 
 JIT中所有的函数和运算符处理空值的方法都与原生函数和运算符一致，即每个数据类型都用该类型的最小值来表示该类型的空值，用户不需要专门处理空值。
@@ -391,15 +389,6 @@ foo(123)             // 正常执行
 foo(1:2)             // 正常执行
 foo("abc")           // 抛出异常，因为目前不支持STRING
 foo((1 2, 3 4, 5 6)) // 抛出异常，因为目前不支持tuple
-
-@jit
-def foo(x) {
-  y = cumprod(x)
-  z = y + 1
-  return z
-}
-
-foo(1..10)             //  抛出异常，因为目前还不支持cumprod函数，不知道该函数返回的类型，导致类型推导失败
 ```
 
 因此，为了能够正常使用JIT函数，用户应该避免在函数内或者参数中使用尚不支持的函数。
