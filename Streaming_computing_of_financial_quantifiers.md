@@ -28,7 +28,7 @@ DolphinDB 是一款高性能分布式时序数据库。与传统的关系数据�
 
 DolphinDB 内置的流数据框架支持流数据的发布，订阅，预处理，实时内存计算，复杂指标的滚动窗口计算、滑动窗口计算、累计窗口计算等，是一个运行高效、使用便捷的流数据处理框架。
 
-<img src="./images/Streaming_computing_of_financial_quantifiers/1_1.png" width=80% scale=90%>
+<img src="./images/Streaming_computing_of_financial_quantifiers/1_1.png" width=60%>
 
 本教程主要介绍如何在 **“流数据表 ——> 订阅者(内置流计算引擎) ——> 计算结果”** 这段过程中，利用内置流计算引擎实现金融量化因子并优化之。
 
@@ -68,12 +68,12 @@ DolphinDB 提供了存储可变长二维数组的数据类型 array vector。在
 因此，level 2 快照行情的多档数据可以选择：①多列存储；② 用 array vector 存为一列。
 
 <figure align="left">
-<img src="./images/Streaming_computing_of_financial_quantifiers/1_2.png" width=90% scale=90%>  
+<img src="./images/Streaming_computing_of_financial_quantifiers/1_2.png" width=75%>  
     <figcaption><b>多档多列存储，共194列</b></figcaption>
 </figure>
 
 <figure align="left">
-<img src="./images/Streaming_computing_of_financial_quantifiers/1_3.png" width=90% scale=90%>  
+<img src="./images/Streaming_computing_of_financial_quantifiers/1_3.png" width=75%>  
     <figcaption><b>array vector 存储，共42列</b></figcaption>
 </figure>
 
@@ -136,7 +136,7 @@ DolphinDB 目前已经实现了 [WorldQuant 101 Alpha 因子库](https://gitee.c
 
 ## 2.1 实现示例
 
-本节以 WorldQuant Alpha 101 和国泰君安 191 中的因子为例，说明日频因子流式实现方法。
+以 WorldQuant Alpha 101 和国泰君安 191 中的因子为例，说明日频因子流式实现方法。
 
 ### **2.1.1 WorldQuant Alpha 1**
 
@@ -187,7 +187,7 @@ alpha1Parser1admin OK                0       2          securityid...keyCount   
 
 其中 securityID 作为分组键，dateTime 是时间列，输入的消息格式同内存表 `inputTable`，需要计算的指标定义在 `metrics` 里，结果输出到内存表 `resultTable` 中。横截面数据计算的触发方式是 keyCount，即当前时间的数据累积超过 3000 条或者新时间点的数据到来才会触发一次计算。
 
-创建引擎之后，即可向引擎中插入几条数据，并观察计算结果。
+创建完引擎之后，即可往引擎中插入几条数据，并观察计算结果。
 
 ```
 // 向引擎添加数据
@@ -272,7 +272,7 @@ gtja1Parser1 admin OK                0       3          securityID...keyCount   
 */
 ```
 
-上述代码创建了一个名为 “gtja1Parser” 的引擎流水线。通过 `getStreamEngineStat` 函数可以观察到，该引擎流水线由一个名为 “gtja1Parser0” 的响应式状态引擎、一个名为 “gtja1Parser1” 的横截面引擎和一个名为 “gtja1Parser2” 的响应式状态引擎组成。
+上述代码创建了一个名为 “gtja1Parser” 的引擎流水线。通过 `getStreamEngineStat` 函数可以观察到，该引擎流水线由一个名为 “gtja1Parser0” 的响应式状态引擎，一个名为 “gtja1Parser1” 的横截面引擎和一个名为 “gtja1Parser2” 的响应式状态引擎组成。
 
 其中 securityID 作为分组键，dateTime 是时间列，输入的消息格式同内存表 `inputTable`，需要计算的指标定义在 `metrics` 里，结果输出到内存表 `resultTable` 中。横截面数据计算的触发方式是 keyCount，即当前时间的数据累积超过 3000 条或者新时间点的数据到来才会触发一次计算。
 
@@ -343,7 +343,7 @@ def gtjaAlpha1(open, close, vol){
 
 （1）横截面引擎的 *timeColumn* 参数只支持 TIMESTAMP 类型。
 
-（2）因为不同引擎的输出表的各列顺序不同，所以输出表结构的定义需要根据因子的最后一步逻辑来决定。
+ （2）因为不同引擎的输出表的各列顺序不同，所以输出表结构的定义需要根据因子的最后一步逻辑来决定。
 
 - 时序聚合引擎：输出表的各列的顺序为：时间列，分组列，计算结果列。
 - 响应式状态引擎：输出表的各列的顺序为：分组列，时间列，计算结果列。（响应式状态引擎的输出表中时间列不是必须的，但是因为时间序列聚合引擎以及横截面引擎的输入输出表需包含时间列，所以流水线中的响应式状态引擎输出时会自动增加时间列。）
@@ -472,7 +472,7 @@ securityID dateTime                factor
 
 无状态函数是指不需要回溯历史数据，仅根据当前时刻传入的参数即可获得计算结果的函数。适合封装不依赖历史数据的计算逻辑。比如 [3.1.2 章节](#312-加权平均价格)中的加权平均价格。
 
-:bulb: **注意**：
+:note: **注意**：
 
 如果在  `createReactiveStateEngine` 里面指定了 *keyColumn* 参数，则响应式状态引擎内会进行分组计算。以 `keyColumn="securityID"` 为例，引擎内会根据股票代码分组计算。那么对于同一个股票代码的数据，引擎内会逐条计算；但对于不同股票代码的数据，无状态函数在引擎内会采取向量化计算。所以传入无状态函数的参数都是向量。
 
@@ -504,7 +504,7 @@ offerOrderQty0 = rand(200, n)
 testData = table(securityID, dateTime, bidPrice0, bidOrderQty0, offerPrice0, offerOrderQty0)
 ```
 
-<img src="./images/Streaming_computing_of_financial_quantifiers/3_1.png" width=45%>
+<img src="./images/Streaming_computing_of_financial_quantifiers/3_1.png" width=35%>
 
 构建响应式状态引擎，并输入这批数据：
 
@@ -523,7 +523,7 @@ rse = createReactiveStateEngine(name="reactiveDemo", metrics =metrics, dummyTabl
 tableInsert(rse, testData.flip())
 ```
 
-<img src="./images/Streaming_computing_of_financial_quantifiers/3_2.png" width=35%>
+<img src="./images/Streaming_computing_of_financial_quantifiers/3_2.png" width=25%>
 
 如上所示，传入的 *bidPrice0* 是向量，并且这一批的 10 条数据会分两次计算（前 7 条不同股票代码的数据计算一次，后 3 条数据计算一次）。
 
@@ -569,7 +569,7 @@ metrics = <[dateTime, factorWeightedAveragedPrice(bidPrice0, bidOrderQty0, offer
 
 状态函数是指计算中不仅用到当前数据，还会用到历史数据的函数。比如 [3.1.1 章节](#311-价格涨跌幅)中的价格涨跌幅，不仅需要当前的价格数据，还需要前 lag 条的历史价格数据。
 
-:bulb: **注意**：
+:note: **注意**：
 
 （1）状态函数需要用 @state 声明。
 
@@ -650,7 +650,7 @@ securityID tradeTime               factor
 
 Step1：计算买卖压力指标（[买卖压力指标](https://gitee.com/dolphindb/Tutorials_CN/blob/master/sql_performance_optimization_wap_di_rv.md#2-指标定义)）
 
-<img src="./images/Streaming_computing_of_financial_quantifiers/3_3.png" width=28%>
+<img src="./images/Streaming_computing_of_financial_quantifiers/3_3.png" width=23%>
 
 Step2：使用 `mavg` 计算过去 lag 行的移动平均买卖压力指标
 
@@ -806,7 +806,7 @@ securityID tradeTime               sum    avg    sum_avg                 anyVect
 */
 ```
 
-<img src="./images/Streaming_computing_of_financial_quantifiers/3_4.png" width=27%>
+<img src="./images/Streaming_computing_of_financial_quantifiers/3_4.png" width=20%>
 
 ② 状态函数内调用自定义函数时，不支持用多个变量接收函数多个返回值（即 `a,b = foo(...)` 的写法）。如果无状态函数需要返回多个值，则需要用 `fixedLengthArrayVector` 将返回结果组装成 array Vector 返回。在状态函数内，用一个变量接收，之后可以用 res[index] 的方式将返回的多个结果拆分。（可以参考上面注意事项① 中的例子）
 
@@ -1203,8 +1203,7 @@ def calAmount(bidPrice0, bidPrice1, bidPrice2, bidPrice3, bidPrice4, bidPrice5, 
 **DDB 实现代码 (`for` 循环+`if-else`)**：
 
 ```
-@jit def calAmountMax(bidPrice0, bidPrice1, bidPrice2, bidPrice3, bidPrice4, bidPrice5, bidPrice6, bidPrice7, bidPrice8, bidPrice9, bidO@jit
-def calAmountMax(bidPrice0, bidPrice1, bidPrice2, bidPrice3, bidPrice4, bidPrice5, bidPrice6, bidPrice7, bidPrice8, bidPrice9, bidOrderQty0, bidOrderQty1, bidOrderQty2, bidOrderQty3, bidOrderQty4, bidOrderQty5, bidOrderQty6, bidOrderQty7, bidOrderQty8, bidOrderQty9){
+@jit def calAmountMax(bidPrice0, bidPrice1, bidPrice2, bidPrice3, bidPrice4, bidPrice5, bidPrice6, bidPrice7, bidPrice8, bidPrice9, bidOrderQty0, bidOrderQty1, bidOrderQty2, bidOrderQty3, bidOrderQty4, bidOrderQty5, bidOrderQty6, bidOrderQty7, bidOrderQty8, bidOrderQty9){
 	amount = [bidPrice0*bidOrderQty0, bidPrice1*bidOrderQty1, bidPrice2*bidOrderQty2, bidPrice3*bidOrderQty3, bidPrice4*bidOrderQty4, bidPrice5*bidOrderQty5, bidPrice6*bidOrderQty6, bidPrice7*bidOrderQty7, bidPrice8*bidOrderQty8, bidPrice9*bidOrderQty9]
 	maxRes = -1.0
 	for(i in 0:10){
