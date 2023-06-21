@@ -280,10 +280,12 @@ subscribeTable(tableName="aggrFeatures10min", actionName="predictRV", offset=-1,
 
 ### 4.2 快速复现流处理
 
-为了方便用户快速复现实时波动率预测的演示，本教程提供了模型、数据及快速复现流处理代码。下载相关文件后，将模型和数据文件存储在 DolphinDB 服务端，然后修改代码中的相关路径参数，就可以快速复现上述流处理过程。
+为了方便用户快速复现实时波动率预测的演示，本教程提供了模型、数据及快速复现流处理代码。下载[相关文件](https://www.dolphindb.cn/downloads/docs/machine_learning_volatility.zip)后解压缩，将模型和数据文件存储在 DolphinDB 服务端，然后修改代码中的相关路径参数，就可以快速复现上述流处理过程。
 
-- 训练好的模型（请根据实际 server 版本进行选择）：[v1.30.18](./data/machine_learning_volatility/realizedVolatilityModel_1.30.18.bin)  [v2.00.6](./data/machine_learning_volatility/realizedVolatilityModel_2.00.6.bin)
-- [snapshot 数据](./data/machine_learning_volatility/testSnapshot.csv)：2020年10月19日 601319, 600519 两只股票共 9507 条数据
+- 训练好的模型（请根据实际 server 版本进行选择）：
+    - v1.30.18：*realizedVolatilityModel_1.30.18.bin*
+    - v2.00.6：*realizedVolatilityModel_2.00.6.bin*
+- snapshot 数据（*testSnapshot.csv*)：2020年10月19日 601319, 600519 两只股票共 9507 条数据
 
 * [快速复现流处理代码](./script/machine_learning_volatility/06.streamComputingReproduction.txt)
 
