@@ -607,7 +607,7 @@ DolphinDB 内置的响应式状态引擎在解析复杂因子的计算表达式�
 
 按照教程，把module内容同步到server后，测试所需脚本： [test_scripts.zip](script/Level2_Snapshot_Factor_Calculation/test_scripts.zip) 
 
-测试的 csv 数据： [Level2_Snapshot_Factor_Calculation](data/Level2_Snapshot_Factor_Calculation) 
+测试的 csv 数据： [Level2_Snapshot_Factor_Calculation](https://www.dolphindb.cn/downloads/docs/Level2_Snapshot_Factor_Calculation.zip) 
 
 
 
