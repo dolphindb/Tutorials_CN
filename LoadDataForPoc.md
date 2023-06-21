@@ -113,7 +113,7 @@ DolphinDB 导入数据的步骤是先把 CSV 文件读入内存，再写入硬�
 
 ### 2.1 建库建表
 
-本教程以上海证券交易所的逐笔委托数据为例来建库建表，点击 [Entrust](data/LoadDataForPoc/Entrust.tar.gz) 下载用例数据。文件解压后放到 loadForPoc/SH/Order/20210104 目录下。在 DolphinDB 中，可以使用 [create](https://www.dolphindb.cn/cn/help/SQLStatements/create.html) 语句建库建表。DolphinDB 建库时有 OLAP 和 TSDB 两种存储引擎可以选择，具体的选择原则可参考 [数据模型](https://www.dolphindb.cn/cn/help/DatabaseandDistributedComputing/Database/DataModel.html)。
+本教程以上海证券交易所的逐笔委托数据为例来建库建表，点击 [Entrust](https://www.dolphindb.cn/downloads/docs/LoadDataForPoc.zip) 下载用例数据。文件解压后放到 loadForPoc/SH/Order/20210104 目录下。在 DolphinDB 中，可以使用 [create](https://www.dolphindb.cn/cn/help/SQLStatements/create.html) 语句建库建表。DolphinDB 建库时有 OLAP 和 TSDB 两种存储引擎可以选择，具体的选择原则可参考 [数据模型](https://www.dolphindb.cn/cn/help/DatabaseandDistributedComputing/Database/DataModel.html)。
 
 本教程推荐选用 [TSDB](https://www.dolphindb.cn/cn/help/DatabaseandDistributedComputing/Database/DataModel.html) 引擎。上市每天逐笔委托数据大小在 3GB 左右，根据前面的分区规划，先按日期做值分区，再用股票代码做7个 HASH 分区。按日期值分区时，**VALUE 的初始值写两三天的初始值即可，实际分区值会根据数据的实际日期自动扩展**。
 
@@ -341,7 +341,7 @@ def partCol(mutable memTable)
 
 并行导入时，多个任务不能同时写入一个分区，在做任务分配时，要确保不同任务写入不同的分区。因为一级分区为天，不同日期的数据会写到不同的分区。所以，推荐以每天数据与任务一一对应的方式来并行导入。
 
-本案例批量导入了2021年01月05日到01月15日期间，9个工作日的逐笔委托数据。为了方便下载，每天的数据限定为 180MB 左右，点击此处下载数据：[批量导入数据](data/LoadDataForPoc/parallelData.tar.gz)。由于之前单个文件导入的 CSV 文件比较大，在进行并行导入前，推荐先把单个导入的文件删除。批量导入的基本步骤如下：
+本案例批量导入了2021年01月05日到01月15日期间，9个工作日的逐笔委托数据。为了方便下载，每天的数据限定为 180MB 左右，点击此处下载数据：[批量导入数据](https://www.dolphindb.cn/downloads/docs/LoadDataForPoc.zip)。由于之前单个文件导入的 CSV 文件比较大，在进行并行导入前，推荐先把单个导入的文件删除。批量导入的基本步骤如下：
 
 1.  在单个 CSV 文件导入的基础上，把一天的数据导入封装为一个函数
 2.  用异步任务的方式提交一批任务，按天进行批量导入。
