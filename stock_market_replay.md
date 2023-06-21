@@ -459,21 +459,10 @@ C++ API 教程：[C++ API 教程](https://gitee.com/dolphindb/api-cplusplus)
 
 ## 附录
 
-[01.股票行情回放.txt](script/stock_market_replay/01.stockMarketReplay.txt)
-
-[02.消费场景1：计算个股交易成本 _asofJoin 实现.txt](script/stock_market_replay/02.calTradeCost_asofJoin.txt)
-
-[03.消费场景1：计算个股交易成本 _lookUpJoin 实现.txt](script/stock_market_replay/03.calTradeCost_lookUpJoin.txt)
-
-[04.消费场景2：实时推送 Kafka.txt](script/stock_market_replay/04.publishToKafka.txt)
-
-[05.消费场景3：C++API 实时订阅.cpp](script/stock_market_replay/05.subscribe.cpp)
-
-[06.清理环境.txt](script/stock_market_replay/06.cleanEnvironment.txt)
-
-[样例数据：order.csv](data/stock_market_replay/order.zip)
-
-[样例数据：snapshot.csv](data/stock_market_replay/snapshot.zip)
-
-[样例数据：trade.csv](data/stock_market_replay/trade.zip)
-
+- [股票行情回放.txt](script/stock_market_replay/01.stockMarketReplay.txt)
+- [消费场景1：计算个股交易成本 _asofJoin 实现.txt](script/stock_market_replay/02.calTradeCost_asofJoin.txt)
+- [消费场景1：计算个股交易成本 _lookUpJoin 实现.txt](script/stock_market_replay/03.calTradeCost_lookUpJoin.txt)
+- [消费场景2：实时推送 Kafka.txt](script/stock_market_replay/04.publishToKafka.txt)
+- [消费场景3：C++API 实时订阅.cpp](script/stock_market_replay/05.subscribe.cpp)
+- [清理环境.txt](script/stock_market_replay/06.cleanEnvironment.txt)
+- [样例数据：order.csv, trade.csv与snapshot.csv](https://www.dolphindb.cn/downloads/docs/stock_market_replay.zip)
