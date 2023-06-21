@@ -716,13 +716,4 @@ Python API 教程：[Python API 教程](https://gitee.com/dolphindb/api_python3/
 - [Python 源码](script/appendices_market_replay_bp/python_replay.py) 
 - [C++ 测试源码](script/appendices_market_replay_bp/cpp_replay_test.cpp) 
 
-:bulb: **注意**：由于原始行情数据文件较大，故采用分卷压缩方式。解压时：
-
-1. 下载所有的压缩分卷至同一目录。
-2. 使用 7z 等解压缩软件提取名为 *data_pack.zip.001* 分卷，得到 *data_pack* 文件夹。
-3. 在 *data_pack* 文件夹中，解压 *data.zip* 即可得到原始行情数据文件。
-<figure align="left">
-<img src="./images/appendices_market_replay_bp/unzip_datapack.png" width=70%>
-    <figcaption>分卷提取</figcaption>
-</figure>
 
