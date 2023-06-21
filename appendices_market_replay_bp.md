@@ -704,7 +704,7 @@ Python API 教程：[Python API 教程](https://gitee.com/dolphindb/api_python3/
 
 附录中的压缩包包含以下文件：
 
-- [原始行情数据文件](data/appendices_market_replay_bp) 
+- [原始行情数据文件](https://www.dolphindb.cn/downloads/docs/appendices_market_replay_bp_data.zip) 
 - [逐笔委托建库建表脚本](script/appendices_market_replay_bp/order_create.txt) 
 - [逐笔成交建库建表脚本](script/appendices_market_replay_bp/transac_create.txt) 
 - [快照建库建表脚本](script/appendices_market_replay_bp/snap_create.txt) 
