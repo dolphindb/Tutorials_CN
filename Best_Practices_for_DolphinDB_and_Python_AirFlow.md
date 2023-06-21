@@ -852,7 +852,7 @@ DolphinDBOperator(
 
 - Python 项目：[addETL.py](script/Best_Practices_for_DolphinDB_and_Python_AirFlow/Python_projects)，[fullETL.py](script/Best_Practices_for_DolphinDB_and_Python_AirFlow/Python_projects)
 
-- 数据文件：[20210104snapshot.csv](data/Best_Practices_for_DolphinDB_and_Python_AirFlow)
+- 数据文件：[20210104snapshot.csv](https://www.dolphindb.cn/downloads/docs/Best_Practices_for_DolphinDB_and_Python_AirFlow.zip)
 
 - Airflow 变量：[Variables.json](script/Best_Practices_for_DolphinDB_and_Python_AirFlow) 
 
