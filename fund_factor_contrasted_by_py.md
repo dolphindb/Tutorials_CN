@@ -713,7 +713,7 @@ print(end-start)
 
 ### 附件
 
-[测试数据](data/fund_factor_contrasted_by_py/datafile)
+[测试数据](https://www.dolphindb.cn/downloads/docs/fund_factor_contrasted_by_py.zip)
 
 [数据导入到 DolphinDB 的脚本](script/fund_factor_contrasted_by_py/fund_data_load.txt)
 
