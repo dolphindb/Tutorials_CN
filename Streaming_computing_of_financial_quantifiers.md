@@ -1442,6 +1442,5 @@ assert each(eqObj, resultTable1.factor, resultTable4.factor).all()
 
 多档多列与多档 array vector 的快照见以下附件：
 
-  [snapshot_100stocks_arrayvector.zip](script/Streaming_computing_of_financial_quantifiers/snapshot_100stocks_arrayvector.zip) 
-
-  [snapshot_100stocks_multi.zip](script/Streaming_computing_of_financial_quantifiers/snapshot_100stocks_multi.zip) 
+- [snapshot_100stocks_arrayvector.zip](https://www.dolphindb.cn/downloads/docs/Streaming_computing_of_financial_quantifiers.zip) 
+- [snapshot_100stocks_multi.zip](https://www.dolphindb.cn/downloads/docs/Streaming_computing_of_financial_quantifiers.zip) 
