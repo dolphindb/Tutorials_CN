@@ -130,7 +130,7 @@ reshape 实现的功能相当于 [cast($)](https://www.dolphindb.cn/cn/help/Func
 	0  0  3  0  0
 	0  0  0  4  0
 	0  0  0  0  5
-
+	
 	>diag(m);
 	[1,2,3,4,5]
 	```
@@ -671,7 +671,7 @@ col1	col2	col3
 
 * [fill!](https://www.dolphindb.cn/cn/help/200/FunctionsandCommands/FunctionReferences/f/fill!.html)，[nullFill](https://www.dolphindb.cn/cn/help/200/FunctionsandCommands/FunctionReferences/n/nullFill.html) 和 [nullFill!](https://www.dolphindb.cn/cn/help/200/FunctionsandCommands/FunctionReferences/n/nullFill%21.html) ：用指定值填充 NULL 值。
 
-上述方法都需要对参与计算的矩阵单独填充。对于矩阵间的二元计算，可以通过 [withNullFill](https://www.dolphindb.cn/cn/help/200/FunctionsandCommands/FunctionReferences/n/nullFill.html) 函数同时实现填充和计算。
+上述方法都需要对参与计算的矩阵单独填充。对于矩阵间的二元计算，可以通过 [withNullFill](https://www.dolphindb.cn/cn/help/200/Functionalprogramming/TemplateFunctions/withNullFill.html) 函数同时实现填充和计算。
 
 #### 2.7.2 去除空行/列
 
