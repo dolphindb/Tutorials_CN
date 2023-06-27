@@ -811,14 +811,14 @@ t = table(2011.11.01..2021.10.31 as date,
 
 ```
 
-使用 [interval](https://www.dolphindb.cn/cn/help/SQLStatements/interval.html) 函数对于日期按月分组，并计算标准差。其中，*fill* 类型为 "prev"，表示使用前一个值填充缺失值。
+使用 [interval](https://www.dolphindb.cn/cn/help/SQLStatements/interval.html) 函数按日期分组，并计算标准差。其中，*fill* 类型为 "prev"，表示使用前一个值填充缺失值。
 
 ```
-timer res = select std(rate) from t group by code, interval(month(date), 1, "prev")
+timer res = select std(rate) from t group by code, interval(date(date), 1, "prev")
 
 ```
 
-**查询耗时 1.8 ms。**
+**查询耗时 4.029 ms。**
 
 ### 4.9 计算股票组合的价值
 
