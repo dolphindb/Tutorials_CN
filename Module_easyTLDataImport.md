@@ -500,15 +500,15 @@ getJobDetails(jobid)
 
 ## 5. 使用示例
 
-- **第一步：**用户按照第 1 章文件结构中的要求解压并准备好数据。假设数据放在 */hdd/hdd1/factorCalDev/server/TLData/* 目录下，文件结构如下图：
+- **第一步**：用户按照第 1 章文件结构中的要求解压并准备好数据。假设数据放在 */hdd/hdd1/factorCalDev/server/TLData/* 目录下，文件结构如下图：
 
 <img src="./images/Module_easyTLDataImport/5_1.png" width=50%>
 
-- **第二步：**将模块同步到 DolphinDB 的 *sever/modules* 的目录下。
+- **第二步**：将模块同步到 DolphinDB 的 *sever/modules* 的目录下。
 
 <img src="./images/Module_easyTLDataImport/5_2.png" width=70%>
 
-- **第三步：**载入模块和导入数据方法如下：
+- **第三步**：载入模块和导入数据方法如下：
 
 ```
 use DolphinDBModules::easyTLDataImport::loadTLData
@@ -533,7 +533,7 @@ jobid3 = autoLoadTongLianData(fileDir=fileDir, dataSource="TLTrade", parallel=3)
 getJobStatus(jobid3)   // 查看任务状态
 ```
 
-- **第四步：**查询任务状态。
+- **第四步**：查询任务状态。
 
 （1）使用 `getJobStatus(jobid)` 可以查询任务状态，当 endTime 有值的时候表示任务结束。例如：
 
@@ -559,7 +559,7 @@ cat dolphindb.log | grep message
 
 <img src="./images/Module_easyTLDataImport/5_5.png" width=83%>
 
-- **第五步：**查询数据。
+- **第五步**：查询数据。
 
 （1）快照数据
 
