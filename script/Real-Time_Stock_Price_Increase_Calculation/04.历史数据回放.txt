@@ -1,0 +1,4 @@
+dbName, tbName = "dfs://SH_TSDB_snapshot_ArrayVector", "snapshot"
+t = select * from loadTable(dbName, tbName) where date(DateTime)=2021.12.01 order by DateTime
+submitJob("replay_snapshot", "snapshot",  replay{t, snapshotStreamTable, `DateTime, `DateTime, 100, true, 1})
+getRecentJobs()

@@ -205,6 +205,7 @@
     - [金融因子流式实现](Streaming_computing_of_financial_quantifiers.md)
     - [Python + HDF5 因子计算与 DolphinDB 一体化因子计算方案对比](Python+HDF5_vs_DolphinDB.md)
     - [DolphinDBModules::easyTLDataImport 通联历史数据自动化导入功能模块使用教程](Module_easyTLDataImport.md)
+    - [DolphinDB 流计算在金融行业的应用：实时计算涨幅榜](Real-Time_Stock_Price_Increase_Calculation.md)
   - 物联网：
     - [DolphinDB在工业物联网的应用](iot_demo.md)
     - [物联网时序数据查询案例](iot_query_case.md)

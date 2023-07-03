@@ -1,0 +1,21 @@
+dbName, tbName = "dfs://SH_TSDB_snapshot_ArrayVector", "snapshot"
+t = select * from loadTable(dbName, tbName) where date(DateTime)=2021.12.01 and left(SecurityID, 2)="60" and time(DateTime)>=09:25:00.000 order by DateTime
+
+// warm up
+warmupData = select * from t where time(DateTime) < 09:30:00.000
+warmupStreamEngine(getStreamEngine("calChange"), warmupData)
+
+// test once 1 
+testData = select * from t where time(DateTime) = 09:30:00.000 limit 1
+timer(10){getStreamEngine("calChange").append!(testData)}
+/** Time elapsed: 1.951 ms */
+
+// test once 1650
+testData = select * from t where time(DateTime) > 09:30:00.000 context by SecurityID csort DateTime limit 1
+timer(10){getStreamEngine("calChange").append!(testData)}
+/** Time elapsed: 34.503 ms */
+
+// test continuous
+timer getStreamEngine("calChange").append!(t)
+/** Time elapsed: 17176.461 ms */
+//distinct(t.SecurityID)
