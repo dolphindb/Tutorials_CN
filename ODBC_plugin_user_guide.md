@@ -129,7 +129,9 @@ export LD_LIBRARY_PATH=/usr/local/oracle/instantclient_21_7:$LD_LIBRARY_PATH
 export TNS_ADMIN=/etc/oracle
 // DolphinDB 默认字符编码是 utf8 编码。
 // Oracle 的 ODBC 驱动需要 NLS_LANG 环境来识别客户端编码，需要设置环境变量 NLS_LANG 为 utf8 编码。
-export NLS_LANG='AMERICAN_AMERICA.AL32UTF8'
+export NLS_LANG='AMERICAN_AMERICA.AL32UTF8'
+#!/bin/sh
+nohup ./dolphindb -console 0 > single.nohup 2>&1 &
 ```
 
 **注意**：如果是集群模式，则需要启动运行代理节点的终端上先配置好环境变量，然后再启动节点。原因是 DolphinDB 数据节点的父进程是代理节点，会继承其的环境变量。对于使用自定义脚本运行的的 DolphinDB 服务，需要在对应的启动脚本里添加。
