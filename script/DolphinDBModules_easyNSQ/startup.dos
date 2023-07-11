@@ -1,0 +1,24 @@
+login(`admin, `123456)
+go
+
+pluginPath = "/home/appadmin/mqzhu/v2.00.9.6/server/plugins/nsq/PluginNsq.txt"
+configFilePath = "/home/appadmin/mqzhu/v2.00.9.6/server/plugins/nsq/nsq_sdk_config.ini";
+// 确保 nsq 插件加载成功
+try{ loadPlugin(pluginPath) } catch(ex) { print(ex) }
+go
+
+// 调用模块
+use DolphinDBModules::easyNSQ
+go
+
+// 初始化环境(不删除分区表)
+iniNsqEnv()
+go
+
+// 拉起订阅
+subscribeNsq(configFilePath, "orders", ["sh","sz"], saveToDfs=true)
+subscribeNsq(configFilePath, "trade", ["sh","sz"], saveToDfs=true)
+subscribeNsq(configFilePath, "snapshot", ["sh","sz"], saveToDfs=true)
+subscribeNsq(configFilePath, "orders", ["sh","sz"], merge=true, saveToDfs=true)
+subscribeNsq(configFilePath, "trade", ["sh","sz"], merge=true, saveToDfs=true)
+subscribeNsq(configFilePath, "snapshot", ["sh","sz"], merge=true, saveToDfs=true)

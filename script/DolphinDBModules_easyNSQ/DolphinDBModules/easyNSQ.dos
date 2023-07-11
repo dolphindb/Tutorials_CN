@@ -1,0 +1,715 @@
+module DolphinDBModules::easyNSQ
+
+/* *
+*  @ Function name: easyNsqLog
+*  @ Brief: print message to frontend and to log file
+*  @ Param: 
+*  funcName: the name of function that sends the message 
+*  msg: the message to print
+*  isError: whether it is an error msg
+*/
+def easyNsqLog(funcName, msg, isError=false) {
+    if(!isError) {
+        formattedMsg = stringFormat("[DolphinDBModules::easyNSQ] %W: %W", funcName, msg)
+    } else {
+        formattedMsg = stringFormat("[ERROR][DolphinDBModules::easyNSQ] %W: %W", funcName, msg)
+    }
+	print(formattedMsg)
+	writeLog(formattedMsg)
+}
+
+/* *
+*  @ Function name: validateDataSourceParam
+*  @ Brief: check whether the dataSource argument is valid and standardize it
+*  @ Param: 
+*  dataSource: represents the nsq data type of interest
+*  @ Return: NULL if the dataSource argument is invalid, 
+*   otherwise return a string scalar which is `orders, `trade or `snapshot
+*/
+def validateDataSourceParam(dataSource) {
+    try {
+        if(dataSource.size() == 1 && !isVoid(dataSource)) {
+            ds = dataSource.lower() 
+            if(ds in [`orders, `trade, `snapshot]) {
+                return ds
+            }
+        }
+    } catch (ex) {
+        easyNsqLog(`validateDataSourceParam, string(ex[0]) + ":" + string(ex[1]), true)
+        return NULL
+    }
+
+	easyNsqLog(`validateDataSourceParam, "Invalid dataSource argument", true)
+	return NULL
+}
+
+/* *
+*  @ Function name: validateMarketsParam
+*  @ Brief: check whether the markets argument is valid and standardize it
+*  @ Param: 
+*  markets: represents the markets of interest
+*  @ Return: NULL if the markets argument is invalid, 
+*   otherwise return a string vector which is [`sz], [`sh] or [`sz, `sh]
+*/
+ def validateMarketsParam(markets) {
+    try {
+        if(markets.size() in 1:2) {
+            marketList = markets.lower()
+            if(all(marketList in ["sz", "sh"])) {
+                if(marketList.size() == 1 || marketList[0] != marketList[1])
+                    return [marketList].flatten()
+            }
+        }
+    } catch (ex) {
+        easyNsqLog(`validateMarketsParam, string(ex[0]) + ":" + string(ex[1]), true)
+        return NULL
+    }
+	
+	easyNsqLog(`validateMarketsParam, "Invalid markets argument", true)
+	return NULL
+}
+
+/* *
+*  @ Function name: validateStreamTableNamesParam
+*  @ Brief: check whether the streamTableNames argument is valid and standardize it
+*  @ Param: 
+*  streamTableNames: the name of stream tables where the real-time nsq data is going to store
+*  @ Return: NULL if the streamTableNames argument is invalid, 
+*   nsqStickOrderStream/nsqStockTradeStream/nsqStockSnapshotStream if streamTableNames=NULL and merge=true,
+*   nsqStockOrdersSHStream/nsqStockOrdersSZStream/nsqStockTradeSHStream/nsqStockTradeSZStream/nsqStockSnapshotSHStream/nsqStockSnapshotSZStream
+*   if streamTableNames=NULL and merge=false, otherwise return user intput without modification
+*/
+def validateStreamTableNamesParam(ds, marketList, merge, streamTableNames) {
+    try {
+        if(isVoid(streamTableNames)) {
+            ds_capitalized = upper(ds[0]) + ds[1:]
+            if(merge && marketList.size() == 2) {
+                return ["nsqStock" + ds_capitalized + "Stream"]
+            } else if(!merge) {
+                return ["nsqStock" + ds_capitalized + upper(marketList) + "Stream"].flatten()
+            }
+
+        } else if(streamTableNames.size() in 1:2) {
+            if((merge == true && streamTableNames.size() == 1) || 
+                (merge == false && streamTableNames.size() == marketList.size())) {
+                return [streamTableNames].flatten()
+            }
+        }
+    } catch (ex) {
+        easyNsqLog(`validateStreamTableNamesParam, string(ex[0]) + ":" + string(ex[1]), true)
+        return NULL
+    }
+    
+    easyNsqLog(`validateStreamTableNamesParam, "Invalid streamTableNames argument", true)
+	return NULL
+}
+
+/* *
+*  @ Function name: validateDbPathParam
+*  @ Brief: check whether the dbPath argument is valid and standardize it
+*  @ Param: 
+*  dbPath: the path of database where the real-time nsq data is going to store if saveToDfs option is on
+*  @ Return: NULL if the dbPath argument is invalid, 
+*   dfs://nsqStockOrders, dfs://nsqStockTrade or dfs://nsqStockSnapshot if dbPath=NULL,
+*   otherwise return user intput without modification
+*/
+def validateDbPathParam(ds, dbPath) {
+    try {
+        if(dbPath.size() == 1) {
+            if(isVoid(dbPath)) {
+                ds_capitalized = upper(ds[0]) + ds[1:]
+                return "dfs://nsqStock" + ds_capitalized
+            } else if(regexFind(dbPath, "^dfs://") == 0) {
+                return dbPath
+            }
+        }
+    } catch (ex) {
+        easyNsqLog(`validateDbPathParam, string(ex[0]) + ":" + string(ex[1]), true)
+        return NULL
+    }
+    
+    easyNsqLog(`validateDbPathParam, "Invalid dbPath argument", true)
+	return NULL
+}
+
+/* *
+*  @ Function name: validateTableNamesParam
+*  @ Brief: check whether the tableNames argument is valid and standardize it
+*  @ Param: 
+*  tableNames: the name of dfs tables where the real-time nsq data is going to store if saveToDfs option is on
+*  @ Return: NULL if the tableNames argument is invalid, 
+*   orders/trade/snapshot if tableNames=NULL and merge=true,
+*   ordersSH/ordersSZ/tradeSH/tradeSZ/snapshotSH/snapshotSZ if tableNames=NULL and merge=false, 
+*   otherwise return user intput without modification
+*/
+def validateTableNamesParam(ds, marketList, merge, tableNames) {
+    try {
+        if(isVoid(tableNames)) {
+            if(merge) {
+                return [ds]
+            } else {
+                return [ds + upper(marketList)].flatten()
+            }
+        } else if(tableNames.size() in 1:2) {
+            if((merge == true && tableNames.size() == 1) || 
+                (merge == false && tableNames.size() == marketList.size())) {
+                return [tableNames].flatten()
+            }
+        }
+    } catch (ex) {
+        easyNsqLog(`validateTableNamesParam, string(ex[0]) + ":" + string(ex[1]), true)
+        return NULL
+    }
+    
+    easyNsqLog(`validateTableNamesParam, "Invalid tableNames argument", true)
+	return NULL
+}
+
+
+def subscribeNsqOrders(markets, merge, saveToDfs, streamTableNames, dbPath, tableNames) {
+    try {
+        ordersSchema = nsq::getSchema(`orders)
+        
+        // sz，sh合并存储
+        if(merge) {
+            // 持久化共享流表
+            enableTableShareAndPersistence(
+                table=streamTable(1:0, ordersSchema.name, ordersSchema.type), 
+                tableName=streamTableNames[0], 
+                cacheSize=500000, 
+                preCache=100000
+            )
+            easyNsqLog(`subscribeNsqOrders, "initialize shared and persistence streamTable "+streamTableNames[0])
+            
+            if(saveToDfs) {
+                // 分布式表
+                if(existsDatabase(dbPath)) {
+                    easyNsqLog(`subscribeNsqOrders, "find existing database "+ dbPath)
+                } else {
+                    dbDate = database("", VALUE, 2023.01.01..2023.12.01)
+                    dbSymbol = database("", HASH, [SYMBOL, 50])
+                    database(dbPath, COMPO, [dbDate, dbSymbol], , "TSDB")
+                    easyNsqLog(`subscribeNsqOrders, "create database "+ dbPath)
+                }
+                
+                if(existsTable(dbPath, tableNames[0])) {
+                    easyNsqLog(`subscribeNsqOrders, "find existing dfsTable ("+ dbPath + "," +  tableNames[0]+")")
+                } else {
+                    createPartitionedTable(
+                        dbHandle=database(dbPath),
+                        table=table(1:0, ordersSchema.name, ordersSchema.type), 
+                        tableName=tableNames[0], 
+                        partitionColumns=`TradeDate`InstrumentID, 
+                        sortColumns=`InstrumentID`TransactTime, 
+                        keepDuplicates=ALL
+                    )
+                    easyNsqLog(`subscribeNsqOrders, "create dfsTable ("+ dbPath + "," +  tableNames[0]+")")
+                }
+                
+                // 流表入库的订阅
+                subscribeTable(
+                    tableName=streamTableNames[0], 
+                    actionName="easyNSQ_saveToDfsTable", 
+                    offset=-1, 
+                    handler=loadTable(dbPath, tableNames[0]),
+                    msgAsTable=true, 
+                    batchSize=10000, 
+                    throttle=1, 
+                    reconnect = true
+                )
+                easyNsqLog(`subscribeNsqOrders, stringFormat("dfs table (%W,%W) is listening to stream table %W", dbPath, tableNames[0], streamTableNames[0]))
+            }
+            
+            // nsq订阅实时数据
+            nsq::subscribe(`orders, `sz, objByName(streamTableNames[0], true))
+            nsq::subscribe(`orders, `sh, objByName(streamTableNames[0], true))
+            easyNsqLog(`subscribeNsqOrders, "successfully subscribe nsq sh and sz orders data")
+            
+        } else {
+            // sz，sh分开存储
+            for(i in 0:markets.size()) {
+                 // 持久化共享流表
+                enableTableShareAndPersistence(
+                    table=streamTable(1:0, ordersSchema.name, ordersSchema.type), 
+                    tableName=streamTableNames[i], 
+                    cacheSize=500000, 
+                    preCache=100000
+                )
+                easyNsqLog(`subscribeNsqOrders, "initialize shared and persistence streamTable "+streamTableNames[i])
+            }
+                
+            if(saveToDfs) {
+                // 分布式表
+                if(existsDatabase(dbPath)) {
+                    easyNsqLog(`subscribeNsqOrders, "find existing database "+ dbPath)
+                } else {
+                    dbDate = database("", VALUE, 2023.01.01..2023.12.01)
+                    dbSymbol = database("", HASH, [SYMBOL, 25])
+                    database(dbPath, COMPO, [dbDate, dbSymbol], , "TSDB")
+                    easyNsqLog(`subscribeNsqOrders, "create database "+ dbPath)
+                }
+                
+                for(i in 0:markets.size()) {
+                    if(existsTable(dbPath, tableNames[i])) {
+                        easyNsqLog(`subscribeNsqOrders, "find existing dfsTable ("+ dbPath + "," +  tableNames[i]+")")
+                    } else {
+                        createPartitionedTable(
+                            dbHandle=database(dbPath),
+                            table=table(1:0, ordersSchema.name, ordersSchema.type), 
+                            tableName=tableNames[i], 
+                            partitionColumns=`TradeDate`InstrumentID, 
+                            sortColumns=`InstrumentID`TransactTime, 
+                            keepDuplicates=ALL
+                        )
+                        easyNsqLog(`subscribeNsqOrders, "create dfsTable ("+ dbPath + "," +  tableNames[i]+")")
+                    }
+                    
+                    // 流表入库的订阅
+                    subscribeTable(
+                        tableName=streamTableNames[i], 
+                        actionName="easyNSQ_saveToDfsTable", 
+                        offset=-1, 
+                        handler=loadTable(dbPath, tableNames[i]),
+                        msgAsTable=true, 
+                        batchSize=10000, 
+                        throttle=1, 
+                        reconnect = true
+                    )
+                    easyNsqLog(`subscribeNsqOrders, stringFormat("dfs table (%W,%W) is listening to stream table %W", dbPath, tableNames[i], streamTableNames[i]))
+                }
+            }
+            
+            for(i in 0:markets.size()) {    
+                // nsq订阅实时数据
+                nsq::subscribe(`orders, markets[i], objByName(streamTableNames[i], true))
+                easyNsqLog(`subscribeNsqOrders, "successfully subscribe nsq " + markets[i] + " orders data")
+            }
+        }
+        
+    } catch(ex) {
+        easyNsqLog("subscribeNsqOrders", string(ex[0])+":"+string(ex[1]), true)
+        return NULL
+    }
+    
+    if(saveToDfs) {
+        return streamTableNames, dbPath, tableNames
+    } else {
+        return streamTableNames
+    }
+}
+
+
+def subscribeNsqTrade(markets, merge, saveToDfs, streamTableNames, dbPath, tableNames) {
+    try {
+        tradeSchema = nsq::getSchema(`trade)
+        
+        // sz，sh合并存储
+        if(merge) {
+            // 持久化共享流表
+            enableTableShareAndPersistence(
+                table=streamTable(1:0, tradeSchema.name, tradeSchema.type), 
+                tableName=streamTableNames[0], 
+                cacheSize=500000, 
+                preCache=100000
+            )
+            easyNsqLog(`subscribeNsqTrade, "initialize shared and persistence streamTable "+streamTableNames[0])
+            
+            if(saveToDfs) {
+                // 分布式表
+                if(existsDatabase(dbPath)) {
+                    easyNsqLog(`subscribeNsqTrade, "find existing database "+ dbPath)
+                } else {
+                    dbDate = database("", VALUE, 2023.01.01..2023.12.01)
+                    dbSymbol = database("", HASH, [SYMBOL, 50])
+                    database(dbPath, COMPO, [dbDate, dbSymbol], , "TSDB")
+                    easyNsqLog(`subscribeNsqTrade, "create database "+ dbPath)
+                }
+                
+                if(existsTable(dbPath, tableNames[0])) {
+                    easyNsqLog(`subscribeNsqTrade, "find existing dfsTable ("+ dbPath + "," +  tableNames[0] + ")")
+                } else {
+                    createPartitionedTable(
+                        dbHandle=database(dbPath),
+                        table=table(1:0, tradeSchema.name, tradeSchema.type), 
+                        tableName=tableNames[0], 
+                        partitionColumns=`TradeDate`InstrumentID, 
+                        sortColumns=`InstrumentID`TransactTime, 
+                        keepDuplicates=ALL
+                    )
+                    easyNsqLog(`subscribeNsqTrade, "create dfsTable ("+ dbPath + "," +  tableNames[0]+")")
+                }
+                
+                // 流表入库的订阅
+                subscribeTable(
+                    tableName=streamTableNames[0], 
+                    actionName="easyNSQ_saveToDfsTable", 
+                    offset=-1, 
+                    handler=loadTable(dbPath, tableNames[0]),
+                    msgAsTable=true, 
+                    batchSize=10000, 
+                    throttle=1, 
+                    reconnect = true
+                )
+                easyNsqLog(`subscribeNsqOrders, stringFormat("dfs table (%W,%W) is listening to stream table %W", dbPath, tableNames[0], streamTableNames[0]))
+            }
+            
+            // nsq订阅实时数据
+            nsq::subscribe(`trade, `sz, objByName(streamTableNames[0], true))
+            nsq::subscribe(`trade, `sh, objByName(streamTableNames[0], true))
+            easyNsqLog(`subscribeNsqOrders, "successfully subscribe nsq sh and sz trade data")
+            
+        } else {
+            // sz，sh分开存储
+            for(i in 0:markets.size()) {
+                // 持久化共享流表
+               enableTableShareAndPersistence(
+                   table=streamTable(1:0, tradeSchema.name, tradeSchema.type), 
+                   tableName=streamTableNames[i], 
+                   cacheSize=500000, 
+                   preCache=100000
+               )
+               easyNsqLog(`subscribeNsqTrade, "initialize shared and persistence streamTable "+streamTableNames[i])
+           }
+               
+           if(saveToDfs) {
+               // 分布式表
+               if(existsDatabase(dbPath)) {
+                   easyNsqLog(`subscribeNsqTrade, "find existing database "+ dbPath)
+               } else {
+                   dbDate = database("", VALUE, 2023.01.01..2023.12.01)
+                   dbSymbol = database("", HASH, [SYMBOL, 25])
+                   database(dbPath, COMPO, [dbDate, dbSymbol], , "TSDB")
+                   easyNsqLog(`subscribeNsqTrade, "create database "+ dbPath)
+               }
+               
+               for(i in 0:markets.size()) {
+                   if(existsTable(dbPath, tableNames[i])) {
+                       easyNsqLog(`subscribeNsqTrade, "find existing dfsTable ("+ dbPath + "," +  tableNames[i]+")")
+                   } else {
+                       createPartitionedTable(
+                           dbHandle=database(dbPath),
+                           table=table(1:0, tradeSchema.name, tradeSchema.type), 
+                           tableName=tableNames[i], 
+                           partitionColumns=`TradeDate`InstrumentID, 
+                           sortColumns=`InstrumentID`TransactTime, 
+                           keepDuplicates=ALL
+                       )
+                       easyNsqLog(`subscribeNsqTrade, "create dfsTable ("+ dbPath + "," +  tableNames[i]+")")
+                   }
+                   
+                   // 流表入库的订阅
+                   subscribeTable(
+                       tableName=streamTableNames[i], 
+                       actionName="easyNSQ_saveToDfsTable", 
+                       offset=-1, 
+                       handler=loadTable(dbPath, tableNames[i]),
+                       msgAsTable=true, 
+                       batchSize=10000, 
+                       throttle=1, 
+                       reconnect = true
+                   )
+                   easyNsqLog(`subscribeNsqOrders, stringFormat("dfs table (%W,%W) is listening to stream table %W", dbPath, tableNames[i], streamTableNames[i]))
+               }
+           }
+           
+           for(i in 0:markets.size()) {    
+               // nsq订阅实时数据
+               nsq::subscribe(`trade, markets[i], objByName(streamTableNames[i], true))
+               easyNsqLog(`subscribeNsqOrders, "successfully subscribe nsq " + markets[i] + " trade data")
+           }
+        }
+        
+    } catch(ex) {
+        easyNsqLog("subscribeNsqTrade", string(ex[0]) + ":" + string(ex[1]), true)
+        return NULL
+    }
+    
+    if(saveToDfs) {
+        return streamTableNames, dbPath, tableNames
+    } else {
+        return streamTableNames
+    }
+}
+
+
+def subscribeNsqSnapshot(markets, merge, saveToDfs, streamTableNames, dbPath, tableNames) {
+    try {
+        snapshotSchema = nsq::getSchema(`snapshot)
+        
+        // sz，sh合并存储
+        if(merge) {
+            // 持久化共享流表
+            enableTableShareAndPersistence(
+                table=streamTable(1:0, snapshotSchema.name, snapshotSchema.type), 
+                tableName=streamTableNames[0], 
+                cacheSize=500000, 
+                preCache=100000
+            )
+            easyNsqLog(`subscribeNsqSnapshot, "initialize shared and persistence streamTable "+streamTableNames[0])
+            
+            if(saveToDfs) {
+                // 分布式表
+                if(existsDatabase(dbPath)) {
+                    easyNsqLog(`subscribeNsqSnapshot, "find existing database "+ dbPath)
+                } else {
+                    dbDate = database("", VALUE, 2023.01.01..2023.12.01)
+                    dbSymbol = database("", HASH, [SYMBOL, 50])
+                    database(dbPath, COMPO, [dbDate, dbSymbol], , "TSDB")
+                    easyNsqLog(`subscribeNsqSnapshot, "create database "+ dbPath)
+                }
+                
+                if(existsTable(dbPath, tableNames[0])) {
+                    easyNsqLog(`subscribeNsqSnapshot, "find existing dfsTable ("+ dbPath + "," +  tableNames[0] + ")")
+                } else {
+                    createPartitionedTable(
+                        dbHandle=database(dbPath),
+                        table=table(1:0, snapshotSchema.name, snapshotSchema.type), 
+                        tableName=tableNames[0], 
+                        partitionColumns=`TradeDate`InstrumentID, 
+                        sortColumns=`InstrumentID`UpdateTime, 
+                        keepDuplicates=ALL
+                    )
+                    easyNsqLog(`subscribeNsqSnapshot, "create dfsTable ("+ dbPath + "," +  tableNames[0]+")")
+                }
+                
+                // 流表入库的订阅
+                subscribeTable(
+                    tableName=streamTableNames[0], 
+                    actionName="easyNSQ_saveToDfsTable", 
+                    offset=-1, 
+                    handler=loadTable(dbPath, tableNames[0]),
+                    msgAsTable=true, 
+                    batchSize=10000, 
+                    throttle=1, 
+                    reconnect = true
+                )
+                easyNsqLog(`subscribeNsqOrders, stringFormat("dfs table (%W,%W) is listening to stream table %W", dbPath, tableNames[0], streamTableNames[0]))
+            }
+            
+            // nsq订阅实时数据
+            nsq::subscribe(`snapshot, `sz, objByName(streamTableNames[0], true))
+            nsq::subscribe(`snapshot, `sh, objByName(streamTableNames[0], true))
+            easyNsqLog(`subscribeNsqOrders, "successfully subscribe nsq sz and sh snapshot data")
+                        
+        } else {
+            // sz，sh分开存储
+            for(i in 0:markets.size()) {
+                // 持久化共享流表
+               enableTableShareAndPersistence(
+                   table=streamTable(1:0, snapshotSchema.name, snapshotSchema.type), 
+                   tableName=streamTableNames[i], 
+                   cacheSize=500000, 
+                   preCache=100000
+               )
+               easyNsqLog(`subscribeNsqSnapshot, "initialize shared and persistence streamTable "+streamTableNames[i])
+           }
+               
+           if(saveToDfs) {
+               // 分布式表
+               if(existsDatabase(dbPath)) {
+                   easyNsqLog(`subscribeNsqSnapshot, "find existing database "+ dbPath)
+               } else {
+                   dbDate = database("", VALUE, 2023.01.01..2023.12.01)
+                   dbSymbol = database("", HASH, [SYMBOL, 25])
+                   database(dbPath, COMPO, [dbDate, dbSymbol], , "TSDB")
+                   easyNsqLog(`subscribeNsqSnapshot, "create database "+ dbPath)
+               }
+               
+               for(i in 0:markets.size()) {
+                   if(existsTable(dbPath, tableNames[i])) {
+                       easyNsqLog(`subscribeNsqSnapshot, "find existing dfsTable ("+ dbPath + "," +  tableNames[i]+")")
+                   } else {
+                       createPartitionedTable(
+                           dbHandle=database(dbPath),
+                           table=table(1:0, snapshotSchema.name, snapshotSchema.type), 
+                           tableName=tableNames[i], 
+                           partitionColumns=`TradeDate`InstrumentID, 
+                           sortColumns=`InstrumentID`UpdateTime, 
+                           keepDuplicates=ALL
+                       )
+                       easyNsqLog(`subscribeNsqSnapshot, "create dfsTable ("+ dbPath + "," +  tableNames[i]+")")
+                   }
+                   
+                   // 流表入库的订阅
+                   subscribeTable(
+                       tableName=streamTableNames[i], 
+                       actionName="easyNSQ_saveToDfsTable", 
+                       offset=-1, 
+                       handler=loadTable(dbPath, tableNames[i]),
+                       msgAsTable=true, 
+                       batchSize=10000, 
+                       throttle=1, 
+                       reconnect = true
+                   )
+                   easyNsqLog(`subscribeNsqOrders, stringFormat("dfs table (%W,%W) is listening to stream table %W", dbPath, tableNames[i], streamTableNames[i]))
+               }
+           }
+           
+           for(i in 0:markets.size()) {    
+               // nsq订阅实时数据
+               nsq::subscribe(`snapshot, markets[i], objByName(streamTableNames[i], true))
+               easyNsqLog(`subscribeNsqOrders, "start to subscribe nsq " + markets[i] + " snapshot data")
+           }
+        }
+        
+    } catch(ex) {
+        easyNsqLog("subscribeNsqSnapshot",  string(ex[0]) + ":" + string(ex[1]), true)
+        return NULL
+    }
+    
+    if(saveToDfs) {
+        return streamTableNames, dbPath, tableNames
+    } else {
+        return streamTableNames
+    }
+}
+
+
+/* *
+*  @ Function name: iniNsqEnv
+*  @ Brief: clean out existing stream tables and their subscriptions
+*  @ Param: 
+*  streamTableNames: the name of stream tables to clean
+*  @ Sample usage: iniNsqEnv() to clean all the default stream tables, 
+*  iniNsqEnv(["msqNsqOrdersSHStream", "msqNsqOrdersSZStream"]) to clean stream table msqNsqOrdersSHStream and msqNsqOrdersSZStream
+*/
+def iniNsqEnv(streamTableNames=NULL) {
+    streamTBs = streamTableNames
+    if(isVoid(streamTBs)) {
+        streamTBs = ['nsqStockOrdersStream', 'nsqStockOrdersSHStream', 'nsqStockOrdersSZStream', 'nsqStockTradeStream',
+    'nsqStockTradeSHStream', 'nsqStockTradeSZStream', 'nsqStockSnapshotStream', 'nsqStockSnapshotSHStream', 'nsqStockSnapshotSZStream']
+    }
+    
+    try {
+        // cancel stream table's subscription
+        subRecords = select tableName, actions from getStreamingStat().pubTables where tableName in streamTBs
+        for(record in subRecords) {
+            tbName = record["tableName"]
+            actionList = record["actions"]
+            actionList = actionList.strReplace("[", "").strReplace("]", "").split(',')
+            
+            for(actName in actionList) {
+                try {
+                    unsubscribeTable(tableName=tbName, actionName=actName)
+                    easyNsqLog(`iniNsqEnv, "successfully unsubscribe (" + tbName + ", " + actName + ")")
+                    sleep(10)
+                }
+                catch(ex) {
+                    easyNsqLog(`iniNsqEnv, stringFormat("exception when unsubscribing (%W, %W): %W:%W", tbName, actName, string(ex[0]), string(ex[1])), true) 
+                }
+            }
+        }
+        
+        // drop stream table
+        existTables = exec name from objs(true) where form="TABLE" and type="REALTIME" and shared=true and name in streamTBs
+        for(tbName in existTables) {
+            try {
+                dropStreamTable(tbName)
+                easyNsqLog(`iniNsqEnv, "successfully drop stream table: " + tbName)
+            } catch (ex) {
+                easyNsqLog(`iniNsqEnv, stringFormat("exception when droping %W: %W:%W", tbName, string(ex[0]), string(ex[1])), true)
+            }
+        }
+        
+    } catch (ex) {
+        easyNsqLog(`iniNsqEnv, string(ex[0])+":"+string(ex[1]), true)
+    }
+}
+
+/* *
+*  @ Function name: iniNsqDfs
+*  @ Brief: clear out the existing dfs table
+*  @ Param: 
+*  dbName: the database name of dfs tables to clean
+*  tbNames: the name of dfs tables to clean
+*  @ Sample usage: iniNsqDfs() to clean all the default dfs tables, 
+*  iniNsqDfs("dfs://myNsqTrade", ["myNsqTradeSH", "myNsqTradeSZ"]) to clean dfs table (dfs://myNsqTrade,myNsqTradeSH) and ("dfs://myNsqTrade", "myNsqTradeSZ")
+*/
+def iniNsqDfs(dbName=NULL, tbNames=NULL) {
+    dropTableIfExists = def (x,y) { 
+        if(existsTable(x,y)) {
+            try {
+                dropTable(database(x), y)
+                easyNsqLog(`iniNsqDfs, stringFormat("successfully drop dfs table (%W,%W)", x, y))
+            } catch (ex) {
+                easyNsqLog(`iniNsqDfs, string(ex[0])+":"+string(ex[1]), true)
+            }
+        }
+    }
+    
+    try {
+        if(isVoid(dbName) && isVoid(tbNames)) {
+            loop(dropTableIfExists{"dfs://nsqStockOrders"}, `ordersSH`ordersSZ`orders)
+            loop(dropTableIfExists{"dfs://nsqStockTrade"}, `tradeSH`tradeSZ`trade)
+            loop(dropTableIfExists{"dfs://nsqStockSnapshot"}, `snapshotSH`snapshotSZ`snapshot)
+            
+        } else if(!isVoid(dbName) && !isVoid(tbNames)) {
+            loop(dropTableIfExists{dbName}, tbNames)
+        } else {
+            easyNsqLog(`iniNsqDfs, "invalid arguments, dbName and tbNames should be both null, or both non-null", true)
+        }
+    } catch (ex) {
+        easyNsqLog(`iniNsqDfs, string(ex[0])+":"+string(ex[1]), true)
+    }
+}
+
+/* *
+*  @ Function name: subscribeNsq
+*  @ Brief: subscribe nsq real-time data, store data to stream tables, or dfs tables
+*  @ Param: 
+*  configFilePath: the configuration file for nsq data server
+*  dataSource: the nsq data type of interest
+*  markets: the market of interest, default value is ["sz", "sh"]
+*  merge: whether sh and sz data are stored together
+*  saveToDfs: whether data is stored to dfs tables
+*  streamTableNames: the name of stream tables where the real-time nsq data is going to store 
+*  dbPath: the path of database where the real-time nsq data is going to store if saveToDfs option is on
+*  tableNames: the name of dfs tables where the real-time nsq data is going to store if saveToDfs option is on 
+*  @ Return: NULL if there is any exception,
+*  return streamTableNames if saveToDfs=false,
+*  return streamTableNames, dbPath, tableNames if saveToDfs=true
+*  @ Sample usage: subscribeNsq(configFilePath, 'orders', "sh")
+*/
+def subscribeNsq(configFilePath, dataSource, markets=["sz", "sh"], merge=false, saveToDfs=false, streamTableNames=NULL, dbPath=NULL, tableNames=NULL) {
+	ds = validateDataSourceParam(dataSource)
+	if(isVoid(ds)) return NULL
+	
+	marketList = validateMarketsParam(markets)
+	if(isVoid(marketList)) return NULL
+
+	streamTbNameList = validateStreamTableNamesParam(ds, marketList, merge, streamTableNames)
+	if(isVoid(streamTbNameList)) return NULL
+    
+    dbName = validateDbPathParam(ds, dbPath)
+    if(isVoid(dbName)) return NULL
+    
+    tbNameList = validateTableNamesParam(ds, marketList, merge, tableNames)
+    if(isVoid(tbNameList)) return NULL
+    
+    try{ nsq::connect(configFilePath) } catch (ex) { easyNsqLog("nsq::connect", string(ex[0])+":"+string(ex[1])) }
+    
+    if(ds == `orders) {
+        return subscribeNsqOrders(marketList, merge, saveToDfs, streamTbNameList, dbName, tbNameList)
+    } else if(ds == `trade) {
+        return subscribeNsqTrade(marketList, merge, saveToDfs, streamTbNameList, dbName, tbNameList)
+    } else if(ds == `snapshot) {
+        return subscribeNsqSnapshot(marketList, merge, saveToDfs, streamTbNameList, dbName, tbNameList)
+    }
+}
+
+/* *
+*  @ Function name: closeNsqConnection
+*  @ Brief: close the connection to nsq data server
+*  @ Return: true if close connection successfully, otherwise return false
+*  @ Sample usage: closeNsqConnection()
+*/
+def closeNsqConnection() {
+    try {
+        nsq::close()
+        
+    } catch (ex) {
+        easyNsqLog(`closeNsqConnection, string(ex[0])+":"+string(ex[1]), true)
+        return false
+    }
+    return true
+}
