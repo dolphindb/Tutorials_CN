@@ -121,7 +121,7 @@ grant("group2",TABLE_WRITE,"dfs://db1/t2")
 DolphinDB 提供以下权限类别:
 
 1. TABLE_READ：读取表中数据
-2. TABLE_WRITE：向表中写入数据
+2. TABLE_WRITE：写入/删除/修改表数据
 3. TABLE_INSERT：向表中追加数据
 4. TABLE_UPDATE：更新表中数据
 5. TABLE_DELETE：删除表中数据
@@ -133,12 +133,12 @@ DolphinDB 提供以下权限类别:
 11. DB_UPDATE：更新数据库中所有表
 12. DB_DELETE：删除数据库中所有表
 13. VIEW_EXEC：执行视图 
-14. DB_MANAGE：删除数据库。可删除任何人所建数据库，包括具有 DB_OWNER 权限之用户所建数据库
-15. DB_OWNER：创建数据库并管理其创建的数据库，包括删除数据库、创建或删除数据表、增加或删除分区、可赋予、禁止或取消其他用户对自己创建的数据库的以下权限：TABLE_READ, TABLE_WRITE, DBOBJ_CREATE, DBOBJ_DELETE
-16. SCRIPT_EXEC：运行脚本文件 
-17. TEST_EXEC：执行测试脚本
-18. QUERY_RESULT_MEM_LIMIT：限制用户的查询内存大小
-19. TASK_GROUP_MEM_LIMIT：限制用户发送的批量子查询占用的内存大小
+14. DB_MANAGE：赋予任意或指定数据库的管理权限，包括删除数据库、创建/删除/重命名数据表、增加/删除分区、增加/删除/重命名/替换列
+1.  DB_OWNER：创建数据库并管理其创建的数据库，包括删除其创建的数据库；在其创建的数据库下创建或删除数据表、增加或删除分区、增加/删除表的列、更改表名；赋予、禁止或取消其他用户对自己创建的数据库的以下权限：TABLE_READ, TABLE_WRITE, DBOBJ_CREATE, DBOBJ_DELETE
+2.  SCRIPT_EXEC：运行脚本文件 
+3.  TEST_EXEC：执行测试脚本
+4.  QUERY_RESULT_MEM_LIMIT：限制用户的查询内存大小
+5.  TASK_GROUP_MEM_LIMIT：限制用户发送的批量子查询占用的内存大小
 
 
 请注意，以上权限类别均适用于分布式（DFS）数据库和表；TABLE_READ 和 TABLE_WRITE 权限亦适用于共享内存表、流数据表与流数据引擎。
