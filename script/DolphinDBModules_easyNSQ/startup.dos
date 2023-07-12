@@ -19,6 +19,3 @@ go
 subscribeNsq(configFilePath, "orders", ["sh","sz"], saveToDfs=true)
 subscribeNsq(configFilePath, "trade", ["sh","sz"], saveToDfs=true)
 subscribeNsq(configFilePath, "snapshot", ["sh","sz"], saveToDfs=true)
-subscribeNsq(configFilePath, "orders", ["sh","sz"], merge=true, saveToDfs=true)
-subscribeNsq(configFilePath, "trade", ["sh","sz"], merge=true, saveToDfs=true)
-subscribeNsq(configFilePath, "snapshot", ["sh","sz"], merge=true, saveToDfs=true)

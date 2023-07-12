@@ -9,14 +9,15 @@
 **注意**：DolphinDB 仅提供对接 HSNsqApi 的 NSQ 插件，数据源和接入服务可咨询数据服务商或证券公司。
 
 NSQ 插件目前支持版本：[release200](https://gitee.com/dolphindb/DolphinDBPlugin/tree/release200/nsq), [release130](https://gitee.com/dolphindb/DolphinDBPlugin/tree/release130/nsq)。本模块基于 DolphinDB 2.00.9.4 开发，请使用 2.00.9.4 及以上版本的 DolphinDB。
+
 - [1. 安装说明](#1-安装说明)
   - [1.1 安装 NSQ 插件](#11-安装-nsq-插件)
   - [1.2 安装 easyNSQ 模块](#12-安装-easynsq-模块)
+  - [1.3 使用示例](#13-使用示例)
 - [2. 实时行情数据存储说明](#2-实时行情数据存储说明)
-  - [2.1 行情数据表结构](#21-行情数据表结构)
-  - [2.2 接收行情数据到流数据表](#22-接收行情数据到流数据表)
-  - [2.3 接收行情数据到流数据表，并持久化到分区表](#23-接收行情数据到流数据表并持久化到分区表)
-  - [2.4 合并存储上海和深圳市场行情数据](#24-合并存储上海和深圳市场行情数据)
+  - [2.1 接收行情数据到流数据表](#21-接收行情数据到流数据表)
+  - [2.2 接收行情数据到流数据表，并持久化到分区表](#22-接收行情数据到流数据表并持久化到分区表)
+  - [2.3 合并存储上海和深圳市场行情数据](#23-合并存储上海和深圳市场行情数据)
 - [3.  easyNSQ 模块接口介绍](#3--easynsq-模块接口介绍)
   - [easyNSQ::subscribeNsq(configFilePath, dataSource, \[markets\], \[merge\], \[saveToDfs\], \[streamTableNames\], \[dbPath\], \[tableNames\])](#easynsqsubscribensqconfigfilepath-datasource-markets-merge-savetodfs-streamtablenames-dbpath-tablenames)
   - [easyNSQ::closeNsqConnection()](#easynsqclosensqconnection)
@@ -25,22 +26,28 @@ NSQ 插件目前支持版本：[release200](https://gitee.com/dolphindb/DolphinD
 - [4. easyNSQ 模块使用示例](#4-easynsq-模块使用示例)
   - [例1. 接收深圳市场 snapshot 实时行情数据](#例1-接收深圳市场-snapshot-实时行情数据)
   - [例2. 接收上海市场所有类型实时行情数据，并持久化存储](#例2-接收上海市场所有类型实时行情数据并持久化存储)
-  - [例3. 停止例2中的订阅后，重新接收上海市场 orders 数据](#例3-停止例2中的订阅后重新接收上海市场-orders-数据)
+  - [例3. 停止所有订阅后，重新接收上海市场 orders 数据](#例3-停止所有订阅后重新接收上海市场-orders-数据)
   - [例4. 接收上海和深圳市场所有类型的实时行情数据，并持久化存储](#例4-接收上海和深圳市场所有类型的实时行情数据并持久化存储)
 - [5. 设置节点启动时自动订阅 NSQ 行情数据](#5-设置节点启动时自动订阅-nsq-行情数据)
+- [6. 行情数据表结构](#6-行情数据表结构)
+  - [逐笔委托（orders）](#逐笔委托orders)
+  - [逐笔成交（trade）](#逐笔成交trade)
+  - [L2 快照（snapshot）](#l2-快照snapshot)
 - [附件](#附件)
+
+
 
 
 ## 1. 安装说明
 
 使用 DolphinDBModules::easyNSQ 模块前，请确保在 DolphinDB 服务器上正确安装和加载了 NSQ 插件和 DolphinDBModules::easyNSQ 模块文件。
 
-对于之前从未使用过DolphinDB插件和模块功能的读者，推荐在阅读以下章节的同时阅读 [NSQ 插件官方文档](https://gitee.com/dolphindb/DolphinDBPlugin/tree/release200.9/nsq/bin/linux)以及 [DolphinDB 模块教程](https://gitee.com/dolphindb/Tutorials_CN/blob/master/module_tutorial.md#2-定义模块)。  
-**注意**：easyNSQ 模块依赖于 NSQ 插件，请确保先加载 NSQ 插件，再加载 easyNSQ 模块。
+**注意**：对于之前从未使用过 DolphinDB 插件和模块功能的读者，推荐在阅读以下章节的同时阅读 [NSQ 插件官方文档](https://gitee.com/dolphindb/DolphinDBPlugin/tree/release200.9/nsq)以及 [DolphinDB 模块教程](https://gitee.com/dolphindb/Tutorials_CN/blob/master/module_tutorial.md#2-定义模块)。  
+easyNSQ 模块依赖于 NSQ 插件，请确保先加载 NSQ 插件，再加载 easyNSQ 模块。
 
 ### 1.1 安装 NSQ 插件
 
-用户可以根据正在使用 DolphinDB server 版本和操作系统，从 github 或 gitee 上的 DolphinDB 官方代码仓库 下载已经编译好的 NSQ 插件，例如 64位 Linux 操作系统上与 DolphinDB 2.00.9.4适配的 NSQ 插件可以从 [release 200.9分支](https://gitee.com/dolphindb/DolphinDBPlugin/tree/release200.9/nsq/bin/linux)下载。如果有手动编译插件的需求，可以参考 [NSQ 插件官方文档](https://gitee.com/dolphindb/DolphinDBPlugin/tree/release200.9/nsq/bin/linux)的说明。
+用户可以根据正在使用 DolphinDB server 版本和操作系统，从 github 或 gitee 上的 DolphinDB 官方代码仓库 下载已经编译好的 NSQ 插件，例如 64位 Linux 操作系统上与 DolphinDB 2.00.9.4适配的 NSQ 插件可以从 [release 200.9分支](https://gitee.com/dolphindb/DolphinDBPlugin/tree/release200.9/nsq/bin/linux)下载。如果有手动编译插件的需求，可以参考 [NSQ 插件官方文档](https://gitee.com/dolphindb/DolphinDBPlugin/tree/release200.9/nsq)的说明。
 
 安装插件需要重启 DolphinDB。以 Linux 单节点为例，将编译好的 NSQ 插件安装到路径 */DolphinDB/server/plugins/nsq/*。
 
@@ -110,72 +117,122 @@ use DolphinDBModules::easyNSQ
 
 如果没有返回错误信息，则说明 easyNSQ 模块已经成功加载。
 
+安装插件时常见的错误信息如下：
+
+1. 插件与 DolphinDB server 版本不匹配，需要改用适配 server 版本的插件：`The first line must be the module name, dynamic library file name and version, separated by comma` 或 `Failed to loadPlugin file [...] for the plugin version [...] is not same to the server version [...]`
+2. 没有将 NSQ 插件的路径添加到 Linux 环境变量，需要添加环境变量再重启 DolphinDB server ：`Couldn't load the dynamic library [.../libPluginNsq.so]: libHSNsqApi.so: cannot open shared object file: No such file or directory [...]` 
+
+如果遇到其他问题，可以在社区中交流或者联系 DolphinDB 的技术支持工程师。
+
+### 1.3 使用示例
+
+- **第一步**：用户准备好 nsq 行情数据服务器配置文件 *sdk_config.ini*，以及编译好的 NSQ 插件。上传到 DolphinDB server 所在的服务器上。下图中，配置文件和 NSQ 插件都放置在 *server/plugins/nsq/* 路径。
+
+<img src="./images/DolphinDBModules_easyNSQ/1_1.png" width=50%>
+
+- **第二步**：将模块文件 *easyNSQ.dos* 上传到 DolphinDB server 所在的服务器上，放在 *server/modules/DolphinDBModules/* 路径下（如果 *modules* 目录下 *DolphinDBModules* 文件夹不存在，需要手动创建 *DolphinDBModules* 文件夹）
+
+<img src="./images/DolphinDBModules_easyNSQ/1_2.png" width=60%>
+
+- **第三步**：将 NSQ 插件的路径添加到 Linux 环境变量，然后启动 DolphinDB server。
+
+<img src="./images/DolphinDBModules_easyNSQ/1_3.png" width=75%>
+
+- **第四步**：打开浏览器，在地址栏输入 DolphinDB server 的 ip 地址与端口，连接到该节点的 web 编辑页面。点击右上角的用户按钮进行登录。
+
+<img src="./images/DolphinDBModules_easyNSQ/1_4.png" width=60%>
+
+- **第五步**：在编辑器页面，执行以下脚本订阅行情数据和落库存储：
+
+```
+// 文件地址变量
+pluginPath = "/home/appadmin/mqzhu/jit_server/server/plugins/nsq/PluginNsq.txt"
+configFilePath = "/home/appadmin/mqzhu/jit_server/server/plugins/nsq/sdk_config.ini"
+
+// 加载插件
+try{ loadPlugin(pluginPath) } catch(ex) { print(ex) }
+go
+
+// 加载模块
+use DolphinDBModules::easyNSQ
+go
+
+// 初始化环境
+iniNsqEnv()
+iniNsqDfs()
+go
+
+// 拉起订阅
+subscribeNsq(configFilePath, "orders", ["sh","sz"], saveToDfs=true, merge=true)
+subscribeNsq(configFilePath, "trade", ["sh","sz"], saveToDfs=true, merge=true)
+subscribeNsq(configFilePath, "snapshot", ["sh","sz"], saveToDfs=true, merge=true)
+```
+
+- **第六步**：查询订阅状态
+
+使用插件函数 `nsq::getSubscriptionStatus()` 可以获取NSQ行情的订阅状态。
+
+```
+nsq::getSubscriptionStatus()
+```
+
+<img src="./images/DolphinDBModules_easyNSQ/1_5.png" width=60%>
+
+- **第七步**：查询流数据表。
+
+（1）逐笔委托
+
+```
+select * from nsqStockOrdersStream limit 10
+```
+
+<img src="./images/DolphinDBModules_easyNSQ/1_6.png" width=75%>
+
+（2）逐笔成交
+
+```
+select * from nsqStockTradeStream limit 10
+```
+
+<img src="./images/DolphinDBModules_easyNSQ/1_7.png" width=75%>
+
+（3）L2 快照
+
+```
+select * from nsqStockSnapshotStream limit 10
+```
+
+<img src="./images/DolphinDBModules_easyNSQ/1_8.png" width=75%>
+
+- **第八步**：查询分区表
+
+（1）逐笔委托
+
+```
+select * from loadTable("dfs://nsqStockOrders", "orders") limit 10
+```
+
+<img src="./images/DolphinDBModules_easyNSQ/1_9.png" width=75%>
+
+（2）逐笔成交
+
+```
+select * from loadTable("dfs://nsqStockTrade", "trade") limit 10
+```
+
+<img src="./images/DolphinDBModules_easyNSQ/1_10.png" width=75%>
+
+（3）L2 快照
+
+```
+select * from loadTable("dfs://nsqStockSnapshot", "snapshot") limit 10
+```
+
+<img src="./images/DolphinDBModules_easyNSQ/1_11.png" width=80%>
+
 ## 2. 实时行情数据存储说明
 
-### 2.1 行情数据表结构
-
-目前 NSQ 插件对上海和深圳市场的行情数据表结构做了统一处理，具体表结构如下：
-
-#### 逐笔委托（orders）
-
-| **name**     | **type** |
-| :----------- | :------- |
-| ExchangeID   | SYMBOL   |
-| InstrumentID | SYMBOL   |
-| TransFlag    | INT      |
-| SeqNo        | LONG     |
-| ChannelNo    | INT      |
-| TradeDate    | DATE     |
-| TransactTime | TIME     |
-| OrdPrice     | DOUBLE   |
-| OrdVolume    | LONG     |
-| OrdSide      | CHAR     |
-| OrdType      | CHAR     |
-| OrdNo        | LONG     |
-| BizIndex     | LONG     |
-
-#### 逐笔成交（trade）
-
-| **name**     | **type** |
-| :----------- | :------- |
-| ExchangeID   | SYMBOL   |
-| InstrumentID | SYMBOL   |
-| TransFlag    | INT      |
-| SeqNo        | LONG     |
-| ChannelNo    | INT      |
-| TradeDate    | DATE     |
-| TransactTime | TIME     |
-| TrdPrice     | DOUBLE   |
-| TrdVolume    | LONG     |
-| TrdMoney     | DOUBLE   |
-| TrdBuyNo     | LONG     |
-| TrdSellNo    | LONG     |
-| TrdBSFlag    | CHAR     |
-| BizIndex     | LONG     |
-
-#### L2快照（snapshot）
-
-| **name**        | **type** | **name**              | **type** | **name**               | **type** |
-| :-------------- | :------- | :-------------------- | :------- | :--------------------- | :------- |
-| ExchangeID      | SYMBOL   | BidVolume0-9          | LONG     | EtfSellBalance         | DOUBLE   |
-| InstrumentID    | SYMBOL   | AskVolume0-9          | LONG     | TotalWarrantExecVolume | LONG     |
-| LastPrice       | DOUBLE   | TradesNum             | LONG     | WarrantLowerPrice      | DOUBLE   |
-| PreClosePrice   | DOUBLE   | InstrumentTradeStatus | CHAR     | WarrantUpperPrice      | DOUBLE   |
-| OpenPrice       | DOUBLE   | TotalBidVolume        | LONG     | CancelBuyNum           | INT      |
-| HighPrice       | DOUBLE   | TotalAskVolume        | LONG     | CancelSellNum          | INT      |
-| LowPrice        | DOUBLE   | MaBidPrice            | DOUBLE   | CancelBuyVolume        | LONG     |
-| ClosePrice      | DOUBLE   | MaAskPrice            | DOUBLE   | CancelSellVolume       | LONG     |
-| UpperLimitPrice | DOUBLE   | MaBondBidPrice        | DOUBLE   | CancelBuyValue         | DOUBLE   |
-| LowerLimitPrice | DOUBLE   | MaBondAskPrice        | DOUBLE   | CancelSellValue        | DOUBLE   |
-| TradeDate       | DATE     | YieldToMaturity       | DOUBLE   | TotalBuyNum            | INT      |
-| UpdateTime      | TIME     | IOPV                  | DOUBLE   | TotalSellNum           | INT      |
-| TradeVolume     | LONG     | EtfBuycount           | INT      | DurationAfterBuy       | INT      |
-| TradeBalance    | DOUBLE   | EtfSellCount          | INT      | DurationAfterSell      | INT      |
-| AveragePrice    | DOUBLE   | EtfBuyVolume          | LONG     | BidOrdersNum           | INT      |
-| BidPrice0-9     | DOUBLE   | EtfBuyBalance         | DOUBLE   | AskOrdersNum           | INT      |
-| AskPrice0-9     | DOUBLE   | EtfSellVolume         | LONG     | PreIOPV                | DOUBLE   |
-
-### 2.2 接收行情数据到流数据表
+### 2.1 接收行情数据到流数据表
 
 <img src="./images/DolphinDBModules_easyNSQ/2_1.png" width=75%>
 
@@ -193,7 +250,7 @@ use DolphinDBModules::easyNSQ
 
 其次，流数据表持久化到磁盘上的数据并没有进行结构化的存储，查询和更新的效率比不上在分区表中存储的数据，不适合用于实际生产环境。
 
-如果用户有将行情数据在磁盘上进行持久化存储的需求，请阅读本篇文档[2.3](#23-接收行情数据到流数据表并持久化到分区表)及[2.4](#24-合并存储上海和深圳市场行情数据)小节的方案说明。
+如果用户有将行情数据在磁盘上进行持久化存储的需求，请阅读本篇文档[2.2](#22-接收行情数据到流数据表并持久化到分区表)及[2.3](#23-合并存储上海和深圳市场行情数据)小节的方案说明。
 
 
 
@@ -217,11 +274,11 @@ use DolphinDBModules::easyNSQ
 | retentionMinutes | 1440       |
 | flushMode        | 0          |
 
-### 2.3 接收行情数据到流数据表，并持久化到分区表
+### 2.2 接收行情数据到流数据表，并持久化到分区表
 
 <img src="./images/DolphinDBModules_easyNSQ/2_2.png" width=75%>
 
-easyNSQ模块还支持将实时行情数据写入分区表进行持久化的存储。在此种订阅模式下，用户指定希望接收的行情数据源（逐笔委托、逐笔成交或L2快照），easyNSQ 模块会通过 NSQ 插件订阅交易所数据，将上海和深圳市场的实时行情数据分别写入持久化共享流表，然后通过 DolphinDB 内置的订阅-发布功能，将流表的增量数据实时写入分区表。
+easyNSQ 模块还支持将实时行情数据写入分区表进行持久化的存储。在此种订阅模式下，用户指定希望接收的行情数据源（逐笔委托、逐笔成交或 L2 快照），easyNSQ 模块会通过 NSQ 插件订阅交易所数据，将上海和深圳市场的实时行情数据分别写入持久化共享流表，然后通过 DolphinDB 内置的订阅-发布功能，将流表的增量数据实时写入分区表。
 
 用户可以指定用于存储行情数据的数据库和分区表的名字。在用户没有指定数据库和分区表名字的情况下，模块会使用默认名字的数据库和分区表：
 
@@ -242,13 +299,13 @@ easyNSQ模块还支持将实时行情数据写入分区表进行持久化的存�
 
 基于过往项目的实践，对分区表确定了如下的分区方案：
 
-| **行情数据类型**   | **分区方案**                                           | **分区列**               | **排序列**                  |
-| :----------------- | :----------------------------------------------------- | :----------------------- | :-------------------------- |
-| 逐笔委托（orders） | 组合分区：时间维度按天分区 + 证券代码维度 HASH 25 分区 | TradeDate + InstrumentID | InstrumentID + TransactTime |
-| 逐笔成交（trade）  | 组合分区：时间维度按天分区 + 证券代码维度 HASH 25 分区 | TradeDate + InstrumentID | InstrumentID + TransactTime |
-| L2快照（snapshot） | 组合分区：时间维度按天分区 + 证券代码维度 HASH 25 分区 | TradeDate + InstrumentID | InstrumentID + UpdateTime   |
+| **行情数据类型**    | **分区方案**                                           | **分区列**               | **排序列**                  |
+| :------------------ | :----------------------------------------------------- | :----------------------- | :-------------------------- |
+| 逐笔委托（orders）  | 组合分区：时间维度按天分区 + 证券代码维度 HASH 25 分区 | TradeDate + InstrumentID | InstrumentID + TransactTime |
+| 逐笔成交（trade）   | 组合分区：时间维度按天分区 + 证券代码维度 HASH 25 分区 | TradeDate + InstrumentID | InstrumentID + TransactTime |
+| L2 快照（snapshot） | 组合分区：时间维度按天分区 + 证券代码维度 HASH 25 分区 | TradeDate + InstrumentID | InstrumentID + UpdateTime   |
 
-### 2.4 合并存储上海和深圳市场行情数据
+### 2.3 合并存储上海和深圳市场行情数据
 
 <img src="./images/DolphinDBModules_easyNSQ/2_3.png" width=55%>
 
@@ -260,11 +317,11 @@ easyNSQ 模块支持将上海和深圳市场的实时行情数据进行合并处
 
 对于沪深行情数据合并存储，持久化共享流表的参数配置方案同沪深行情分开存储的参数配置方案。而分区表的分区方案如下：
 
-| **行情数据类型**   | **分区方案**                                           | **分区列**               | **排序列**                  |
-| :----------------- | :----------------------------------------------------- | :----------------------- | :-------------------------- |
-| 逐笔委托（orders） | 组合分区：时间维度按天分区 + 证券代码维度 HASH 50 分区 | TradeDate + InstrumentID | InstrumentID + TransactTime |
-| 逐笔成交（trade）  | 组合分区：时间维度按天分区 + 证券代码维度 HASH 50 分区 | TradeDate + InstrumentID | InstrumentID + TransactTime |
-| L2快照（snapshot） | 组合分区：时间维度按天分区 + 证券代码维度 HASH 50 分区 | TradeDate + InstrumentID | InstrumentID + UpdateTime   |
+| **行情数据类型**    | **分区方案**                                           | **分区列**               | **排序列**                  |
+| :------------------ | :----------------------------------------------------- | :----------------------- | :-------------------------- |
+| 逐笔委托（orders）  | 组合分区：时间维度按天分区 + 证券代码维度 HASH 50 分区 | TradeDate + InstrumentID | InstrumentID + TransactTime |
+| 逐笔成交（trade）   | 组合分区：时间维度按天分区 + 证券代码维度 HASH 50 分区 | TradeDate + InstrumentID | InstrumentID + TransactTime |
+| L2 快照（snapshot） | 组合分区：时间维度按天分区 + 证券代码维度 HASH 50 分区 | TradeDate + InstrumentID | InstrumentID + UpdateTime   |
 
 ## 3.  easyNSQ 模块接口介绍
 
@@ -574,7 +631,7 @@ startup=/DolphinDB/server/startup.dos
 
 然后在 */DolphinDB/server/* 路径下创建 *startup.dos* 脚本文件即可完成配置。之后每次节点启动时，都会自动执行 */DolphinDB/server/startup.dos* 脚本文件中的代码。
 
-假设用户希望接收上海和深证两个市场的 NSQ 行情数据、持久化存储，并对行情数据分别做沪深合并和沪深分开两种处理。用户的 *startup.dos* 应当如下：
+假设用户希望接收上海和深证两个市场的 NSQ 行情数据、持久化存储，并对沪深行情数据做分开存储。用户的 *startup.dos* 应当如下：
 
 ```
 // 登录数据库
@@ -599,11 +656,73 @@ go
 subscribeNsq(configFilePath, "orders", ["sh","sz"], saveToDfs=true)
 subscribeNsq(configFilePath, "trade", ["sh","sz"], saveToDfs=true)
 subscribeNsq(configFilePath, "snapshot", ["sh","sz"], saveToDfs=true)
-subscribeNsq(configFilePath, "orders", ["sh","sz"], merge=true, saveToDfs=true)
-subscribeNsq(configFilePath, "trade", ["sh","sz"], merge=true, saveToDfs=true)
-subscribeNsq(configFilePath, "snapshot", ["sh","sz"], merge=true, saveToDfs=true)
+
+
 
 ```
+
+## 6. 行情数据表结构
+
+目前 NSQ 插件对上海和深圳市场的行情数据表结构做了统一处理，具体表结构如下：
+
+### 逐笔委托（orders）
+
+| **name**     | **type** |
+| :----------- | :------- |
+| ExchangeID   | SYMBOL   |
+| InstrumentID | SYMBOL   |
+| TransFlag    | INT      |
+| SeqNo        | LONG     |
+| ChannelNo    | INT      |
+| TradeDate    | DATE     |
+| TransactTime | TIME     |
+| OrdPrice     | DOUBLE   |
+| OrdVolume    | LONG     |
+| OrdSide      | CHAR     |
+| OrdType      | CHAR     |
+| OrdNo        | LONG     |
+| BizIndex     | LONG     |
+
+### 逐笔成交（trade）
+
+| **name**     | **type** |
+| :----------- | :------- |
+| ExchangeID   | SYMBOL   |
+| InstrumentID | SYMBOL   |
+| TransFlag    | INT      |
+| SeqNo        | LONG     |
+| ChannelNo    | INT      |
+| TradeDate    | DATE     |
+| TransactTime | TIME     |
+| TrdPrice     | DOUBLE   |
+| TrdVolume    | LONG     |
+| TrdMoney     | DOUBLE   |
+| TrdBuyNo     | LONG     |
+| TrdSellNo    | LONG     |
+| TrdBSFlag    | CHAR     |
+| BizIndex     | LONG     |
+
+### L2 快照（snapshot）
+
+| **name**        | **type** | **name**              | **type** | **name**               | **type** |
+| :-------------- | :------- | :-------------------- | :------- | :--------------------- | :------- |
+| ExchangeID      | SYMBOL   | BidVolume0-9          | LONG     | EtfSellBalance         | DOUBLE   |
+| InstrumentID    | SYMBOL   | AskVolume0-9          | LONG     | TotalWarrantExecVolume | LONG     |
+| LastPrice       | DOUBLE   | TradesNum             | LONG     | WarrantLowerPrice      | DOUBLE   |
+| PreClosePrice   | DOUBLE   | InstrumentTradeStatus | CHAR     | WarrantUpperPrice      | DOUBLE   |
+| OpenPrice       | DOUBLE   | TotalBidVolume        | LONG     | CancelBuyNum           | INT      |
+| HighPrice       | DOUBLE   | TotalAskVolume        | LONG     | CancelSellNum          | INT      |
+| LowPrice        | DOUBLE   | MaBidPrice            | DOUBLE   | CancelBuyVolume        | LONG     |
+| ClosePrice      | DOUBLE   | MaAskPrice            | DOUBLE   | CancelSellVolume       | LONG     |
+| UpperLimitPrice | DOUBLE   | MaBondBidPrice        | DOUBLE   | CancelBuyValue         | DOUBLE   |
+| LowerLimitPrice | DOUBLE   | MaBondAskPrice        | DOUBLE   | CancelSellValue        | DOUBLE   |
+| TradeDate       | DATE     | YieldToMaturity       | DOUBLE   | TotalBuyNum            | INT      |
+| UpdateTime      | TIME     | IOPV                  | DOUBLE   | TotalSellNum           | INT      |
+| TradeVolume     | LONG     | EtfBuycount           | INT      | DurationAfterBuy       | INT      |
+| TradeBalance    | DOUBLE   | EtfSellCount          | INT      | DurationAfterSell      | INT      |
+| AveragePrice    | DOUBLE   | EtfBuyVolume          | LONG     | BidOrdersNum           | INT      |
+| BidPrice0-9     | DOUBLE   | EtfBuyBalance         | DOUBLE   | AskOrdersNum           | INT      |
+| AskPrice0-9     | DOUBLE   | EtfSellVolume         | LONG     | PreIOPV                | DOUBLE   |
 
 ## 附件
 
