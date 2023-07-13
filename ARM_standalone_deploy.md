@@ -41,20 +41,20 @@
 
 ### 第一步：下载
 
-- 官方下载地址：[http://www.dolphindb.cn/downloads.html](http://www.dolphindb.cn/downloads.html)
-- 通过 Shell 指令下载，以下载 2.00.9.1 版本为例：
+- 官方下载地址：http://www.dolphindb.cn/downloads.html
+- 也可以通过 Shell 指令下载：
+
+ ```sh
+ wget https://www.dolphindb.cn/downARM64-Current.php -O dolphindb.zip
+ ```
+
+- 执行以下 Shell 指令解压安装包至指定路径(`/path/to/directory`)：
 
 ```sh
-wget "https://www.dolphindb.cn/downloads/DolphinDB_ARM64_V2.00.9.1.zip"
+unzip dolphindb.zip -d </path/to/directory>
 ```
 
-执行以下 Shell 指令解压安装包到指定目录，以解压 2.00.9.1 版本安装包到 */DolphinDB* 目录为例：
-
-```sh
-unzip DolphinDB_ARM64_V2.00.9.1.zip -d /DolphinDB
-```
-
-> ❗️ 安装路径的目录名中不能含有空格字符或中文字符，否则启动数据节点时会失败。
+> **注意**：安装路径的目录名中不能含有空格字符或中文字符，否则启动数据节点时会失败。
 
 ### 第二步：更新软件授权许可
 

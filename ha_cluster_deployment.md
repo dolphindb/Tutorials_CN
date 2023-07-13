@@ -64,17 +64,17 @@ P3：10.0.0.82
 
 在每台服务器上下载 DolphinDB 安装包并解压。
 
-- 官方下载地址：[http://www.dolphindb.cn/downloads.html](https://gitee.com/link?target=http%3A%2F%2Fwww.dolphindb.cn%2Fdownloads.html)
-- 通过 Shell 指令下载，以下载 2.00.9.1 版本为例：
+- 官方下载地址：http://www.dolphindb.cn/downloads.html
+- 也可以通过 Shell 指令下载：
 
-```
-wget "https://www.dolphindb.cn/downloads/DolphinDB_Linux64_V2.00.9.1.zip"
-```
+ ```sh
+ wget https://www.dolphindb.cn/downLinux64-Current.php -O dolphindb.zip
+ ```
 
-执行以下 Shell 指令解压安装包到指定目录，以解压 2.00.9.1 版本安装包到 */DolphinDB* 目录为例：
+- 执行以下 Shell 指令解压安装包至指定路径(`/path/to/directory`)：
 
-```
-unzip DolphinDB_Linux64_V2.00.9.1.zip -d /DolphinDB
+```sh
+unzip dolphindb.zip -d </path/to/directory>
 ```
 
 > 注意：安装路径的目录名中不能含有空格字符或中文字符，否则启动数据节点时会失败。
