@@ -1,156 +1,326 @@
-# DolphinDB VSCode 用户手册
+# DolphinDB VSCode Extension
 
-本教程目录如下：
+VSCode 是微软开发的一款轻量、高性能又有极强扩展性的代码编辑器。它提供了强大的插件框架，开发者可以通过编写插件拓展 VSCode 编辑器的功能，甚至支持新的编程语言。
 
-- [DolphinDB VSCode 用户手册](#dolphindb-vscode-用户手册)
-  - [安装和使用](#安装和使用)
-    - [下载安装](#下载安装)
-    - [编辑服务器连接配置](#编辑服务器连接配置)
-    - [新建脚本文件](#新建脚本文件)
-      - [函数的自动补齐和文档实时浏览](#函数的自动补齐和文档实时浏览)
-    - [执行代码](#执行代码)
-      - [在线浏览数据和生成的对象](#在线浏览数据和生成的对象)
-    - [VSCode 视窗](#vscode-视窗)
+DolphinDB 公司开发了这个针对 DolphinDB 数据库的 VSCode 插件，在 VSCode 中增加了对自研的 DolphinDB 脚本语言的支持，让用户可以编写并执行脚本来操作数据库，或查看数据库中的数据。
 
-VSCode 是微软开发的一款轻量、高性能又有极强扩展性的代码编辑器。它提供了强大的插件框架，允许用户安装插件来支持新的编程语言。DolphinDB 公司开发了支持 DolphinDB 数据库编程语言的 VSCode 插件。
 
-安装 DolphinDB VSCode 插件后，就可以通过 VSCode 以 DolphinDB 语言编写脚本并在 DolphinDB 服务器上运行。
+## 功能
 
-DolphinDB VSCode 插件允许用户：
+- 代码高亮
+- 关键字、常量、内置函数的代码补全
+- 内置函数的文档提示、参数提示
+- 终端可以展示代码执行结果以及 print 函数输出的消息
+- 在底栏中展示执行状态，点击后可取消作业
+- 在底部面板中以表格的形式展示表格、向量、矩阵等数据结构
+- 在侧边面板中管理多个数据库连接，展示会话变量
+- 在浏览器弹窗中显示表格
 
-- 通过修改配置文件与 DolphinDB 服务器进行连接。
-- 支持不断连的切换连接。
-- 创建项目，编辑和管理脚本。
-- 显示代码高亮，支持关键字、常量、内置函数的代码补全。
-- 内置函数参数提示、实时查看函数功能及用法。
-- 执行脚本，并在终端中展示 print 消息以及执行结果。
-- 管理数据库。可在线观察会话变量。
-- 通过浏览器在线浏览数据表/向量/矩阵等数据结构，支持数据更新后的刷新显示。
-- 在底部面板中以表格的形式展示表格、向量、矩阵等数据结构。
-- 在底部面板中展示 plot 绘图
+<img src='./images/vscodeext/demo.png' width='1200'>
 
-在使用 DolphinDB VSCode 插件之前，需要启动 DolphinDB 服务器。
+## 使用方法
 
-## 安装和使用
+### 安装
 
-下载 DolphinDB 插件前，需要安装或升级 VSCode 到v1.68.0及以上版本  ( https://code.visualstudio.com/ )。
+1. 前往[下载页面](https://code.visualstudio.com)安装或升级 VSCode 到最新版 (v1.68.0 以上)
+2. 在 VSCode 插件面板中搜索 dolphindb, 点击 Install安装插件。如因网络原因安装遇阻，可以前往[下载链接](https://marketplace.visualstudio.com/items?itemName=dolphindb.dolphindb-vscode)手动下载后缀为 `.vsix` 的插件，下载后拖到 VSCode 插件面板中。
+3. 点击 Version History 下载最新的版本到本地。安装插件后，退出 VSCode 所有窗口并重新打开 VSCode，否则可能无法在浏览器中查看变量 (见后文)。
 
-### 下载安装
+### 查看、编辑服务器连接配置
 
-点击 VSCode 左侧导航栏的 Extensions 图标，或者通过 `Ctrl+Shift+X` 快捷键打开插件安装窗口。在搜索框中输入 dolphindb，即可搜索到 dolphindb 插件，点击 Install 进行安装。具体方法可查看插件详情。
+1. 成功安装插件后，在VSCode编辑器左侧的资源管理器 (EXPLORER) 面板中新增的 DOLPHINDB 连接管理区域查看连接情况。
 
-![image](images/VSCode/8.png?raw=true)
+    <img src='./images/vscodeext/connections.png' width='400'>
 
-如果因为网络原因安装失败，需通过下方链接手动下载后缀为 `.vsix` 的插件，击 `Version History` 下载最新的版本到本地，并将其拖到 VSCode 插件面板中。  
-https://marketplace.visualstudio.com/items?itemName=dolphindb.dolphindb-vscode
+1. 点击右上角的 `settings` 按钮。
+1. 在`settings.json` 配置文件中编辑 `dolphindb.connections` 配置项。
+    - `name` 和 `url` 属性是必填的 (不同的连接对象必须有不同的 `name`), 默认自动登录 admin 账号 ("autologin": true)。将光标移动到属性上可以查看对应属性的说明。
+    - `dolphindb.connections` 配置项是一个对象数组，默认有四个连接配置，可按情况修改或增加连接对象。
 
-注意：安装后需重启 VSCode 使插件生效。
+### 打开或新建一个 DolphinDB 脚本文件
 
-### 编辑服务器连接配置
+**注意**：
 
-点击菜单栏中的  `文件 > 首选项 > 设置` (`File > Preferences > Settings`)  或者按快捷键 `Ctrl + 逗号` 打开 VSCode 设置。在搜索框中输入 dolphindb，点击下方的 `在 settings.json 中编辑`，编辑 里面的 `dolphindb.connections` 配置项。  
-`dolphindb.connections` 下的一个 `{...}` 对象，表示一个连接配置。用户可通过手动修改该对象，来创建或删除会话连接。每个对象包含6个属性，其中 `name` 和 `url` 是必填属性。需注意：不同的连接对象必须配置不同的 `name`。移动鼠标至属性名上，可查看属性的具体说明。  
+- 如果脚本文件名是 `.dos` 后缀 (DolphinDB Script 的缩写)，插件会自动识别为 DolphinDB 语言，自动启用语法高亮及代码补全、提示
+- 如果脚本文件名不是 `.dos` 后缀, 比如 `.txt` 后缀，则需要手动关联 DolphinDB 语言，方法如下：
 
-```
-"dolphindb.connections": [
-  //一个连接配置如下：
-    {
-        "name": "local8848", // 连接的别名。同一个服务器可以有多个不同的连接
-        "url": "ws://127.0.0.1:8848", // DolphinDB 服务器 ip 和 port，格式为 "ws://ip:port"
-        "autologin": true, // 是否开启自动登录。需配置用户名密码才生效
-        "username": "admin",
-        "password": "123456",
-        "python": false // 默认值为 false。若设置为 true，将使用 Python Parser 来解析执行脚本。
-    }
-]
-```
-
-配置连接后，用户可以通过编辑器左侧面板资源管理器下的 DOLPHINDB 窗口查看并切换连接。选中连接并在该连接下执行脚本后便会自动连接到服务器。切换服务器连接后，原连接不会断开。
-
-注意：若修改了连接配置项，原连接会自动断开。
-
-![image](images/vscode/1.png)
-
-### 新建脚本文件
-
-- 如果脚本文件名后缀是 .dos ，插件会自动识别为 DolphinDB 语言。
-- 如果脚本文件名后缀非 .dos，比如是 .txt，则需要手动关联 DolphinDB 语言。方法如下：点击 VSCode 编辑器右下角状态栏的语言选择按钮，如下图：
-
-<img src=images/VSCode/2.png width=80%>
-
-在语言选择弹框中输入 dolphindb 后回车，即可切换当前文件关联的语言为 DolphinDB 语言。
-
-<img src=images/VSCode/3.png width=80%>
-
-#### 函数的自动补齐和文档实时浏览
-
-用户在 VSCode 编辑器输入函数时，将自动补齐函数名，且可展开函数的具体信息。将光标悬浮至对应函数可自动显示该函数对应的文档。
-
-![image](images/VSCode/9.png)
+1. 点击 VSCode 编辑器右下角状态栏的语言选择按钮，如下图
+`<img src='./images/vscodeext/language-mode.png' width='600'>`
+1. 在语言选择弹框中输入 `dolphindb`, 按回车键将当前文件关联的语言切换为 DolphinDB 语言。
+`<img src='./images/vscodeext/select-language.png' width='600'>`
 
 ### 执行代码
 
-VSCode 中默认通过快捷键 `Ctrl + E` 来执行选中的代码；若没有选中代码，则会执行当前光标所在的行。如果需要自定义代码执行的快捷键，则需在 VSCode 的 `文件 > 首选项 > 键盘快捷方式` (`File > Preferences > Keyboard Shortcuts`) 中进行修改。在搜索栏中输入 dolphindb，找到 execute 并双击，根据提示修改快捷键。
+在打开的 DolphinDB 脚本文件中，按快捷键 `Ctrl + E` 将代码发送到 DolphinDB Server 执行。第一次执行代码时会自动连接到 DOLPHINDB 区域中选中的连接。
 
-#### 在线浏览数据和生成的对象
+- 如果当前有选中的代码，会将选中的代码发送至 DolphinDB Server 执行
+- 如果当前无选中的代码，会将当前光标所在的行发送至 DolphinDB Server 执行
 
-VSCode 编辑器左侧面板资源管理器中展示了连接的会话，用户可在此查看会话中的所有变量。这里展示了变量的名称、类型、维度以及占用的内存大小。用户也可点击变量栏右侧的图标在浏览器浏览该变量具体信息。
+执行代码后，VSCode 编辑器下方的终端内会有基于文本的输出，如果执行的代码最后一条语句返回了表格、数组、矩阵，则会自动切换到 VSCode 编辑器下方面板的 DolphinDB 区域中以表格的形式展示表格、向量、矩阵等数据结构。
 
-请确保以下两点，以避免服务器出现连接错误 (如：ws://xxx errored)：
+**建议**：将 DolphinDB 标签页的内容拖动到终端的右侧，如下图
 
-- DolphinDB Server 版本不低于 1.30.16 或 2.00.4 。
-- 如果配置了系统代理，则代理软件以及代理服务器需要支持 WebSocket 连接。否则请在系统中关闭代理，或者将 DolphinDB Server 的 IP 添加到排除列表，然后重启 VSCode。
+<img src='./images/vscodeext/drag-dataview.png' width='600'>
 
-### VSCode 视窗
+<img src='./images/vscodeext/with-dataview.png' width='600'>
 
-- 查看连接及变量
+### 在 DOLPHINDB 区域中切换连接及查看已连接会话的变量
 
-![image](images/VSCode/4.png)
+执行代码后，可以进行一下操作：
 
-VSCode 左侧资源管理器下的 DOLPHINDB 资源，以树状形式展示了配置文件里的所有连接，以及连接内部的变量信息。
+- 切换执行代码所用的连接 (原有连接不会断开)
+- 点击连接右侧的按钮手动断开连接
+- 查看会话变量的值
+- 非 scalar, pair 类型的变量右侧有两个图标
+  - 点击左边的图标可以在编辑器下方面板的 DolphinDB 区域中查看变量
+  - 点击右边的图标可以直接打开一个浏览器弹窗，在弹窗中查看变量 (需要配置浏览器允许弹窗, 见后文)。弹窗功能需要浏览器中有一个打开的 `DolphinDB Data Browser` 标签页 (URL 可能是 http://localhost:8321/)，如果缺少这个标签页插件会先自动打开这个页面
 
-**连接列表**：点击连接左侧圆形图标选择并切换到该连接。点击连接右侧的断开链接图标可断开该连接。
+如下图所示：
 
-**变量列表**：鼠标悬浮于对应变量，可查看该变量的数据结构。变量（scalar 和 pair 类型除外）右侧有两个图标，分别用于查看变量和在新窗口中查看变量。
+<img src='./images/vscodeext/explorer.png' width='400'>
 
-- 数据浏览器
+**注意**： 请使用近两年的浏览器版本，例如 Chrome 100+ 或 Edge 100+ 或 Firefox 100+，并配置浏览器允许该网站弹窗显示。
 
-VSCode 中的变量可以在终端、左侧资源管理器、VSCode 下方的 DOLPHINDB 面板以及浏览器中显示。其中，前两种以文本格式显示变量的数据结构，而后两种以表格方式显示。
+<img src='./images/vscodeext/allow-browser-popup.png' width='600'>
 
-**终端**
+### 查看函数文档
 
-![image](images/VSCode/7.png)
+在 VSCode 编辑器中输入 DolphinDB 内置函数时，点击函数右侧的箭头可以展开函数的文档：
 
-执行结果的第一行显示代码的执行时间，会话对应的服务器别名。
+<img src='./images/vscodeext/expand-doc.png' width='800'>
 
-以表为例，打印执行结果见上图：
+函数输入完成后，将鼠标悬浮于函数名称上，也可查看函数文档。
 
-- 首先，显示数据形式，此处为 table。[20r][4c] 表示该表是一个 20 行 4 列的数据表。
-- 然后，依次打印每列的数据类型，长度，列名以及包含的数据。
-- 最后，显示代码执行的耗时。
+## 调试脚本
+
+DolphinDB 的 VSCode 插件提供针对用户脚本的调试功能，该功能满足实时追踪运行脚本、显示中间变量的值以及展示函数调用栈信息的用户需求，以利于用户写出更快更好的脚本。具体调试方法如下：
+
+### 原理
+![components](images/vscodeext/debug/zh/components.png)
+
+其中，
+
+- DolphinDB Server：真正执行中断、挂起、数据查询操作的数据库进程
+- Debug Adapter：处理两侧的交互信息
+- DAP：Debug Adapter Protocol，由 Microsoft 提出的一种通用的 Debug 信息交互协议
+- Debug Client：VSCode 调试界面，主要负责与用户交互。下图是该界面的主要部件及功能概览：
+
+    ![1687752887534](images/vscodeext/debug/zh/all-header.png)
+
+### 基本用法
+
+请运行不低于 2.00.10 或 1.30.22 版本的 DolphinDB Server，并按照下面的步骤进行调试
+
+#### 编写脚本
+
+后续步骤介绍基于以下例子脚本。出于调试目的以及代码可读性，我们建议每行只写一条语句。
   
-**左侧资源管理器显示**
+```dos
+  use ta
 
-![image](images/VSCode/10.png)
+  close = 1..20
+  bret = bBands(close)
+  print(bret)
 
-鼠标悬浮于资源管理器的变量上，便可查看该变量的具体内容。同终端打印变量的形式，资源管理器也以文本方式展示变量。
+  close = randNormal(50, 1, 20)
+  rret = rsi(close)
+  print(rret)
+ ```
 
-**VSCode 下方的 DOLPHINDB 面板**
+#### 设置断点
+  
+1. 在选定行左侧空白处单击鼠标左键设置断点。
 
-![image](images/VSCode/ddbPanel.png)
+    <img src="images/vscodeext/debug/zh/set-breakpoint1.png" width='400' />
 
-选择 VSCode 下方的 DOLPHINDB 数据查看面板，可以以表格的形式展示向量、矩阵、表等数据结构。
+1. 为了接下来的调试演示，我们在第 4 行和第 8 行分别设置了断点，设置断点后，编辑器区的左侧空白区域处会出现红色的圆点，表示断点设置成功。
 
-**浏览器显示**
+    <img src="images/vscodeext/debug/zh/set-breakpoint2.png" width='400' />
+  
+#### 启动调试
+  
+1. 在左下角的连接管理面板中选择用于调试的服务器。
 
-为了在浏览器中以表格方式展示 DolphinDB 中的向量、矩阵和表，每个 VSCode 窗口会启动一个本地 HTTP 服务器，用于浏览器页面展示这些变量。默认情况下，HTTP 服务器可用端口范围为[8321,8420]。打开 VSCode 窗口时， HTTP 服务器会从第一个8321开始按照顺序查找首个可用的 port 做为实际监听的端口。
+    <img src="images/vscodeext/debug/zh/server.png" width='400' />
+  
+2. 在底部状态栏中设置语言模式为DolphinDB。
 
-DolphinDB 提供配置项 `dolphindb.ports `，允许用户自行配置端口号。将鼠标悬浮 `dolphindb.ports ` 上可查看它的详细解释及配置方法。
+    <img src="images/vscodeext/debug/zh/language.png" width='400' />
 
-浏览变量的方法为：点击变量右侧的查看变量图标，打开一个浏览器页面（localhost:port）。在该页面查看当前变量的数据结构。变量更新后，重新执行变量，或再次点击查看变量图标，可以刷新变量值。
+3. 按 F5 或通过左侧边栏的运行和调试打开主边栏，点击 `运行和调试`。
+  
+    <img src="images/vscodeext/debug/zh/primary-sidebar.png" width='400' />
 
-![image](images/VSCode/6.png)
+启动后的界面如下图所示，
 
-点击在新窗口中查看变量图标，会打开浏览器弹窗（请开启浏览器允许弹框功能），便于用户同时查看多个变量及观察变量前后的变化（如下图）。
+<img src="images/vscodeext/debug/zh/launched.png" width='800' />
 
-![image](images/VSCode/5.png)
+其中，
+
+- 调试界面的左侧是调试信息区，右侧是编辑器区，下方是调试控制台。
+- 调试信息区展示变量的值、函数调用栈等信息。
+- 编辑器区用黄色的背景标出了将要执行的行。
+- 调试控制台用于显示输出信息和异常信息。
+
+**注意**：调试过程如果无法启动，打开调试控制台，通过错误信息检查排查错误原因。可能的错误原因包括：
+
+- DolphinDB Server 版本太低会报错 `Server sent no subprotocol` 
+- 调试服务器连接失败，请确保 DolphinDB Server 版本不低于 2.00.10 或 1.30.22。
+
+#### 调试
+
+启动调试后，VSCode 的界面上方会出现如下图所示的调试工具栏：
+
+<img src="images/vscodeext/debug/zh/debug-bar.png" width='400' />
+
+从左到右的名称及对应的键盘快捷键分别为：
+
+- 继续（F5）
+- 逐过程（F10）
+- 单步调试（F11）
+- 单步跳出（Shift + F11）
+- 重启（Ctrl + Shift + F5）
+- 停止（Shift + F5）
+
+**建议**：继续、逐过程和单步调试是调试中最常用的三个功能，推荐使用快捷键来操作。
+
+用于调试的按钮功能和使用方法如下：
+
+- 逐过程（F10）：在上个调试界面中，黄色的背景标出了即将被 Server 执行的第 4 行代码所对应的语句。我们按下 F10，让 Server 程序执行完第 4 行代码。此时的调试界面如下图所示，黄色的背景变成了第 5 行代码所对应的语句。
+    
+    <img src="images/vscodeext/debug/zh/F10.png" width='400' />
+- 继续（F5）：我们可以利用逐过程的方式一条语句一条语句地执行脚本，但是这样做的效率较低。着重关注断点所在的语句有助于提升执行调试效率。在这里，我们关心的是第 8 行代码所对应的语句，按下 F5 后，Server 程序会一直执行到第 8 行代码。此时的调试界面如下图所示，黄色的背景变成了第 8 行代码所对应的语句。
+  
+    <img src="images/vscodeext/debug/zh/F5.png" width='400' />
+
+- 查看变量：在调试界面的左侧，即调试主边栏中，我们可以在略上方的位置看到变量的值，如下图所示：
+
+    <img src="images/vscodeext/debug/zh/var.png" width='400' />
+
+    在这里，`close` 和 `bret` 这两个变量因为过长而导致显示不全，我们可以将光标悬浮在变量的值上方，即可看到完整的值。
+
+    <img src="images/vscodeext/debug/zh/var-hover.png" width='400' />
+
+- 单步调试（F11）：单步调试用于进入函数内部，查看函数内部的执行情况。在上一步，我们运行到了第8行代码，即 `rsi` 函数的调用语句。按下 F11 后，Server程序会进入 `rsi` 内。此时对应的调试界面如下图所示，黄色的背景标示程序已经运行到该函数内部，且即将执行第一条语句。
+
+    <img src="images/vscodeext/debug/zh/F11.png" width='400' />
+
+- 查看调用栈：我们将目光再次移动到调试主边栏中。在略下方的位置，可以看到当前的函数调用栈，如下图所示。
+
+    <img src="images/vscodeext/debug/zh/call-stack.png" width='400' />
+    
+    单击调用栈的某一行，就能在上游函数和下游函数之间切换。此时，调试主边栏上方的变量部分也会显示该层函数所对应的变量的值。
+
+- 动态更新断点：在脚本执行的过程中，我们可以动态地更新断点。例如，我们可以在 152 行和 153 行的位置新增两个断点，如下图所示，编辑器区的左侧空白区域处会出现两个红色的圆点，表示断点已经新增成功。
+
+    <img src="images/vscodeext/debug/zh/set-breakpoint3.png" width='400' />
+
+    当然，我们也可以取消断点。例如，我们单击 152 行左侧空白处来删除 152 行对应的断点。如下图所示，编辑器区左侧空白区域处 152 行对应的红色圆点消失，表示 152 行处的断点已经取消成功。
+
+    <img src="images/vscodeext/debug/zh/cancel-breakpoint.png" width='400' />
+
+- 跳出函数：实际过程中，我们经常需要执行完这个函数并返回上层函数。例如，我们点击调试工具栏中的单步跳出按钮<img src="images/vscodeext/debug/zh/step-out-icon.png" width='20' />，即可执行完当前函数体的所有内容并返回到上一层函数。此时，如下图所示，我们已经返回到`test.dos`中的第9行代码所对应的语句，代表执行完第8行对应的 `rsi` 函数。
+
+    <img src="images/vscodeext/debug/zh/step-out.png" width='400' />
+
+- 重启以及停止：重启和停止按钮的功能与其名字相符。例如，我们点击调试工具栏中的重启按钮<img src="images/vscodeext/debug/zh/restart-icon.png" width='20' />，即可重启调试；相应地，点击停止按钮<img src="images/vscodeext/debug/zh/stop-icon.png" width='20' />，即可停止调试。
+
+
+### 进阶用法
+
+#### 语法解析
+
+调试开始时, DolphinDB 会对代码进行初步检测, 如果代码有语法错误, 不会进入调试状态, 并且调试控制台会输出错误信息。
+
+<img src="images/vscodeext/debug/zh/debug-errmsg.png" width='400' />
+
+#### 断点管理
+
+如下图所示，在调试主边栏的下方，可以看到所有断点的信息，包括断点的状态、断点的文件名和文件路径以及行号。值得注意的是右上方有两个按钮，禁用所有断点<img src="images/vscodeext/debug/zh/disable-breakpoints.png" width='20' />以及删除所有断点<img src="images/vscodeext/debug/zh/delete-breakpoints.png" width='20' />。
+  
+- 点击禁用所有断点<img src="images/vscodeext/debug/zh/disable-breakpoints.png" width='20' />可以暂时关闭所有断点，恢复正常程序的执行；再次点击此按钮或者手动添加新断点时，会自动开启所有断点。
+- 点击删除所有断点<img src="images/vscodeext/debug/zh/delete-breakpoints.png" width='20' />可以删除所有断点，包括已经禁用的断点。
+
+<img src="images/vscodeext/debug/zh/breakpoints-manager.png" width='400' />
+
+#### 多目标调试
+
+使用多目标调试很简单：在启动一个调试会话的同时, 只需启动另一个调试会话，VSCode 将自动切换到多目标模式：
+
+- 各个会话现在在“调用堆栈”视图中显示为顶级元素
+    
+    ![1687151041845](images/vscodeext/debug/zh/callstack-view.png)
+
+- 调试工具栏显示当前活动的会话（所有其他会话在下拉菜单中可用）
+
+    ![1687151341351](images/vscodeext/debug/zh/multi-server.png)
+
+- 调试操作（例如, 调试工具栏中的所有操作）在活动会话上执行可以使用调试工具栏中的下拉菜单或在“调用堆栈”视图中选择其他元素来更改活动会话
+
+### 局限性
+
+#### 语法
+
+以下脚本语法存在使用上的局限性：
+
+- functionview 会通过初步的语法检查, 但使用此类语法会导致 DolphinDB 宕机。
+- 含有 include 语句的脚本调试会报错“Does not support Debug mode when using include”。可以考虑用 use 替代。
+- submitJob, remoteRun 等远程调用类函数不能跟踪函数栈调用
+- 匿名函数、lambda 表达式、闭包
+
+#### 调试方法
+
+暂不支持以下调试方法
+
+- 内联断点、条件断点、记录点、监视
+- 查看长度较大的变量
+
+    ![](images/vscodeext/debug/zh/long-var.png)
+
+- 调试控制台查询表达式的值
+
+## 常见问题
+
+执行代码过程中，
+
+- 如果出现 `Webview fatal error: Error: Could not register service workers: InvalidStateError: Failed to register a ServiceWorker: The document is in an invalid state..` 这样的错误，重启 VSCode。
+- 如果出现执行代码并返回表格后，底部没有自动切换到 DolphinDB 视图的情况，需要重置 DolphinDB 视图的位置，如下图所示
+
+    <img src='./images/vscodeext/reset-location.png' width='400'>
+    
+- 如果按 `Ctrl + E` 快捷键无反应：
+    - 可能是由于未关联 DolphinDB 语言（此时语法高亮也未生效）
+    - 也可能由于快捷键与其他插件冲突，需要在 VSCode 的 `文件 > 首选项 > 键盘快捷方式` (`File > Preferences > Keyboard Shortcuts`) 中自定义快捷键，在搜索框中输入 `CTRL+E`, 删除和 `DolphinDB: 执行代码` 冲突的其他插件的快捷键。
+
+    <img src='./images/vscodeext/key-bindings.png' width='600'>
+    
+- VSCode 有大约为 `1 GB` 的内存限制。建议使用 `limit` 限制返回记录数；或者将结果赋给某个变量，如 `a = select * from`，后续通过点击侧边栏变量旁边的按钮进行分页懒加载，按需取回单页数据。
+- 为了在浏览器中展示表格等数据，每个 VSCode 窗口会启动一个本地 HTTP 服务器，其可用端口范围可以通过 `dolphindb.ports` 配置，默认为 `8321-8420`，鼠标悬浮在 ports 上可查看详细解释。
+
+## 开发说明
+
+```shell
+# 安装最新版的 nodejs
+# https://nodejs.org/en/download/current/
+
+# 安装 pnpm 包管理器
+corepack enable
+corepack prepare pnpm@latest --activate
+
+git clone https://github.com/dolphindb/vscode-extension.git
+
+cd vscode-extension
+
+# 安装项目依赖
+pnpm install
+
+# 将 .vscode/settings.template.json 复制为 .vscode/settings.json
+cp .vscode/settings.template.json .vscode/settings.json
+
+# 参考 package.json 中的 scripts
+
+# 构建开发版本
+pnpm run dev
+
+# 在 VSCode 中切换到调试面板，启动 ddb.ext 调试任务（需要先禁用或卸载已安装的 dolphindb 插件）
+```
