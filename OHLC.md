@@ -2,19 +2,14 @@
 
 DolphinDB提供了功能强大的内存计算引擎，内置时间序列函数，分布式计算以及流数据处理引擎，在众多场景下均可高效的计算K线。本教程将介绍DolphinDB如何通过批量处理和流式处理计算K线。
 
-- 计算历史数据K线
+- 计算历史数据K线：可以指定K线窗口的起始时间；一天中可以存在多个交易时段，包括隔夜时段；K线窗口可重叠；使用交易量作为划分K线窗口的维度。需要读取的数据量特别大并且需要将结果写入数据库时，可使用DolphinDB内置的Map-Reduce函数并行计算。
+- 实时计算K线：使用API实时接收市场数据，并使用DolphinDB内置的流数据时序计算引擎(time-series aggregator)进行实时计算得到K线数据。
 
-可以指定K线窗口的起始时间；一天中可以存在多个交易时段，包括隔夜时段；K线窗口可重叠；使用交易量作为划分K线窗口的维度。需要读取的数据量特别大并且需要将结果写入数据库时，可使用DolphinDB内置的Map-Reduce函数并行计算。
+## 历史数据K线计算
 
-- 实时计算K线
+使用历史数据计算K线，可使用DolphinDB的内置函数`bar`，`dailyAlignedBar`或`wj`。 
 
-使用API实时接收市场数据，并使用DolphinDB内置的流数据时序计算引擎(time-series aggregator)进行实时计算得到K线数据。
-
-## 1. 历史数据K线计算
-
-使用历史数据计算K线，可使用DolphinDB的内置函数[`bar`](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/b/bar.html)，[`dailyAlignedBar`](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/d/dailyAlignedBar.html)，或[`wj`](https://www.dolphindb.cn/cn/help/SQLStatements/TableJoiners/windowjoin.html)。 
-
-### 1.1 不指定K线窗口的起始时刻
+### 不指定K线窗口的起始时刻
 
 这种情况可使用`bar`函数。bar(X,Y)返回X减去X除以Y的余数(X-mod(X,Y))，一般用于将数据分组。如下例所示。
 
@@ -49,7 +44,7 @@ OHLC = select first(price) as open, max(price) as high, min(price) as low, last(
 
 请注意，以上数据中，time列的精度为毫秒。若time列精度不是毫秒，则应当将 barMinutes\*60*1000 中的数字做相应调整。
 
-### 1.2 指定K线窗口的起始时刻
+### 指定K线窗口的起始时刻
 
 需要指定K线窗口的起始时刻，可使用`dailyAlignedBar`函数。该函数可处理每日多个交易时段，亦可处理隔夜时段。
 
@@ -86,6 +81,7 @@ OHLC = select first(price) as open, max(price) as high, min(price) as low, last(
 **例子4**（每日两个交易时段，包含隔夜时段）：某些期货每日有多个交易时段，且包括隔夜时段。本例中，第一个交易时段为上午8:45到下午13:45，另一个时段为隔夜时段，从下午15:00到第二天上午05:00。
 
 使用以下脚本产生模拟数据:
+
 ```
 daySession =  08:45:00.000 : 13:45:00.000
 nightSession = 15:00:00.000 : 05:00:00.000
@@ -99,17 +95,19 @@ undef(`timestamp`price`volume`symbol)
 ```
 
 计算7分钟K线：
+
 ```
 barMinutes = 7
 sessionsStart = [daySession[0], nightSession[0]]
 OHLC = select first(price) as open, max(price) as high, min(price) as low, last(price) as close, sum(volume) as volume from trade group by symbol, dailyAlignedBar(timestamp, sessionsStart, barMinutes*60*1000) as barStart
 ```
 
-### 1.3 重叠K线窗口
+### 重叠K线窗口
 
-以上例子中，K线窗口均不重叠。若要计算重叠K线窗口，可以使用[`wj`](https://www.dolphindb.cn/cn/help/SQLStatements/TableJoiners/windowjoin.html)函数。`wj`函数对左表中的每一行，在右表中截取一段窗口，进行计算。
+以上例子中，K线窗口均不重叠。若要计算重叠K线窗口，可以使用`wj`函数对左表中的每一行，在右表中截取一段窗口，进行计算。
 
 **例子5** （每日两个交易时段，重叠的K线窗口）：模拟中国股票市场数据，每5分钟计算30分钟K线。
+
 ```
 n = 1000000
 sampleDate = 2019.11.07
@@ -121,7 +119,7 @@ trade = table(take(sampleDate, n) as date,
 	rand(1000, n) as volume)
 ```
 
-首先生成窗口，并且使用[`cj`](https://www.dolphindb.cn/cn/help/SQLStatements/TableJoiners/crossjoin.html)函数来生成股票和交易窗口的组合。
+首先生成窗口，并且使用`cj`函数来生成股票和交易窗口的组合。
 ```
 barWindows = table(symbols as symbol).cj(table((09:30:00.000 + 0..23 * 300000).join(13:00:00.000 + 0..23 * 300000) as time))
 ```
@@ -132,7 +130,7 @@ OHLC = wj(barWindows, trade, 0:(30*60*1000),
 		<[first(price) as open, max(price) as high, min(price) as low, last(price) as close, sum(volume) as volume]>, `symbol`time)
 ```
 
-### 1.4 使用交易量划分K线窗口
+### 使用交易量划分K线窗口
 
 上面的例子我们均使用时间作为划分K线窗口的维度。在实践中，也可以使用其他变量，譬如用累计的交易量作为划分K线窗口的依据。
 
@@ -155,9 +153,9 @@ group by symbol, bar(cumvol, volThreshold) as volBar
 
 代码采用了嵌套查询的方法。子查询为每个股票生成累计的交易量cumvol，然后在主查询中根据累计的交易量用`bar`函数生成窗口。
 
-### 1.5 使用MapReduce函数加速
+### 使用MapReduce函数加速
 
-若需从数据库中提取较大量级的历史数据，计算K线，然后存入数据库，可使用DolphinDB内置的Map-Reduce函数[`mr`](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/m/mr.html)进行数据的并行读取与计算。这种方法可以显著提高速度。
+若需从数据库中提取较大量级的历史数据，计算K线，然后存入数据库，可使用DolphinDB内置的Map-Reduce函数`mr`进行数据的并行读取与计算。这种方法可以显著提高速度。
 
 本例使用美国股票市场的交易数据。原始数据存于"dfs://TAQ"数据库的"trades"表中。"dfs://TAQ"数据库采用复合分区：基于交易日期Date的值分区与基于股票代码Symbol的范围分区。
 
@@ -191,7 +189,7 @@ mr(ds, calcOHLC, +)
 - 自定义函数`calcOHLC`为Map-Reduce算法中的map函数，对每个数据源计算K线数据，并将结果写入数据库，返回写入数据库的K线数据的行数。
 - "+"是Map-Reduce算法中的reduce函数，将所有map函数的结果，亦即写入数据库的K线数据的行数相加，返回写入数据库的K线数据总数。
 
-## 2. 实时K线计算
+## 实时K线计算
 
 DolphinDB中计算实时K线的流程如下图所示：
 
@@ -199,7 +197,7 @@ DolphinDB中计算实时K线的流程如下图所示：
 
 实时数据供应商一般会提供基于Python、Java或其他常用语言的API的数据订阅服务。本例中使用Python来模拟接收市场数据，通过DolphinDB Python API写入流数据表中。DolphinDB的流数据时序聚合引擎可按照指定的频率与移动窗口实时计算K线。
 
-本例使用的模拟实时数据源为文本文件[trades.csv](data/k-line/trades.csv)。该文件包含以下4列（附带一行样本数据）：
+本例使用的模拟实时数据源为文本文件[trades.csv](data/k_line/trades.csv)。该文件包含以下4列（附带一行样本数据）：
 
 Symbol|Datetime|Price|Volume
 ---|---|---|---
@@ -207,7 +205,7 @@ Symbol|Datetime|Price|Volume
 
 以下三小节介绍实时K线计算的三个步骤：
 
-### 2.1 使用 Python 接收实时数据，并写入DolphinDB流数据表
+### 使用 Python 接收实时数据，并写入DolphinDB流数据表
 
 * DolphinDB 中建立流数据表
 ```
@@ -216,7 +214,7 @@ share streamTable(100:0, `Symbol`Datetime`Price`Volume,[SYMBOL,DATETIME,DOUBLE,I
 
 * 将模拟数据写入DolphinDB流数据表
 
-实时数据中Datetime的数据精度是秒，由于pandas DataFrame中仅能使用DateTime[64]即DolphinDB中的nanotimestamp类型，所以下列代码在写入前有一个数据类型转换的过程。
+实时数据中Datetime的数据精度是秒，由于pandas DataFrame中仅能使用DateTime\[64]即DolphinDB中的nanotimestamp类型，所以下列代码在写入前有一个数据类型转换的过程。
 
 ```python
 import dolphindb as ddb
@@ -233,7 +231,7 @@ s.run("data = select Symbol, datetime(Datetime) as Datetime, Price, Volume from 
 s.run("tableInsert(Trade,data)")
 ```
 
-### 2.2 实时计算K线
+### 实时计算K线
 
 可使用移动窗口实时计算K线数据，一般分为以下2种情况：
 
@@ -246,7 +244,7 @@ s.run("tableInsert(Trade,data)")
 
 下面针对上述的几种情况分别介绍如何使用`createTimeSeriesAggregator`函数实时计算K线数据。请根据实际需要选择相应场景创建时间序列聚合引擎。
 
-#### 2.2.1 仅在每次时间窗口结束时触发计算
+#### 仅在每次时间窗口结束时触发计算
 
 时间窗口不重合，可将`createTimeSeriesAggregator`函数的windowSize参数和step参数设置为相同值。时间窗口部分重合，可将windowSize参数设为大于step参数。请注意，windowSize必须是step的整数倍。
 
@@ -264,7 +262,7 @@ tsAggr2 = createTimeSeriesAggregator(name="tsAggr2", windowSize=300, step=60, me
 subscribeTable(tableName="Trade", actionName="act_tsAggr2", offset=0, handler=append!{tsAggr2}, msgAsTable=true);
 ```
 
-#### 2.2.2 在每个窗口内进行多次计算
+#### 在每个窗口内进行多次计算
 
 以每分钟计算vwap价格为例，当前窗口内即使发生了多次交易，窗口结束前都不会触发任何使用当前窗口数据的计算。某些用户希望在当前窗口结束前频繁使用已有数据计算K线，这时可指定`createTimeSeriesAggregator`函数的updateTime参数。指定updateTime参数后，当前窗口结束前可能会发生多次针对当前窗口的计算。这些计算触发的规则为：
 
@@ -272,7 +270,7 @@ subscribeTable(tableName="Trade", actionName="act_tsAggr2", offset=0, handler=ap
 
 (2) 一条数据到达聚合引擎之后经过2\*updateTime（若2\*updateTime不足2秒，则设置为2秒），若其仍未参与计算，会触发一次计算。该次计算包括当时当前窗口内的所有数据。
 
-若进行分组计算，以上规则在每组之内应用。在使用updateTime参数时，step必须是updateTime的整数倍。必须使用[键值表](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/k/keyedTable.html)作为输出表。若未指定keyColumn参数，主键为timeColumn列；若指定了keyColumn参数，主键为timeColumn列和keyColumn列。有关updateTime参数更多细节，请参考[时序聚合引擎教程](./stream_aggregator.md)
+若进行分组计算，以上规则在每组之内应用。在使用updateTime参数时，step必须是updateTime的整数倍。必须使用键值表作为输出表。若未指定keyColumn参数，主键为timeColumn列；若指定了keyColumn参数，主键为timeColumn列和keyColumn列。有关updateTime参数更多细节，请参考[时序聚合引擎教程](./stream_aggregator.md)
 
 例如，要计算1分钟窗口的K线，但当前1分钟的K线不希望等到窗口结束后再计算，而是希望新数据进入后最迟2秒钟就计算。可通过如下步骤实现。
 
@@ -291,7 +289,7 @@ tsAggr = createTimeSeriesAggregator(name="tsAggr", windowSize=60, step=60, metri
 subscribeTable(tableName="Trade", actionName="act_tsaggr", offset=0, handler=append!{tsAggr}, msgAsTable=true);
 ```
 
-### 2.3 在Python中展示K线数据
+### 在Python中展示K线数据
 
 在本例中，聚合引擎的输出表也定义为流数据表，客户端可以通过Python API订阅输出表，并将计算结果展现到Python终端。
 
@@ -312,4 +310,4 @@ s.subscribe("127.0.0.1", 8848, handler, "OHLC","python_api_subscribe",0)
 Event().wait() 
 ```
 
-也可通过[Grafana](https://gitee.com/dolphindb/grafana-datasource/blob/master/README.zh.md)等可视化系统来连接DolphinDB database，对输出表进行查询并将结果以图表方式展现。
+也可通过Grafana等可视化系统来连接DolphinDB database，对输出表进行查询并将结果以图表方式展现。
