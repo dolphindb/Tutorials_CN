@@ -194,11 +194,8 @@ grant命令：授予某个用户或某个用户组各类权限：
 grant(`user2, DBOBJ_CREATE,"*") 
 getUserAccess("user2")
 ```
+<img src="./images/Permission_Management/2_1.png" width=75%>
 
-<figure align= "center">
-    <img src="./images/Permission_Management/2_1.png" width=75%>
-    <figcaption> grant </figcaption>
-</figure>
 
 
 
@@ -208,11 +205,8 @@ revoke命令:撤销某个用户或某个组的之前被赋予或禁止的权限�
 revoke(`user2, DBOBJ_CREATE,"*")
 getUserAccess("user2")
 ```
-
-<figure align= "middle">
-    <img src="./images/Permission_Management/2_2.png" width=75%>
-    <figcaption> revoke </figcaption>
-</figure>
+<img src="./images/Permission_Management/2_2.png" width=75%>
+  
 
 deny命令:拒绝某个用户或某个组的权限：
 
@@ -220,11 +214,7 @@ deny命令:拒绝某个用户或某个组的权限：
 deny(`user2, DBOBJ_CREATE,"*") 
 getUserAccess("user2")
 ```
-
-<figure align= "middle">
-    <img src="./images/Permission_Management/2_3.png" width=75%>
-    <figcaption> deny </figcaption>
-</figure>
+<img src="./images/Permission_Management/2_3.png" width=75%>
 
 
 
@@ -464,10 +454,9 @@ revoke("user1", TABLE_READ, dbName+"/pt")
 getUserAccess("user1")//TABLE_READ 依旧是 deny
 ```
 
-<figure align= "middle">
-    <img src="./images/Permission_Management/3_1.png" width=75%>
-    <figcaption> getUserAccess("user1") </figcaption>
-</figure>
+<img src="./images/Permission_Management/3_1.png" width=75%>
+
+  
 
 **例7**： 先对用户 user1 `deny` 全局的 TABLE_READ 权限，然后 `grant` "dfs://test/pt" 表 TABLE_READ 权限，1.30.21 和 2.00.9版本前，此时 user1 被赋予读 "dfs://test/pt" 表的权限，被拒绝其他所有表的 TABLE_READ 权限，而新版本则在执行 `grant` 的时候抛出异常：
 
@@ -615,9 +604,8 @@ getUserAccess("user1")
 
 此时 user1 拥有 "dfs://valuedb" 库的 DB_MANAGE 权限。
 
- <figure align="middle">
-     <img src="./images/Permission_Management/4_1.png" width=47%>
- </figure>
+<img src="./images/Permission_Management/4_1.png" width=47%>
+
 
 ```
 login("admin", "123456")
@@ -631,9 +619,8 @@ getUserAccess("user1")
 
 此时 user1 用户的 DB_MANAGE 权限被回收。
 
- <figure align="middle">
-     <img src="./images/Permission_Management/4_2.png" width=47%>
- </figure>
+<img src="./images/Permission_Management/4_2.png" width=47%>
+
 
 **例3**： "u1" 用户拥有流表 "trades"、"output1" 和流引擎 "agg1" 的读写权限：
 
@@ -652,9 +639,8 @@ grant("u1", TABLE_WRITE, "output1")
 getUserAccess(`u1)
 ```
 
- <figure align="middle">
-     <img src="./images/Permission_Management/4_3.png" width=75%>
- </figure>
+ <img src="./images/Permission_Management/4_3.png" width=75%>
+
 
 重启或删除并创建同名流表 "trades"、"output1" 和流引擎 "agg1"，此时三个对象都没有访问控制，任何用户可以对其进行读写：
 
