@@ -195,7 +195,7 @@ grant(`user2, DBOBJ_CREATE,"*")
 getUserAccess("user2")
 ```
 
-<figure align= "middle">
+<figure align= "center">
     <img src="./images/Permission_Management/2_1.png" width=75%>
     <figcaption> grant </figcaption>
 </figure>
