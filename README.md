@@ -83,6 +83,7 @@
   - [线程简介](thread_intro.md)
   - [从一次SQL查询的全过程看DolphinDB 的线程模型](thread_model_SQL.md)
   - [DolphinDB 集群运维监控教程](cluster_monitor.md)
+  - [数据库权限和安全](Permission_Management.md)
   
 - API
 
