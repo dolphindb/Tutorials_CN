@@ -73,7 +73,7 @@
   
 - 系统管理
 
-  - [权限管理和安全](ACL_and_Security.md)
+  - [权限管理和安全](Permission_Management.md)
   - [作业管理](job_management_tutorial.md)
   - [内存管理](memory_management.md)
   - [启动脚本教程](Startup.md)
@@ -83,7 +83,6 @@
   - [线程简介](thread_intro.md)
   - [从一次SQL查询的全过程看DolphinDB 的线程模型](thread_model_SQL.md)
   - [DolphinDB 集群运维监控教程](cluster_monitor.md)
-  - [数据库权限和安全](Permission_Management.md)
   
 - API
 
