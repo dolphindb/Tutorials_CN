@@ -726,7 +726,7 @@ subscribeNsq(configFilePath, "snapshot", ["sh","sz"], saveToDfs=true)
 
 ## 附件
 
-模块文件： [DolphinDBModules](script/DolphinDBModules_easyNSQ/DolphinDBModules) 
+模块文件： [easyNSQ.dos](../../../DolphinDBModules/blob/master/easyNSQ/easyNSQ.dos) 
 
 startup脚本： [startup.dos](script/DolphinDBModules_easyNSQ/startup.dos) 
 
