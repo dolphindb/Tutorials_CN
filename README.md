@@ -162,8 +162,8 @@
   - [ops运维函数库](../../../DolphinDBModules/blob/master/ops/README.md)
   - [国泰君安191 Alpha因子库](../../../DolphinDBModules/blob/master/gtja191Alpha/README_CN.md)
   - [交易日历](../../../DolphinDBModules/blob/master/MarketHoliday/README.md)
-  - [easyNSQ：实时行情数据接入功能模块使用教程](DolphinDBModules_easyNSQ.md)
-  - [easyTLDataImport：通联历史数据自动化导入功能模块使用教程](Module_easyTLDataImport.md)
+  - [easyNSQ：实时行情数据接入功能模块使用教程](../../../DolphinDBModules/blob/master/easyNSQ/README.md)
+  - [easyTLDataImport：通联历史数据自动化导入功能模块使用教程](../../../DolphinDBModules/blob/master/easyTLDataImport/README.md)
 
 - 应用场景示例
 
@@ -210,6 +210,7 @@
     - [DolphinDB 流计算在金融行业的应用：实时计算涨幅榜](Real-Time_Stock_Price_Increase_Calculation.md)
     
     - [DolphinDB TopN 系列函数教程](DolphinDB_TopN.md)
+    - [DolphinDB AMD 插件最佳实践指南](best_implementation_for_AMD_Plugin.md)
   - 物联网：
     - [DolphinDB在工业物联网的应用](iot_demo.md)
     - [物联网时序数据查询案例](iot_query_case.md)
