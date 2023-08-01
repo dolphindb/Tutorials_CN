@@ -1,0 +1,225 @@
+login(`admin, `123456)
+version()
+
+// 加载插件
+try{ loadPlugin("plugins/amdquote/PluginAmdQuote.txt") } catch(ex) { print(ex) }
+go
+// 连接行情服务器
+option = dict(STRING, ANY)
+option[`ReceivedTime] = true
+option[`DailyIndex] = true
+// option[`OutputElapsed] = true
+handle = amdQuote::connect(
+    "myUsername", 
+    "myPassword", 
+    ["110.110.10.10"], 
+    [7890], 
+    option
+)
+
+// use ops
+// unsubscribeAll()
+// dropStreamTable("snapshot")
+// dropStreamTable("order")
+// dropStreamTable("execution")
+// dropStreamTable("orderExecution1")
+// dropStreamTable("orderExecution2")
+
+// 获取行情数据的表结构并建流表
+snapshotTbName = "snapshot"
+orderTbName = "order"
+executionTbName = "execution"
+snapshotSchema = amdQuote::getSchema(`snapshot)
+colName = append!(["tradeDate"], snapshotSchema.name)
+colType = append!(["DATE"], snapshotSchema.type)
+enableTableShareAndPersistence(table=streamTable(2000000:0, colName, colType), tableName=snapshotTbName, cacheSize=200000)
+orderSchema = amdQuote::getSchema(`order)
+colName = append!(["tradeDate"], orderSchema.name)
+colType = append!(["DATE"], orderSchema.type)
+enableTableShareAndPersistence(table=streamTable(2000000:0, colName, colType), tableName=orderTbName, cacheSize=200000)
+executionSchema = amdQuote::getSchema(`execution)
+colName = append!(["tradeDate"], executionSchema.name)
+colType = append!(["DATE"], executionSchema.type)
+enableTableShareAndPersistence(table=streamTable(2000000:0, colName, colType), tableName=executionTbName, cacheSize=200000)
+orderExecutionSchema = amdQuote::getSchema(`orderExecution)
+enableTableShareAndPersistence(table=streamTable(2000000:0, orderExecutionSchema.name, orderExecutionSchema.type), tableName=`orderExecution1, cacheSize=200000)
+enableTableShareAndPersistence(table=streamTable(2000000:0, orderExecutionSchema.name, orderExecutionSchema.type), tableName=`orderExecution2, cacheSize=200000)
+go
+
+// 根据获取的行情数据的表结构建分布式库表
+dbName = "dfs://amd"
+if (!existsDatabase(dbName)) {
+    dbDate = database("", VALUE, 2023.01.01..2023.12.31)
+    dbCode = database("", HASH, [SYMBOL, 10])
+    db = database(dbName, COMPO, [dbDate, dbCode], engine="TSDB")
+} else {
+    db = database(dbName)
+}
+
+if (!existsTable(dbName, snapshotTbName)) {
+    colName = append!(["tradeDate"], snapshotSchema.name)
+    colType = append!(["DATE"], snapshotSchema.type)
+    tbSchema = table(1:0, colName, colType)
+    pt = db.createPartitionedTable(table=tbSchema, tableName=snapshotTbName, partitionColumns=`tradeDate`securityCode,  sortColumns=`securityCode`origTime, keepDuplicates=ALL)
+}
+
+if (!existsTable(dbName, orderTbName)) {
+    colName = append!(["tradeDate"], orderSchema.name)
+    colType = append!(["DATE"], orderSchema.type)
+    tbSchema = table(1:0, colName, colType)
+    pt = db.createPartitionedTable(table=tbSchema, tableName=orderTbName, partitionColumns=`tradeDate`securityCode,  sortColumns=`securityCode`orderTime, keepDuplicates=ALL)
+}
+
+if (!existsTable(dbName, executionTbName)) {
+    colName = append!(["tradeDate"], executionSchema.name)
+    colType = append!(["DATE"], executionSchema.type)
+    tbSchema = table(1:0, colName, colType)
+    pt = db.createPartitionedTable(table=tbSchema, tableName=executionTbName, partitionColumns=`tradeDate`securityCode,  sortColumns=`securityCode`execTime, keepDuplicates=ALL)
+}
+go
+
+// 订阅处理方法
+def handleSnapshotSubs(mutable msg, reorderedColNames) {
+    // 增加一个日期字段 tradeDate，其值为对应的时间戳字段的日期部分
+    update msg set tradeDate = date(origTime)
+    // 股票代码字段增加后缀，上海市场的后缀为".SH"，深圳市场的后缀为".SZ"
+    update msg set securityCode = securityCode + ".SZ" where marketType=102
+    update msg set securityCode = securityCode + ".SH" where marketType=101
+    // 所有价格字段值除以 100
+    update msg set lastPrice = lastPrice / 100
+    update msg set openPrice = openPrice / 100
+    update msg set highPrice = highPrice / 100
+    update msg set lowPrice = lowPrice / 100
+    update msg set preClosePrice = preClosePrice / 100
+    update msg set offerPrice1 = offerPrice1 / 100
+    update msg set offerPrice2 = offerPrice2 / 100
+    update msg set offerPrice3 = offerPrice3 / 100
+    update msg set offerPrice4 = offerPrice4 / 100
+    update msg set offerPrice5 = offerPrice5 / 100
+    update msg set offerPrice6 = offerPrice6 / 100
+    update msg set offerPrice7 = offerPrice7 / 100
+    update msg set offerPrice8 = offerPrice8 / 100
+    update msg set offerPrice9 = offerPrice9 / 100
+    update msg set offerPrice10 = offerPrice10 / 100
+    update msg set bidPrice1 = bidPrice1 / 100
+    update msg set bidPrice2 = bidPrice2 / 100
+    update msg set bidPrice3 = bidPrice3 / 100
+    update msg set bidPrice4 = bidPrice4 / 100
+    update msg set bidPrice5 = bidPrice5 / 100
+    update msg set bidPrice6 = bidPrice6 / 100
+    update msg set bidPrice7 = bidPrice7 / 100
+    update msg set bidPrice8 = bidPrice8 / 100
+    update msg set bidPrice9 = bidPrice9 / 100
+    update msg set bidPrice10 = bidPrice10 / 100
+    update msg set weightedAvgOfferPrice = weightedAvgOfferPrice / 100
+    update msg set weightedAvgBidPrice = weightedAvgBidPrice / 100
+    update msg set highLimited = highLimited / 100
+    update msg set lowLimited = lowLimited / 100
+    // 调整列顺序为与流表、分布式表一致
+    reorderColumns!(msg, reorderedColNames)
+
+    return msg
+}
+
+def handleOrderSubs(mutable msg, reorderedColNames) {
+    // 增加一个日期字段 tradeDate，其值为对应的时间戳字段的日期部分
+    update msg set tradeDate = date(orderTime)
+    // 股票代码字段增加后缀，上海市场的后缀为".SH"，深圳市场的后缀为".SZ"
+    update msg set securityCode = securityCode + ".SZ" where marketType = 102
+    update msg set securityCode = securityCode + ".SH" where marketType = 101
+    // 所有价格字段值除以 100
+    update msg set orderPrice = orderPrice / 100
+    // 调整列顺序为与流表、分布式表一致
+    reorderColumns!(msg, reorderedColNames)
+
+    return msg
+}
+
+def handleExecutionSubs(mutable msg, reorderedColNames) {
+    // 增加一个日期字段 tradeDate，其值为对应的时间戳字段的日期部分
+    update msg set tradeDate = date(execTime)
+    update msg set securityCode = securityCode + ".SZ" where marketType = 102
+    update msg set securityCode = securityCode + ".SH" where marketType = 101
+    // 所有价格字段值除以 100
+    update msg set execPrice = execPrice / 100
+    // 调整列顺序为与流表、分布式表一致
+    reorderColumns!(msg, reorderedColNames)
+
+    return msg
+}
+go
+
+// 订阅入库
+pt = loadTable(dbName, snapshotTbName)
+subscribeTable(tableName=snapshotTbName, actionName="saveSnapshotToDFS", offset=-2, handler=pt, msgAsTable=true, batchSize=200000, throttle=60)
+pt = loadTable(dbName, orderTbName)
+subscribeTable(tableName=orderTbName, actionName="saveOrderToDFS", offset=-2, handler=pt, msgAsTable=true, batchSize=200000, throttle=60)
+pt = loadTable(dbName, executionTbName)
+subscribeTable(tableName=executionTbName, actionName="saveExecutionToDFS", offset=-2, handler=pt, msgAsTable=true, batchSize=200000, throttle=60)
+go
+
+/** 查看订阅信息
+getStreamingStat().pubTables;
+getStreamingStat().pubConns;
+getStreamingStat().subWorkers;
+getStreamingStat().subConns;
+*/
+
+// AMD 订阅
+reorderedColNames = loadTable(dbName, snapshotTbName).schema().colDefs.name
+amdQuote::subscribe(handle, `snapshot, snapshot, 101, , handleSnapshotSubs{reorderedColNames=reorderedColNames})
+amdQuote::subscribe(handle, `snapshot, snapshot, 102, , handleSnapshotSubs{reorderedColNames=reorderedColNames})
+reorderedColNames = loadTable(dbName, orderTbName).schema().colDefs.name
+amdQuote::subscribe(handle, `order, order, 101, , handleOrderSubs{reorderedColNames=reorderedColNames})
+amdQuote::subscribe(handle, `order, order, 102, , handleOrderSubs{reorderedColNames=reorderedColNames})
+reorderedColNames = loadTable(dbName, executionTbName).schema().colDefs.name
+amdQuote::subscribe(handle, `execution, execution, 101, , handleExecutionSubs{reorderedColNames=reorderedColNames})
+amdQuote::subscribe(handle, `execution, execution, 102, , handleExecutionSubs{reorderedColNames=reorderedColNames})
+d = dict(INT, ANY)
+d[1] = orderExecution1
+d[2] = orderExecution2
+amdQuote::subscribe(handle, `orderExecution, d, 101)
+go
+
+// 可转债和 ETF 基金订阅
+def subscribeConvertibleBond(handle, reorderedColNames) {
+    // 通过代码规律过滤得到可转债代码表
+    codeList = amdQuote::getCodeList()
+    convertibleBondCodeSh = exec securityCode from codeList where marketType = 101 and (securityCode like "110%" or securityCode like "111%" or securityCode like "113%" or securityCode like "118%" or securityCode like "1320%")
+    convertibleBondCodeSz = exec securityCode from codeList where marketType = 102 and (securityCode like "123%" or securityCode like "127%" or securityCode like "128%")
+    
+    amdQuote::subscribe(handle, `bondSnapshot, objByName("snapshot"), 101, convertibleBondCodeSh, handleSnapshotSubs{reorderedColNames=reorderedColNames})
+    amdQuote::subscribe(handle, `bondSnapshot, objByName("snapshot"), 102, convertibleBondCodeSz, handleSnapshotSubs{reorderedColNames=reorderedColNames})
+}
+
+def subscribeEtfFund(handle, reorderedColNames) {
+    // 获取ETF代码表
+    codeList = exec securityCode from amdQuote::getETFCodeList()
+
+    amdQuote::subscribe(handle, `fundSnapshot, objByName("snapshot"), 101, codeList, handleSnapshotSubs{reorderedColNames=reorderedColNames})
+    amdQuote::subscribe(handle, `fundSnapshot, objByName("snapshot"), 102, codeList, handleSnapshotSubs{reorderedColNames=reorderedColNames})
+}
+
+reorderedColNames = loadTable(dbName, snapshotTbName).schema().colDefs.name
+try {
+    subscribeConvertibleBond(handle, reorderedColNames)
+    subscribeEtfFund(handle, reorderedColNames)
+} catch(ex) {
+    print(ex)
+    writeLog(ex)
+}
+go
+
+// 查看 AMD 订阅信息
+amdQuote::getStatus(handle)
+// 取消所有 AMD 订阅
+// amdQuote::unsubscribe(handle, `all)
+// 关闭 AMD 连接
+// amdQuote::close(handle)
+
+// 时延检查，需要配置option[`OutputElapsed] = true
+// select avg(nanosecond(perPenetrationTime)), max(nanosecond(perPenetrationTime)), min(nanosecond(perPenetrationTime)), median(nanosecond(perPenetrationTime)) from snapshot 
+// select avg(nanosecond(perPenetrationTime)), max(nanosecond(perPenetrationTime)), min(nanosecond(perPenetrationTime)), median(nanosecond(perPenetrationTime)) from execution
+// select avg(nanosecond(perPenetrationTime)), max(nanosecond(perPenetrationTime)), min(nanosecond(perPenetrationTime)), median(nanosecond(perPenetrationTime)) from order 
+// select avg(nanosecond(perPenetrationTime)), max(nanosecond(perPenetrationTime)), min(nanosecond(perPenetrationTime)), median(nanosecond(perPenetrationTime)) from orderExecution1
+// select avg(nanosecond(perPenetrationTime)), max(nanosecond(perPenetrationTime)), min(nanosecond(perPenetrationTime)), median(nanosecond(perPenetrationTime)) from orderExecution2 
