@@ -740,4 +740,34 @@ getJobStatus(jobid1)   // 查看任务状态
 
 ## 附录
 
- [DolphinDBModules.zip](script/Module_easyTLDataImport/DolphinDBModules.zip) 
+1. 数据表结构
+
+​	[snapshotCsvSchema.dos](../../Modules/easyTLDataImport/tbSchema/snapshotCsvSchema.dos) 
+
+​	[snapshotSchema.dos](../../Modules/easyTLDataImport/tbSchema/snapshotSchema.dos) 
+
+​	[entrustCsvSchema.dos](../../Modules/easyTLDataImport/tbSchema/entrustCsvSchema.dos) 
+
+​	[entrustSchema.dos](../../Modules/easyTLDataImport/tbSchema/entrustSchema.dos) 
+
+​	[tradeCsvSchema.dos](../../Modules/easyTLDataImport/tbSchema/tradeCsvSchema.dos) 
+
+​	[tradeSchema.dos](../../Modules/easyTLDataImport/tbSchema/tradeSchema.dos) 
+
+​	[orderQueueCsvSchema.dos](../../Modules/easyTLDataImport/tbSchema/orderQueueCsvSchema.dos) 
+
+2. 数据库和分区表创建
+
+​	[createDB.dos](../../Modules/easyTLDataImport/createDB.dos) 
+
+​	[createTB.dos](../../Modules/easyTLDataImport/createTB.dos) 
+
+3. 数据导入
+
+​	[loadOneDaySnapshot.dos](../../Modules/easyTLDataImport/loadOneDayData/loadOneDaySnapshot.dos) 
+
+​	[loadOneDayEntrust.dos](../../Modules/easyTLDataImport/loadOneDayData/loadOneDayEntrust.dos) 
+
+​	[loadOneDayTrade.dos](../../Modules/easyTLDataImport/loadOneDayData/loadOneDayTrade.dos) 
+
+​	[loadTLData.dos](../../Modules/easyTLDataImport/loadTLData.dos) 
