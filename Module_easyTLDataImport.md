@@ -742,7 +742,7 @@ getJobStatus(jobid1)   // 查看任务状态
 
 1. 数据表结构
 
-​	[snapshotCsvSchema.dos](../../Modules/easyTLDataImport/tbSchema/snapshotCsvSchema.dos) 
+​	[snapshotCsvSchema.dos](../../../DolphinDBModules/blob/master/easyTLDataImport/tbSchema/snapshotCsvSchema.dos) 
 
 ​	[snapshotSchema.dos](../../Modules/easyTLDataImport/tbSchema/snapshotSchema.dos) 
 
