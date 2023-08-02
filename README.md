@@ -192,9 +192,7 @@
     - [DolphinDB流式计算中证1000指数主买/主卖交易量](CSI_1000.md)
     - [公募基金历史数据基础分析教程](public_fund_basic_analysis.md)
     - [平均性能超Python10倍: 如何使用DolphinDB计算基金日频因子](fund_factor_contrasted_by_py.md)
-
     <!-- - [DolphinDB Kafka插件最佳实践指南](kafka_plugin_guide.md) -->
-
     - [中高频多因子库存储最佳实践](best_practices_for_multi_factor.md)
     - [金融 PoC 用户历史数据导入指导手册之股票 level2 逐笔篇](LoadDataForPoc.md)
     - [DolphinDB NSQ 插件最佳实践指南](best_implementation_for_NSQ_Plugin.md)
@@ -206,9 +204,7 @@
     - [DolphinDB 与 Python AirFlow 最佳实践](Best_Practices_for_DolphinDB_and_Python_AirFlow.md)
     - [金融因子流式实现](Streaming_computing_of_financial_quantifiers.md)
     - [Python + HDF5 因子计算与 DolphinDB 一体化因子计算方案对比](Python+HDF5_vs_DolphinDB.md)
-    
     - [DolphinDB 流计算在金融行业的应用：实时计算涨幅榜](Real-Time_Stock_Price_Increase_Calculation.md)
-    
     - [DolphinDB TopN 系列函数教程](DolphinDB_TopN.md)
     - [DolphinDB AMD 插件最佳实践指南](best_implementation_for_AMD_Plugin.md)
   - 物联网：
