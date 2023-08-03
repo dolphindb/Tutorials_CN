@@ -4,7 +4,7 @@ Kdb+ 以程序体积小、代码简洁、运行速度快而闻名。它是美国
 
 2018年初发布的 DolphinDB，同样是性能极佳的时间序列数据库。作为一款国产的高性能分布式数据库产品，DolphinDB 迅速崛起，成为国内头部券商、私募公募的首选方案。DolphinDB 功能强大的编程语言和高容量高速度的流数据分析系统，能在满足低延时高吞吐量数据读写的要求的同时，轻松实现因子挖掘、流式计算、股票行情回放、实时计算高频因子等功能，为金融和物联网领域的数据存储和分析计算提供一站式解决方案。近几年来，DolphinDB 天然的分布式构架，强大的流式增量计算能力，丰富的函数库，以及易用性等优势吸引了大量海内外用户使用 DolphinDB 代替 Kdb+。
 
-本教程作为 Kdb+ 使用者迁移到 DolphinDB 的一份简明参考，其考察了两者的相同点和区别，介绍了如何将 Kdb+ 数据迁移到 DolphinDB，并总结了从 Kdb+ 到 DolphinDB 编程语法方面的映射。
+本教程作为 Kdb+ 使用者迁移到 DolphinDB 的一份简明参考，考察了两者的相同点和区别，介绍了如何将 Kdb+ 数据迁移到 DolphinDB，并总结了从 Kdb+ 到 DolphinDB 编程语法方面的映射。
  
 - [从 Kdb+ 到 DolphinDB](#从-kdb-到-dolphindb)
   - [1. Kdb+ vs DolphinDB](#1-kdb-vs-dolphindb)
@@ -156,7 +156,7 @@ Orders2 = kdb::loadFile(DATA_DIR + "/2022.06.17/Orders/", DATA_DIR + "/sym")
 
 ##### 关于 NULL 和 INF <!-- omit in toc -->
 
-与 Kdb+ 不同，DolphinDB 不提供表示各个类型正负无穷值的字面量。当各类型数据溢出时，会被处理为该类型的 NULL 值。通常，在赋值语句或表达式中使用无返回值的函数时，也会得到一个 VOID 类型的 NULL。
+DolphinDB 不提供表示各个类型正负无穷值的字面量。对于整型、浮点类型和时间类型，可以使用 `00<数据类型符号>` 作为对应数据类型 NULL 值的字面量。当各类型数据溢出时，会被处理为该类型的 NULL 值。通常，在赋值语句或表达式中使用无返回值的函数时，也会得到一个 VOID 类型的 NULL。
 
 通过函数 `isVoid` 判断是否为 VOID 类型的 NULL，通过函数 `isNull` 和 `isValid` 可以检查所有 NULL 值，包括 VOID 和有类型的 NULL。对于不关心 NULL 类型的用户，建议使用 `isNull` 或 `isValid` 进行条件判断。
 
@@ -174,7 +174,7 @@ Orders2 = kdb::loadFile(DATA_DIR + "/2022.06.17/Orders/", DATA_DIR + "/sym")
 
 **说明：**
 - DolphinDB 的 ANY DICTIONARY 表示 JSON 数据类型。
-- DolphinDB 字典的键必须是标量，值可以是任何数据形式与数据类型。支持字典嵌套。Kdb+ 的字典在输出或进行遍历时，键值对会保留输入时的顺序，而 DolphinDB 的字典按照 key 在 bucket 内的顺序输出键值对。
+- DolphinDB 字典的键必须是标量，值可以是任何数据形式与数据类型。支持字典嵌套。Kdb+ 的字典在输出或进行遍历时，键值对会保留输入时的顺序，而 DolphinDB 的字典是否保留键值顺序由创建时用户传入的 ordered 参数决定。字典默认不保留键值输入顺序，按照 key 在 bucket 内的顺序输出键值对。若创建字典时用户指定 ordered = true，则键值对的顺序与输入顺序保持一致。
 - Kdb+ 的矩阵由嵌套的 list 表示，遵循行优先。DolphinDB 的矩阵提供数据类型 matrix 存放矩阵，遵循列优先。Kdb+ 矩阵输入到 DolphinDB 时需要转换方向。
 - DolphinDB 支持包括标量、向量、数据对、矩阵、集合、字典和表在内的多种数据形式，并针对不同的使用场景做了具体优化。请参考[数据形式](https://dolphindb.cn/cn/help/DataTypesandStructures/DataForms/index.html)。
  
