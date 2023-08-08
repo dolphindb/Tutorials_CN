@@ -129,14 +129,14 @@ synDataBaseOnline(restoreServerIP=restoreServerIP,restoreServerPort=restoreServe
 内存不能容纳当天数据时，使用上述脚本可能会导致 OOM。可使用 [sqlDS](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/s/sqlDS.html) 将备份数据按分区生成多个数据源，通过 [mr](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/m/mr.html) 函数将数据源逐个写入远程数据库。
 ```
 def writeData(dbName,tableName,t) : loadTable(dbName,tableName).append!(t)
-def writeRemoteDB(t, ip, port, dbName,tableName,writeData=writeData){
+def writeRemoteDB(t, ip, port, dbName,tableName,writeData){
 	conn = xdb(ip, port)
 	conn(login{`admin,`123456})
 	remoteRun(conn,writeData,dbName,tableName,t)
 }
 def synDataBaseOnline(ip, port,writeRemoteDB=writeRemoteDB){
 	ds = sqlDS(<select * from loadTable("dfs://db1","mt") where Timestamp > timestamp(date(now())) and Timestamp < now()>)
-	mr(ds, writeRemoteDB{,ip,port,"dfs://db1","mt"},,, false)
+	mr(ds, writeRemoteDB{,ip,port,"dfs://db1","mt",writeData},,, false)
 }
 login(`admin,`123456)
 restoreServerIP = '115.239.209.234'
