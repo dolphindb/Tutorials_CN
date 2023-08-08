@@ -565,7 +565,7 @@ order by employee_id
 
 <img src="./images/Standard_SQL_in_DolphinDB/3_3.png" width="70%">
 
-**注：**目前不支持形如 ` ALL (1400, 3000)` 这样的比较。
+**注**：目前不支持形如 ` ALL (1400, 3000)` 这样的比较。
 
 
 
