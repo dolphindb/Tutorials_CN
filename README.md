@@ -115,7 +115,7 @@
   - 插件开发与使用
     - [插件开发教程（介绍插件开发的方法与流程）](plugin_development_tutorial.md "介绍插件开发的方法与流程")
     - [插件开发深度解析（介绍插件开发中的常见问题）](plugin_advance.md "介绍插件开发中的常见问题")
-    - [DolphinDB VSCode 插件使用说明](https://gitee.com/dolphindb/vscode-extension/blob/master/README.zh.md "VSCode 插件使用说明")
+    - [DolphinDB VSCode 插件使用说明](https://gitee.com/dolphindb/vscode-extension/blob/main/README.zh.md "VSCode 插件使用说明")
   - 数据导入、交互与转换
     - [AWS S3 插件使用说明（如何编译、加载和使用该插件并实现 AWS S3 对象数据库与 DolphinDB 之间的数据交互）](../../../DolphinDBPlugin/blob/release200/aws/README.md "如何编译、加载和使用该插件并实现 AWS S3 对象数据库与 DolphinDB 之间的数据交互")
     - [Excel 插件（用于从 MS Excel 向 DolphinDB 数据库的数据导入，不含使用说明）](../../../excel-add-in "用于从 MS Excel 向 DolphinDB 数据库的数据导入，不含使用说明")
