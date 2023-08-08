@@ -849,7 +849,7 @@ order by employee_id
 - case when
 - 支持整型与 STRING/SYMBOL 类型字段 join
 
-**注：**目前仍然不支持 on 1=2 这样的常量表达式（对开发、框架代码可能有一些影响）。
+**注**：目前仍然不支持 on 1=2 这样的常量表达式（对开发、框架代码可能有一些影响）。
 
 ## 5 SQL 方言(dialect)兼容
 
