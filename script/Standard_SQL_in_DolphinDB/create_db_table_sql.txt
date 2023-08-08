@@ -1,0 +1,97 @@
+drop database if exists "dfs://hr"
+create database "dfs://hr" partitioned by HASH([INT, 10])
+dir = "/hdd/data/sqlstd/"
+
+// 创建数据表 jobs
+jobs_tmp = loadText(dir+"JOBS.csv")
+create table "dfs://hr"."jobs" (
+	JOB_ID SYMBOL,
+	JOB_TITLE STRING,
+	MIN_SALARY INT,
+	MAX_SALARY INT	
+)
+jobs = loadTable("dfs://hr", "jobs")
+jobs.append!(jobs_tmp)
+select * from jobs 
+
+// 创建数据表 job_history
+job_history_tmp=loadText(dir+"JOB_HISTORY.csv")
+create table "dfs://hr"."job_history" (
+	EMPLOYEE_ID INT,
+	START_DATE DATE,
+	END_DATE DATE,
+	JOB_ID SYMBOL,
+	DEPARTMENT_ID INT
+)
+partitioned by EMPLOYEE_ID
+
+job_history = loadTable("dfs://hr", "job_history")
+job_history.append!(job_history_tmp)
+select * from job_history
+
+
+// 创建数据表 locations
+locations_tmp=loadText(dir+"LOCATIONS.csv")
+create table "dfs://hr"."locations" (
+	LOCATION_ID INT,
+	STREET_ADDRESS STRING,
+	POSTAL_CODE LONG,
+	CITY STRING,
+	STATE_PROVINCE STRING,
+	COUNTRY_ID SYMBOL
+)
+locations = loadTable("dfs://hr", "locations")
+locations.append!(locations_tmp)
+select * from locations
+
+// 创建数据表 regions
+regions_tmp=loadText(dir+"REGIONS.csv")
+create table "dfs://hr"."regions" (
+	REGION_ID INT,
+	REGION_NAME STRING
+)
+regions = loadTable("dfs://hr", "regions")
+regions.append!(regions_tmp)
+select * from regions
+
+// 创建数据表 employees
+employees_tmp=loadText(dir+"EMPLOYEES.csv")
+create table "dfs://hr"."employees" (
+	EMPLOYEE_ID INT,
+	FIRST_NAME STRING,
+	LAST_NAME STRING,
+	EMAIL STRING,
+	PHONE_NUMBER STRING,
+	HIRE_DATE DATE,
+	JOB_ID SYMBOL,
+	SALARY INT,
+	COMMISSION_PCT DOUBLE,
+	MANAGER_ID INT,
+	DEPARTMENT_ID INT
+)
+employees = loadTable("dfs://hr", "employees")
+employees.append!(employees_tmp)
+select * from employees
+
+// 创建数据表 departments
+departments_tmp=loadText(dir+"DEPARTMENTS.csv")
+create table "dfs://hr"."departments" (
+	DEPARTMENT_ID INT,
+	DEPARTMENT_NAME STRING,
+	MANAGER_ID INT,
+	LOCATION_ID INT
+)
+departments = loadTable("dfs://hr", "departments")
+departments.append!(departments_tmp)
+select * from departments
+
+// 创建数据表 countries
+countries_tmp=loadText(dir+"COUNTRIES.csv")
+create table "dfs://hr"."countries" (
+	COUNTRY_ID SYMBOL,
+	COUNTRY_NAME STRING,
+	REGION_ID INT
+)
+countries= loadTable("dfs://hr", "countries")
+countries.append!(countries_tmp)
+select * from countries

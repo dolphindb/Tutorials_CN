@@ -59,6 +59,7 @@
   - [DolphinDB窗口计算综述](window_cal.md)
   - [DolphinDB SQL案例教程](DolphinDB_SQL_Case_Tutorial.md)
   - [DolphinDB SQL执行计划教程](DolphinDB_Explain.md)
+  - [DolphinDB SQL 标准化](Standard_SQL_in_DolphinDB.md)
   
 - 流计算
 
