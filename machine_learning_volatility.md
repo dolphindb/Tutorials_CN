@@ -354,13 +354,13 @@ select avg(CostTime) as avgCostTime, min(CostTime) as minCostTime, max(CostTime)
 
 **模型**
 
-[快速复现流处理模型 V1.30.18](https://www.dolphindb.cn/downloads/docs/machine_learning_volatility.zip)
+[快速复现流处理模型 V1.30.18](./data/machine_learning_volatility/realizedVolatilityModel_1.30.18.bin)
 
-[快速复现流处理模型 V2.00.6](https://www.dolphindb.cn/downloads/docs/machine_learning_volatility.zip)
+[快速复现流处理模型 V2.00.6](./data/machine_learning_volatility/realizedVolatilityModel_2.00.6.bin)
 
 **数据**
 
-[快速复现测试流处理 snapshot 数据](https://www.dolphindb.cn/downloads/docs/machine_learning_volatility.zip)
+[快速复现测试流处理 snapshot 数据](./data/machine_learning_volatility/testSnapshot.csv)
 
 **开发环境**
 
