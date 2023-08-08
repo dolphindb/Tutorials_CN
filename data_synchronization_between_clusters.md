@@ -144,7 +144,7 @@ restoreServerPort = 18848
 ```
 可执行以下函数触发备份：
 ```
-synDataBaseOnline(restoreServerIP=restoreServerIP,restoreServerPort=restoreServerPort)
+synDataBaseOnline(restoreServerIP,restoreServerPort)
 ```
 也可通过 `scheduleJob` 指定每天22:30定时执行
 ```
