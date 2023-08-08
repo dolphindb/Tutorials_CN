@@ -825,7 +825,7 @@ assert 1, eqObj(out.price, NULL NULL NULL NULL NULL 5.788743 -7.291889 7.031123 
 
 分布式SQL的第一个应用是计算无状态的因子。对于无状态的因子，即计算本身可能只涉及单条记录内一个或者几个字段。这样的计算可以利用分布式表的机制，在各分区内并行计算。
 
-以[第三章中的权重偏度因子](#333-快照数据的多档赋权无状态因子计算)为例，此因子计算只用了一个字段，且计算逻辑不涉及前后数据，所以在SQL中调用时，DolphinDB会自动在各分区内并行计算。如果目标数据是内存表，可以使其变为内存分区表，使之分布式并行计算。内存分区表的创建，参考[`createPartitionedTable`](https://www.dolphindb.cn/cn/help/200/FunctionsandCommands/FunctionReferences/c/createPartitionedTable.html)。
+以[第三章中的权重偏度因子](#333-快照数据的多档赋权无状态因子计算)为例，此因子计算只用了一个字段，且计算逻辑不涉及前后数据，所以在SQL中调用时，DolphinDB会自动在各分区内并行计算。如果目标数据是内存表，可以使其变为内存分区表，使之并行计算。内存分区表的创建，参考[`createPartitionedTable`](https://www.dolphindb.cn/cn/help/200/FunctionsandCommands/FunctionReferences/c/createPartitionedTable.html)。
 
 ```
 resWeight =  select TradeTime, SecurityID, `mathWghtSkew as factorname, mathWghtSkew(BidPrice, w)  as val from loadTable("dfs://LEVEL2_Snapshot_ArrayVector","Snap")  where date(TradeTime) = 2020.01.02
