@@ -27,7 +27,7 @@
 
 ## 2. DolphinDB 线程类型
 
-* **woker**
+* **worker**
 
   常规交互作业的工作线程。
   
@@ -177,7 +177,7 @@ DolphinDB 客户端接收到 datanode1 返回的信息后，经过反序列化�
 
 | 线程类型         | 配置参数               | 默认配置        |优化建议配置|
 | ---------------- | ---------------------- | -------------- | ---------- |
-| woker            | wokerNum               | CPU 的内核数   |license 限制的 CPU 核心数与物理机 CPU 核心数两者的最小值|
+| worker            | workerNum               | CPU 的内核数   |license 限制的 CPU 核心数与物理机 CPU 核心数两者的最小值|
 | local executor   | localExecutors         | workerNum-1  |   |
 | remote executor  | remoteExecutors        | 1            |集群的节点数-1*|
 | batch job worker | maxBatchJobWorker      | workerNum |   |
