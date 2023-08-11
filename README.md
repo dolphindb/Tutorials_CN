@@ -120,6 +120,7 @@
     - [AWS S3 插件使用说明（如何编译、加载和使用该插件并实现 AWS S3 对象数据库与 DolphinDB 之间的数据交互）](../../../DolphinDBPlugin/blob/release200/aws/README.md "如何编译、加载和使用该插件并实现 AWS S3 对象数据库与 DolphinDB 之间的数据交互")
     - [Excel 插件（用于从 MS Excel 向 DolphinDB 数据库的数据导入，不含使用说明）](../../../excel-add-in "用于从 MS Excel 向 DolphinDB 数据库的数据导入，不含使用说明")
     - [Feather 插件使用说明（用于 Apache Arrow 协议下的数据列式存储、读取和转换）](../../../DolphinDBPlugin/blob/release200/feather/README.md "Apache Arrow 协议下的数据列式存储、读取和转换")
+    - [formatArrow 插件使用说明（用于在 server 与 API 交互时对列式数据进行数据类型转换）](../../../DolphinDBPlugin/blob/release200/formatArrow/README_CN.md "用于在 server 与 API 交互时对列式数据进行数据类型转换")
     - [HBase 插件使用说明（介绍如何通过 Thrift 接口连接 HBase 数据源并读取数据）](../../../DolphinDBPlugin/blob/release200/hbase/README.md "如何通过 Thrift 接口连接 HBase 数据源并读取数据")
     - [HDF5 插件使用说明（介绍如何将 HDF5 文件导入 DolphinDB 并完成数据类型转换）](../../../DolphinDBPlugin/blob/release200/hdf5/README_CN.md "如何将 HDF5 文件导入 DolphinDB 并完成数据类型转换")
     - [HDFS 插件使用说明（介绍如何读取 Hadoop 分布式文件系统上的文件信息及传输 HDFS 上的文件至本地）](../../../DolphinDBPlugin/blob/release200/hdfs/README.md "介绍如何读取 Hadoop 分布式文件系统上的文件信息及传输 HDFS 上的文件至本地")
