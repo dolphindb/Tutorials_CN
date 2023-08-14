@@ -41,6 +41,7 @@
   - [DolphinDB 分布式表数据更新原理和性能介绍](dolphindb_update.md)
   - [DolphinDB TSDB 存储引擎介绍](tsdb_engine.md)
   - [DECIMAL 使用教程](DECIMAL.md)
+  - [DolphinDB 计算精度问题与 DECIMAL 类型](DECIMAL_Calculation_Characteristics.md)
   - [分级存储](hierarchical_storage.md)
   - [数据迁移与平衡](data_move_rebalance.md)
   - [DolphinDB 集群间的异步复制](Asynchronous_Replication.md)
