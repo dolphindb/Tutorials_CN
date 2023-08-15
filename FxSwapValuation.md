@@ -88,13 +88,12 @@ mode=single
 maxMemSize=64
 maxConnections=512
 workerNum=8
-localExecutors=7
 newValuePartitionPolicy=add
 webWorkerNum=2
 dataSync=1
 ```
 
-单节点部署教程：[单节点部署](./standalone_server.md)
+单节点部署教程：[单节点部署](https://gitee.com/dolphindb/Tutorials_CN/blob/master/standalone_server.md)
 
 ## 3. 外汇掉期估值的普通实现
 
@@ -144,7 +143,7 @@ result = fx_contract join table(k as valuation)
 k = ploop(valuationDtmRate{today, swap_rate, IR_swap},fx_contract.maturity_date, fx_contract.far_leg_spot_rate, fx_contract.near_leg_amount).flatten()
 result = fx_contract join table(k as valuation)
 ```
-> 注意：`ploop`/`peach` 的并行度由配置文件中的 localExecutors 控制，默认值是 CPU 内核数减1。在批流一体的因子实现中，不建议使用 `ploop`/`peach` 并行加速。具体并行策略可以参考因子最佳实践中的[并行计算章节](./best_practice_for_factor_calculation.md#73-%E5%B9%B6%E8%A1%8C%E8%AE%A1%E7%AE%97)。
+> 注意：在批流一体的因子实现中，不建议使用 `ploop`/`peach` 并行加速。具体并行策略可以参考因子最佳实践中的[并行计算章节](https://gitee.com/dolphindb/Tutorials_CN/blob/master/best_practice_for_factor_calculation.md#73-%E5%B9%B6%E8%A1%8C%E8%AE%A1%E7%AE%97)。
 
 ## 4. 外汇掉期估值的优化实现
 

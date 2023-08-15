@@ -182,7 +182,7 @@ DolphinDB 以分区为单位管理海量数据，通常数据处理以一个分�
 
 - 多线程
 
-现代操作系统及软件使用多线程技术来充分发挥多核服务器的硬件优势。DolphinDB 大量应用了多线程技术，就分布式 SQL 而言，会使用多个线程（[localExectors](https://www.dolphindb.cn/cn/help/DatabaseandDistributedComputing/Configuration/StandaloneMode.html) 配置参数）来并发处理分区数据。
+现代操作系统及软件使用多线程技术来充分发挥多核服务器的硬件优势。DolphinDB 大量应用了多线程技术，就分布式 SQL 而言，会使用多个线程来并发处理分区数据。
 
 - 分布式
 
@@ -243,7 +243,7 @@ for(aDate in allDays){
 
 - 分布式，并行度高
 
-以上 select 部分的代码是分布式、并行执行的，并行度取决于分区的个数及集群可用的 [localExecutors](https://www.dolphindb.cn/cn/help/DatabaseandDistributedComputing/Configuration/StandaloneMode.html)（一般设置为 CPU 核数 - 1）。具体来说，按本文中的开发环境配置（即每个节点配置15个 local executor，3节点总共45个），以及源表 trade 的分区方案，并行度为20。相比于单线程处理数据，理论执行速度提高至20倍，实测按一个交易日数据提升至18倍。进一步地，可以通过 submitJob 的方式并行执行多个任务。
+以上 select 部分的代码是分布式、并行执行的；进一步地，可以通过 submitJob 的方式并行执行多个任务。
 
 - 数据访问次数少
 

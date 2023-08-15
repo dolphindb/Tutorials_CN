@@ -120,7 +120,6 @@ mode=single
 maxMemSize=64
 maxConnections=512
 workerNum=8
-localExecutors=7
 maxConnectionPerSite=15
 newValuePartitionPolicy=add
 webWorkerNum=2
@@ -136,7 +135,7 @@ lanCluster=0
 
 > 配置参数persistenceDir需要开发人员根据实际环境配置。
 
-单节点部署教程：[单节点部署](./standalone_server.md)
+单节点部署教程：[单节点部署](https://gitee.com/dolphindb/Tutorials_CN/blob/master/standalone_server.md)
 
 ### 2.3 DolphinDB client开发环境
 

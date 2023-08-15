@@ -108,7 +108,6 @@ unzip dolphindb.zip -d </path/to/directory>
   dfsReplicaReliabilityLevel=2
   dataSync=1
   workerNum=4
-  localExecutors=3
   maxConnections=512
   maxMemSize=8
   lanCluster=0
@@ -147,7 +146,6 @@ unzip dolphindb.zip -d </path/to/directory>
   maxMemSize=32
   maxConnections=512
   workerNum=4
-  localExecutors=3
   maxBatchJobWorker=4
   chunkCacheEngineMemSize=2
   TSDBCacheEngineSize=1
@@ -171,7 +169,6 @@ unzip dolphindb.zip -d </path/to/directory>
   localSite=10.0.0.80:8901:P1-agent
   controllerSite=10.0.0.80:8900:controller8900
   workerNum=4
-  localExecutors=3
   maxMemSize=4
   lanCluster=0
   ```
@@ -193,7 +190,6 @@ unzip dolphindb.zip -d </path/to/directory>
   localSite=10.0.0.81:8901:P2-agent
   controllerSite=10.0.0.80:8900:controller8900
   workerNum=4
-  localExecutors=3
   maxMemSize=4
   lanCluster=0
   ```
@@ -215,7 +211,6 @@ unzip dolphindb.zip -d </path/to/directory>
   localSite=10.0.0.82:8901:P3-agent
   controllerSite=10.0.0.80:8900:controller8900
   workerNum=4
-  localExecutors=3
   maxMemSize=4
   lanCluster=0
   ```

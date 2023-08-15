@@ -53,7 +53,7 @@
 本教程示例 DolphinDB 搭建的行情回放服务架构如下图所示：
 
 <figure align="left">
-<img src="./images/appendices_market_replay_bp/1_1.png" width=65%>
+<img src="./images/appendices_market_replay_bp/1_1.png" width=50%>
     <figcaption>行情回放服务架构</figcaption>
 </figure>
 
@@ -66,7 +66,7 @@
 本教程示例 DolphinDB 搭建行情回放服务的具体操作步骤如下图所示：
 
 <figure align="left">
-<img src="./images/appendices_market_replay_bp/1_2.png" width=65%>
+<img src="./images/appendices_market_replay_bp/1_2.png" width=50%>
     <figcaption>搭建步骤</figcaption>
 </figure>
 
@@ -485,7 +485,7 @@ auto myHandler = [&](vector<Message> msgs)
 根据 5.1.4 构造的消费函数，两支股票（“000616.SZ” &“000681.SZ”）最大速度回放三张表一天数据输出如下图所示：
 
 <figure align="left">
-<img src="./images/appendices_market_replay_bp/5_1.png" width=70%>
+<img src="./images/appendices_market_replay_bp/5_1.png" width=60%>
     <figcaption>消费输出结果</figcaption>
 </figure>
 
@@ -542,7 +542,7 @@ def myHandler(lst):
 根据 5.2.3 构造的消费函数，两支股票（“000616.SZ” &“000681.SZ”）最大速度回放三张表一天数据输出如下图所示：
 
 <figure align="left">
-<img src="./images/appendices_market_replay_bp/5_2.png" width=70%>
+<img src="./images/appendices_market_replay_bp/5_2.png" width=60%>
     <figcaption>消费输出结果</figcaption>
 </figure>
 
@@ -618,7 +618,6 @@ def myHandler(lst):
 maxMemSize=128
 maxConnections=5000
 workerNum=24
-localExecutors=23
 webWorkerNum=2
 chunkCacheEngineMemSize=16
 newValuePartitionPolicy=add
@@ -715,5 +714,3 @@ Python API 教程：[Python API 教程](https://gitee.com/dolphindb/api_python3/
 - [C++ 源码](script/appendices_market_replay_bp/cpp_replay.cpp) 
 - [Python 源码](script/appendices_market_replay_bp/python_replay.py) 
 - [C++ 测试源码](script/appendices_market_replay_bp/cpp_replay_test.cpp) 
-
-

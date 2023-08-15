@@ -4,17 +4,17 @@
 
 ## 1.任务管理
 
-工作线程（Worker）接收客户端请求，将任务分解为多个小任务，根据任务的粒度自己执行或者发送给执行线程 localExecutor 或 remoteExecutor 执行。
+工作线程（Worker）接收客户端请求，将任务分解为多个小任务，根据任务的粒度自己执行或者发送给执行线程 localExecutor 、交给下级线程执行或者由 remoteExecutor 发送到远端执行。
 
 - Worker
 
   常规交互作业的工作线程。每个节点都存在 Worker 线程，可以分为以下几类。
 
-  - ZeroWorker, FirstWorker, SecondWorker, ThirdWorker, ForthWorker
+  - ZeroWorker, FirstWorker, SecondWorker, ThirdWorker, ForthWorker, FifthWorker, SixthWorker
 
-    客户端提交至节点的作业为0级，由 ZeroWorker 处理。根据作业所涉及到的分区，ZeroWorker 将其分解为多个子任务。其中本地节点上的子任务由 ZeroWorker 与 localExecutor 并行执行；需要由远程节点执行的子任务则降低为1级，并通过 remoteExecutor 发送到对应节点上的 FirstWorker 处理。以此类推，若某个级别的子任务需要进一步拆解，则拆分出来的由远程节点执行的子任务降低一级，发送至远程节点上对应层级的 Worker 处理。
+    客户端提交至节点的作业为0级，由 ZeroWorker 处理。根据作业所涉及到的分区，ZeroWorker 将其分解为多个子任务。其中本地节点上的子任务由 ZeroWorker 与 FirstWorker 并行执行；需要由远程节点执行的子任务则降低为1级，并通过 remoteExecutor 发送到对应节点上的 FirstWorker 处理。以此类推，若某个级别的子任务需要进一步拆解，则拆分出来的由远程节点执行的子任务降低一级，发送至远程节点上对应层级的 Worker 处理。
 
-    ZeroWorker 和 FirstWorker 的数量由 `workerNum` 决定，默认值为机器上的 CPU 核数，最大值不超过 license 中的最大 核数。其余层级的 Work 数量为上级的0.75倍，最小个数为1。
+    ZeroWorker, FirstWorker, SecondWorker 的数量由 `workerNum` 决定，分别为workerNum, workerNum-1, workerNum*0.75，`workerNum` 默认值为机器上的 CPU 核数，最大值不超过 license 中的最大核数。其余层级的 Work 数量为上级的1/2，最小为1。
 
   - UrgentWorker
 
@@ -27,12 +27,6 @@
   - InfraWorker
 
     开启高可用后，用于接收 raft 心跳汇报的线程，防止集群负载大时，心跳信息无法及时汇报。默认有2个该线程。
-
-- LocalExecutor
-
-  本地执行线程。Worker 拆解完任务后生成的本地子任务队列，由同一节点下的 localExecutor 执行。所有 Worker 共享本地执行线程，每个 localExecutor 一次只能处理一个子任务。
-
-  通过 `localExecutors` 配置线程个数，默认为机器上的 CPU 核数减1。
 
 - RemoteExecutor
 
@@ -51,12 +45,6 @@
   DynamicWorker 是动态工作线程，作为 Worker 的补充。DynamicWorkerManager 是创建 DynamicWorker 的线程，每个节点有且仅有一个该线程。如果所有的工作线程被占满，有新任务到来时，通过该线程创建 DynamicWorker 来执行新任务。根据系统并发任务的繁忙程度，总共可以创建三组动态工作线程，每一个级别可以创建 maxDynamicWorker 个动态工作线程。
 
   动态工作线程在任务执行完后若闲置60秒则会被系统自动回收，不再占用系统资源。maxDynamicWorker 的默认值为 workerNum。
-
-- DynamicExecutorManager 和 DynamicExecutor
-
-  与 DynamicWorkerManager 和 DynamicWorker 类似，DynamicExecutor 是由 DynamicWorkerManager 动态创建的执行线程。DynamicExecutor 线程数量上限由 `maxDynamicLocalExecutor` 决定，默认值为 localExecutors。DynamicWorkerManager 最多可以创建3组动态执行线程，每组线程最多为 maxDynamicLocalExecutor 个。
-
-  DynamicExecutor 在闲置60秒后被自动回收。
 
 - BlockIOWorker
 

@@ -326,7 +326,7 @@ symbol exchange cycle tradingDay date       time      open  high  low   close vo
 
 ### 3.1 单个文件多线程载入内存
 
-[`ploadText`](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/p/ploadText.html)函数可将一个文本文件以多线程的方式载入内存。该函数与[`loadText`](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/l/loadText.html)函数的语法是一致的，区别在于，`ploadText`函数可以快速载入大型文件（至少16MB），并且生成内存分区表。它充分利用了多核CPU来并行载入文件，并行程度取决于服务器本身CPU核数量和节点的localExecutors配置。
+[`ploadText`](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/p/ploadText.html)函数可将一个文本文件以多线程的方式载入内存。该函数与[`loadText`](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/l/loadText.html)函数的语法是一致的，区别在于，`ploadText`函数可以快速载入大型文件（至少16MB），并且生成内存分区表。它充分利用了多核CPU来并行载入文件，并行程度取决于服务器本身CPU核数量和节点的workerNum配置。
 
 下面比较`loadText`函数与`ploadText`函数导入同一个文件的性能。
 

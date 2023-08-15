@@ -231,20 +231,12 @@ res = select dbtime, SecurityID,flow(BidSize1,OfferSize1, OfferPX1, BidPX1) as F
 
 - 并行调用
 
-DolphinDB 计算框架会将一个大的计算任务拆解成多个子任务进行并行计算。所以，在以上面的 Sql 进行计算时，会自动计算数据涉及的分区，并按照配置的参数 workerNum 和 localExecutors 所限制的最大工作线程数量，来自动进行多线程并行计算。但在本次对比中，我们需要在指定并发数下的进行一体化计算。我们可以通过修改 DolphinDB 配置文件中的 workerNum 和 localExecutors 参数来精确地限制系统资源的使用。在DolphinDB 的多线程机制中，任务分配线程也会参与计算，实际工作线程数量为 `localExecutors` 数量加 1 。参数调整与实际工作线程数量的关系如下：
-
-| `workerNum` 数量 | `localExecutors` 数量 | **实际工作线程数量** |
-| :--------------- | :-------------------- | :------------------- |
-| 1                | 0                     | 1                    |
-| 2                | 1                     | 2                    |
-| …                | …                     | …                    |
-| 20               | 19                    | 20                   |
+DolphinDB 计算框架会将一个大的计算任务拆解成多个子任务进行并行计算。所以，在以上面的 Sql 进行计算时，会自动计算数据涉及的分区，并按照配置的参数 workerNum 所限制的最大工作线程数量，来自动进行多线程并行计算。但在本次对比中，我们需要在指定的并发数下进行一体化计算。我们可以通过修改 DolphinDB 配置文件中的 workerNum 参数来精确地限制系统资源的使用。
 
 参数修改示例如下：
 
 ```
 workerNum=20
-localExecutors=19
 ```
 
 通过参数调整，即可控制本次因子通过 DolphinDB Sql 引擎调用计算时的 CPU 资源使用并行度。

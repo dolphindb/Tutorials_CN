@@ -398,7 +398,6 @@ mode=single
 maxMemSize=32
 maxConnections=512
 workerNum=8
-localExecutors=7
 maxConnectionPerSite=15
 newValuePartitionPolicy=add
 webWorkerNum=2

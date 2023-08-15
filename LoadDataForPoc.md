@@ -337,7 +337,7 @@ def partCol(mutable memTable)
 
 #### 2.2.3 并行导入
 
-并行导入能够快速导入数据，这种导入方法会占用比较多的内存，所以在导入前，要配置合理的并行度。workerNum 和 localExecutors 可以控制并行度，估算方式为，**可用内存除以一天的文件大小，得到 workerNum 的值，localExecutors 值配置为 workerNum - 1。** 可用内存的值是由 maxMemSize 参数确定的，一般配置为机器可用内存的 80%。此外，也要确保，maxMemSize 的值不大于 license 文件限制的内存大小。
+并行导入能够快速导入数据，这种导入方法会占用比较多的内存，所以在导入前，要配置合理的并行度。workerNum 可以控制并行度，估算方式为，**可用内存除以一天的文件大小，得到 workerNum 的值。** 可用内存的值是由 maxMemSize 参数确定的，一般配置为机器可用内存的 80%。此外，也要确保，maxMemSize 的值不大于 license 文件限制的内存大小。
 
 并行导入时，多个任务不能同时写入一个分区，在做任务分配时，要确保不同任务写入不同的分区。因为一级分区为天，不同日期的数据会写到不同的分区。所以，推荐以每天数据与任务一一对应的方式来并行导入。
 
@@ -406,7 +406,7 @@ errorMsg 可能的错误信息及解决方式如下：
 
 并行导入追求高速的写入性能，通过配置多块磁盘，可发挥硬盘并行 IO 的能力。通过单机配置文件 dolphindb.cfg 或集群配置文件 cluster.cfg 中的 volumes 参数进行磁盘配置。详细的磁盘配置方法详见：[磁盘参数](https://www.dolphindb.cn/cn/help/DatabaseandDistributedComputing/Configuration/ConfigParamRef.html#id15)。
 
-并行导入时，通过观察硬盘的写入速度、内存消耗情况、CPU 利用率、集群间网络速率，查看资源使用情况。如果内存、CPU 和集群间网络都还有盈余，硬盘的 IO 还没有饱和，可以把 workerNum 和 localExecutors 配置修改的大一些，提升并行度。
+并行导入时，通过观察硬盘的写入速度、内存消耗情况、CPU 利用率、集群间网络速率，查看资源使用情况。如果内存、CPU 和集群间网络都还有盈余，硬盘的 IO 还没有饱和，可以把 workerNum 配置修改的大一些，提升并行度。
 
 总而言之，通过对并行任务的合理调度，充分利用某一类硬件的物理性能，达到硬件可以支持的最大导入速度。
 
@@ -432,7 +432,7 @@ errorMsg 可能的错误信息及解决方式如下：
 
 5. 执行过程中，报 out of memory 错误，怎么处理？
 
-答：这是因为导入过程中内存不够用了。如果使用的是社区版本 license，请联系负责支持的销售人员，获取试用版本 license。然后，查看 maxMemSize 参数的配置是否远小于系统内存，建议配置为系统内存的 80%。 最后，检查 workerNum 和 localExecutors 配置，合理配置值的计算方法为：可用内存除以单个文件大小向下取整得到 workerNum 的值，localExecutors 的值为 workerNum 减 1。
+答：这是因为导入过程中内存不够用了。如果使用的是社区版本 license，请联系负责支持的销售人员，获取试用版本 license。然后，查看 maxMemSize 参数的配置是否远小于系统内存，建议配置为系统内存的 80%。 最后，检查 workerNum 配置，合理配置值的计算方法为：可用内存除以单个文件大小向下取整得到 workerNum 的值。
 
 6. nsf 系统导入时，报 Bad file descriptor 错误，怎么解决？
 

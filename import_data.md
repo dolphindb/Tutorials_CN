@@ -72,7 +72,7 @@ update schemaTb set type=`LONG where name=`volume        tt=loadText(dataFilePat
 
 ### 2.2. `ploadText`
 
-`ploadText`函数的特点可以快速载入大文件（至少16MB）。它在设计中充分利用了多核CPU来并行载入文件，并行程度取决于服务器本身CPU核数量和节点的localExecutors配置。
+`ploadText`函数的特点可以快速载入大文件（至少16MB）。它在设计中充分利用了多核CPU来并行载入文件，并行程度取决于服务器本身CPU核数量和节点的workerNum配置。
 
 首先通过脚本生成一个4G左右的CSV文件：
 

@@ -296,14 +296,12 @@ localSite,mode
 在配置文件 *cluster.cfg* 中，需要使用前缀来区分数据节点与计算节点的配置项。
 ```
 CN%.workerNum=64
-CN%.localExecutors=63
 CN%.maxConnections=3000
 CN%.maxMemSize=256
 CN%.dataSync=0
 DN%.maxConnections=512
 DN%.maxMemSize=128
 DN%.workerNum=32
-DN%.localExecutors=31
 DN%.chunkCacheEngineMemSize=6
 DN%.dataSync=1
 DN%.redoLogDir=/ssd/ssd0/wfHuang/volumes/redoLog
@@ -648,7 +646,7 @@ limit 10
 
 ## 4.3 参数设置
 
-计算节点不需要设置 DFS 表存储相关的参数，包括：*volumes*, *chunkCacheEngineMemSize*, *tsdbCacheEngineSize*, *redoLogDir* 等。计算节点的核心参数包括：*MaxMemSize*, *MaxConnections*, *workerNum*, *localExecutor*，*maxQueryResultLimit *等。具体设置请参考手册[参数配置](https://www.dolphindb.cn/cn/help/DatabaseandDistributedComputing/Configuration/index.html) 。
+计算节点不需要设置 DFS 表存储相关的参数，包括：*volumes*, *chunkCacheEngineMemSize*, *tsdbCacheEngineSize*, *redoLogDir* 等。计算节点的核心参数包括：*MaxMemSize*, *MaxConnections*, *workerNum*, *maxQueryResultLimit *等。具体设置请参考手册[参数配置](https://www.dolphindb.cn/cn/help/DatabaseandDistributedComputing/Configuration/index.html) 。
 
 ## 4.4 计算节点扩缩容
 
@@ -662,7 +660,6 @@ limit 10
 ```
 mode=agent
 workerNum=4
-localExecutors=3
 localSite=192.192.168.4:8950:C4-agent
 controllerSite=192.192.168.4:8990:controller3
 sites=192.192.168.4:8950:C4-agent:agent,192.192.168.2:8990:controller1:controller,192.192.168.3:8990:controller2:controller,192.192.168.4:8990:controller3:controller
