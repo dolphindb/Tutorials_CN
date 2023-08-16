@@ -643,7 +643,7 @@ msum(m,3,1)
 2020.01.06|13 30
 ```
 
-矩阵运算中，也可以做复杂的窗口嵌套。曾在2.1.2.1节中提到的98号因子也可以在矩阵中通过几行代码实现（trade 表有需要可以自行模拟数据，或用sample数据  [CNTRADE](data/window_cal/CNTRADE.zip)）：
+矩阵运算中，也可以做复杂的窗口嵌套。曾在2.2.1节中提到的98号因子也可以在矩阵中通过几行代码实现（trade 表有需要可以自行模拟数据，或用 sample 数据  [CNTRADE](data/window_cal/CNTRADE.zip)）：
 
 ```
 // 输入表trade的schema如下，如需要可自行模拟数据：
