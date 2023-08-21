@@ -222,6 +222,7 @@
     - [基于 DolphinDB 机器学习的出租车行程时间预测](Forecast_of_Taxi_Trip_Duration.md)
     - [地震波形数据存储解决方案](Seismic_waveform_data_storage.md)
     - [使用 DolphinDB 和机器学习对地震波形数据进行预测](Earthquake_Prediction_with_DolphinDB_and_Machine_Learning.md)
+    - [PIP 降采样算法文章](PIP_in_DolphinDB.md)
 
 - 入门和测试
 
