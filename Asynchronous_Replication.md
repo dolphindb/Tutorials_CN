@@ -126,8 +126,8 @@ vim ./cluster.cfg
 
 ```
 clusterReplicationMode=slave
-replicationExecutionUsername=admin
-replicationExecutionPassword=123456
+clusterReplicationExecutionUsername=admin
+clusterReplicationExecutionPassword=123456
 ```
 
 在配置中指定了用于执行集群间异步复制的用户名和密码。**必须确保该用户有事务操作的相关权限**，即对于主集群上执行的操作，该用户在从集群上同样有执行的权限，否则异步复制任务会失败。关于 DolphinDB 权限的具体介绍请参考[用户权限管理](https://www.dolphindb.cn/cn/help/SystemManagement/UserAccessControl.html)。
