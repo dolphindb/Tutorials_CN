@@ -178,7 +178,7 @@ getDatabaseClusterReplicationStatus()
 
 查询结果如下，**dbName** 表示库名，**enabled** 表示开启状态。
 
-<img src="./images/Asynchronous_Replication/3_1.png" width=30%>
+<img src="./images/Asynchronous_Replication/3_1.png" width=20%>
 
 ### 3.2 查询异步复制状态
 
@@ -232,7 +232,7 @@ select count(*) from loadTable("dfs://testDB", "testTB")
 
 返回结果如下：
 
-<img src="./images/Asynchronous_Replication/3_2.png" width=20%>
+<img src="./images/Asynchronous_Replication/3_2.png" width=15%>
 
 从集群对应的分区表中插入了 1210000 条数据。可以确认主集群中的数据已同步到从集群中。
 
