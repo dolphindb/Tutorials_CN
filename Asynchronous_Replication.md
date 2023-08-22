@@ -170,7 +170,7 @@ setDatabaseForClusterReplication(db, true)
 schema(db).clusterReplicationEnabled
 ```
 
-若执行结果返回 true，则说明异步复制功能已启用。也可以通过 [*getDatabaseClusterReplicationStatus*](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/g/getDatabaseClusterReplicationStatus.html) 查看所有数据库的异步复制开启状态，但请注意，使用该函数的前提是数据库中存在数据。
+若执行结果返回 true，则说明异步复制功能已启用。也可以通过 [getDatabaseClusterReplicationStatus](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/g/getDatabaseClusterReplicationStatus.html) 查看所有数据库的异步复制开启状态，但请注意，使用该函数的前提是数据库中存在数据。
 
 ```
 getDatabaseClusterReplicationStatus()
@@ -178,7 +178,7 @@ getDatabaseClusterReplicationStatus()
 
 查询结果如下，**dbName** 表示库名，**enabled** 表示开启状态。
 
-<img src="./images/Asynchronous_Replication/3_1.png" width=40%>
+<img src="./images/Asynchronous_Replication/3_1.png" width=30%>
 
 ### 3.2 查询异步复制状态
 
@@ -232,7 +232,7 @@ select count(*) from loadTable("dfs://testDB", "testTB")
 
 返回结果如下：
 
-<img src="./images/Asynchronous_Replication/3_2.png" width=30%>
+<img src="./images/Asynchronous_Replication/3_2.png" width=20%>
 
 从集群对应的分区表中插入了 1210000 条数据。可以确认主集群中的数据已同步到从集群中。
 
@@ -249,13 +249,13 @@ select count(*) from loadTable("dfs://testDB", "testTB")
 rpc(getControllerAlias(), getMasterReplicationStatus)
 ```
 
-[*getMasterReplicationStatus*](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/g/getMasterReplicationStatus.html) 只能在控制节点上执行，用户可以通过 `rpc` 函数在控制节点上进行调用。返回结果如下。
+[getMasterReplicationStatus](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/g/getMasterReplicationStatus.html) 只能在控制节点上执行，用户可以通过 `rpc` 函数在控制节点上进行调用。返回结果如下。
 
 <img src="./images/Asynchronous_Replication/3_3.png" width=80%>
 
 主集群生成了三个异步复制任务，分别对应创建数据库、创建表和插入数据。关于上图中各参数的介绍请参考[函数介绍](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/g/getMasterReplicationStatus.html)。
 
-与之相对应，在 dataNodeSlave 上使用 [*getSlaveReplicationStatus*](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/g/getSlaveReplicationStatus.html)[ ](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/g/getSlaveReplicationStatus.html?highlight=异步复制)可以查询从集群任务执行队列的状态：
+与之相对应，在 dataNodeSlave 上使用 [getSlaveReplicationStatus](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/g/getSlaveReplicationStatus.html)[ ](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/g/getSlaveReplicationStatus.html?highlight=异步复制)可以查询从集群任务执行队列的状态：
 
 ```
 rpc(getControllerAlias(), getSlaveReplicationStatus)
@@ -267,7 +267,7 @@ rpc(getControllerAlias(), getSlaveReplicationStatus)
 
 从集群拉取了主集群上生成的三个任务并完成执行。
 
-在 dataNodeMaster 上使用 [*getRecentSlaveReplicationInfo*](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/g/getRecentSlaveReplicationInfo.html) 可以查看跨集群异步复制进程中，连接到主集群的各从集群最近一次的任务状态。
+在 dataNodeMaster 上使用 [getRecentSlaveReplicationInfo](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/g/getRecentSlaveReplicationInfo.html) 可以查看跨集群异步复制进程中，连接到主集群的各从集群最近一次的任务状态。
 
 ```
 rpc(getControllerAlias(), getRecentSlaveReplicationInfo)
@@ -279,7 +279,7 @@ rpc(getControllerAlias(), getRecentSlaveReplicationInfo)
 
 从集群最近一次拉取任务时通过控制节点 10.0.0.3:8711 进行连接，最近完成任务的 taskID 为 3。
 
-若想获取从集群异步复制的任务进度和耗时，可以在 dataNodeSlave 上使用 [*getClusterReplicationMetrics*](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/g/getClusterReplicationMetrics.html) 进行查询。
+若想获取从集群异步复制的任务进度和耗时，可以在 dataNodeSlave 上使用 [getClusterReplicationMetrics](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/g/getClusterReplicationMetrics.html) 进行查询。
 
 ```
 rpc(getControllerAlias(), getClusterReplicationMetrics, 30)
@@ -292,7 +292,7 @@ rpc(getControllerAlias(), getClusterReplicationMetrics, 30)
 过去 30s 内完成了三个任务，任务平均耗时为 00:00:00.537。  
 
 :bulb:**注意**：  
-若将上述例子中最后一个参数值改为-1，即`rpc(getControllerAlias(),getClusterReplicationMetrics, -1)`，则返回自异步复制开启后的所有状态信息。
+若将上述例子中最后一个参数值改为-1，即 `rpc(getControllerAlias(),getClusterReplicationMetrics, -1)`，则返回自异步复制开启后的所有状态信息。
 
 ### 3.3 停止或关闭异步复制
 
@@ -302,17 +302,17 @@ rpc(getControllerAlias(), getClusterReplicationMetrics, 30)
 rpc(getControllerAlias(), stopClusterReplication)
 ```
 
-若在主集群上执行 [*stopClusterReplication*](https://www.dolphindb.cn/cn/help/FunctionsandCommands/CommandsReferences/s/stopClusterReplication.html)，集群异步复制状态转为 "DISABLED"，在此之后创建的任务将不会放到发送队列中；若在从集群上执行，从集群停止从主集群读取新任务，但正在执行中的任务不会停止。
+若在主集群上执行 [stopClusterReplication](https://www.dolphindb.cn/cn/help/FunctionsandCommands/CommandsReferences/s/stopClusterReplication.html)，集群异步复制状态转为 "DISABLED"，在此之后创建的任务将不会放到发送队列中；若在从集群上执行，从集群停止从主集群读取新任务，但正在执行中的任务不会停止。
 
-若希望重新开启异步复制，可通过 [*startClusterReplication*](https://www.dolphindb.cn/cn/help/FunctionsandCommands/CommandsReferences/s/startClusterReplication.html)  重新启动，集群状态将转为 "ENABLED"。该函数同样只能在控制节点上调用。
+若希望重新开启异步复制，可通过 [startClusterReplication](https://www.dolphindb.cn/cn/help/FunctionsandCommands/CommandsReferences/s/startClusterReplication.html)  重新启动，集群状态将转为 "ENABLED"。该函数同样只能在控制节点上调用。
 
-当完成异步复制任务之后希望关闭数据库的异步复制功能时，可使用 [*setDatabaseForClusterReplication*](https://www.dolphindb.cn/cn/help/FunctionsandCommands/CommandsReferences/s/setDatabaseForClusterReplication.html) 来关闭。
+当完成异步复制任务之后希望关闭数据库的异步复制功能时，可使用 [setDatabaseForClusterReplication](https://www.dolphindb.cn/cn/help/FunctionsandCommands/CommandsReferences/s/setDatabaseForClusterReplication.html) 来关闭。
 
 ```
 setDatabaseForClusterReplication(db, false)
 ```
 
-以上通过一些简单的例子对如何使用异步复制功能进行了介绍，若希望了解更多异步复制支持的操作，请参考[DolphinDB用户手册](https://www.dolphindb.cn/cn/help/index.html)。
+以上通过一些简单的例子对如何使用异步复制功能进行了介绍，若希望了解更多异步复制支持的操作，请参考 [DolphinDB用户手册](https://www.dolphindb.cn/cn/help/index.html)。
 
 ## 4. 常见问题
 
@@ -330,7 +330,7 @@ setDatabaseForClusterReplication(db, false)
 
 <img src="./images/Asynchronous_Replication/4_2.png" width=80%>
 
-使用 *getSlaveReplicationStatus* 查看任务执行队列状态发现异步复制任务由于失败而中止，**state** 显示为 “FAILED”，失败的任务 ID 为 938。此时的集群状态为 “STOPPED”。
+使用 `getSlaveReplicationStatus` 查看任务执行队列状态发现异步复制任务由于失败而中止，**state** 显示为 “FAILED”，失败的任务 ID 为 938。此时的集群状态为 “STOPPED”。
 
 导致异步复制任务失败的原因可能为磁盘容量不足、无写文件权限等等，**details** 中会给出失败原因。用户可以根据失败原因尝试解决，然后执行 *startClusterReplication* 重启异步复制任务。从集群将再次执行所有失败的任务。
 
@@ -341,7 +341,7 @@ rpc(getControllerAlias(), skipClusterReplicationTask, 938)
 rpc(getControllerAlias(), startClusterReplication)
 ```
 
-首先通过 [*skipClusterReplicationTask*](https://www.dolphindb.cn/cn/help/FunctionsandCommands/CommandsReferences/s/skipClusterReplicationTask.html) 跳过了失败的任务，接着调用 *startClusterReplication* 重启了异步复制。跳过的任务将被标记为完成状态。
+首先通过 [skipClusterReplicationTask](https://www.dolphindb.cn/cn/help/FunctionsandCommands/CommandsReferences/s/skipClusterReplicationTask.html) 跳过了失败的任务，接着调用 `startClusterReplication` 重启了异步复制。跳过的任务将被标记为完成状态。
 
 ## 5. 附录
 
