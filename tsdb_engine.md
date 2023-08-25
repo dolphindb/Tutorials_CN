@@ -50,7 +50,7 @@ OLAP 存储引擎的建库建表脚本如下：
 dbTime = database("", VALUE, 2021.08.01..2021.09.01)
 dbStockID = database("", HASH, [SYMBOL, 100])
 
-db = database(directory="dfs://stock",partitionType=COMPO,partitionScheme=[dbTime,dbStockId],engine="OLAP")
+db = database(directory="dfs://stock",partitionType=COMPO,partitionScheme=[dbTime,dbStockID],engine="OLAP")
 
 schema = table(1:0, `Timestamp`StockID`bid, [TIMESTAMP, SYMBOL, DOUBLE])
 stocks = db.createPartitionedTable(table=schema, tableName=`stocks, partitionColumns=`Timestamp`StockID)
@@ -62,7 +62,7 @@ TSDB 存储引擎的建库建表脚本如下：
 dbTime = database("", VALUE, 2021.08.01..2021.09.01)
 dbStockID = database("", HASH, [SYMBOL, 100])
 
-db = database(directory="dfs://stock",partitionType=COMPO,partitionScheme=[dbTime,dbStockId],engine="TSDB")
+db = database(directory="dfs://stock",partitionType=COMPO,partitionScheme=[dbTime,dbStockID],engine="TSDB")
 
 schema = table(1:0, `Timestamp`StockID`bid, [TIMESTAMP, SYMBOL, DOUBLE])
 stocks = db.createPartitionedTable(table=schema, tableName=`stocks, partitionColumns=`Timestamp`StockID, sortColumns=`StockID`Timestamp)
