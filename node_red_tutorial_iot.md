@@ -83,7 +83,7 @@ DolphinDB 低代码平台是基于 Node-RED 构建的，所以需先安装 Node-
 
     ![images/node_red_iot/node_red_8.png](images/node_red_iot/node_red_8.png)
     
-1. 打开网页 *http://localhost:1880*，左侧选项板中会出现 DolphinDB 节点，拖出来使用即可。
+1. 打开网页 [http://localhost:1880](http://localhost:1880) 在左侧选项板中会出现 DolphinDB 节点，拖出来使用即可。
 
     ![images/node_red_iot/node_red_9.png](images/node_red_iot/node_red_9.png)
     
@@ -180,7 +180,7 @@ DolphinDB 节点是基于 Node-RED 的，因此开发 DolphinDB 节点需要先�
 
 DolphinDB 的安装包中包含核心文件 *dolphindb.html* 和 *dolphindb.js*。其中，*dolphindb.html* 主要用于定义DolphinDB 节点的属性、编辑对话框和帮助文本，而 dolphindb.js 则主要用于定义 DolphinDB 节点的功能。
 
-在 DolphinDB 节点的 html 文件部分与普通 Node-RED 节点开发流程相似，因此这里不再赘述。我们重点介绍 *dolphindb.js* 中的节点功能实现方法，可参照：[JAVAScript API](../api/JavaScript/README_CN.md) 进行开发。
+在 DolphinDB 节点的 html 文件部分与普通 Node-RED 节点开发流程相似，因此这里不再赘述。我们重点介绍 *dolphindb.js* 中的节点功能实现方法，可参照：[JAVAScript API](https://github.com/dolphindb/api-javascript/blob/main/README.zh.md) 进行开发。
 
 ### 在 JavaScript 中连接 DolphinDB
 
