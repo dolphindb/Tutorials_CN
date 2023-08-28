@@ -1,0 +1,32 @@
+
+def transForm(mutable msg){
+	msg.replaceColumn!(`TradeQty, int(msg[`TradeQty]))
+	msg.replaceColumn!(`BuyNo, int(msg[`BuyNo]))
+	msg.replaceColumn!(`SellNo, int(msg[`SellNo]))
+	msg.replaceColumn!(`ChannelNo, int(msg[`ChannelNo]))
+	msg.replaceColumn!(`TradeIndex, int(msg[`TradeIndex]))
+	msg.replaceColumn!(`BizIndex, int(msg[`BizIndex]))
+	return msg
+}
+
+def syncData(conn, dbName, tbName, dt){
+	sql = "select SecurityID, TradeTime, TradePrice, TradeQty, TradeAmount, BuyNo, SellNo, ChannelNo, TradeIndex, TradeBSFlag, BizIndex from ticksh"
+	if(!isNull(dt)) {
+		sql = sql + " WHERE trunc(TradeTime) = TO_DATE('"+dt+"', 'yyyy.MM.dd')"
+	}
+    odbc::query(conn,sql, loadTable(dbName,tbName), 100000, transForm)
+}
+
+try { loadPlugin("plugins/odbc/PluginODBC.txt"); } catch(ex) { print ex }
+conn=odbc::connect("Dsn=orac", `Oracle);
+dbName="dfs://TSDB_tick"
+tbName="tick"
+// case1 全表
+syncData(conn, dbName, tbName, NULL)
+// case2 多任务
+for(dt in 2021.01.04..2021.01.05){
+	submitJob(`syncOracTick, `syncOracTick, syncData, conn, dbName, tbName, dt)
+}
+select * from getRecentJobs() where jobDesc = `syncOracTick
+
+

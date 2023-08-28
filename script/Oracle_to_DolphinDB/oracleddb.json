@@ -1,0 +1,81 @@
+{
+	"job": {
+		"content": [{
+			"writer": {
+				"parameter": {
+					"dbPath": "dfs://TSDB_tick",
+					"userId": "admin",
+					"tableName": "tick",
+					"host": "127.0.0.1",
+					"pwd": "123456",
+					"table": [
+					    {
+				                 "type": "DT_SYMBOL",
+                               			 "name": "SecurityID"
+		                            },
+                		            {
+		                                "type": "DT_TIMESTAMP",
+                		                "name": "TradeTime"
+		                            },
+                		            {
+		                                "type": "DT_DOUBLE",
+                		                "name": "TradePrice"
+		                            },
+                		            {
+		                                "type": "DT_INT",
+                		                "name": "TradeQty"
+		                            },
+                		            {
+		                                "type": "DT_DOUBLE",
+                		                "name": "TradeAmount"
+		                            },
+                		            {
+		                                "type": "DT_INT",
+                		                "name": "BuyNo"
+		                            },
+                		            {
+		                                "type": "DT_INT",
+                		                "name": "SellNo"
+		                            },
+                		            {
+		                                "type": "DT_INT",
+                		                "name": "TradeIndex"
+		                            },
+                		            {
+		                                "type": "DT_INT",
+                		                "name": "ChannelNo"
+		                            },
+                		            {
+		                                "type": "DT_SYMBOL",
+                		                "name": "TradeBSFlag"
+		                            },
+         		                    {
+		                                "type": "DT_INT",
+                		                "name": "BizIndex"
+                         	    	    }
+					],
+					"port": 8858
+				},
+				"name": "dolphindbwriter"
+			},
+			"reader": {
+				"parameter": {
+					"username": "system",
+					"column": ["SecurityID", "TradeTime", "TradePrice", "TradeQty", "TradeAmount", "BuyNo", "SellNo", "ChannelNo", "TradeIndex", "TradeBSFlag", "BizIndex"],
+					"connection": [{
+						"table": ["ticksh"],
+						"jdbcUrl": ["jdbc:oracle:thin:@127.0.0.1:1521:ora21c"]
+					}],
+					"password": "dolphindb123",
+					"where": ""
+				},
+				"name": "oraclereader"
+			}
+		}],
+		"setting": {
+			"speed": {
+				"channel": 1
+			}
+		}
+	}
+}

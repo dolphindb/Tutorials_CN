@@ -1,0 +1,18 @@
+login(`admin,`123456)
+def createTick(dbName, tbName){
+	if(existsDatabase(dbName)){
+		dropDatabase(dbName)
+	}
+	db1 = database(, VALUE, 2020.01.01..2021.01.01)
+	db2 = database(, HASH, [SYMBOL, 10])
+	db = database(dbName, COMPO, [db1, db2], , "TSDB")
+	db = database(dbName)
+	name = `SecurityID`TradeTime`TradePrice`TradeQty`TradeAmount`BuyNo`SellNo`ChannelNo`TradeIndex`TradeBSFlag`BizIndex
+	type = `SYMBOL`TIMESTAMP`DOUBLE`INT`DOUBLE`INT`INT`INT`INT`SYMBOL`INT
+	schemaTable = table(1:0, name, type)
+	db.createPartitionedTable(table=schemaTable, tableName=tbName, partitionColumns=`TradeTime`SecurityID, compressMethods={TradeTime:"delta"}, sortColumns=`SecurityID`TradeTime, keepDuplicates=ALL)
+}
+
+dbName="dfs://TSDB_tick"
+tbName="tick"
+createTick(dbName, tbName)
