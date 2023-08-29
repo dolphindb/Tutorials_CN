@@ -318,7 +318,7 @@ ldd libodbcdriver.so      #libodbcdriver.so 替换为对应 ODBC Driver 库文�
 - 如果该库是已经存在的，可以通过添加 `LD_LIBRARY_PATH` 环境变量的值，使得能在执行 `ldd` 时和运行时加载依赖的动态库时找到该库。
 
 ```
-export LD_LIBRARY_PATH=${LIB_PATH}:%LD_LIBRARY_PATH //${LIB_PATH}修改为依赖库所在的文件夹路径
+export LD_LIBRARY_PATH=${LIB_PATH}:$LD_LIBRARY_PATH //${LIB_PATH}修改为依赖库所在的文件夹路径
 ```
 
 - 该库不存在时，缺少哪个库就安装哪个库
@@ -602,7 +602,7 @@ ln -s libssl.so.1.0.0 libssl.so.10
 5. 添加环境变量，重启 DolphinDB 服务。
 
 ```
-export LD_LIBRARY_PATH=/usrl/local/ssl102/lib/:%LD_LIBRARY_PATH //把前面编译的好的 OpenSSL的库路径添加到环境变量中。
+export LD_LIBRARY_PATH=/usrl/local/ssl102/lib/:$LD_LIBRARY_PATH //把前面编译的好的 OpenSSL的库路径添加到环境变量中。
 ```
 
 **5.2.3.2 glibc 依赖问题**
