@@ -207,6 +207,7 @@
     - [DolphinDB 与 Python AirFlow 最佳实践](Best_Practices_for_DolphinDB_and_Python_AirFlow.md)
     - [金融因子流式实现](Streaming_computing_of_financial_quantifiers.md)
     - [Python + HDF5 因子计算与 DolphinDB 一体化因子计算方案对比](Python+HDF5_vs_DolphinDB.md)
+    - [Python + 文件存储与 DolphinDB 因子计算性能比较](DolphinDB_VS_Python+File_Storage.md)
     - [DolphinDB 流计算在金融行业的应用：实时计算涨幅榜](Real-Time_Stock_Price_Increase_Calculation.md)
     - [DolphinDB TopN 系列函数教程](DolphinDB_TopN.md)
     - [DolphinDB AMD 插件最佳实践指南](best_implementation_for_AMD_Plugin.md)
