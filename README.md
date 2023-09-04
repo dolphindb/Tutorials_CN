@@ -247,3 +247,7 @@
   - [基于 DataX 的 DolphinDB 数据导入工具](../../../datax-writer)
   - [从 OceanBase 迁移到 DolphinDB](OceanBase_to_DolphinDB.md)
   - [从 Oracle 迁移到 DolphinDB](Oracle_to_DolphinDB.md)
+ 
+- 开源项目
+
+  - [开源项目贡献者指南]
