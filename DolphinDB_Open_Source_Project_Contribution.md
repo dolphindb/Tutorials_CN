@@ -17,7 +17,7 @@
 
 DolphinDB 的开源项目由 PMC（Project Management Committee） 统一管理，通常由项目的最初开发者组成，并逐步接纳优秀的社区成员。项目相关参与者包括：用户、贡献者、提交者、维护者。
 
-<img src="images/DolphinDB_Open_Source_Project_Contribution/1_1.png" alt="项目组织结构" title="项目组织结构" style="zoom:40%;" />
+<img src="images/DolphinDB_Open_Source_Project_Contribution/1_1.png" alt="项目组织结构" title="项目组织结构" width=60% />
 
 
 **PMC**
