@@ -250,4 +250,4 @@
  
 - 开源项目
 
-  - [开源项目贡献者指南]
+  - [开源项目贡献者指南](DolphinDB_Open_Source_Project_Contribution.md)
