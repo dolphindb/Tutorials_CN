@@ -44,6 +44,7 @@
   - [DolphinDB 计算精度问题与 DECIMAL 类型](DECIMAL_Calculation_Characteristics.md)
   - [分级存储](hierarchical_storage.md)
   - [数据迁移与平衡](data_move_rebalance.md)
+  - [快照引擎](snapshot_engine.md)
   - [DolphinDB 集群间的异步复制](Asynchronous_Replication.md)
   - [DolphinDB 中有关 array vector 的最佳实践指南](Array_Vector.md)
   
@@ -180,7 +181,6 @@
     - [DolphinDB教程：面板数据的处理](panel_data.md)
     - [金融高频因子的流批统一计算：DolphinDB响应式状态引擎](reactive_state_engine.md)
     - [股票行情数据导入实例](stockdata_csv_import_demo.md)
-    - [快照引擎](snapshot_engine.md)
     - [节点启动时的流计算自动订阅教程](streaming_auto_sub.md)
     - [DolphinDB机器学习在金融行业的应用：实时实际波动率预测](machine_learning_volatility.md)
     - [DolphinDB流计算在金融行业的应用：实时计算分钟资金流](streaming_capital_flow_order_by_order.md)
