@@ -1350,7 +1350,7 @@ DolphinDB 不仅提供了高速存取时序数据的基本功能，还内置了�
 
 <img src="images/Array_Vector/Array_Vector_13.png">
 
-其中 bidAmtDiff~t~ 表示 t 时刻的委买增额；bid~i,t~ 表示 t 时刻快照数据的第 i 档买方报价；指示函数 I 含义如下：
+其中 $bidAmtDiff_{t}$ 表示 t 时刻的委买增额；$bid_{i,t}$ 表示 t 时刻快照数据的第 i 档买方报价；指示函数 I 含义如下：
 
 <img src="images/Array_Vector/Array_Vector_14.png">
 
