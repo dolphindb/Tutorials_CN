@@ -45,6 +45,7 @@
   - [分级存储](hierarchical_storage.md)
   - [数据迁移与平衡](data_move_rebalance.md)
   - [DolphinDB 集群间的异步复制](Asynchronous_Replication.md)
+  - [DolphinDB 中有关 array vector 的最佳实践指南](Array_Vector.md)
   
 - 编程语言
 
