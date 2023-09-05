@@ -1402,7 +1402,7 @@ submitJob("replayData", "replay snapshot data", replay{inputTables=testData, out
 
 <img src="images/Array_Vector/Array_Vector_15.png">
 
-其中 level10_Diff$_{t}$ 表示 t 时刻的委买增额； $bid_{i,t}$ 表示 t 时刻快照数据的第 i 档买方报价；指示函数 $I$ 含义如下：
+其中<img src="images/Array_Vector/level10.png">表示 t 时刻的委买增额； $bid_{i,t}$ 表示 t 时刻快照数据的第 i 档买方报价；指示函数 $I$ 含义如下：
 
 <img src="images/Array_Vector/Array_Vector_16.png">
 
