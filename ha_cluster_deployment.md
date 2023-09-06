@@ -505,7 +505,7 @@ ps aux|grep dolphindb
 
 <img src="./images/ha_cluster_deployment/1_4.png" width=60%>
 
-打开后的 Web 管理界面如下。以管理用身份（默认账号：admin，默认密码：123456）登录 Web 管理界面后，用户可以通过勾选想要启动的数据节点和计算节点，再点击启动（关闭）按键即可启动（关闭）相应的数据节点和计算节点：
+打开后的 Web 管理界面如下。以管理员身份（默认账号：admin，默认密码：123456）登录 Web 管理界面后，用户可以通过勾选想要启动的数据节点和计算节点，再点击启动（关闭）按键即可启动（关闭）相应的数据节点和计算节点：
 
 <img src="./images/ha_cluster_deployment/1_5.png" width=80%>
 
@@ -768,7 +768,7 @@ sh startagent.sh
 
 <img src="./images/ha_cluster_deployment/3_10.png" width=60%>
 
-打开后的 Web 管理界面如下。以管理用身份（默认账号：admin，默认密码：123456）登录 Web 管理界面后，用户可以通过勾选想要启动的数据节点和计算节点，再点击启动（关闭）按键即可启动（关闭）相应的数据节点和计算节点：
+打开后的 Web 管理界面如下。以管理员身份（默认账号：admin，默认密码：123456）登录 Web 管理界面后，用户可以通过勾选想要启动的数据节点和计算节点，再点击启动（关闭）按键即可启动（关闭）相应的数据节点和计算节点：
 
 <img src="./images/ha_cluster_deployment/3_11.png" width=80%>
 

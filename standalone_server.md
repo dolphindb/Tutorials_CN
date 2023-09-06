@@ -100,7 +100,7 @@ ps aux|grep dolphindb
 
 在浏览器中输入部署服务器 IP 地址和部署端口号（默认是 8848）即可进入 Web 管理界面，
 教程中的部署服务器 IP 地址为 10.0.0.82，部署端口为 8848，所以访问地址为 10.0.0.82:8848，
-打开后的 Web 管理界面如下：
+打开后的 Web 管理界面如下。以管理员身份（默认账号：admin，默认密码：123456）登录 Web 管理界面后，用户可以检查节点运行状态。
 
 ![SingleNodeStatusWeb](images/deploy_standalone/checknode_status_singlenode_web.png)
 
