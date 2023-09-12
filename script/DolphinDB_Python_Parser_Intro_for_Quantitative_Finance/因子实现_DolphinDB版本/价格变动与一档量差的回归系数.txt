@@ -1,0 +1,13 @@
+def priceSensitivityOrderFlowImbalance(LastPrice, BidOrderQty, OfferOrderQty){
+	deltaP = deltas(LastPrice)*10000
+	NVOL = BidOrderQty[0].nullFill(0) - OfferOrderQty[0].nullFill(0)
+	return beta(deltaP.nullFill(0), NVOL)
+}
+
+timer{
+	snapshotTB = loadTable("dfs://TL_Level2", "snapshot")
+	res = select priceSensitivityOrderFlowImbalance(LastPrice, BidOrderQty, OfferOrderQty) as priceSensitivityOrderFlowImbalance
+		from snapshotTB
+		where date(TradeTime)=2023.02.01
+		group by date(TradeTime) as TradeTime, SecurityID
+}

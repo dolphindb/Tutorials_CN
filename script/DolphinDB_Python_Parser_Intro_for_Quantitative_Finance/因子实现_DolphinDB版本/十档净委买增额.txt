@@ -1,0 +1,13 @@
+@state
+def level10Diff(price, qty, buy=true, lag=20){
+        prevPrice = price.prev()
+        left, right = rowAlign(price, prevPrice, how=iif(buy, "bid", "ask"))
+        qtyDiff = (qty.rowAt(left).nullFill(0) - qty.prev().rowAt(right).nullFill(0)) 
+        amtDiff = rowSum(nullFill(price.rowAt(left), prevPrice.rowAt(right)) * qtyDiff)
+        return msum(amtDiff, lag, 1).nullFill(0)
+}
+
+timer{
+	snapshotTB = loadTable("dfs://TL_Level2", "snapshot")
+	res = select SecurityID, TradeTime, level10Diff(BidPrice, BidOrderQty, true, 20) as amtDiff from snapshotTB where date(TradeTime)=2023.02.01 context by SecurityID csort TradeTime
+}

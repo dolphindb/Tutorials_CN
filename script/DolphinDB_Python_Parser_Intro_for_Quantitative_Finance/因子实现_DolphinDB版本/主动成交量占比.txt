@@ -1,0 +1,9 @@
+@state
+def actVolumePercent(tradeQty, buyNo, sellNo, window){
+	return msum(iif(buyNo > sellNo, tradeQty, 0), window) \ msum(tradeQty, window)
+}
+
+timer{
+	tradeTB = loadTable("dfs://TL_Level2", "trade")
+	res = select SecurityID, TradeTime, actVolumePercent(TradeQty, BidApplSeqNum, OfferApplSeqNum, 60) as actVolumePercent from tradeTB where date(TradeTime)=2023.02.01 context by date(TradeTime), SecurityID
+}

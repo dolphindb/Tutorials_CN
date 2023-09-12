@@ -212,6 +212,7 @@
     - [DolphinDB 流计算在金融行业的应用：实时计算涨幅榜](Real-Time_Stock_Price_Increase_Calculation.md)
     - [DolphinDB TopN 系列函数教程](DolphinDB_TopN.md)
     - [DolphinDB AMD 插件最佳实践指南](best_implementation_for_AMD_Plugin.md)
+    - [DolphinDB Python Parser 在金融量化分析场景的入门教程](DolphinDB_Python_Parser_Intro_for_Quantitative_Finance.md)
   - 物联网：
     - [DolphinDB在工业物联网的应用](iot_demo.md)
     - [物联网时序数据查询案例](iot_query_case.md)

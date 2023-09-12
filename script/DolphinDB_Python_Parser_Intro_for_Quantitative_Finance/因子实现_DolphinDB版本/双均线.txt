@@ -1,0 +1,17 @@
+if(existsDatabase("dfs://Daily_adj_price")){
+	dropDatabase("dfs://Daily_adj_price")}
+db = database("dfs://Daily_adj_price", VALUE, 2020.07M..2023.09M)
+// # data = loadTextEx(db,'data','TRADE_DATE',"/home/data/mkt_equd_adj.csv")
+data = loadTextEx(db,'data','TRADE_DATE',"/ssd/ssd3/data/mkt_equd_adj.csv")
+data =loadTable("dfs://Daily_adj_price", "data")
+timer{
+// 通过移动平均计算双均线
+// year(TRADE_DATE) = 2023 
+a = select SECURITY_ID, TRADE_DATE as date, CLOSE_PRICE_1 as close, mavg(CLOSE_PRICE_1, 5) as ma_5, mavg(CLOSE_PRICE, 20) as ma_20 from data context by SECURITY_ID 
+// 获得两根均线的前一根线
+update a set pre_ma5 = prev(ma_5), pre_ma20 = prev(ma_20) context by SECURITY_ID
+
+// 判断金叉死叉并生成信号
+update a set signal = iif(pre_ma5 > pre_ma20 and ma_5< ma_20, -1 ,iif(pre_ma5 < pre_ma20 and ma_5> ma_20, 1 , 0)) context by SECURITY_ID}
+
+//全部3501206条数据，本地耗时 423 ms，228服务器耗时556ms

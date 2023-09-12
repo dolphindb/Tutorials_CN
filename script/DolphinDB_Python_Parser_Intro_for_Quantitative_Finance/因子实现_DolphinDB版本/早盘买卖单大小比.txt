@@ -1,0 +1,11 @@
+def openBidVolDvdAskVol(OrderQty, Side){
+	return log(avg(iif(Side in ["1", "B"], OrderQty, NULL)) \ avg(iif(Side in ["2", "S"], OrderQty, NULL)))
+}
+
+timer{
+	orderTB = loadTable("dfs://TL_Level2", "entrust")
+	res = select openBidVolDvdAskVol(OrderQty, Side) as openBidVolDvdAskVol
+		from orderTB
+		where date(TradeTime)=2023.02.01 and time(TradeTime)>=09:30:00.000 and time(TradeTime)<=10:30:00.000
+		group by date(TradeTime) as TradeTime, SecurityID
+}

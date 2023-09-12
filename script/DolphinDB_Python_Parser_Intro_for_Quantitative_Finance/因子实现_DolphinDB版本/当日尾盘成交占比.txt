@@ -1,0 +1,11 @@
+def beforeClosingVolumePercent(TradeTime, TradeQty){
+	return sum(TradeQty*(time(TradeTime) between 14:30:00.000 : 15:00:00.000)) \ sum(TradeQty)
+}
+
+timer{
+	tradeTB = loadTable("dfs://TL_Level2", "trade")
+	res = select beforeClosingVolumePercent(TradeTime, TradeQty) as BCVP
+		from tradeTB
+		where date(TradeTime)=2023.02.01
+		group by date(TradeTime) as TradeDate, SecurityID
+}
