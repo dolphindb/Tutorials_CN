@@ -152,7 +152,7 @@
     - [zmq 插件使用说明（用于 zmq 消息队列库的请求应答、发布、订阅和管道消息传输）](../../../DolphinDBPlugin/blob/release200/zmq/README.md "用于 zmq 消息队列库的请求应答、发布、订阅和管道消息传输")
     - [Kafka 插件使用说明（用于发布或订阅 Kafka 流服务）](../../../DolphinDBPlugin/blob/release200/kafka/README_CN.md "用于发布或订阅 Kafka 流服务")
   - 机器学习
-    - [SVM 插件使用说明（用于在机器学习数据处理中对 DolphinDB 对象执行支持向量机模型的训练和预测）](../../../DolphinDBPlugin/blob/release200/svm/README_CN.md "用于对 DolphinDB 对象执行 SVM 模型的训练和预测")
+    - [SVM 插件使用说明（用于在机器学习数据处理中对 DolphinDB 对象执行支持向量机模型的训练和预测）](../../../DolphinDBPlugin/blob/release200/svm/README.md "用于对 DolphinDB 对象执行 SVM 模型的训练和预测")
     - [XGBoost 插件使用说明（用于机器学习数据的训练、预测、模型保存和加载）](../../../DolphinDBPlugin/blob/release200/xgboost/README_CN.md "用于机器学习数据的训练、预测、模型保存和加载")
   - 其他工具
     - [Py 插件使用说明（介绍如何在 DolphinDB 内调用 Python 环境中的第三方库）](../../../DolphinDBPlugin/blob/release200/py/README_CN.md "介绍如何在 DolphinDB 内调用 Python 环境中的第三方库")
