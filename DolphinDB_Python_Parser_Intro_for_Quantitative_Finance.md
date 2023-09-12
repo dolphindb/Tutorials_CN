@@ -538,7 +538,7 @@ combined_results = df.groupby('SECURITY_ID').apply(signal_ma,5,20)
 
 <img src="images/DolphinDB_Python_Parser_Intro_for_Quantitative_Finance/3_2.png">
 
-其中 $level10 \_Diff_{t}$  表示 t 时刻的十档净委买增额； $bid_{i,t}$  表示 t 时刻的第 i 档买方报价； $bidQty_{i,t}$ 表示 t 时刻的第 i 档买方挂单数量；指示函数 $I$ 表示报价是否在有效释放范围内。
+其中 level10_Diff<sub>t</sub> 表示 t 时刻的十档净委买增额； $bid_{i,t}$  表示 t 时刻的第 i 档买方报价； $bidQty_{i,t}$ 表示 t 时刻的第 i 档买方挂单数量；指示函数 $I$ 表示报价是否在有效释放范围内。
 
 有效十档范围内表示不考虑已不在十档范围内的档位，即表示只考虑以下区间的档位：
 
