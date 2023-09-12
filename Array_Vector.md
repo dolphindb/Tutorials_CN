@@ -327,7 +327,7 @@ y[10]
 */
 ```
 
-- 通过 x[start:end] 的方式访问 Array Vector 的列。【可以访问多行，返回一个 Array Vector】
+- 通过 x\[start:end] 的方式访问 Array Vector 的列。【可以访问多行，返回一个 Array Vector】
 
 ```
 // end 不为空
@@ -1350,7 +1350,7 @@ DolphinDB 不仅提供了高速存取时序数据的基本功能，还内置了�
 
 <img src="images/Array_Vector/Array_Vector_13.png">
 
-其中 $bidAmtDiff_{t}$ 表示 t 时刻的委买增额； $bid_{i,t}$ 表示 t 时刻快照数据的第 i 档买方报价；指示函数 $I$ 含义如下：
+其中 bidAmtDiff<sub>t</sub> 表示 t 时刻的委买增额； bid<sub>i,t</sub> 表示 t 时刻快照数据的第 i 档买方报价；指示函数 I 含义如下：
 
 <img src="images/Array_Vector/Array_Vector_14.png">
 
@@ -1402,7 +1402,7 @@ submitJob("replayData", "replay snapshot data", replay{inputTables=testData, out
 
 <img src="images/Array_Vector/Array_Vector_15.png">
 
-其中 <img src="images/Array_Vector/level10.png"> 表示 t 时刻的委买增额； $bid_{i,t}$ 表示 t 时刻快照数据的第 i 档买方报价；指示函数 $I$ 含义如下：
+其中 level10_Diff<sub>t</sub> 表示 t 时刻的委买增额； bid<sub>i,t</sub> 表示 t 时刻快照数据的第 i 档买方报价；指示函数 I 含义如下：
 
 <img src="images/Array_Vector/Array_Vector_16.png">
 

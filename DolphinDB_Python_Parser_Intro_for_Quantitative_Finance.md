@@ -192,7 +192,7 @@ pt.schema()
 
 <img src="images/DolphinDB_Python_Parser_Intro_for_Quantitative_Finance/1_4.png">
 
-其中 $BCVP_{t}$  表示 t 日期的尾盘成交占比； $Vol_{t}$  表示 t 日期的总成交量； $Vol_{t,14:30-15:00}$ 表示 t 日期的 14:30—15:00 的成交量之和。
+其中 BCVP<sub>t</sub>  表示 t 日期的尾盘成交占比； Vol<sub>t</sub>  表示 t 日期的总成交量； Vol<sub>t,14:30-15:00</sub> 表示 t 日期的 14:30—15:00 的成交量之和。
 
 因子计算示例代码如下：
 
@@ -538,7 +538,7 @@ combined_results = df.groupby('SECURITY_ID').apply(signal_ma,5,20)
 
 <img src="images/DolphinDB_Python_Parser_Intro_for_Quantitative_Finance/3_2.png">
 
-其中 level10_Diff<sub>t</sub> 表示 t 时刻的十档净委买增额； $bid_{i,t}$  表示 t 时刻的第 i 档买方报价； $bidQty_{i,t}$ 表示 t 时刻的第 i 档买方挂单数量；指示函数 $I$ 表示报价是否在有效释放范围内。
+其中 level10_Diff<sub>t</sub> 表示 t 时刻的十档净委买增额； bid<sub>i,t</sub>  表示 t 时刻的第 i 档买方报价； bidQty<sub>i,t</sub> 表示 t 时刻的第 i 档买方挂单数量；指示函数 I 表示报价是否在有效释放范围内。
 
 有效十档范围内表示不考虑已不在十档范围内的档位，即表示只考虑以下区间的档位：
 
@@ -615,8 +615,8 @@ res = df[df["TradeTime"].astype(ddb.DATE)==2023.02.01][["TradeTime", "SecurityID
 
 其中，
 
-- $ΔP_{t}$  表示 t 时刻的价格变动； $lastPrice_{t}$ 表示 t 时刻的最新价格；
-- $NVOL_{t}$ 表示 t 时刻的买卖一档量差； $bidQty_{1,t}$ 表示 t 时刻的买方一档挂单笔数； $askQty_{1,t}$ 表示 t 时刻的卖方一档挂单笔数；
+- ΔP<sub>t</sub>  表示 t 时刻的价格变动； lastPrice<sub>t</sub> 表示 t 时刻的最新价格；
+- NVOL<sub>t</sub> 表示 t 时刻的买卖一档量差； bidQty<sub>1,t</sub> 表示 t 时刻的买方一档挂单笔数； askQty<sub>1,t</sub> 表示 t 时刻的卖方一档挂单笔数；
 - α 表示截距；λ 表示斜率；εt 表示 t 时刻的残差。
 
 其中回归系数  λ 为目标因子值。
@@ -673,7 +673,7 @@ res = df[df["TradeTime"].astype(ddb.DATE)==2023.02.01][["SecurityID", "LastPrice
 
 <img src="images/DolphinDB_Python_Parser_Intro_for_Quantitative_Finance/3_7.png">
 
-其中 $tradeQty_{i}$ 表示 i 时刻的成交量； $actVolume_{t}$ 表示 t 时刻起的前 lag 笔订单的主动成交量之和； $totalVolume_{t}$ 表示 t 时刻起的前 lag 笔订单的总成交量；指示函数 $I$ 含义如下：
+其中 tradeQty<sub>i</sub> 表示 i 时刻的成交量； actVolume<sub>t</sub> 表示 t 时刻起的前 lag 笔订单的主动成交量之和； totalVolume<sub>t</sub> 表示 t 时刻起的前 lag 笔订单的总成交量；指示函数 I 含义如下：
 
 <img src="images/DolphinDB_Python_Parser_Intro_for_Quantitative_Finance/3_8.png">
 
@@ -722,9 +722,9 @@ res = df[df["TradeTime"].astype(ddb.DATE)==2023.02.01][["TradeTime", "SecurityID
 
 <img src="images/DolphinDB_Python_Parser_Intro_for_Quantitative_Finance/3_9.png">
 
-其中 $openBidVol$ 表示早盘时间段买入订单平均委托量； $openAskVol$ 表示早盘时间段卖出订单平均委托量； $orderQty_{t}$ 表示 t 时刻的委托量；
+其中 openBidVol 表示早盘时间段买入订单平均委托量； openAskVol 表示早盘时间段卖出订单平均委托量； orderQty<sub>t</sub> 表示 t 时刻的委托量；
 
-​         $I_{bid}$ 是指示函数，当订单为买方委托单时值为 1，否则为 0； $I_{ask}$ 是指示函数，当订单为卖方委托单时值为 1，否则为 0。
+​         I<sub>bid</sub> 是指示函数，当订单为买方委托单时值为 1，否则为 0； I<sub>ask</sub> 是指示函数，当订单为卖方委托单时值为 1，否则为 0。
 
 因子计算示例代码如下：
 
@@ -776,7 +776,7 @@ res = df[df["TradeTime"].astype(ddb.DATE)==2023.02.01][["TradeTime", "SecurityID
 
 <img src="images/DolphinDB_Python_Parser_Intro_for_Quantitative_Finance/3_10.png">
 
-其中 $vwap_{t}$ 表示 t 时刻起的前 lag 笔委托单的委托量加权平均委托价格； $orderQty_{i}$ 表示 i 时刻委托单的委托量； $orderPrice_{i}$ 表示 i 时刻委托单的委托价格。
+其中 vwap<sub>t</sub> 表示 t 时刻起的前 lag 笔委托单的委托量加权平均委托价格； orderQty<sub>i</sub> 表示 i 时刻委托单的委托量； orderPrice<sub>i</sub> 表示 i 时刻委托单的委托价格。
 
 因子计算示例代码如下：
 
