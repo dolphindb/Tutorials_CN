@@ -1,0 +1,84 @@
+dbName = "dfs://test_ai_dataloader"
+tbName = "wide_factor_table"
+
+if (existsDatabase(dbName)) {
+    dropDatabase(dbName)
+}
+
+// 股票数量
+numSymbols = 250
+// 因子数量
+numFactors = 1000
+
+dateBegin = 2020.01.01
+dateEnd = 2020.01.31
+
+symbolList = symbol(lpad(string(1..numSymbols), 6, "0") + ".SH")
+factorList = lpad(string(1..numFactors), 7,"f000000")
+
+colNames = ["Datetime", "Symbol"] join factorList
+colTypes = [DATETIME, SYMBOL] join take(DOUBLE, numFactors)
+schema = table(1:0, colNames, colTypes)
+
+// 使用 COMPO 分区方式建库表
+db1 = database("", VALUE, dateBegin..dateEnd)
+db2 = database("", VALUE, symbolList)
+db = database(dbName, COMPO, [db1, db2], engine="TSDB")
+pt = db.createPartitionedTable(schema, tbName, partitionColumns=`Datetime`Symbol, sortColumns=`Symbol`Datetime)
+pt = select * from loadTable("{dbPath}", "{tbName}") where Symbol=`000001.SH, date(DateTime)=2020.01.01
+
+// 生成数据
+def genData(dbName, tbName, dateBegin, dateEnd, symbolList, factorList, colNames, colTypes) {
+    tickBeginMorning = 09:30:00
+    tickEndMorning = 11:30:00
+    tickBeginAfternoon = 13:00:00
+    tickEndAfternoon = 15:00:00
+    freqInSecs = 3
+
+    numTicks = (tickEndMorning - tickBeginMorning) / freqInSecs
+    ticksMorning = temporalAdd(tickBeginMorning, (0..numTicks)*freqInSecs, `s)
+    numTicks = (tickEndAfternoon - tickBeginAfternoon) / freqInSecs
+    ticksAfternoon = temporalAdd(tickBeginAfternoon, (0..numTicks)*freqInSecs, `s)
+
+    ticks = ticksMorning join ticksAfternoon
+    numRowsPerDay = ticks.size() * symbolList.size()
+
+    // 不考虑交易日
+    for (dt in dateBegin..dateEnd) {
+        ticksInDay = concatDateTime(dt, ticks)
+        t = table(numRowsPerDay:numRowsPerDay, colNames, colTypes)
+        t["datetime"] = stretch(ticksInDay, numRowsPerDay)
+        t["symbol"] = take(symbolList, numRowsPerDay)
+
+        for (factorName in factorList) {
+            t[factorName] = rand(100.0, numRowsPerDay)
+        }
+        loadTable(dbName, tbName).append!(t)
+    }
+}
+
+oneMonth = duration("1M")
+curDate = dateBegin
+
+// 按月切分写入任务
+if (curDate <= dateEnd) {
+    do {
+        endCurTask = min(monthEnd(curDate), dateEnd)
+
+        submitJob(
+            "test_ai_dataloader_wide_" + temporalFormat(curDate,"yyyyMMdd"), 
+            "", 
+            genData,
+            dbName,
+            tbName,
+            curDate,
+            endCurTask,
+            symbolList,
+            factorList,
+            colNames,
+            colTypes
+        )
+        print("submit " + string(curDate))
+        curDate = monthBegin(temporalAdd(curDate, oneMonth))
+    } while (curDate <= dateEnd)
+}
