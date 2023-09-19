@@ -83,7 +83,7 @@ select val from loadTable(dbName, tableName) pivot by datetime, stockID, factorN
 DolphinDB Python API 自 1.30.22.2 版本起提供深度学习工具类 AI DDBDataLoader，提供对 DolphinDB SQL 对应的数据集进行批量拆分和重新洗牌的易用接口，将 DolphinDB 中的数据直接对接到 Pytorch 中。
 
 ```
-pip install dolphindb-tools-0.1a1.whl //
+pip install dolphindb_tools-0.1a1.whl //
 ```
 
 期待输出：
@@ -301,7 +301,7 @@ tensor([[[4, 5, 6],
 ![img](images/DolphinDB_AI_DataLoader_for_Deep_Learning/DolphinDB_AI_DataLoader_for_Deep_Learning_3.png)
 
 - datas：数据存储
-- dist：[dolphindb-tools-0.1a1.whl](script/DolphinDB_AI_DataLoader_for_Deep_Learning/dist/dolphindb-tools-0.1a1.whl) 分发包
+- dist：[dolphindb_tools-0.1a1.whl](script/DolphinDB_AI_DataLoader_for_Deep_Learning/dist/dolphindb_tools-0.1a1.whl) 分发包
 - prepare：数据集准备模块
   - [ddb_scripts.dos](script/DolphinDB_AI_DataLoader_for_Deep_Learning/prepare/ddb_scripts.dos)：DolphinDB 建库建表以及模拟写入脚本
   - [prepare_data.py](script/DolphinDB_AI_DataLoader_for_Deep_Learning/prepare/prepare_data.py)：PytorchDataLoader 测试准备数据
