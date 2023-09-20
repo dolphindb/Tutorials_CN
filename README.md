@@ -174,7 +174,7 @@
 - 应用场景示例
 
   - [使用DolphinDB进行机器学习](machine_learning.md)
-  - [深度学习遇到 DolphinDB AI DataLoader](DolphinDB_AI_DataLoader_for_Deep_Learning.md)
+    <!-- - [深度学习遇到 DolphinDB AI DataLoader](DolphinDB_AI_DataLoader_for_Deep_Learning.md) -->
   - [DolphinDB缓存表（CachedTable）快速实现MySQL跨数据库基础信息同步功能](cachedtable.md)
   - [DolphinDB中有关时间信息的最佳实践指南](timezone.md)
   - 金融：
