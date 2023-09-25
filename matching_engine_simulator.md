@@ -104,7 +104,7 @@
 
 
 
-具体其他接口字段说明见DolphinDB官网的*模拟撮合引擎使用说明*。
+具体其他接口字段说明见[模拟撮合引擎使用说明](https://gitee.com/dolphindb/DolphinDBPlugin/tree/release200.10/MatchingEngineSimulator)。
 
 ### 撮合规则
 
@@ -1075,3 +1075,4 @@ DolphinDB 提供了模拟撮合引擎插件，可以基于快照和逐笔行情�
 
 - [完整脚本文件](data/MatchEngineSimulator/mesuc.rar)
 - [ C++ 代码文件](script/MatchingEngineSimulator/MatchEngineTest.zip)
+- 
