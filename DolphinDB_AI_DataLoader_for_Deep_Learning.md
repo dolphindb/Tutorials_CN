@@ -74,7 +74,7 @@ select val from loadTable(dbName, tableName) pivot by datetime, stockID, factorN
 
 可以认为，设置了 *repartitionCol* 和 *repartitionScheme* 参数之后，相当于对上述的 `pivot by` 查询语句的结果又做了一个“重分区”，使得每个分区占用的空间不至于特别大。
 
-下面介绍 `DDBDataLoader` 的各个组件。在 `DDBDataLoader` 内部，每组子查询由数据管理器 DataManager 管理，每个 DataManager 又对应一个 DataSource。这里所谓的 DataSource，基本上可以理解为就是一个分区的元数据。DataSource 通过传入的 Session 会话从 DolphinDB 服务端获取一个分区的数据，并将该分区的数据放入一个预载队列中。DataManager 则根据选取数据的顺序从 DataSource 产生的预载队列中获取预载的分区粒度数据，并将其根据滑动窗口大小和步长处理为相应的 PyTorch 的 Tensor 格式。`DDBDataLoader` 维护了一个包含多个数据管理器 DataManager 的数据池，数据池的大小由参数 `groupPoolSize` 控制。后台工作线程从这些数据管理器中提取批量数据，并将其组装成用于训练的数据格式和形状，然后放入整个 AI Dataloader 的预准备队列中。最后，迭代时，`DDBDataLoader` 从预准备队列中获取已准备好的批量数据，将其传递给客户端，供神经网络训练使用。
+下面介绍 `DDBDataLoader` 的各个组件。在 `DDBDataLoader` 内部，每组子查询由数据管理器 DataManager 管理，每个 DataManager 又对应一个 DataSource。这里的 DataSource，可视为一个分区的元数据。DataSource 通过传入的 Session 会话从 DolphinDB 服务端获取一个分区的数据，并将该分区的数据放入一个预载队列中。DataManager 则根据选取数据的顺序从 DataSource 产生的预载队列中获取预载的分区粒度数据，并将其根据滑动窗口大小和步长处理为相应的 PyTorch 的 Tensor 格式。`DDBDataLoader` 维护了一个包含多个数据管理器 DataManager 的数据池，数据池的大小由参数 `groupPoolSize` 控制。后台工作线程从这些数据管理器中提取批量数据，并将其组装成用于训练的数据格式和形状，然后放入整个 AI Dataloader 的预准备队列中。最后，迭代时，`DDBDataLoader` 从预准备队列中获取已准备好的批量数据，将其传递给客户端，供神经网络训练使用。
 
 ## AI DataLoader 详细介绍
 
@@ -94,22 +94,21 @@ pip install dolphindb_tools-0.1a1.whl //
 
 | **DolphinDB 类型**             | **Tensor 类型** |
 | :----------------------------- | :-------------- |
-| BOOL [不含空值]                | torch.bool      |
-| CHAR [不含空值]                | torch.int8      |
-| SHORT [不含空值]               | torch.int16     |
-| INT [不含空值]                 | torch.int32     |
-| LONG [不含空值]                | torch.int64     |
+| BOOL \[不含空值]                | torch.bool      |
+| CHAR \[不含空值]                | torch.int8      |
+| SHORT \[不含空值]               | torch.int16     |
+| INT \[不含空值]                 | torch.int32     |
+| LONG \[不含空值]                | torch.int64     |
 | FLOAT                          | torch.float32   |
 | DOUBLE                         | torch.float64   |
-| CHAR/SHORT/INT/LONG [包含空值] | torch.float64   |
+| CHAR/SHORT/INT/LONG \[包含空值] | torch.float64   |
 
-> 注 
->
-> 1：若 sql 查询的结果表中包含不支持的类型，即便其列名被包含在 targetCol 中，即表示迭代中 y 对应的列名，详细见接口说明，该数据列也不会出现在输入数据和目标数据中。
->
-> 2：支持上述类型的 ArrayVector 类型。如果使用 ArrayVector 列，需要保证输入数据或目标数据全部为 ArrayVector 类型。
->
-> 3：torch.bool 不支持布尔型数据的空值，因此获取 BOOL 类型数据前需确保不包含空值。
+**注意**：
+
+1. 若 sql 查询的结果表中包含不支持的类型，即便其列名被包含在 targetCol 中，即表示迭代中 y 对应的列名，详细见接口说明，该数据列也不会出现在输入数据和目标数据中。
+2. 支持上述类型的 ArrayVector 类型。如果使用 ArrayVector 列，需要保证输入数据或目标数据全部为 ArrayVector 类型。
+3. torch.bool 不支持布尔型数据的空值，因此获取 BOOL 类型数据前需确保不包含空值。
+
 
 ### 接口介绍
 
@@ -200,7 +199,7 @@ DDBDataLoader(
 
 ```
 import dolphindb as ddb
-from ddbtools import DDBDataLoader
+from dolphindb_tools.dataloader import DDBDataLoader
 
 sess = ddb.Session()
 sess.connect("localhost", 8848, "admin", "123456")
@@ -332,7 +331,7 @@ tensor([[[4, 5, 6],
 | **软件名称**          | **版本信息**               |
 | :-------------------- | :------------------------- |
 | DolphinDB             | 2.00.10.1                  |
-| ddbtools              | 0.0.1-a1                   |
+| ddbtools              | 0.1a1                      |
 | python                | 3.8.17                     |
 | dolphindb             | 1.30.22.2                  |
 | numpy，torch ，pandas | 1.24.4, 2.0.0+cu118, 1.5.2 |
@@ -474,7 +473,7 @@ if __name__ == "__main__":
 
 ```
 import dolphindb as ddb
-from ddbtools import DDBDataLoader
+from dolphindb_tools.dataloader import DDBDataLoader
 
 sess = ddb.Session()
 sess.connect('localhost', 8848, "admin", "123456")
@@ -538,7 +537,7 @@ for epoch in range(num_epochs):
 - **内存占用减少**：在内存方面，DolphinDB 内部并行线程以及多消息队列机制，迭代数据集，使用完内存，及时回收，返还给操作系统，减少内存在进程中常驻时间，而传统的数据集和 DataLoader 方式，为直接加载全量数据到内存中，导致内存长时间占用，当涉及数据集过大时，容易产生 OOM 现象。这样 DDBDataLoader 内存使用减少为原来的 1/5。
 - **代码行数减少**：在代码简洁性方面，DolphinDB 封装了一个 DataLoader 接口，用户使用无感知，只需调用接口，将数据传输到 PyTorch 中，仅仅只需代码 70 行，而 传统的数据集和 DataLoader 需要重新构造一个接口用于数据集与 PyTorch 的对接，代码需 200 多行行。极大的减低了开发运维成本。
 
-综上，DDBDataLoader 可以提升性能以及大幅降低将 DolphinDB 内的数据喂到 PyTorch 训练的开发运维成本。
+综上，DDBDataLoader 可以提升性能以及大幅降低 DolphinDB 内数据用于 PyTorch 训练的开发运维成本。
 
 ## 总结
 

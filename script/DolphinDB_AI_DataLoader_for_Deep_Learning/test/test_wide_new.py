@@ -4,7 +4,7 @@ import torch.nn as nn
 from net import SimpleNet
 from tqdm import tqdm
 
-from ddbtools import DDBDataLoader
+from dolphindb_tools.dataloader import DDBDataLoader
 
 
 def main():
