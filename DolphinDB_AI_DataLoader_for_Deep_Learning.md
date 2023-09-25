@@ -1,18 +1,17 @@
 # 深度学习遇到 DolphinDB AI DataLoader
-- [深度学习遇到 DolphinDB AI DataLoader](#深度学习遇到-dolphindb-ai-dataloader)
-  - [总体架构](#总体架构)
-  - [工作原理](#工作原理)
-  - [AI DataLoader 详细介绍](#ai-dataloader-详细介绍)
-    - [安装步骤](#安装步骤)
-    - [DolphinDB类型与Tensor类型对照表](#dolphindb类型与tensor类型对照表)
-    - [接口介绍](#接口介绍)
-  - [简单使用示例](#简单使用示例)
-  - [性能对比测试](#性能对比测试)
-    - [环境准备](#环境准备)
-    - [PyTorch DataLoader 性能测试](#pytorch-dataloader-性能测试)
-    - [DDBDataLoader性能测试](#ddbdataloader性能测试)
-    - [结论](#结论)
-  - [总结](#总结)
+- [总体架构](#总体架构)
+- [工作原理](#工作原理)
+- [AI DataLoader 详细介绍](#ai-dataloader-详细介绍)
+  - [安装步骤](#安装步骤)
+  - [DolphinDB类型与Tensor类型对照表](#dolphindb类型与tensor类型对照表)
+  - [接口介绍](#接口介绍)
+- [简单使用示例](#简单使用示例)
+- [性能对比测试](#性能对比测试)
+  - [环境准备](#环境准备)
+  - [PyTorch DataLoader 性能测试](#pytorch-dataloader-性能测试)
+  - [DDBDataLoader性能测试](#ddbdataloader性能测试)
+  - [结论](#结论)
+- [总结](#总结)
 
 深度学习模型有能力自动发现变量之间的关系，而这些关系通常是不可见的，这使得深度学习可以挖掘新的因子和规律，为量化投资策略提供更多可能性。在传统的量化策略开发流程中，通常会使用 Python 或第三方工具生成因子，并将其存储为文件。这些因子是构建深度学习模型的基础输入，包括技术指标、波动性指标和市场情绪指标等。随着证券交易规模不断扩大以及因子数据量的激增。传统的文件存储因子作为深度学习模型的输入，面临以下问题：
 
@@ -83,7 +82,7 @@ select val from loadTable(dbName, tableName) pivot by datetime, stockID, factorN
 DolphinDB Python API 自 1.30.22.2 版本起提供深度学习工具类 AI DDBDataLoader，提供对 DolphinDB SQL 对应的数据集进行批量拆分和重新洗牌的易用接口，将 DolphinDB 中的数据直接对接到 Pytorch 中。
 
 ```
-pip install dolphindb_tools-0.1a1.whl //
+pip install dolphindb-tools
 ```
 
 期待输出：
