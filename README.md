@@ -174,7 +174,7 @@
 - 应用场景示例
 
   - [使用DolphinDB进行机器学习](machine_learning.md)
-    [深度学习遇到 DolphinDB AI DataLoader](DolphinDB_AI_DataLoader_for_Deep_Learning.md) 
+  - [深度学习遇到 DolphinDB AI DataLoader](DolphinDB_AI_DataLoader_for_Deep_Learning.md) 
   - [DolphinDB缓存表（CachedTable）快速实现MySQL跨数据库基础信息同步功能](cachedtable.md)
   - [DolphinDB中有关时间信息的最佳实践指南](timezone.md)
   - 金融：
@@ -215,7 +215,7 @@
     - [DolphinDB TopN 系列函数教程](DolphinDB_TopN.md)
     - [DolphinDB AMD 插件最佳实践指南](best_implementation_for_AMD_Plugin.md)
     - [DolphinDB Python Parser 在金融量化分析场景的入门教程](DolphinDB_Python_Parser_Intro_for_Quantitative_Finance.md)
-      - [模拟撮合引擎应用教程](matching_engine_simulator.md)
+    - [模拟撮合引擎应用教程](matching_engine_simulator.md)
   - 物联网：
     - [DolphinDB在工业物联网的应用](iot_demo.md)
     - [物联网时序数据查询案例](iot_query_case.md)
