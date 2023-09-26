@@ -1,7 +1,7 @@
 # 深度学习遇到 DolphinDB AI DataLoader
 - [总体架构](#总体架构)
 - [工作原理](#工作原理)
-- [AI DataLoader 详细介绍](#ai-dataloader-详细介绍)
+- [DDBDataLoader 详细介绍](#ddbdataloader-详细介绍)
   - [安装步骤](#安装步骤)
   - [DolphinDB类型与Tensor类型对照表](#dolphindb类型与tensor类型对照表)
   - [接口介绍](#接口介绍)
@@ -18,22 +18,22 @@
 - 因子数据过大，内存带宽与存储空间瓶颈
 - 因子数据与深度学习模型集成工程化与成本问题
 
-为应对这些挑战，DolphinDB将数据库与深度学习相结合，开发了 DDBDataLoader。该工具用于因子数据的管理和深度学习模型的集成，旨在提高因子数据的效率和管理，并简化与深度学习模型的交互。着重于因子数据的管理和深度学习模型的集成，旨在提高因子数据的效率和管理，并简化了与深度学习模型的交互。
+为应对这些挑战，DolphinDB将数据库与深度学习相结合，开发了 AI Dataloader（为了便于描述，下文使用DDBDataLoader这一更贴近功能实现的类名指代）。该工具用于因子数据的管理和深度学习模型的集成，旨在提高因子数据的效率和管理，并简化与深度学习模型的交互。着重于因子数据的管理和深度学习模型的集成，旨在提高因子数据的效率和管理，并简化了与深度学习模型的交互。
 
 ## 总体架构
 
-![img](images/DolphinDB_AI_DataLoader_for_Deep_Learning/DolphinDB_AI_DataLoader_for_Deep_Learning_1.png)
+<img src="images/DolphinDB_AI_DataLoader_for_Deep_Learning/DolphinDB_AI_DataLoader_for_Deep_Learning_1.png" width="550">
 
 **主要包括以下功能模块:**
 
 - 因子数据存储模块
   - DolphinDB 存储历史因子数据
-- 因子数据推送模块: 即 AI DataLoader 队列，其内部维护多个工作线程与消息队列，以提高并发性能，从 DolphinDB 中按照分区机制将因子数据转换为 PyTorch 等深度学习框架等可识别 tensor。策略研发人员可以实时从 DolphinDB 中获取所需的因子数据，并将其推送到深度学习模型中用于训练。这种实时性能帮助策略研发人员在需要时获取最新数据进行模型训练。
+- 因子数据推送模块: 即 AI DataLoader（DDBDataLoader） 队列，其内部维护多个工作线程与消息队列，以提高并发性能，从 DolphinDB 中按照分区机制将因子数据转换为 PyTorch 等深度学习框架等可识别 tensor。策略研发人员可以实时从 DolphinDB 中获取所需的因子数据，并将其推送到深度学习模型中用于训练。这种实时性能帮助策略研发人员在需要时获取最新数据进行模型训练。
   - 第一步，构造 DDBDataLoader 对象，根据 groupCol 参数指定的数据列拆分为若干组查询，每组查询中，再根据 repartitionCol 参数指定的数据列拆分为若干个子查询，此种分割增加了数据的灵活性，使用户能够更精细地选择所需的数据，以满足深度学习模型的训练需求。
-  - 第二步，DDBDataLoader 对象内部线程根据拆分的数据，会在后台线程中转换以及拼接成 Pytorch 训练所需的数据，再放入预准备队列中，即图中2，通过此种方式，可以减少客户端内存的占用。
+  - 第二步，DDBDataLoader 对象内部线程根据拆分的数据，会在后台线程中转换以及拼接成 PyTorch 训练所需的数据，再放入预准备队列中，即图中2，通过此种方式，可以减少客户端内存的占用。
   - 最后一步涉及从 DDBDataLoader 队列中迭代获取批量数据，并将这些数据返回给客户端，以供 PyTorch 训练使用，即图中5。
 
-具体内部详细工作流程将在下一节《工作原理》中详细介绍。
+具体内部详细工作流程将在下一节 *工作原理* 中详细介绍。
 
 ## 工作原理
 
@@ -75,11 +75,11 @@ select val from loadTable(dbName, tableName) pivot by datetime, stockID, factorN
 
 下面介绍 `DDBDataLoader` 的各个组件。在 `DDBDataLoader` 内部，每组子查询由数据管理器 DataManager 管理，每个 DataManager 又对应一个 DataSource。这里的 DataSource，可视为一个分区的元数据。DataSource 通过传入的 Session 会话从 DolphinDB 服务端获取一个分区的数据，并将该分区的数据放入一个预载队列中。DataManager 则根据选取数据的顺序从 DataSource 产生的预载队列中获取预载的分区粒度数据，并将其根据滑动窗口大小和步长处理为相应的 PyTorch 的 Tensor 格式。`DDBDataLoader` 维护了一个包含多个数据管理器 DataManager 的数据池，数据池的大小由参数 `groupPoolSize` 控制。后台工作线程从这些数据管理器中提取批量数据，并将其组装成用于训练的数据格式和形状，然后放入整个 AI Dataloader 的预准备队列中。最后，迭代时，`DDBDataLoader` 从预准备队列中获取已准备好的批量数据，将其传递给客户端，供神经网络训练使用。
 
-## AI DataLoader 详细介绍
+## DDBDataLoader 详细介绍
 
 ### 安装步骤
 
-DolphinDB Python API 自 1.30.22.2 版本起提供深度学习工具类 AI DDBDataLoader，提供对 DolphinDB SQL 对应的数据集进行批量拆分和重新洗牌的易用接口，将 DolphinDB 中的数据直接对接到 Pytorch 中。
+DolphinDB Python API 自 1.30.22.2 版本起提供深度学习工具类 DDBDataLoader，提供对 DolphinDB SQL 对应的数据集进行批量拆分和重新洗牌的易用接口，将 DolphinDB 中的数据直接对接到 PyTorch 中。
 
 ```
 pip install dolphindb-tools
