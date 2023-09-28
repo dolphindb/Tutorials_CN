@@ -4,51 +4,45 @@
 
 > 本教程假定读者已经搭建好 DolphinDB 服务。如需搭建 DolphinDB，请参考教程：[DolphinDB 安装使用指南](https://gitee.com/dolphindb/Tutorials_CN/blob/master/dolphindb_user_guide.md)。
 
-- [DolphinDB 集群运维监控教程](#dolphindb-集群运维监控教程)
-- [1. 监控方案概述](#1-监控方案概述)
-- [2 软件安装部署](#2-软件安装部署)
-  - [2.1 NodeExporter 部署](#21-nodeexporter-部署)
-  - [2.2 Prometheus 部署](#22-prometheus-部署)
-  - [2.3 Grafana部署](#23-grafana部署)
-  - [2.4 dolphindb-datasource 插件安装](#24-dolphindb-datasource-插件安装)
-- [3 监控方案实现](#3-监控方案实现)
-  - [3.1 监控指标体系及其计算公式](#31-监控指标体系及其计算公式)
-  - [3.2 导入JSON文件监控集群](#32-导入json文件监控集群)
-- [4. 邮件告警与预警](#4-邮件告警与预警)
-  - [4.1 修改配置文件添加邮箱信息](#41-修改配置文件添加邮箱信息)
-  - [4.2 告警规则建立](#42-告警规则建立)
-  - [4.3 告警消息设置](#43-告警消息设置)
-  - [4.4 设置告警方式](#44-设置告警方式)
-  - [4.5 最终结果](#45-最终结果)
-- [5. 附录](#5-附录)
-  - [5.1 PromQL 查询语法介绍](#51-promql-查询语法介绍)
-  - [5.2 Grafana面板使用的一些小技巧](#52-grafana面板使用的一些小技巧)
-  - [5.3 Grafana 告警的进阶使用](#53-grafana-告警的进阶使用)
-  - [5.4 钉钉告警与预警](#54-钉钉告警与预警)
-  - [5.5 Prometheus+Alertmanager 企业微信告警与预警](#55-prometheusalertmanager-企业微信告警与预警)
+- [2.1 NodeExporter 部署](#21-nodeexporter-部署)
+- [2.2 Prometheus 部署](#22-prometheus-部署)
+- [2.3 Grafana部署](#23-grafana部署)
+- [2.4 dolphindb-datasource 插件安装](#24-dolphindb-datasource-插件安装)
+- [3.1 监控指标体系及其计算公式](#31-监控指标体系及其计算公式)
+- [3.2 导入JSON文件监控集群](#32-导入json文件监控集群)
+- [4.1 修改配置文件添加邮箱信息](#41-修改配置文件添加邮箱信息)
+- [4.2 告警规则建立](#42-告警规则建立)
+- [4.3 告警消息设置](#43-告警消息设置)
+- [4.4 设置告警方式](#44-设置告警方式)
+- [4.5 最终结果](#45-最终结果)
+- [5.1 PromQL 查询语法介绍](#51-promql-查询语法介绍)
+- [5.2 Grafana面板使用的一些小技巧](#52-grafana面板使用的一些小技巧)
+- [5.3 Grafana 告警的进阶使用](#53-grafana-告警的进阶使用)
+- [5.4 钉钉告警与预警](#54-钉钉告警与预警)
+- [5.5 Prometheus+Alertmanager 企业微信告警与预警](#55-prometheusalertmanager-企业微信告警与预警)
 
 
 # 1. 监控方案概述
 
 本套教程实现了以下三套监控方案：
 
-*   第一套：NodeExporter + Prometheus + Grafana 监控服务器资源
+- 第一套：NodeExporter + Prometheus + Grafana 监控服务器资源
 
-![](/images/cluster_monitor/1-1.png)
+  ![](/images/cluster_monitor/1-1.png)
 
-本方案主要用于监控服务器资源使用情况，如 CPU 频率信息、内存占用信息、磁盘 IO 信息、网络 IO 信息等。本方案由 NodeExporter 采集服务器指标，Prometheus 定时抓取，再由 Grafana 对 Prometheus 采集的资源信息进行可视化展示。
+  本方案主要用于监控服务器资源使用情况，如 CPU 频率信息、内存占用信息、磁盘 IO 信息、网络 IO 信息等。本方案由 NodeExporter 采集服务器指标，Prometheus 定时抓取，再由 Grafana 对 Prometheus 采集的资源信息进行可视化展示。
 
-*   第二套：DolphinDB + Prometheus + Grafana 监控 DolphinDB 资源
+- 第二套：DolphinDB + Prometheus + Grafana 监控 DolphinDB 资源
 
-![](/images/cluster_monitor/1-2.png)
+  ![](/images/cluster_monitor/1-2.png)
 
-本方案主要用于监控 DolphinDB 进程对服务器资源的使用情况及 DolphinDB 性能，如 DolphinDB 进程 CPU 占用情况、DolphinDB 进程内存占用情况、DolphinDB 进程磁盘资源使用情况等。DolphinDB 内置了相应的运维函数以获取当前节点的资源使用情况，Prometheus 可以抓取到这些指标。本方案中 Prometheus 定时从 DolphinDB 抓取相关指标，再由 Grafana 对 Prometheus 采集的指标信息进行可视化展示。
+  本方案主要用于监控 DolphinDB 进程对服务器资源的使用情况及 DolphinDB 性能，如 DolphinDB 进程 CPU 占用情况、DolphinDB 进程内存占用情况、DolphinDB 进程磁盘资源使用情况等。DolphinDB 内置了相应的运维函数以获取当前节点的资源使用情况，Prometheus 可以抓取到这些指标。本方案中 Prometheus 定时从 DolphinDB 抓取相关指标，再由 Grafana 对 Prometheus 采集的指标信息进行可视化展示。
 
-*   第三套：dolphindb-datasource 插件+ Grafana 监控 DolphinDB 集群节点状态
+- 第三套：dolphindb-datasource 插件+ Grafana 监控 DolphinDB 集群节点状态
 
-![](/images/cluster_monitor/1-3.png)
+  ![](/images/cluster_monitor/1-3.png)
 
-本方案主要用于监控 DolphinDB 集群的节点状态、流表状态以及订阅状态。DolphinDB 开发了 Grafana 数据源插件 (dolphindb-datasource)，让用户在 Grafana 面板 (dashboard) 上通过编写查询脚本，与 DolphinDB 进行交互 (基于 WebSocket)，实现 DolphinDB 数据的可视化。本方案中，Grafana 直接连接 DolphinDB 服务，使用查询脚本直接展示数据库信息。
+  本方案主要用于监控 DolphinDB 集群的节点状态、流表状态以及订阅状态。DolphinDB 开发了 Grafana 数据源插件 (dolphindb-datasource)，让用户在 Grafana 面板 (dashboard) 上通过编写查询脚本，与 DolphinDB 进行交互 (基于 WebSocket)，实现 DolphinDB 数据的可视化。本方案中，Grafana 直接连接 DolphinDB 服务，使用查询脚本直接展示数据库信息。
 
 上述三套方案互不依赖，可以根据需要安装必须的软件。
 
@@ -454,7 +448,7 @@ select * from t
 
 # 4. 邮件告警与预警
 
-Pormetheus 和 Grafana 的告警功能丰富，可以设置，邮件、钉钉、企业微信等多种方式的告警和预警。
+Prometheus 和 Grafana 的告警功能丰富，可以设置，邮件、钉钉、企业微信等多种方式的告警和预警。
 
 本章简单介绍了如何设置邮件告警，其他告警设置请参考附录章节。
 

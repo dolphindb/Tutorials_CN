@@ -9,14 +9,13 @@ DolphinDB提供了三种方式进行性能监控：
 
 本文以监控系统平均负载为例，安装配置 Prometheus 和其 Alertmanager 组件，然后接入邮件报警，演示系统负载高时自动邮件报警的功能。用户可以参照此文，根据自己的实际需求来实现具体的运维方案。
 
-- [使用Prometheus监控告警](#使用prometheus监控告警)
-  - [1. Prometheus metrics](#1-prometheus-metrics)
-  - [2. 下载Prometheus](#2-下载prometheus)
-  - [3.安装及配置](#3安装及配置)
-    - [3.1 Prometheus安装及配置](#31-prometheus安装及配置)
-    - [3.2 Alertmanager安装及配置](#32-alertmanager安装及配置)
-    - [3.3 启动Prometheus和Alertmanager](#33-启动prometheus和alertmanager)
-  - [4. 监控展示](#4-监控展示)
+- [1. Prometheus metrics](#1-prometheus-metrics)
+- [2. 下载Prometheus](#2-下载prometheus)
+- [3.安装及配置](#3安装及配置)
+  - [3.1 Prometheus安装及配置](#31-prometheus安装及配置)
+  - [3.2 Alertmanager安装及配置](#32-alertmanager安装及配置)
+  - [3.3 启动Prometheus和Alertmanager](#33-启动prometheus和alertmanager)
+- [4. 监控展示](#4-监控展示)
 
 ## 1. Prometheus metrics
 
@@ -202,15 +201,15 @@ Prometheus 内置简易的Web控制台，可以查询指标、配置信息等，
 
 * 访问http://127.0.0.1:9090/targets 查看被监控的节点：
 
-![targets](./images/monitor/targets.png?raw=true)
+  <img src="./images/monitor/targets.png" width="500">
 
 * 访问http://127.0.0.1:9090/rules 查看监控报警规则：
 
-![targets](./images/monitor/rules.png?raw=true)
+  <img src="./images/monitor/rules.png" width="500">
 
 * 访问http://127.0.0.1:9090/graph 在输入框中输入指标如 *lastMinuteNetworkRecv*，查看对应指标的图形展示：
 
-![targets](./images/monitor/graph.png?raw=true)
+  <img src="./images/monitor/graph.png" width="500">
 
 
 在实际工作中，经常将Prometheus作为Grafana的数据源，使用Grafana查看指标或者创建仪表盘。DolphinDB已经实现了Grafana的服务端和客户端的接口，具体配置可以参考[grafana教程](../../grafana-datasource/blob/master/README_CN.md)。
