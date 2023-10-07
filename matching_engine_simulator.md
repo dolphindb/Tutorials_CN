@@ -1112,7 +1112,7 @@ DolphinDB 提供了模拟撮合引擎插件，可以基于快照和逐笔行情�
     <WARNING>:the time of this userOrder is Less than LastOrderTime, it will be set to LastOrderTime
     ```
     
-    **说明：该日志是WARNING信息而非ERROR信息，**输入的用户订单时间小于最新行情时间。以下是可能的原因：
+    **说明：该日志是WARNING信息而非ERROR信息，** 输入的用户订单时间小于最新行情时间。以下是可能的原因：
     
     - **用户订单的时间列设置有误/忘记设置**
     - **行情数据输入和用户订单生成异步进行**，可能存在算法策略生成用户订单较慢的情况，这属于正常现象。
