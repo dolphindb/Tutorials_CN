@@ -57,19 +57,28 @@ DolphinDB Python Parser （简称 Python Parser）是 Python 语言的一个 Dol
 
 上述教程代码都基于 DolphinDB 语法开发，在 DolphinDB 支持的编程 IDE 中执行代码时要选择 DolphinDB 语法解释器。选择方式如下：
 
-**GUI 编程工具**：建议下载官网的最新版本，本教程基于 V1.30.22.1 开发。
 
-<img src="images/DolphinDB_Python_Parser_Intro_for_Quantitative_Finance/1_1.png" title="GUI 配置界面">
+1. **GUI 客户端**：建议下载官网的最新版本：[DolphinDB GUI](https://www.dolphindb.cn/product#downloads)。
+
+    使用前，应在 DolphinDB GUI 中确保语言下拉菜单已开启：点击 **File** > **Preferences**，选中 **Always show language dropdown** 复选框。
+
+    <img src="images/DolphinDB_Python_Parser_Intro_for_Quantitative_Finance/1_0.png" title="GUI 首选项">
+
+    此后，即可在GUI用户界面中的语言选择菜单中选择 DolphinDB 语法解释器。
+
+    <img src="images/DolphinDB_Python_Parser_Intro_for_Quantitative_Finance/1_1.png" title="GUI 配置界面">
 
 
 
-**Visual Studio Code（VSCode）编辑器 + DolphinDB VSCode 插件**：建议下载最新版 VSCode 插件，本教程基于 V2.0.1041 开发。
 
-在 VSCode 的 Settings 界面搜索 ` @ext:dolphindb.dolphindb-vscode connections` 后，编辑 `settings.json`，在 `dolphindb.connections` 一节中，指定 “python” 条目。
+2. **Visual Studio Code（VS Code）编辑器 + DolphinDB VS Code 插件**：建议下载最新版 VS Code 插件：[Visual Studio Code extension for DolphinDB](https://www.dolphindb.cn/product#downloads)。本教程基于 V2.0.1041 开发。
 
-`"python": true` 表示使用 Python Parser 语法解释器；`"python": false` 表示使用 DolphinDB 语法解释器。
+    在 VS Code 的 **Settings** 界面搜索 ` @ext:dolphindb.dolphindb-vscode connections` 后，编辑 `settings.json`，在 `dolphindb.connections` 一节中，指定 “python” 条目。
 
-<img src="images/DolphinDB_Python_Parser_Intro_for_Quantitative_Finance/1_2.png" title="VS Code 配置界面">
+    `"python": true` 表示使用 Python Parser 语法解释器；`"python": false` 表示使用 DolphinDB 语法解释器。
+
+    <img src="images/DolphinDB_Python_Parser_Intro_for_Quantitative_Finance/1_2.png" title="VS Code 配置界面">
+
 
 
 
