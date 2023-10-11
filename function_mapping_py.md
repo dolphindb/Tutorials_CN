@@ -38,6 +38,12 @@ DolphinDB 函数选取自 2.00 版本 [用户手册](https://www.dolphindb.cn/cn
 | slice       | slice          |
 | type        | type / typestr |
 | zip         | loop(pair, x, y) |
+| join        | concat         |
+| format      | strReplace     |
+| sort        | isort          |
+| rjust /zfill | lpad /rpad     |
+| lead / lag  | move           |
+| itertools.product | cross + join |
 
 
 
@@ -77,6 +83,7 @@ DolphinDB 函数选取自 2.00 版本 [用户手册](https://www.dolphindb.cn/cn
 | numpy.mean                                               | mean/avg                    |
 | numpy.sum                                                | sum                         |
 | nump.random.normal                                       | norm                        |
+| nump.clip                                                | winsorize                   |
 
 ##  3. <a name='pandas'></a>pandas
 
@@ -124,7 +131,7 @@ DolphinDB 函数选取自 2.00 版本 [用户手册](https://www.dolphindb.cn/cn
 | pandas.DataFrame.cumsum / pandas.Series.cumsum               | cumsum                  |
 | pandas.DataFrame.cumprod / pandas.Series.cumprod             | cumprod                 |
 | pandas.DataFrame.nlargest(nsmallest) / pandas.Series.nlargest(nsmallest)  |  top + order by / aggrTopN |
-| pandas.DataFrame.diff / pandas.Series.diff                   | deltas                  |
+| pandas.DataFrame.diff / pandas.Series.diff                   | eachPost, deltas                  |
 | pandas.DataFrame.quantile / pandas.Series.quantile           | quantile                |
 | pandas.DataFrame.transpose                                   | transpose               |
 | pandas.Series.resample / pandas.DataFrame.resample           | resample                |
@@ -177,7 +184,7 @@ DolphinDB 函数选取自 2.00 版本 [用户手册](https://www.dolphindb.cn/cn
 | pandas.rolling_mean                                          | mavg                  |
 | pandas.rolling_std                                           | mstd                  |
 | pandas.rolling_median                                        | mmed                  |
-| pandas.DataFrame.shift / pandas.Series.shift                 | move / tmove          |
+| pandas.DataFrame.shift / pandas.Series.shift                 | move / tmove / prev / next |
 
 
 
@@ -237,7 +244,7 @@ DolphinDB 函数选取自 2.00 版本 [用户手册](https://www.dolphindb.cn/cn
 | statsmodels.stats.weightstats.ztest    | zTest          |
 | statsmodels.multivariate.manova.MANOVA | manova         |
 | statsmodels.api.stats.anova_lm         | anova          |
-| statsmodels.regression.linear_model.OLS                 | ols / olsEx               |
+| statsmodels.regression.linear_model.OLS                 | olsolsEx               |
 | statsmodels.regression.linear_model.WLS                 | wls                    |
 
 ##  6. <a name='sklearn'></a>sklearn
