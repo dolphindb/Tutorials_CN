@@ -21,10 +21,11 @@
       }
     ]
   },
+  "description": "",
   "editable": true,
   "fiscalYearStartMonth": 0,
   "graphTooltip": 0,
-  "id": 21,
+  "id": 43,
   "links": [],
   "liveNow": false,
   "panels": [
@@ -39,10 +40,7 @@
       "id": 44,
       "panels": [
         {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "xwS6aOi4k"
-          },
+          "datasource": "${DS_PROMETHEUS}",
           "description": "0为未与Prometheus连接",
           "fieldConfig": {
             "defaults": {
@@ -90,13 +88,10 @@
           "pluginVersion": "9.0.5",
           "targets": [
             {
-              "datasource": {
-                "type": "prometheus",
-                "uid": "xwS6aOi4k"
-              },
+              "datasource":"${DS_DOLPHINDB}",
               "editorMode": "code",
-              "expr": "up{job=~\"[^0-9].*?[0-9]\"}",
-              "legendFormat": "__auto",
+              "expr": "up{job=~\"$job\"}",
+              "legendFormat": "{{job}}",
               "range": true,
               "refId": "A"
             }
@@ -105,10 +100,7 @@
           "type": "bargauge"
         },
         {
-          "datasource": {
-            "type": "dolphindb-datasource",
-            "uid": "Y09S2SZVk"
-          },
+          "datasource": "${DS_DOLPHINDB}",
           "fieldConfig": {
             "defaults": {
               "color": {
@@ -158,7 +150,8 @@
           "pluginVersion": "9.0.5",
           "targets": [
             {
-              "code": "temp = getClusterPerf(includeMaster=true)\nt = select  host,port,mode,state,name,runningJobs,queuedJobs,runningTasks,queuedTasks,maxMemSize,connectionNum from temp\nmapper1 = dict(0 1 2 3 4,[\"datanode\",\"agentnode\",\"controlnode\",\"singlemode\",\"computenode\"])\nmapper2 = dict(0 1,[\"未存活\",\"存活\"])\ntempvalue1 = t.mode\ntempvalue2 = t.state\nfinalvalue1 = mapper1[tempvalue1]\nfinalvalue2 = mapper2[tempvalue2]\nreplaceColumn!(t,`mode,finalvalue1)\nreplaceColumn!(t,`state,finalvalue2)\nselect * from t\n",
+              "code": "temp = getClusterPerf(includeMaster=true)\nt = select  host,port,mode,state,name,maxMemSize,runningTasks,queuedTasks,runningJobs,queuedJobs,connectionNum from temp\nmapper1 = dict(0 1 2 3 4,[\"datanode\",\"agentnode\",\"controlnode\",\"singlemode\",\"computenode\"])\nmapper2 = dict(0 1,[\"未存活\",\"存活\"])\ntempvalue1 = t.mode\ntempvalue2 = t.state\nfinalvalue1 = mapper1[tempvalue1]\nfinalvalue2 = mapper2[tempvalue2]\nreplaceColumn!(t,`mode,finalvalue1)\nreplaceColumn!(t,`state,finalvalue2)\nselect * from t",
+              "datasource": "${DS_DOLPHINDB}",
               "refId": "A"
             }
           ],
@@ -166,42 +159,16 @@
           "type": "table"
         },
         {
-          "datasource": {
-            "type": "dolphindb-datasource",
-            "uid": "Y09S2SZVk"
-          },
+          "datasource": "${DS_DOLPHINDB}",
           "fieldConfig": {
             "defaults": {
               "color": {
-                "mode": "palette-classic"
+                "mode": "thresholds"
               },
               "custom": {
-                "axisLabel": "",
-                "axisPlacement": "auto",
-                "barAlignment": 0,
-                "drawStyle": "line",
-                "fillOpacity": 0,
-                "gradientMode": "none",
-                "hideFrom": {
-                  "legend": false,
-                  "tooltip": false,
-                  "viz": false
-                },
-                "lineInterpolation": "linear",
-                "lineWidth": 1,
-                "pointSize": 5,
-                "scaleDistribution": {
-                  "type": "linear"
-                },
-                "showPoints": "auto",
-                "spanNulls": false,
-                "stacking": {
-                  "group": "A",
-                  "mode": "none"
-                },
-                "thresholdsStyle": {
-                  "mode": "off"
-                }
+                "align": "auto",
+                "displayMode": "auto",
+                "inspect": false
               },
               "mappings": [],
               "thresholds": {
@@ -228,10 +195,163 @@
           },
           "id": 52,
           "options": {
+            "footer": {
+              "fields": "",
+              "reducer": [
+                "sum"
+              ],
+              "show": false
+            },
+            "showHeader": true
+          },
+          "pluginVersion": "9.0.5",
+          "targets": [
+            {
+              "code": "nodes=exec value from pnodeRun(getNodeAlias)\nsta0 = rpc(nodes[0],getStreamingStat).pubTables\nif(size(nodes)>1){\n    for(x in nodes[1:]){\n        sta0.append!(rpc(x,getStreamingStat).pubTables)\n    }\n}\nselect * from sta0",
+              "refId": "A"
+            }
+          ],
+          "title": "流表状态",
+          "type": "table"
+        },
+        {
+          "datasource": "${DS_DOLPHINDB}",
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "thresholds"
+              },
+              "custom": {
+                "align": "auto",
+                "displayMode": "auto",
+                "inspect": false
+              },
+              "mappings": [],
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  },
+                  {
+                    "color": "red",
+                    "value": 80
+                  }
+                ]
+              }
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 12,
+            "y": 9
+          },
+          "id": 54,
+          "options": {
+            "footer": {
+              "fields": "",
+              "reducer": [
+                "sum"
+              ],
+              "show": false
+            },
+            "showHeader": true
+          },
+          "pluginVersion": "9.0.5",
+          "targets": [
+            {
+              "code": "nodes=exec value from pnodeRun(getNodeAlias)\nsta0 = rpc(nodes[0],getStreamingStat).subWorkers\nif(size(nodes)>1){\n    for(x in nodes[1:]){\n        sta0.append!(rpc(x,getStreamingStat).subWorkers)\n    }\n}\nselect * from sta0",
+              "refId": "A"
+            }
+          ],
+          "title": "订阅状态",
+          "type": "table"
+        }
+      ],
+      "title": "节点状态",
+      "type": "row"
+    },
+    {
+      "collapsed": true,
+      "gridPos": {
+        "h": 1,
+        "w": 24,
+        "x": 0,
+        "y": 1
+      },
+      "id": 34,
+      "panels": [
+        {
+          "datasource": "${DS_PROMETHEUS}",
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "palette-classic"
+              },
+              "custom": {
+                "axisLabel": "",
+                "axisPlacement": "auto",
+                "barAlignment": 0,
+                "drawStyle": "line",
+                "fillOpacity": 0,
+                "gradientMode": "none",
+                "hideFrom": {
+                  "legend": false,
+                  "tooltip": false,
+                  "viz": false
+                },
+                "lineInterpolation": "linear",
+                "lineWidth": 1,
+                "pointSize": 5,
+                "scaleDistribution": {
+                  "type": "linear"
+                },
+                "showPoints": "auto",
+                "spanNulls": false,
+                "stacking": {
+                  "group": "A",
+                  "mode": "none"
+                },
+                "thresholdsStyle": {
+                  "mode": "off"
+                }
+              },
+              "mappings": [],
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  },
+                  {
+                    "color": "red",
+                    "value": 80
+                  }
+                ]
+              }
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 0,
+            "y": 2
+          },
+          "id": 40,
+          "options": {
             "legend": {
-              "calcs": [],
-              "displayMode": "list",
-              "placement": "bottom"
+              "calcs": [
+                "last",
+                "min",
+                "max"
+              ],
+              "displayMode": "table",
+              "placement": "right"
             },
             "tooltip": {
               "mode": "single",
@@ -240,18 +360,218 @@
           },
           "targets": [
             {
-              "code": "getStreamingStat().pubTables",
+              "datasource": "${DS_PROMETHEUS}",
+              "editorMode": "code",
+              "expr": "maxRunningQueryTime{job=~\"$job\"}/1000000",
+              "legendFormat": "{{job}}",
+              "range": true,
               "refId": "A"
             }
           ],
-          "title": "流表状态",
+          "title": "各节点当前正在执行查询的最大耗时(ms)",
           "type": "timeseries"
         },
         {
-          "datasource": {
-            "type": "dolphindb-datasource",
-            "uid": "Y09S2SZVk"
+          "datasource": "${DS_PROMETHEUS}",
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "palette-classic"
+              },
+              "custom": {
+                "axisLabel": "",
+                "axisPlacement": "auto",
+                "barAlignment": 0,
+                "drawStyle": "line",
+                "fillOpacity": 0,
+                "gradientMode": "none",
+                "hideFrom": {
+                  "legend": false,
+                  "tooltip": false,
+                  "viz": false
+                },
+                "lineInterpolation": "linear",
+                "lineWidth": 1,
+                "pointSize": 5,
+                "scaleDistribution": {
+                  "type": "linear"
+                },
+                "showPoints": "auto",
+                "spanNulls": false,
+                "stacking": {
+                  "group": "A",
+                  "mode": "none"
+                },
+                "thresholdsStyle": {
+                  "mode": "off"
+                }
+              },
+              "mappings": [],
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  },
+                  {
+                    "color": "red",
+                    "value": 80
+                  }
+                ]
+              }
+            },
+            "overrides": [
+              {
+                "__systemRef": "hideSeriesFrom",
+                "matcher": {
+                  "id": "byNames",
+                  "options": {
+                    "mode": "exclude",
+                    "names": [
+                      "dnode2"
+                    ],
+                    "prefix": "All except:",
+                    "readOnly": true
+                  }
+                },
+                "properties": [
+                  {
+                    "id": "custom.hideFrom",
+                    "value": {
+                      "legend": false,
+                      "tooltip": false,
+                      "viz": true
+                    }
+                  }
+                ]
+              }
+            ]
           },
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 12,
+            "y": 2
+          },
+          "id": 42,
+          "options": {
+            "legend": {
+              "calcs": [
+                "last",
+                "min",
+                "max"
+              ],
+              "displayMode": "table",
+              "placement": "right"
+            },
+            "tooltip": {
+              "mode": "single",
+              "sort": "none"
+            }
+          },
+          "targets": [
+            {
+              "datasource": "${DS_PROMETHEUS}",
+              "editorMode": "code",
+              "expr": "maxLast10QueryTime{job=~\"$job\"}/1000000",
+              "legendFormat": "{{job}}",
+              "range": true,
+              "refId": "A"
+            }
+          ],
+          "title": "各节点前10个完成的查询中的最大耗时(ms)",
+          "type": "timeseries"
+        },
+        {
+          "datasource":"${DS_PROMETHEUS}",
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "palette-classic"
+              },
+              "custom": {
+                "axisLabel": "",
+                "axisPlacement": "auto",
+                "barAlignment": 0,
+                "drawStyle": "line",
+                "fillOpacity": 0,
+                "gradientMode": "none",
+                "hideFrom": {
+                  "legend": false,
+                  "tooltip": false,
+                  "viz": false
+                },
+                "lineInterpolation": "linear",
+                "lineWidth": 1,
+                "pointSize": 5,
+                "scaleDistribution": {
+                  "type": "linear"
+                },
+                "showPoints": "auto",
+                "spanNulls": false,
+                "stacking": {
+                  "group": "A",
+                  "mode": "none"
+                },
+                "thresholdsStyle": {
+                  "mode": "off"
+                }
+              },
+              "mappings": [],
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  },
+                  {
+                    "color": "red",
+                    "value": 80
+                  }
+                ]
+              }
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 0,
+            "y": 10
+          },
+          "id": 36,
+          "options": {
+            "legend": {
+              "calcs": [
+                "last",
+                "min",
+                "max"
+              ],
+              "displayMode": "table",
+              "placement": "right"
+            },
+            "tooltip": {
+              "mode": "single",
+              "sort": "none"
+            }
+          },
+          "targets": [
+            {
+              "datasource":"${DS_PROMETHEUS}",
+              "editorMode": "code",
+              "expr": "avgLoad{job=~\"$job\"}",
+              "legendFormat": "{{job}}",
+              "range": true,
+              "refId": "A"
+            }
+          ],
+          "title": "各节点cpu平均负载",
+          "type": "timeseries"
+        },
+        {
+          "datasource":"${DS_PROMETHEUS}",
           "fieldConfig": {
             "defaults": {
               "color": {
@@ -306,403 +626,7 @@
             "h": 8,
             "w": 12,
             "x": 12,
-            "y": 9
-          },
-          "id": 54,
-          "options": {
-            "legend": {
-              "calcs": [],
-              "displayMode": "list",
-              "placement": "bottom"
-            },
-            "tooltip": {
-              "mode": "single",
-              "sort": "none"
-            }
-          },
-          "targets": [
-            {
-              "code": "getStreamingStat().subWorkers",
-              "refId": "A"
-            }
-          ],
-          "title": "订阅状态",
-          "type": "timeseries"
-        }
-      ],
-      "title": "节点状态",
-      "type": "row"
-    },
-    {
-      "collapsed": true,
-      "gridPos": {
-        "h": 1,
-        "w": 24,
-        "x": 0,
-        "y": 1
-      },
-      "id": 34,
-      "panels": [
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "xwS6aOi4k"
-          },
-          "fieldConfig": {
-            "defaults": {
-              "color": {
-                "mode": "palette-classic"
-              },
-              "custom": {
-                "axisLabel": "",
-                "axisPlacement": "auto",
-                "barAlignment": 0,
-                "drawStyle": "line",
-                "fillOpacity": 0,
-                "gradientMode": "none",
-                "hideFrom": {
-                  "legend": false,
-                  "tooltip": false,
-                  "viz": false
-                },
-                "lineInterpolation": "linear",
-                "lineWidth": 1,
-                "pointSize": 5,
-                "scaleDistribution": {
-                  "type": "linear"
-                },
-                "showPoints": "auto",
-                "spanNulls": false,
-                "stacking": {
-                  "group": "A",
-                  "mode": "none"
-                },
-                "thresholdsStyle": {
-                  "mode": "off"
-                }
-              },
-              "mappings": [],
-              "thresholds": {
-                "mode": "absolute",
-                "steps": [
-                  {
-                    "color": "green"
-                  },
-                  {
-                    "color": "red",
-                    "value": 80
-                  }
-                ]
-              }
-            },
-            "overrides": []
-          },
-          "gridPos": {
-            "h": 8,
-            "w": 12,
-            "x": 0,
             "y": 10
-          },
-          "id": 40,
-          "options": {
-            "legend": {
-              "calcs": [
-                "last",
-                "min",
-                "max"
-              ],
-              "displayMode": "table",
-              "placement": "right"
-            },
-            "tooltip": {
-              "mode": "single",
-              "sort": "none"
-            }
-          },
-          "targets": [
-            {
-              "datasource": {
-                "type": "prometheus",
-                "uid": "xwS6aOi4k"
-              },
-              "editorMode": "code",
-              "expr": "maxRunningQueryTime/1000000",
-              "legendFormat": "{{job}}",
-              "range": true,
-              "refId": "A"
-            }
-          ],
-          "title": "各节点当前正在执行查询的最大耗时(ms)",
-          "type": "timeseries"
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "xwS6aOi4k"
-          },
-          "fieldConfig": {
-            "defaults": {
-              "color": {
-                "mode": "palette-classic"
-              },
-              "custom": {
-                "axisLabel": "",
-                "axisPlacement": "auto",
-                "barAlignment": 0,
-                "drawStyle": "line",
-                "fillOpacity": 0,
-                "gradientMode": "none",
-                "hideFrom": {
-                  "legend": false,
-                  "tooltip": false,
-                  "viz": false
-                },
-                "lineInterpolation": "linear",
-                "lineWidth": 1,
-                "pointSize": 5,
-                "scaleDistribution": {
-                  "type": "linear"
-                },
-                "showPoints": "auto",
-                "spanNulls": false,
-                "stacking": {
-                  "group": "A",
-                  "mode": "none"
-                },
-                "thresholdsStyle": {
-                  "mode": "off"
-                }
-              },
-              "mappings": [],
-              "thresholds": {
-                "mode": "absolute",
-                "steps": [
-                  {
-                    "color": "green"
-                  },
-                  {
-                    "color": "red",
-                    "value": 80
-                  }
-                ]
-              }
-            },
-            "overrides": []
-          },
-          "gridPos": {
-            "h": 8,
-            "w": 12,
-            "x": 12,
-            "y": 10
-          },
-          "id": 42,
-          "options": {
-            "legend": {
-              "calcs": [
-                "last",
-                "min",
-                "max"
-              ],
-              "displayMode": "table",
-              "placement": "right"
-            },
-            "tooltip": {
-              "mode": "single",
-              "sort": "none"
-            }
-          },
-          "targets": [
-            {
-              "datasource": {
-                "type": "prometheus",
-                "uid": "xwS6aOi4k"
-              },
-              "editorMode": "code",
-              "expr": "maxLast10QueryTime/1000000",
-              "legendFormat": "{{job}}",
-              "range": true,
-              "refId": "A"
-            }
-          ],
-          "title": "各节点前10个完成的查询中的最大耗时(ms)",
-          "type": "timeseries"
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "xwS6aOi4k"
-          },
-          "fieldConfig": {
-            "defaults": {
-              "color": {
-                "mode": "palette-classic"
-              },
-              "custom": {
-                "axisLabel": "",
-                "axisPlacement": "auto",
-                "barAlignment": 0,
-                "drawStyle": "line",
-                "fillOpacity": 0,
-                "gradientMode": "none",
-                "hideFrom": {
-                  "legend": false,
-                  "tooltip": false,
-                  "viz": false
-                },
-                "lineInterpolation": "linear",
-                "lineWidth": 1,
-                "pointSize": 5,
-                "scaleDistribution": {
-                  "type": "linear"
-                },
-                "showPoints": "auto",
-                "spanNulls": false,
-                "stacking": {
-                  "group": "A",
-                  "mode": "none"
-                },
-                "thresholdsStyle": {
-                  "mode": "off"
-                }
-              },
-              "mappings": [],
-              "thresholds": {
-                "mode": "absolute",
-                "steps": [
-                  {
-                    "color": "green"
-                  },
-                  {
-                    "color": "red",
-                    "value": 80
-                  }
-                ]
-              }
-            },
-            "overrides": []
-          },
-          "gridPos": {
-            "h": 8,
-            "w": 12,
-            "x": 0,
-            "y": 18
-          },
-          "id": 36,
-          "options": {
-            "legend": {
-              "calcs": [
-                "last",
-                "min",
-                "max"
-              ],
-              "displayMode": "table",
-              "placement": "right"
-            },
-            "tooltip": {
-              "mode": "single",
-              "sort": "none"
-            }
-          },
-          "targets": [
-            {
-              "datasource": {
-                "type": "prometheus",
-                "uid": "xwS6aOi4k"
-              },
-              "editorMode": "code",
-              "expr": "avgLoad",
-              "legendFormat": "{{job}}",
-              "range": true,
-              "refId": "A"
-            }
-          ],
-          "title": "各节点cpu平均负载",
-          "type": "timeseries"
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "xwS6aOi4k"
-          },
-          "fieldConfig": {
-            "defaults": {
-              "color": {
-                "mode": "palette-classic"
-              },
-              "custom": {
-                "axisLabel": "",
-                "axisPlacement": "auto",
-                "barAlignment": 0,
-                "drawStyle": "line",
-                "fillOpacity": 0,
-                "gradientMode": "none",
-                "hideFrom": {
-                  "legend": false,
-                  "tooltip": false,
-                  "viz": false
-                },
-                "lineInterpolation": "linear",
-                "lineWidth": 1,
-                "pointSize": 5,
-                "scaleDistribution": {
-                  "type": "linear"
-                },
-                "showPoints": "auto",
-                "spanNulls": false,
-                "stacking": {
-                  "group": "A",
-                  "mode": "none"
-                },
-                "thresholdsStyle": {
-                  "mode": "off"
-                }
-              },
-              "mappings": [],
-              "thresholds": {
-                "mode": "absolute",
-                "steps": [
-                  {
-                    "color": "green"
-                  },
-                  {
-                    "color": "red",
-                    "value": 80
-                  }
-                ]
-              }
-            },
-            "overrides": [
-              {
-                "__systemRef": "hideSeriesFrom",
-                "matcher": {
-                  "id": "byNames",
-                  "options": {
-                    "mode": "exclude",
-                    "names": [
-                      "运达风电内存监控-2.00.8"
-                    ],
-                    "prefix": "All except:",
-                    "readOnly": true
-                  }
-                },
-                "properties": [
-                  {
-                    "id": "custom.hideFrom",
-                    "value": {
-                      "legend": false,
-                      "tooltip": false,
-                      "viz": true
-                    }
-                  }
-                ]
-              }
-            ]
-          },
-          "gridPos": {
-            "h": 8,
-            "w": 12,
-            "x": 12,
-            "y": 18
           },
           "id": 38,
           "options": {
@@ -724,12 +648,9 @@
           },
           "targets": [
             {
-              "datasource": {
-                "type": "prometheus",
-                "uid": "xwS6aOi4k"
-              },
+              "datasource": "${DS_PROMETHEUS}",
               "editorMode": "code",
-              "expr": "jobLoad",
+              "expr": "jobLoad{job=~\"$job\"}",
               "legendFormat": "{{job}}",
               "range": true,
               "refId": "A"
@@ -739,10 +660,7 @@
           "type": "timeseries"
         },
         {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "xwS6aOi4k"
-          },
+          "datasource": "${DS_PROMETHEUS}",
           "description": "",
           "fieldConfig": {
             "defaults": {
@@ -782,7 +700,8 @@
                 "mode": "absolute",
                 "steps": [
                   {
-                    "color": "green"
+                    "color": "green",
+                    "value": null
                   },
                   {
                     "color": "red",
@@ -799,7 +718,7 @@
                   "options": {
                     "mode": "exclude",
                     "names": [
-                      "运达风电内存监控-2.00.8"
+                      "dnode1"
                     ],
                     "prefix": "All except:",
                     "readOnly": true
@@ -822,7 +741,7 @@
             "h": 8,
             "w": 12,
             "x": 0,
-            "y": 26
+            "y": 18
           },
           "id": 32,
           "options": {
@@ -830,8 +749,7 @@
               "calcs": [
                 "last",
                 "min",
-                "max",
-                "mean"
+                "max"
               ],
               "displayMode": "table",
               "placement": "right"
@@ -843,12 +761,9 @@
           },
           "targets": [
             {
-              "datasource": {
-                "type": "prometheus",
-                "uid": "xwS6aOi4k"
-              },
+              "datasource": "${DS_PROMETHEUS}",
               "editorMode": "code",
-              "expr": "runningJobs",
+              "expr": "runningJobs{job=~\"$job\"}",
               "legendFormat": "{{job}}",
               "range": true,
               "refId": "A"
@@ -858,10 +773,7 @@
           "type": "timeseries"
         },
         {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "xwS6aOi4k"
-          },
+          "datasource": "${DS_PROMETHEUS}",
           "fieldConfig": {
             "defaults": {
               "color": {
@@ -900,7 +812,8 @@
                 "mode": "absolute",
                 "steps": [
                   {
-                    "color": "green"
+                    "color": "green",
+                    "value": null
                   },
                   {
                     "color": "red",
@@ -917,7 +830,7 @@
                   "options": {
                     "mode": "exclude",
                     "names": [
-                      "中新证券datanode2"
+                      "dnode1"
                     ],
                     "prefix": "All except:",
                     "readOnly": true
@@ -940,13 +853,15 @@
             "h": 8,
             "w": 12,
             "x": 12,
-            "y": 26
+            "y": 18
           },
           "id": 30,
           "options": {
             "legend": {
               "calcs": [
-                "last"
+                "last",
+                "min",
+                "max"
               ],
               "displayMode": "table",
               "placement": "right"
@@ -958,12 +873,9 @@
           },
           "targets": [
             {
-              "datasource": {
-                "type": "prometheus",
-                "uid": "xwS6aOi4k"
-              },
+              "datasource": "${DS_PROMETHEUS}",
               "editorMode": "code",
-              "expr": "queuedJobs",
+              "expr": "queuedJobs{job=~\"$job\"}",
               "legendFormat": "{{job}}",
               "range": true,
               "refId": "A"
@@ -987,10 +899,7 @@
       "id": 28,
       "panels": [
         {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "xwS6aOi4k"
-          },
+          "datasource":"${DS_PROMETHEUS}",
           "fieldConfig": {
             "defaults": {
               "color": {
@@ -1029,7 +938,8 @@
                 "mode": "absolute",
                 "steps": [
                   {
-                    "color": "green"
+                    "color": "green",
+                    "value": null
                   },
                   {
                     "color": "red",
@@ -1042,7 +952,7 @@
           },
           "gridPos": {
             "h": 8,
-            "w": 12,
+            "w": 22,
             "x": 0,
             "y": 3
           },
@@ -1065,12 +975,9 @@
           },
           "targets": [
             {
-              "datasource": {
-                "type": "prometheus",
-                "uid": "xwS6aOi4k"
-              },
+              "datasource":"${DS_PROMETHEUS}",
               "editorMode": "code",
-              "expr": "cpuUsage",
+              "expr": "cpuUsage{job=~\"$job\"}",
               "legendFormat": "{{job}}",
               "range": true,
               "refId": "A"
@@ -1094,10 +1001,7 @@
       "id": 20,
       "panels": [
         {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "xwS6aOi4k"
-          },
+          "datasource":"${DS_PROMETHEUS}",
           "fieldConfig": {
             "defaults": {
               "color": {
@@ -1136,7 +1040,8 @@
                 "mode": "absolute",
                 "steps": [
                   {
-                    "color": "green"
+                    "color": "green",
+                    "value": null
                   },
                   {
                     "color": "red",
@@ -1172,12 +1077,9 @@
           },
           "targets": [
             {
-              "datasource": {
-                "type": "prometheus",
-                "uid": "xwS6aOi4k"
-              },
+              "datasource": "${DS_PROMETHEUS}",
               "editorMode": "code",
-              "expr": "memoryAlloc/1024/1024",
+              "expr": "memoryAlloc{job=~\"$job\"}/1024/1024",
               "legendFormat": "{{job}}",
               "range": true,
               "refId": "A"
@@ -1187,10 +1089,7 @@
           "type": "timeseries"
         },
         {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "xwS6aOi4k"
-          },
+          "datasource":"${DS_PROMETHEUS}",
           "fieldConfig": {
             "defaults": {
               "color": {
@@ -1229,7 +1128,8 @@
                 "mode": "absolute",
                 "steps": [
                   {
-                    "color": "green"
+                    "color": "green",
+                    "value": null
                   },
                   {
                     "color": "red",
@@ -1265,12 +1165,9 @@
           },
           "targets": [
             {
-              "datasource": {
-                "type": "prometheus",
-                "uid": "xwS6aOi4k"
-              },
+              "datasource":"${DS_PROMETHEUS}",
               "editorMode": "code",
-              "expr": "memoryUsed/1024/1024",
+              "expr": "memoryUsed{job=~\"$job\"}/1024/1024",
               "legendFormat": "{{job}}",
               "range": true,
               "refId": "A"
@@ -1294,10 +1191,7 @@
       "id": 8,
       "panels": [
         {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "xwS6aOi4k"
-          },
+          "datasource": "${DS_PROMETHEUS}",
           "fieldConfig": {
             "defaults": {
               "color": {
@@ -1336,311 +1230,8 @@
                 "mode": "absolute",
                 "steps": [
                   {
-                    "color": "green"
-                  },
-                  {
-                    "color": "red",
-                    "value": 80
-                  }
-                ]
-              }
-            },
-            "overrides": [
-              {
-                "__systemRef": "hideSeriesFrom",
-                "matcher": {
-                  "id": "byNames",
-                  "options": {
-                    "mode": "exclude",
-                    "names": [
-                      "运达风电内存监控-2.00.8"
-                    ],
-                    "prefix": "All except:",
-                    "readOnly": true
-                  }
-                },
-                "properties": [
-                  {
-                    "id": "custom.hideFrom",
-                    "value": {
-                      "legend": false,
-                      "tooltip": false,
-                      "viz": true
-                    }
-                  }
-                ]
-              }
-            ]
-          },
-          "gridPos": {
-            "h": 8,
-            "w": 12,
-            "x": 0,
-            "y": 5
-          },
-          "id": 14,
-          "options": {
-            "legend": {
-              "calcs": [
-                "last",
-                "min",
-                "max",
-                "mean"
-              ],
-              "displayMode": "table",
-              "placement": "right"
-            },
-            "tooltip": {
-              "mode": "single",
-              "sort": "none"
-            }
-          },
-          "targets": [
-            {
-              "datasource": {
-                "type": "prometheus",
-                "uid": "xwS6aOi4k"
-              },
-              "editorMode": "code",
-              "expr": "diskCapacity/1024/1024/1024/1024",
-              "legendFormat": "{{job}}",
-              "range": true,
-              "refId": "A"
-            }
-          ],
-          "title": "节点所在磁盘总容量(TB)",
-          "type": "timeseries"
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "xwS6aOi4k"
-          },
-          "fieldConfig": {
-            "defaults": {
-              "color": {
-                "mode": "palette-classic"
-              },
-              "custom": {
-                "axisLabel": "",
-                "axisPlacement": "auto",
-                "barAlignment": 0,
-                "drawStyle": "line",
-                "fillOpacity": 0,
-                "gradientMode": "none",
-                "hideFrom": {
-                  "legend": false,
-                  "tooltip": false,
-                  "viz": false
-                },
-                "lineInterpolation": "linear",
-                "lineWidth": 1,
-                "pointSize": 5,
-                "scaleDistribution": {
-                  "type": "linear"
-                },
-                "showPoints": "auto",
-                "spanNulls": false,
-                "stacking": {
-                  "group": "A",
-                  "mode": "none"
-                },
-                "thresholdsStyle": {
-                  "mode": "off"
-                }
-              },
-              "mappings": [],
-              "thresholds": {
-                "mode": "absolute",
-                "steps": [
-                  {
-                    "color": "green"
-                  },
-                  {
-                    "color": "red",
-                    "value": 80
-                  }
-                ]
-              }
-            },
-            "overrides": []
-          },
-          "gridPos": {
-            "h": 8,
-            "w": 12,
-            "x": 12,
-            "y": 5
-          },
-          "id": 16,
-          "options": {
-            "legend": {
-              "calcs": [
-                "last",
-                "min",
-                "max",
-                "mean"
-              ],
-              "displayMode": "table",
-              "placement": "right"
-            },
-            "tooltip": {
-              "mode": "single",
-              "sort": "none"
-            }
-          },
-          "targets": [
-            {
-              "datasource": {
-                "type": "prometheus",
-                "uid": "xwS6aOi4k"
-              },
-              "editorMode": "code",
-              "expr": "diskFreeSpace/1024/1024/1024/1024",
-              "legendFormat": "{{job}}",
-              "range": true,
-              "refId": "A"
-            }
-          ],
-          "title": "节点所在磁盘剩余容量(TB)",
-          "type": "timeseries"
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "xwS6aOi4k"
-          },
-          "fieldConfig": {
-            "defaults": {
-              "color": {
-                "mode": "palette-classic"
-              },
-              "custom": {
-                "axisLabel": "",
-                "axisPlacement": "auto",
-                "barAlignment": 0,
-                "drawStyle": "line",
-                "fillOpacity": 0,
-                "gradientMode": "none",
-                "hideFrom": {
-                  "legend": false,
-                  "tooltip": false,
-                  "viz": false
-                },
-                "lineInterpolation": "linear",
-                "lineWidth": 1,
-                "pointSize": 5,
-                "scaleDistribution": {
-                  "type": "linear"
-                },
-                "showPoints": "auto",
-                "spanNulls": false,
-                "stacking": {
-                  "group": "A",
-                  "mode": "none"
-                },
-                "thresholdsStyle": {
-                  "mode": "off"
-                }
-              },
-              "mappings": [],
-              "thresholds": {
-                "mode": "absolute",
-                "steps": [
-                  {
-                    "color": "green"
-                  },
-                  {
-                    "color": "red",
-                    "value": 80
-                  }
-                ]
-              }
-            },
-            "overrides": []
-          },
-          "gridPos": {
-            "h": 8,
-            "w": 12,
-            "x": 6,
-            "y": 13
-          },
-          "id": 18,
-          "options": {
-            "legend": {
-              "calcs": [
-                "last",
-                "min",
-                "max",
-                "mean"
-              ],
-              "displayMode": "table",
-              "placement": "right"
-            },
-            "tooltip": {
-              "mode": "single",
-              "sort": "none"
-            }
-          },
-          "targets": [
-            {
-              "datasource": {
-                "type": "prometheus",
-                "uid": "xwS6aOi4k"
-              },
-              "editorMode": "code",
-              "expr": "(1-diskFreeSpace/diskCapacity)*100",
-              "legendFormat": "{{job}}",
-              "range": true,
-              "refId": "A"
-            }
-          ],
-          "title": "节点所在磁盘空间使用率(%)",
-          "type": "timeseries"
-        },
-        {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "xwS6aOi4k"
-          },
-          "fieldConfig": {
-            "defaults": {
-              "color": {
-                "mode": "palette-classic"
-              },
-              "custom": {
-                "axisLabel": "",
-                "axisPlacement": "auto",
-                "barAlignment": 0,
-                "drawStyle": "line",
-                "fillOpacity": 0,
-                "gradientMode": "none",
-                "hideFrom": {
-                  "legend": false,
-                  "tooltip": false,
-                  "viz": false
-                },
-                "lineInterpolation": "linear",
-                "lineWidth": 1,
-                "pointSize": 5,
-                "scaleDistribution": {
-                  "type": "linear"
-                },
-                "showPoints": "auto",
-                "spanNulls": false,
-                "stacking": {
-                  "group": "A",
-                  "mode": "none"
-                },
-                "thresholdsStyle": {
-                  "mode": "off"
-                }
-              },
-              "mappings": [],
-              "thresholds": {
-                "mode": "absolute",
-                "steps": [
-                  {
-                    "color": "green"
+                    "color": "green",
+                    "value": null
                   },
                   {
                     "color": "red",
@@ -1655,7 +1246,7 @@
             "h": 8,
             "w": 12,
             "x": 0,
-            "y": 21
+            "y": 5
           },
           "id": 10,
           "options": {
@@ -1676,12 +1267,9 @@
           },
           "targets": [
             {
-              "datasource": {
-                "type": "prometheus",
-                "uid": "xwS6aOi4k"
-              },
+              "datasource": "${DS_PROMETHEUS}",
               "editorMode": "code",
-              "expr": "diskReadRate/1024/1024",
+              "expr": "diskReadRate{job=~\"$job\"}/1024/1024",
               "legendFormat": "{{job}}",
               "range": true,
               "refId": "A"
@@ -1691,10 +1279,7 @@
           "type": "timeseries"
         },
         {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "xwS6aOi4k"
-          },
+          "datasource":"${DS_PROMETHEUS}",
           "fieldConfig": {
             "defaults": {
               "color": {
@@ -1733,7 +1318,8 @@
                 "mode": "absolute",
                 "steps": [
                   {
-                    "color": "green"
+                    "color": "green",
+                    "value": null
                   },
                   {
                     "color": "red",
@@ -1748,7 +1334,7 @@
             "h": 8,
             "w": 12,
             "x": 12,
-            "y": 21
+            "y": 5
           },
           "id": 12,
           "options": {
@@ -1769,18 +1355,189 @@
           },
           "targets": [
             {
-              "datasource": {
-                "type": "prometheus",
-                "uid": "xwS6aOi4k"
-              },
+              "datasource":"${DS_PROMETHEUS}",
               "editorMode": "code",
-              "expr": "diskWriteRate/1024/1024",
+              "expr": "diskWriteRate{job=~\"$job\"}/1024/1024",
               "legendFormat": "{{job}}",
               "range": true,
               "refId": "A"
             }
           ],
           "title": "节点磁盘写速率(MB/s)",
+          "type": "timeseries"
+        },
+        {
+          "datasource": "${DS_PROMETHEUS}",
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "palette-classic"
+              },
+              "custom": {
+                "axisLabel": "",
+                "axisPlacement": "auto",
+                "barAlignment": 0,
+                "drawStyle": "line",
+                "fillOpacity": 0,
+                "gradientMode": "none",
+                "hideFrom": {
+                  "legend": false,
+                  "tooltip": false,
+                  "viz": false
+                },
+                "lineInterpolation": "linear",
+                "lineWidth": 1,
+                "pointSize": 5,
+                "scaleDistribution": {
+                  "type": "linear"
+                },
+                "showPoints": "auto",
+                "spanNulls": false,
+                "stacking": {
+                  "group": "A",
+                  "mode": "none"
+                },
+                "thresholdsStyle": {
+                  "mode": "off"
+                }
+              },
+              "mappings": [],
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  },
+                  {
+                    "color": "red",
+                    "value": 80
+                  }
+                ]
+              }
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 0,
+            "y": 13
+          },
+          "id": 18,
+          "options": {
+            "legend": {
+              "calcs": [
+                "last",
+                "min",
+                "max"
+              ],
+              "displayMode": "table",
+              "placement": "right"
+            },
+            "tooltip": {
+              "mode": "single",
+              "sort": "none"
+            }
+          },
+          "targets": [
+            {
+              "datasource": "${DS_PROMETHEUS}",
+              "editorMode": "code",
+              "expr": "(1-diskFreeSpace{job=~\"$job\"}/diskCapacity{job=~\"$job\"})*100",
+              "legendFormat": "{{job}}",
+              "range": true,
+              "refId": "A"
+            }
+          ],
+          "title": "节点所在磁盘空间使用率(%)",
+          "type": "timeseries"
+        },
+        {
+          "datasource":"${DS_PROMETHEUS}",
+          "fieldConfig": {
+            "defaults": {
+              "color": {
+                "mode": "palette-classic"
+              },
+              "custom": {
+                "axisLabel": "",
+                "axisPlacement": "auto",
+                "barAlignment": 0,
+                "drawStyle": "line",
+                "fillOpacity": 0,
+                "gradientMode": "none",
+                "hideFrom": {
+                  "legend": false,
+                  "tooltip": false,
+                  "viz": false
+                },
+                "lineInterpolation": "linear",
+                "lineWidth": 1,
+                "pointSize": 5,
+                "scaleDistribution": {
+                  "type": "linear"
+                },
+                "showPoints": "auto",
+                "spanNulls": false,
+                "stacking": {
+                  "group": "A",
+                  "mode": "none"
+                },
+                "thresholdsStyle": {
+                  "mode": "off"
+                }
+              },
+              "mappings": [],
+              "thresholds": {
+                "mode": "absolute",
+                "steps": [
+                  {
+                    "color": "green",
+                    "value": null
+                  },
+                  {
+                    "color": "red",
+                    "value": 80
+                  }
+                ]
+              }
+            },
+            "overrides": []
+          },
+          "gridPos": {
+            "h": 8,
+            "w": 12,
+            "x": 12,
+            "y": 13
+          },
+          "id": 16,
+          "options": {
+            "legend": {
+              "calcs": [
+                "last",
+                "min",
+                "max"
+              ],
+              "displayMode": "table",
+              "placement": "right"
+            },
+            "tooltip": {
+              "mode": "single",
+              "sort": "none"
+            }
+          },
+          "targets": [
+            {
+              "datasource":"${DS_PROMETHEUS}",
+              "editorMode": "code",
+              "expr": "diskFreeSpace{job=~\"$job\"}/1024/1024/1024/1024",
+              "legendFormat": "{{job}}",
+              "range": true,
+              "refId": "A"
+            }
+          ],
+          "title": "节点所在磁盘剩余容量(TB)",
           "type": "timeseries"
         }
       ],
@@ -1798,10 +1555,7 @@
       "id": 2,
       "panels": [
         {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "xwS6aOi4k"
-          },
+          "datasource":"${DS_PROMETHEUS}",
           "description": "",
           "fieldConfig": {
             "defaults": {
@@ -1841,7 +1595,8 @@
                 "mode": "absolute",
                 "steps": [
                   {
-                    "color": "green"
+                    "color": "green",
+                    "value": null
                   },
                   {
                     "color": "red",
@@ -1850,7 +1605,32 @@
                 ]
               }
             },
-            "overrides": []
+            "overrides": [
+              {
+                "__systemRef": "hideSeriesFrom",
+                "matcher": {
+                  "id": "byNames",
+                  "options": {
+                    "mode": "exclude",
+                    "names": [
+                      "agent2"
+                    ],
+                    "prefix": "All except:",
+                    "readOnly": true
+                  }
+                },
+                "properties": [
+                  {
+                    "id": "custom.hideFrom",
+                    "value": {
+                      "legend": false,
+                      "tooltip": false,
+                      "viz": true
+                    }
+                  }
+                ]
+              }
+            ]
           },
           "gridPos": {
             "h": 8,
@@ -1877,12 +1657,9 @@
           },
           "targets": [
             {
-              "datasource": {
-                "type": "prometheus",
-                "uid": "xwS6aOi4k"
-              },
+              "datasource": "${DS_PROMETHEUS}",
               "editorMode": "code",
-              "expr": "networkSendRate/1024/1024",
+              "expr": "networkSendRate{job=~\"$job\"}/1024/1024",
               "legendFormat": "{{job}}",
               "range": true,
               "refId": "A"
@@ -1892,10 +1669,7 @@
           "type": "timeseries"
         },
         {
-          "datasource": {
-            "type": "prometheus",
-            "uid": "xwS6aOi4k"
-          },
+          "datasource": "${DS_PROMETHEUS}",
           "fieldConfig": {
             "defaults": {
               "color": {
@@ -1934,7 +1708,8 @@
                 "mode": "absolute",
                 "steps": [
                   {
-                    "color": "green"
+                    "color": "green",
+                    "value": null
                   },
                   {
                     "color": "red",
@@ -1970,12 +1745,9 @@
           },
           "targets": [
             {
-              "datasource": {
-                "type": "prometheus",
-                "uid": "xwS6aOi4k"
-              },
+              "datasource": "${DS_PROMETHEUS}",
               "editorMode": "code",
-              "expr": "networkRecvRate/1024/1024",
+              "expr": "networkRecvRate{job=~\"$job\"}/1024/1024",
               "legendFormat": "{{job}}",
               "range": true,
               "refId": "A"
@@ -1994,10 +1766,30 @@
   "style": "dark",
   "tags": [],
   "templating": {
-    "list": []
+    "list": [
+      {
+        "current": {
+          "selected": false,
+          "text": "controller1|controller2|controller3|agent1|agent2|agent3|dnode1|dnode2|dnode3|cnode1|cnode2|cnode3",
+          "value": "controller1|controller2|controller3|agent1|agent2|agent3|dnode1|dnode2|dnode3|cnode1|cnode2|cnode3"
+        },
+        "hide": 0,
+        "name": "job",
+        "options": [
+          {
+            "selected": true,
+            "text": "controller1|controller2|controller3|agent1|agent2|agent3|dnode1|dnode2|dnode3|cnode1|cnode2|cnode3",
+            "value": "controller1|controller2|controller3|agent1|agent2|agent3|dnode1|dnode2|dnode3|cnode1|cnode2|cnode3"
+          }
+        ],
+        "query": "controller1|controller2|controller3|agent1|agent2|agent3|dnode1|dnode2|dnode3|cnode1|cnode2|cnode3",
+        "skipUrlSync": false,
+        "type": "textbox"
+      }
+    ]
   },
   "time": {
-    "from": "now-6h",
+    "from": "now-30m",
     "to": "now"
   },
   "timepicker": {
@@ -2017,8 +1809,26 @@
     ]
   },
   "timezone": "",
-  "title": "DolphinDB高可用集群监控",
-  "uid": "fP0N5id4z",
-  "version": 7,
-  "weekStart": ""
+  "title": "高可用基准性能测试环境",
+  "uid": "fSzc6KEVk",
+  "version": 6,
+  "weekStart": "",
+  "__inputs": [
+    {
+      "name": "DS_PROMETHEUS",
+      "label": "Prometheus",
+      "description": "",
+      "type": "datasource",
+      "pluginId": "prometheus",
+      "pluginName": "Prometheus"
+    },
+    {
+      "name": "DS_DOLPHINDB",
+      "label": "DolphinDB",
+      "description": "",
+      "type": "datasource",
+      "pluginId": "dolphindb-datasource",
+      "pluginName": "DolphinDB"
+    }
+  ]
 }
