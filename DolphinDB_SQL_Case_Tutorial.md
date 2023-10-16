@@ -977,14 +977,13 @@ timer result = select first(wind_code) as wind_code, first(date) as date, sum(vo
 
 ```
 def createDBAndTable(dbName, tableName) {
-	if(existsTable(dbName, tableName)) return loadTable(dbName, tableName)
-	dbDate = database(, VALUE, 2021.07.01..2021.07.31)
-	dbSecurityID = database(, HASH, [SYMBOL, 1])
-	db = database(dbName, COMPO, [dbDate, dbSecurityID])
-	model = table(1:0, `SecurityID`Date`Time`FactorID`FactorValue, [SYMBOL, DATE, TIME, SYMBOL, DOUBLE])
-	return createPartitionedTable(db, model, tableName, `Date`SecurityID)
+    if(existsTable(dbName, tableName)) return loadTable(dbName, tableName)
+    dbDate = database(, VALUE, 2021.07.01..2021.07.31)
+    dbSecurityID = database(, HASH, [SYMBOL, 10])
+    db = database(dbName, COMPO, [dbDate, dbSecurityID])
+    model = table(1:0, `SecurityID`Date`Time`FactorID`FactorValue, [SYMBOL, DATE, TIME, SYMBOL, DOUBLE])
+    return createPartitionedTable(db, model, tableName, `Date`SecurityID)
 }
-
 ```
 
 执行以下代码，创建两个分布式表、一个维度表，并写入模拟数据，如下：
@@ -996,6 +995,7 @@ time = join(09:30:00 + 1..12 * 60 * 10, 13:00:00 + 1..12 * 60 * 10)
 syms = format(1..2000, "000000") + ".SH"
 tmp = cj(cj(table(dates), table(time)), table(syms))
 t = table(tmp.syms as SecurityID, tmp.dates as Date, tmp.time as Time, take(["Factor01"], tmp.size()) as FactorID, rand(100.0, tmp.size()) as FactorValue)
+
 createDBAndTable("dfs://Factor10MinSH", "Factor10MinSH").append!(t)
 
 syms = format(2001..4000, "000000") + ".SZ"
@@ -1007,9 +1007,10 @@ db = database("dfs://infodb", VALUE, 1 2 3)
 model = table(1:0, `SecurityID`Info, [SYMBOL, STRING])
 if(!existsTable("dfs://infodb", "MdSecurity")) createTable(db, model, "MdSecurity")
 loadTable("dfs://infodb", "MdSecurity").append!(
-    table(join(format(1..2000, "000000") + ".SH", format(2001..4000, "000000") + ".SZ") as SecurityID, 
-          take(string(NULL), 4000) as Info))
+    table(join(format(1..2000, "000000") + ".SH", format(2001..4000, "000000") + ".SZ") as SecurityID, 
+          take(string(NULL), 4000) as Info))
 
+setMaxMemSize(32)
 ```
 
 
@@ -1020,16 +1021,15 @@ loadTable("dfs://infodb", "MdSecurity").append!(
 
 ```
 timer {
-	nt1 = select concatDateTime(Date, Time) as TradeTime, SecurityID, FactorValue from loadTable("dfs://Factor10MinSH", "Factor10MinSH") where Date between 2019.01.01 : 2021.10.31, FactorID = "Factor01"
-	nt2 = select concatDateTime(Date, Time) as TradeTime, SecurityID, FactorValue from loadTable("dfs://Factor10MinSZ", "Factor10MinSZ") where Date between 2019.01.01 : 2021.10.31, FactorID = "Factor01"
-	unt = unionAll(nt1, nt2)
-	
-	sec = select SecurityID from loadTable("dfs://infodb", "MdSecurity") where substr(SecurityID, 0, 3) in ["001", "003", "005", "007"]
-	res = select * from lj(sec, unt, `SecurityID)
+    nt1 = select concatDateTime(Date, Time) as TradeTime, SecurityID, FactorValue from loadTable("dfs://Factor10MinSH", "Factor10MinSH") where Date between 2019.01.01 : 2020.10.31, FactorID = "Factor01"
+    nt2 = select concatDateTime(Date, Time) as TradeTime, SecurityID, FactorValue from loadTable("dfs://Factor10MinSZ", "Factor10MinSZ") where Date between 2019.01.01 : 2020.10.31, FactorID = "Factor01"
+    unt = unionAll(nt1, nt2)
+    
+    sec = select SecurityID from loadTable("dfs://infodb", "MdSecurity") where substr(SecurityID, 0, 3) in ["001", "003", "005", "007"]
+    res = select * from lj(sec, unt, `SecurityID)
 
-	res = select FactorValue from res pivot by TradeTime, SecurityID
+    res1 = select FactorValue from res pivot by TradeTime, SecurityID
 }
-
 ```
 
 **查询耗时 6922 ms。**
@@ -1042,22 +1042,18 @@ timer {
 
 ```
 timer {
-	sec = exec SecurityID from loadTable("dfs://infodb", "MdSecurity") where substr(SecurityID, 0, 3) in ["001", "003", "005", "007"]
-	
-	nt1 = select concatDateTime(Date, Time) as TradeTime, SecurityID, FactorValue from loadTable("dfs://Factor10MinSH", "Factor10MinSH") where Date between 2019.01.01 : 2021.10.31, SecurityID in sec, FactorID = "Factor01"
-	re1 = panel(nt1.TradeTime, nt1.SecurityID, nt1.FactorValue)
+    sec = exec SecurityID from loadTable("dfs://infodb", "MdSecurity") where substr(SecurityID, 0, 3) in ["001", "003", "005", "007"]
+    schema(loadTable("dfs://Factor10MinSH", "Factor10MinSH"))
+    nt1 = exec FactorValue from loadTable("dfs://Factor10MinSH", "Factor10MinSH") where Date between 2019.01.01 : 2020.10.31, SecurityID in sec, FactorID = "Factor01" pivot by concatDateTime(Date, Time), SecurityID
+    nt2 = exec FactorValue from loadTable("dfs://Factor10MinSZ", "Factor10MinSZ") where Date between 2019.01.01 : 2020.10.31, SecurityID in sec, FactorID = "Factor01" pivot by concatDateTime(Date, Time), SecurityID
 
-	nt2 = select concatDateTime(Date, Time) as TradeTime, SecurityID, FactorValue from loadTable("dfs://Factor10MinSZ", "Factor10MinSZ") where Date between 2019.01.01 : 2021.10.31, SecurityID in sec, FactorID = "Factor01"
-	re2 = panel(nt2.TradeTime, nt2.SecurityID, nt2.FactorValue)
-
-	res = re1 + re2
+    res3 = merge(nt1.setIndexedMatrix!(), nt2.setIndexedMatrix!(), 'left')
 }
-
 ```
 
-**查询耗时 5129 ms。**
+**查询耗时 4210 ms。**
 
-**与优化前相比，优化后查询性能提升约 20%。**
+**与优化前相比，优化后查询性能提升约 40%。**
 
 综合对比上述写法，概括出几个 SQL 编写技巧：
 
