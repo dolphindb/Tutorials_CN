@@ -89,7 +89,7 @@
   - [从一次SQL查询的全过程看DolphinDB 的线程模型](thread_model_SQL.md)
   - [DolphinDB 集群运维监控教程](cluster_monitor.md)
   
-- API
+- 连接器
 
   - [DolphinDB Python API使用教程](../../../api_python3/blob/master/README_CN.md)
   - [DolphinDB Python API离线安装](python_api_install_offline.md)
@@ -97,7 +97,7 @@
 
   <!--先隐藏，等教程更新完毕再暴露 - [Java API使用实例](../../../api-java/blob/master/example/README_CN.md) -->
 
-  - [JDBC API使用教程](../../../jdbc/blob/master/README_CN.md)
+  - [JDBC 使用教程](../../../jdbc/blob/master/README_CN.md)
   - [C# API使用教程](../../../api-csharp/blob/master/README_CN.md)
   - [C++ API使用教程](../../../api-cplusplus/blob/master/README_CN.md)
   - [C++ API 数据写入使用指南](ddb_cpp_api_connector.md)
