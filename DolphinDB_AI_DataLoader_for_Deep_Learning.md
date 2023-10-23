@@ -1,4 +1,4 @@
-# 深度学习遇到 DolphinDB AI DataLoader
+![image](https://github.com/dolphindb/Tutorials_CN/assets/126059410/89cf9739-fb1e-4f6c-b7bf-101ada2d3a07)# 深度学习遇到 DolphinDB AI DataLoader
 - [总体架构](#总体架构)
 - [工作原理](#工作原理)
 - [DDBDataLoader 详细介绍](#ddbdataloader-详细介绍)
@@ -18,7 +18,7 @@
 - 因子数据过大，内存带宽与存储空间瓶颈
 - 因子数据与深度学习模型集成工程化与成本问题
 
-为应对这些挑战，DolphinDB将数据库与深度学习相结合，开发了 AI Dataloader（为了便于描述，下文使用DDBDataLoader这一更贴近功能实现的类名指代）。该工具用于因子数据的管理和深度学习模型的集成，旨在提高因子数据的效率和管理，并简化与深度学习模型的交互。着重于因子数据的管理和深度学习模型的集成，旨在提高因子数据的效率和管理，并简化了与深度学习模型的交互。
+为了应对这些挑战，DolphinDB将数据库与深度学习相结合，开发了AI Dataloader。该工具旨在提高因子数据的效率和管理，并简化与深度学习模型的交互。具体而言，DDBDataLoader类用于因子数据的管理和深度学习模型的集成，达到更贴近功能实现的目的。
 
 ## 总体架构
 
