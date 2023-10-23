@@ -1,4 +1,5 @@
-![image](https://github.com/dolphindb/Tutorials_CN/assets/126059410/89cf9739-fb1e-4f6c-b7bf-101ada2d3a07)# 深度学习遇到 DolphinDB AI DataLoader
+# 深度学习遇到 DolphinDB AI DataLoader
+
 - [总体架构](#总体架构)
 - [工作原理](#工作原理)
 - [DDBDataLoader 详细介绍](#ddbdataloader-详细介绍)
