@@ -1,7 +1,0 @@
-def toFactor(mutable tb){
-    TradeTimeA=nanotimestamp(tb.TRADETIME*1000);
-    ReceiveTimeA=take(time(now()),tb.size());
-    tb.replaceColumn!(`TRADETIME,TradeTimeA);
-    tb.replaceColumn!(`RECEIVETIME,ReceiveTimeA);
-    return tb;
-}
