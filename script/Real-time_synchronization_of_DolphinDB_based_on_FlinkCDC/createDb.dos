@@ -1,0 +1,14 @@
+def dropAll(){
+	dropDB("dfs://FlinkcdcDemo");
+}
+def createDb(){
+	db1=database("",VALUE,[2023.01.01]);
+    db2=database("",HASH,[SYMBOL,20]);
+    db=database("dfs://FlinkcdcDemo",COMPO,[db1,db2],,"TSDB");
+    colName = `ChannelNo`ApplSeqNum`MDStreamID`SecurityID`SecurityIDSource`Price`OrderQty`Side`TradeTime`OrderType`OrderIndex`LocalTime`SeqNo`Market`DataStatus`BizIndex`isDeleted
+    colType = [INT,LONG,INT,SYMBOL,INT,DOUBLE,INT,SYMBOL,TIMESTAMP,SYMBOL,INT,TIME,LONG,SYMBOL,INT,LONG,CHAR]
+    tbSchema = table(1:0, colName, colType)
+    db.createPartitionedTable(table=tbSchema,tableName=`entrust,partitionColumns=`TradeTime`SecurityID,sortColumns=`Market`SecurityID`TradeTime,keepDuplicates=LAST)
+    db.createPartitionedTable(table=tbSchema,tableName=`entrustAll,partitionColumns=`TradeTime`SecurityID,sortColumns=`Market`SecurityID`TradeTime,keepDuplicates=ALL)
+}
+createDb();
