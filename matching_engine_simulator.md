@@ -63,8 +63,8 @@
 | orderType    | INT       | order：<br>1：市价；<br>2：限价；<br>3：本方最优；<br>10：撤单，仅上交所，即上交所撤单记录在order中<br>transaction：<br>0：成交；<br>1：撤单，仅深交所，即深交所撤单记录在transaction中 |
 | price        | DOUBLE    | 订单价格                                                     |
 | qty          | LONG      | 订单数量                                                     |
-| buyNo        | LONG      | transaction对应其原始数据；order填充buyNo，无意义，深交所数据为了补全上交所数据格式增加的冗余列 |
-| sellNo       | LONG      | transaction对应其原始数据；order填充sellNo，无意义，深交所数据为了补全上交所数据格式增加的冗余列 |
+| buyNo        | LONG      | transaction对应其原始数据；order填充buyNo                    |
+| sellNo       | LONG      | transaction对应其原始数据；order填充sellNo                   |
 | direction    | INT       | 1（买）或2（卖）                                             |
 | seqNum       | LONG      | 逐笔数据序号                                                 |
 
