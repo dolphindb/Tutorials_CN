@@ -1,0 +1,66 @@
+login("admin", "123456")
+// dbName = "dfs://test_tsdb_0"
+dbName = "dfs://test_tsdb_1"
+tableName = "factorTable"
+
+def createDB(dbName){
+    if(existsDatabase(dbName)){
+        dropDatabase(dbName)
+    }
+    database(directory=dbName, partitionType=VALUE, partitionScheme=2022.12.01..2030.12.30, engine='TSDB')
+}
+
+def createTb(dbName, tbName){
+    db = database(dbName)
+    colName = `tradeDate`tradeTime`ID join (take("factor", 100) + string(1..100))
+    colType = [DATE, TIME, INT] join take(DOUBLE, 100)
+    tbSchema = table(1:0, colName, colType)
+    // db.createPartitionedTable(table=tbSchema,tableName=tbName,partitionColumns=`tradeDate,sortColumns=`ID`tradeDate`TradeTime,keepDuplicates=LAST)
+    // 设置降维
+    db.createPartitionedTable(table=tbSchema,tableName=tbName,partitionColumns=`tradeDate,sortColumns=`ID`tradeDate`TradeTime,keepDuplicates=LAST, sortKeyMappingFunction=[hashBucket{,500},])
+}
+
+/* 模拟单日生成 10 万条数据 */
+def writeData(dbName, tbName, date){
+    n = 500000
+	ID = 1..n
+	tradeDate = take(date, n)
+	tradeTime = 09:00:00.000 + rand(9000000, n).sort!()
+	data = (tradeDate, tradeTime, ID)
+	for(i in 0:100){
+		data.append!(100.0 + rand(20.0, n))
+	}
+	loadTable(dbName, tbName).append!(table(data))
+    pnodeRun(flushTSDBCache)
+}
+
+
+// 创库创表
+createDB(dbName)
+createTb(dbName, tableName)
+// 分别写入五天数据
+dateList=2023.03.06..2023.03.10
+each(submitJob{,,writeData, dbName, tableName,}, "writeData"+ string(1..dateList.size()), string(dateList), dateList);
+
+getRecentJobs()
+
+// 检查数据是否完全写入
+
+select count(*) from loadTable(dbName, tableName) // 2500,000
+// 单分区数据量约为 400M 
+
+// 检查落盘后的大小
+use ops
+getTableDiskUsage(dbName, tableName) // 17.05 GB -> 2.88 GB
+
+// 检测每个 sortKey 的数据量
+getSessionMemoryStat()
+// chunkIDs = exec chunkID from pnodeRun(getChunksMeta{"/test_tsdb_0%"}) where dfsPath not like "%tbl%" and dfsPath not like "%domain%"
+chunkIDs = exec chunkID from pnodeRun(getChunksMeta{"/test_tsdb_1%"}) where dfsPath not like "%tbl%" and dfsPath not like "%domain%"
+select count(*) from pnodeRun(getTSDBSortKeyEntry{chunkIDs}) // 2500,000 个 sortKey 每个 sortKey 只有 1 条 -> 2500 个 sortKey 每个 sortKey 1000 条
+
+// 测试查询性能
+timer select top 10 *  from loadTable(dbName, tableName) // 59.5 s -> 104 ms
+timer select *  from loadTable(dbName, tableName) where ID = 1 and tradeDate = 2023.03.09 // 4.5 s -> 7.62 ms
+
+

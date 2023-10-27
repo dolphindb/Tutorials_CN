@@ -40,6 +40,7 @@
   - [内存表详解](in_memory_table.md)
   - [DolphinDB 分布式表数据更新原理和性能介绍](dolphindb_update.md)
   - [DolphinDB TSDB 存储引擎介绍](tsdb_engine.md)
+  - [DolphinDB TSDB 存储引擎详解](tsdb_explained.md)
   - [DECIMAL 使用教程](DECIMAL.md)
   - [DolphinDB 计算精度问题与 DECIMAL 类型](DECIMAL_Calculation_Characteristics.md)
   - [分级存储](hierarchical_storage.md)
