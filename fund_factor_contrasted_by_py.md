@@ -51,7 +51,7 @@
 
   - 公式：
 
-    <img src="https://latex.codecogs.com/svg.image?annualReturn_{value}=(1&plus;\frac{EndingValue-BeginningValue}{BeginningValue})**(\frac{252}{730})-1"/>
+    ![equation1](./images/fund_factor_contrasted_by_py/equation1.png)
     
   - 代码实现：
 
@@ -76,7 +76,7 @@
   
   - 公式：
   
-    <img src="https://latex.codecogs.com/svg.image?annualVolat=\sqrt{\frac{\sum\limits_{i=1}^{n}(DailyReturn_{i}-(\overline{DailyReturn})^{2})}{n-1}}*\sqrt{252}"/>
+    ![equation2](./images/fund_factor_contrasted_by_py/equation2.png)
     
   - 代码实现：
   
@@ -104,7 +104,7 @@
 
   - 公式：
 
-    <img src="https://latex.codecogs.com/svg.image?skewValue=\frac{\frac{1}{n}\sum\limits_{i=1}^{n}(DailyReturn_{i}-\overline{DailyReturn})^{3}}{(\sqrt{\frac{1}{n}\sum\limits_{i=1}^{n}(DailyReturn_{i}-\overline{DailyReturn})^{2})^{3}"/>
+    ![equation3](./images/fund_factor_contrasted_by_py/equation3.png)
     
   - 代码实现：
 
@@ -132,7 +132,7 @@
   
   - 公式：
   
-    <img src="https://latex.codecogs.com/svg.image?kurValue=\frac{\frac{1}{n}\sum\limits_{i=1}^{n}(DailyReturn_{i}-\overline{DailyReturn})^{4}}{(\frac{1}{n}\sum\limits_{i=1}^{n}(DailyReturn_{i}-\overline{DailyReturn})^{2})^{4}"/>
+    ![equation4](./images/fund_factor_contrasted_by_py/equation4.png)
     
   - 代码实现:
   
@@ -160,7 +160,7 @@
   
   - 公式：
   
-    <img src="https://latex.codecogs.com/svg.image?sharpValue=(annualReturn_{value}-0.03)/annualVolat"/>
+    ![equation5](./images/fund_factor_contrasted_by_py/equation5.png)
     
   - 代码实现：
   
@@ -187,7 +187,7 @@
   
     在某个时间周期的净值序列中，记 `i` 为某一天，`DailyValuei` 为第 `i` 天的净值，`j` 为 `i` 之前的某一天，`DailyValuej` 为第 `j` 天的净值，找到一组 `i`,  `j` 使得其收益率回撤幅度最大记为最大回撤率 `MaxDrawdown`，
     
-    <img src="https://latex.codecogs.com/svg.image?MaxDrawdown=max(1-\frac{DailyValue_{i}}{DailyValue_{j}})"/>
+    ![equation6](./images/fund_factor_contrasted_by_py/equation6.png)
     
   - 代码实现：
   
@@ -221,7 +221,7 @@
   
   - 公式：
   
-    <img src="https://latex.codecogs.com/svg.image?DrawdownRatio=annualReturn_{value}/MaxDrawdown"/>
+    ![equation7](./images/fund_factor_contrasted_by_py/equation7.png)
     
   - 代码实现：
   
@@ -246,7 +246,7 @@
   
   - 公式：
   
-    <img src="https://latex.codecogs.com/svg.image?\beta&space;=&space;\frac{COV(DailyReturn_{value},DailyReturn_{price})}{\sigma&space;_{DailyReturn_{price}}}"/>
+    ![equation8](./images/fund_factor_contrasted_by_py/equation8.png)
     
     其中分子为日净值收益率和日基准收益率的协方差，分母为日基准收益率的方差
     
@@ -279,7 +279,7 @@
   
   - 公式：
   
-    <img src="https://latex.codecogs.com/svg.image?\alpha=AnnualReturn_{value}-0.03-\beta&space;(AnnualReturn_{price}-0.03)"/>
+    ![equation9](./images/fund_factor_contrasted_by_py/equation9.png)
   
   - 代码实现：
   
@@ -310,31 +310,31 @@
   
     ​    公式：
   
-    <img src="https://latex.codecogs.com/svg.image?M=Mean=\frac{\sum_{i=1}^{k}DailyReturn_{i}}{k}"/>
+    ![equation10](./images/fund_factor_contrasted_by_py/equation10.png)
   
     c. 计算每个片段的离差序列，即用每个片段的均值分别减该片段内的每个元素；
   
     ​    公式：
   
-    <img src="https://latex.codecogs.com/svg.image?For\&space;every\&space;DailyReturn_{i}\&space;X_{i}=DailyReturn_{i}-M"/>
-  
+    ![equation11](./images/fund_factor_contrasted_by_py/equation11.png)
+
     d. 计算每个片段离差序列中的最大值减去最小值，记为 R；
   
     ​    公式：
   
-    <img src="https://latex.codecogs.com/svg.image?R_{k}=max(X_{1},X_{2},...,X_{k})-min(X_{1},X_{2},...,X_{k})"/>
+    ![equation12](./images/fund_factor_contrasted_by_py/equation12.png)
   
     e. 计算每个片段的标准差，记为 S；
   
     ​    公式：
   
-    <img src="https://latex.codecogs.com/svg.image?S_{k}=\sqrt{\frac{\sum_{i=1}^{k}(X_{i}-M)^2}{k}}"/>
+    ![equation13](./images/fund_factor_contrasted_by_py/equation13.png)
   
     f. 计算每个片段的 R/S 值，并计算按照不同粒度划分的所有片段中各片段元素的均值；
   
     ​    公式：
   
-    <img src="https://latex.codecogs.com/svg.image?AVS=\frac{\sum_{i=1}^{n}(\frac{R}{S})_{i}}{n}"/>
+    ![equation14](./images/fund_factor_contrasted_by_py/equation14.png)
   
     g. 以划分的标准粒度为自变量，以对应的各片段元素的均值为因变量，计算回归方程，截距即为赫斯特指数；
   
