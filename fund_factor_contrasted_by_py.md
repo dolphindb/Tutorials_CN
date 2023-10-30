@@ -241,9 +241,8 @@
   
   - 公式：
 
-    <img src=./images/fund_factor_contrasted_by_py/equation8.png width=300/>
+    <img src="./images/fund_factor_contrasted_by_py/equation8.png" width="300"/>
 
-    
     其中分子为日净值收益率和日基准收益率的协方差，分母为日基准收益率的方差
     
   - 代码实现：
