@@ -18,10 +18,18 @@
 本教程包含内容：
 
 - [SQL优化案例：深度不平衡、买卖压力指标、波动率计算](#sql优化案例深度不平衡买卖压力指标波动率计算)
-  - [1. Snapshot 数据文件结构](#1-snapshot数据文件结构)
+  - [1. Snapshot数据文件结构](#1-snapshot数据文件结构)
   - [2. 指标定义](#2-指标定义)
   - [3. SQL优化](#3-sql优化)
+    - [3.1 新手：以列为单位进行计算](#31-新手以列为单位进行计算)
+    - [3.2 进阶：将列拼接为矩阵进行计算](#32-进阶将列拼接为矩阵进行计算)
+    - [3.3 高性能1：V2.00的TSDB存储和计算](#33-高性能1v200的tsdb存储和计算)
+    - [3.4 高性能2：V2.00的TSDB使用Array Vector存储和计算](#34-高性能2v200的tsdb使用array-vector存储和计算)
   - [4. OLAP到TSDB的性能提升原因](#4-olap到tsdb的性能提升原因)
+    - [4.1 数据库分区方法](#41-数据库分区方法)
+    - [4.2 数据表创建方法](#42-数据表创建方法)
+    - [4.3 OLAP存储引擎与TSDB存储引擎的差异](#43-olap存储引擎与tsdb存储引擎的差异)
+    - [4.4 小结](#44-小结)
   - [5. 总结](#5-总结)
 
 ## 1. Snapshot数据文件结构
@@ -65,21 +73,15 @@
 
 * **Weighted Averaged Price(WAP)**：加权平均价格
 
-![](https://latex.codecogs.com/svg.latex?WAP=\frac{{{BidPrice_0}*{OfferOrderQty_0}+{OfferPrice_0}*{BidOrderQty_0}}}{{{BidOrderQty_0}+{OfferOrderQty_0}}})
+<img src="images/sql_performance_optimization_wap_di_rv/2_1.png">
 
 * **Depth Imbalance(DI)**：深度不平衡
 
-![](https://latex.codecogs.com/svg.latex?D{I_j}=\frac{{{BidOrderQty_j}-{OfferOrderQty_j}}}{{{BidOrderQty_j}+{OfferOrderQty_j}}},j=0..9)
+<img src="images/sql_performance_optimization_wap_di_rv/2_2.png">
 
 * **Press**：买卖压力指标
 
-![](https://latex.codecogs.com/svg.latex?{w_i}=\frac{{WAP\div({Price_i}-WAP)}}{{\sum\limits_{j=0}^9WAP\div({Price_j}-WAP)}})
-
-![](https://latex.codecogs.com/svg.latex?BidPress=\sum\limits_{j=0}^9{BidOrderQty_j}\cdot{w_j})
-
-![](https://latex.codecogs.com/svg.latex?AskPress=\sum\limits_{j=0}^9{OfferOrderQty_j}\cdot{w_j})
-
-![](https://latex.codecogs.com/svg.latex?Press=\log(BidPress)-\log(AskPress))
+<img src="images/sql_performance_optimization_wap_di_rv/2_3.png">
 
 **特征数据重采样（10min窗口，并聚合计算波动率）**
 
@@ -87,13 +89,11 @@
 
 * **Realized Volatility(RV)**：波动率定义为对数收益率的平方和的平方根
 
-![](https://latex.codecogs.com/svg.latex?S=WAP)
+<img src="images/sql_performance_optimization_wap_di_rv/2_4.png">
 
 股票的价格始终是处于买单价和卖单价之间，因此本项目用加权平均价格来代替股价进行计算
 
-![](https://latex.codecogs.com/svg.latex?{r_{t1,t2}}=\log\frac{{{S_{t2}}}}{{{S_{t1}}}})
-
-![](https://latex.codecogs.com/svg.latex?RV=\sqrt{\sum\limits_t{r_{t-1,t}^2}})
+<img src="images/sql_performance_optimization_wap_di_rv/2_5.png">
 
 
 ## 3. SQL优化
