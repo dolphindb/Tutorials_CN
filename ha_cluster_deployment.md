@@ -9,6 +9,7 @@ DolphinDB 集群包括四种类型节点：控制节点（controller）、代理
 
 本教程用于在 Linux 操作系统上进行高可用集群的部署、升级、过期 License 升级，并对常见问题做出解答，便于用户快速上手 DolphinDB 。包含以下主题：
 
+- [高可用集群部署](#高可用集群部署)
 - [1. 部署 DolphinDB 高可用集群](#1-部署-dolphindb-高可用集群)
   - [第一步：下载](#第一步下载)
   - [第二步：更新软件授权许可](#第二步更新软件授权许可)
@@ -116,7 +117,7 @@ dfsHAMode=Raft
 lanCluster=0
 ```
 
-在这里必须修改的是 *localSite*，用户需要根据实际环境指定控制节点的 IP 地址、端口号和别名。 *dfsHAMode=Raft* 表示配置高可用集群，集群中所有的控制节点组成一个 Raft 组。其余参数用户应结合自身服务器硬件配置进行合理参数调优。
+在这里必须修改的是 *localSite*，用户需要根据实际环境指定控制节点的 IP 地址、端口号和别名。*dfsHAMode=Raft* 表示配置高可用集群，集群中所有的控制节点组成一个 Raft 组。*dfsReplicationFactor* 必须大于1。其余参数用户应结合自身服务器硬件配置进行合理参数调优。
 
 如果需要配置集群 Web 管理界面外网访问，必须配置 *publicName* 参数，例如配置 **P1** 外网访问地址为 19.56.128.21 ，则需要添加配置参数：
 
@@ -176,7 +177,7 @@ lanCluster=0
 enableChunkGranularityConfig=true
 ```
 
-*cluster.cfg* 的配置适用于集群中所有数据节点和计算节点，用户应结合自身服务器硬件配置进行合理参数调优。
+*cluster.cfg* 的配置适用于集群中所有数据节点和计算节点，用户应结合自身服务器硬件配置进行合理参数调优：`maxMemSize`推荐设置为min(服务器可用内存/节点数，license限制最大内存)*0.85，`workerNum`推荐设置为min(服务器逻辑核心数，license限制逻辑核心数)，`volumes`推荐设置为ssd，且设置多块盘
 
 如果需要配置数据节点和计算节点的 Web 交互编程界面外网访问，必须配置 *publicName* 参数，例如配置 **P1** 外网访问地址为 19.56.128.21，**P2** 外网访问地址为 19.56.128.22，**P3** 外网访问地址为 19.56.128.23，则需要添加配置参数：
 
@@ -209,7 +210,7 @@ maxMemSize=4
 lanCluster=0
 ```
 
-在这里必须修改的是 *localSite, controllerSite* 和 *sites*。 *localSite* 配置代理节点信息，用户需要根据实际环境指定代理节点的 IP 地址、端口号和别名。*controllerSite* 配置代理节点第一次与集群中通信的控制节点的信息，必须与 P1 的 *controller.cfg* 中的 *localSite* 保持一致。*sites* 配置当前代理节点和集群中所有控制节点的信息，需要依次填写该代理节点和所有控制节点的 IP 地址、端口号和别名。若控制节点 *controller.cfg* 中的参数 *localSite* 有变化，即使只是节点别名有改变，所有代理节点的配置文件 *agent.cfg* 中的参数 *controllerSite* 和 *sites* 都应当做相应的改变。其余参数用户可根据实际情况进行调整。
+在这里必须修改的是 *localSite, controllerSite* 和 *sites*。 *localSite* 配置代理节点信息，用户需要根据实际环境指定代理节点的 IP 地址、端口号和别名。*controllerSite* 配置代理节点第一次与集群中通信的控制节点的信息，与 P1 的 *controller.cfg* 中的 *localSite* 保持一致。*sites* 配置当前代理节点和集群中所有控制节点的信息，需要依次填写该代理节点和所有控制节点的 IP 地址、端口号和别名。若控制节点 *controller.cfg* 中的参数 *localSite* 有变化，即使只是节点别名有改变，所有代理节点的配置文件 *agent.cfg* 中的参数 *controllerSite* 和 *sites* 都应当做相应的改变。其余参数用户可根据实际情况进行调整。
 
 ### （2）P2 需要配置的文件
 
@@ -236,7 +237,7 @@ dfsHAMode=Raft
 lanCluster=0
 ```
 
-在这里必须修改的是 *localSite*，用户需要根据实际环境指定控制节点的 IP 地址、端口号和别名。 *dfsHAMode=Raft* 表示配置高可用集群，集群中所有的控制节点组成一个 Raft 组。其余参数用户应结合自身服务器硬件配置进行合理参数调优。
+在这里必须修改的是 *localSite*，用户需要根据实际环境指定控制节点的 IP 地址、端口号和别名。 *dfsHAMode=Raft* 表示配置高可用集群，集群中所有的控制节点组成一个 Raft 组。*dfsReplicationFactor* 必须大于1。其余参数用户应结合自身服务器硬件配置进行合理参数调优。
 
 如果需要配置集群 Web 管理界面外网访问，必须配置 *publicName* 参数，例如配置 **P2** 外网访问地址为 19.56.128.22 ，则需要添加配置参数：
 
@@ -329,7 +330,7 @@ maxMemSize=4
 lanCluster=0
 ```
 
-在这里必须修改的是 *localSite, controllerSite* 和 *sites*。 *localSite* 配置代理节点信息，用户需要根据实际环境指定代理节点的 IP 地址、端口号和别名。*controllerSite* 配置代理节点第一次与集群中通信的控制节点的信息，必须与 P2 的 *controller.cfg* 中的 *localSite* 保持一致。*sites* 配置当前代理节点和集群中所有控制节点的信息，需要依次填写该代理节点和所有控制节点的 IP 地址、端口号和别名。若控制节点 *controller.cfg* 中的参数 *localSite* 有变化，即使只是节点别名有改变，所有代理节点的配置文件 *agent.cfg* 中的参数 *controllerSite* 和 *sites* 都应当做相应的改变。其余参数用户可根据实际情况进行调整。
+在这里必须修改的是 *localSite, controllerSite* 和 *sites*。 *localSite* 配置代理节点信息，用户需要根据实际环境指定代理节点的 IP 地址、端口号和别名。*controllerSite* 配置代理节点第一次与集群中通信的控制节点的信息，与 P1 的 *controller.cfg* 中的 *localSite* 保持一致。*sites* 配置当前代理节点和集群中所有控制节点的信息，需要依次填写该代理节点和所有控制节点的 IP 地址、端口号和别名。若控制节点 *controller.cfg* 中的参数 *localSite* 有变化，即使只是节点别名有改变，所有代理节点的配置文件 *agent.cfg* 中的参数 *controllerSite* 和 *sites* 都应当做相应的改变。其余参数用户可根据实际情况进行调整。
 
 ### （3）P3 需要配置的文件
 
@@ -356,7 +357,7 @@ dfsHAMode=Raft
 lanCluster=0
 ```
 
-在这里必须修改的是 *localSite*，用户需要根据实际环境指定控制节点的 IP 地址、端口号和别名。 *dfsHAMode=Raft* 表示配置高可用集群，集群中所有的控制节点组成一个 Raft 组。其余参数用户应结合自身服务器硬件配置进行合理参数调优。
+在这里必须修改的是 *localSite*，用户需要根据实际环境指定控制节点的 IP 地址、端口号和别名。 *dfsHAMode=Raft* 表示配置高可用集群，集群中所有的控制节点组成一个 Raft 组。*dfsReplicationFactor* 必须大于1。其余参数用户应结合自身服务器硬件配置进行合理参数调优。
 
 如果需要配置集群 Web 管理界面外网访问，必须配置 *publicName* 参数，例如配置 **P3** 外网访问地址为 19.56.128.23，则需要添加配置参数：
 
@@ -449,7 +450,7 @@ maxMemSize=4
 lanCluster=0
 ```
 
-在这里必须修改的是 *localSite, controllerSite* 和 *sites*。 *localSite* 配置代理节点信息，用户需要根据实际环境指定代理节点的 IP 地址、端口号和别名。*controllerSite* 配置代理节点第一次与集群中通信的控制节点的信息，必须与 P3 的 *controller.cfg* 中的 *localSite* 保持一致。*sites* 配置当前代理节点和集群中所有控制节点的信息，需要依次填写该代理节点和所有控制节点的 IP 地址、端口号和别名。若控制节点 *controller.cfg* 中的参数 *localSite* 有变化，即使只是节点别名有改变，所有代理节点的配置文件 *agent.cfg* 中的参数 *controllerSite* 和 *sites* 都应当做相应的改变。其余参数用户可根据实际情况进行调整。
+在这里必须修改的是 *localSite, controllerSite* 和 *sites*。 *localSite* 配置代理节点信息，用户需要根据实际环境指定代理节点的 IP 地址、端口号和别名。*controllerSite* 配置代理节点第一次与集群中通信的控制节点的信息，必须与 P1 的 *controller.cfg* 中的 *localSite* 保持一致。*sites* 配置当前代理节点和集群中所有控制节点的信息，需要依次填写该代理节点和所有控制节点的 IP 地址、端口号和别名。若控制节点 *controller.cfg* 中的参数 *localSite* 有变化，即使只是节点别名有改变，所有代理节点的配置文件 *agent.cfg* 中的参数 *controllerSite* 和 *sites* 都应当做相应的改变。其余参数用户可根据实际情况进行调整。
 
 ## 第四步：启动集群
 
