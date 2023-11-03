@@ -61,6 +61,8 @@ DolphinDB 的插件实现了能在脚本中调用的函数。一个插件函数�
 
 函数原型中的 ConstantSP 可以表示绝大多数 DolphinDB 对象（标量、向量、矩阵、表，等等）。其他常用的派生自它的变量类型有 VectorSP（向量）以及 TableSP（表）等。
 
+开发插件时所需的头文件通常位于 DolphinDBPlugin 项目的 include 目录下，用户可切换至指定版本下载。 此处给出 Gitee 中某版本插件头文件的[链接](https://gitee.com/dolphindb/DolphinDBPlugin/tree/release200.10/include)。更多说明可参阅本文 8.常见问题。
+
 ## 1.2 创建变量
 
 创建标量，可以直接用 new 语句创建头文件 ScalarImp.h 中声明的类型对象，并将它赋值给一个 ConstantSP。 ConstantSP 是一个经过封装的智能指针，会在变量的引用计数为 0 时自动释放内存，因此，用户不需要手动删除已经创建的变量：
