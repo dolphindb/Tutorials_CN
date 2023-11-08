@@ -75,6 +75,7 @@
   - [历史数据回放教程](historical_data_replay.md)
   - [流数据高可用](haStreamingTutorial.md)
   - [StreamEngineParser 解析原理介绍](StreamEngineParser.md)
+  - [DolphinDB 流计算时延统计与性能优化](streaming_timer.md)
   <!-- - [流数据状态函数插件](PluginReactiveState.md)    -->
   
 - 系统管理
