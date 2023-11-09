@@ -96,7 +96,7 @@ LSM-Tree 是一种分层、有序、面向磁盘的数据结构，主要用于�
 2. 如果在内存表中找不到数据，则会按层级遍历磁盘上的 SSTable 进行检索，由于 SSTable 文件数据是按键值排序的，因此可以在单个 SSTable 内快速进行范围查询。为了提高 SSTable 遍历的效率，可以给 SSTable 增加 Bloom Filter，以减少不必要的磁盘扫描。
 3. 查询时，SSTable 可能会包含多个不同历史版本的数据，此时需要根据查询条件，找到符合版本的数据（例如最新一条数据）。
 
-> 注：最坏的情况下，需要将所有层级的 SSTable 文件都遍历一遍，如果 SSTable 文件过多，查询是非常低效的，因此可以理解为什么 LSM-Tree 要引入合并机制，减小 SSTable 的文件数。
+    > 注：最坏的情况下，需要将所有层级的 SSTable 文件都遍历一遍，如果 SSTable 文件过多，查询是非常低效的，因此可以理解为什么 LSM-Tree 要引入合并机制，减小 SSTable 的文件数。
 
 相较于传统的 B+ 树而言，LSM-Tree 的优势在于高吞吐写入与较低的随机写延迟，这非常契合 DolphinDB 海量数据高性能写入的设计诉求。虽然没有 B+ 树那样高效的随机读和范围查询性能，LSM-Tree 依靠键值排序使得单个 SSTable 文件的范围查询也十分高效。
 
@@ -107,7 +107,7 @@ DolphinDB 的 TSDB 引擎是基于 LSM-Tree 架构进行开发的，因此大部
 - **写入：** 与 LSM-Tree 直接写入一个有序的数据结构不同，DolphinDB TSDB 引擎在写入数据到内存时，会先按写入顺序存储在一个写缓冲区域（unsorted write Buffer），当数据量累积到一定程度，再进行排序转化为一个 sorted buffer。
 - **查询：** DolphinDB TSDB 引擎会预先遍历 Level File （对应 LSM-Tree 的 SSTable 文件），读取查询涉及的分区下所有 Level File 尾部的索引信息到内存的索引区域（一次性读，常驻内存）。后续查询时，系统会先查询内存中的索引，若命中，则可以快速定位到对应 Level File 的数据块，无需再遍历磁盘上的文件。
 
-<img src="images/tsdb_explained/read_write.png" width=60%>
+  <img src="images/tsdb_explained/read_write.png" width=60%>
 
 ### 2.2 TSDB 引擎 CRUD 流程
 
@@ -123,7 +123,7 @@ TSDB 引擎写入整体上和 OLAP 一致，都是通过两阶段协议进行提
 
 2. **写 Cache Engine：** 写 Redo Log 的同时，将数据写入 TSDB Cache Engine 的 CacheTable，并在 CacheTable 内部完成数据的排序过程。
 
-<img src="images/tsdb_explained/cacheTable.png" width=60%>
+    <img src="images/tsdb_explained/cacheTable.png" width=60%>
 
    CacheTable 分为两个部分：首先是 write buffer，数据刚写入时会追加到 write buffer 的尾部，该 buffer 的数据是未排序的。当 write buffer 超过 *TSDBCacheTableBufferThreshold* 的配置值（默认 16384 行），则按照 sortColumns 指定的列排序，转成一个 sorted buffer (该内存是 read only 的)，同时清空 write buffer。
 
@@ -132,11 +132,11 @@ TSDB 引擎写入整体上和 OLAP 一致，都是通过两阶段协议进行提
    - 刷盘前，系统会将 CacheTable 的所有数据按照 sortColumns 进行归并排序，**再按分区**写入磁盘 Level 0 层的 Level File 文件中（大小为 32M）。
    - 刷盘时，若单个分区的数据量很大，按 32 M 拆分可能产生多个 Level File 文件（见下注1）；若单个分区写入数据量不足 32 M或拆分后最后一部分数据不足 32 M，也会写为一个 Level File。由于 Level File 一旦写入就是不可变的，**下次写入不会向磁盘的 Level File 文件追加数据** 。
 
-> **注1：** 同属于一个 sortKey 值的数据不会被拆分到不同的 Level File 文件。因此实际场景我们会发现一个 Level File 的文件可能会大于 32 M，若一个 sortKey 值对应的数据量特别巨大，甚至可能达到更高！
->
-> **注2：** 可以通过设置刷盘的工作线程数配置项 *TSDBCacheFlushWorkNum* 来提高刷盘效率。
->
-> **注3：** 根据步骤 2，3，可以发现刷盘前数据先局部排序（sorted buffer），再整体排序，共执行了两次排序操作。实际就是通过分治的思想，提升了排序的效率。
+    > **注1：** 同属于一个 sortKey 值的数据不会被拆分到不同的 Level File 文件。因此实际场景我们会发现一个 Level File 的文件可能会大于 32 M，若一个 sortKey 值对应的数据量特别巨大，甚至可能达到更高！
+
+    > **注2：** 可以通过设置刷盘的工作线程数配置项 *TSDBCacheFlushWorkNum* 来提高刷盘效率。
+
+    > **注3：** 根据步骤 2，3，可以发现刷盘前数据先局部排序（sorted buffer），再整体排序，共执行了两次排序操作。实际就是通过分治的思想，提升了排序的效率。
 
 若刷盘过程中，又有新的数据写入 Cache Engine，则系统会分配新的 Cache Engine 空间来进行写入。在极端情况下，TSDB 的 Cache Engine 占用的内存 **会达到两倍** 的 *TSDBCacheEngineSize*（配置项）的指定值。**在配置 *TSDBCacheEngineSize* 大小和 *maxMemSize*，需要注意这一点，以免造成内存溢出的情况。**
 
@@ -151,11 +151,11 @@ TSDB 引擎写入整体上和 OLAP 一致，都是通过两阶段协议进行提
 1. **分区剪枝：** 根据查询语句进行分区剪枝，缩窄查询范围。
 2. **加载索引：** 遍历涉及到的分区下的所有 Level File，将其尾部的索引信息加载到内存中（索引信息采用惰性缓存策略，即不会在节点启动时被立即加载进内存，而是在第一次查询命中该分区时才被加载进内存）。查询命中的分区的索引信息一旦被加载到内存后，会一直缓存在内存中（除非因内存不够被置换），后续查询若涉及该分区则不会重复此步骤，而是直接从内存中读取索引信息。
 
-> **注：** 内存中存放索引的区域大小由配置项 *TSDBLevelFileIndexCacheSize* 决定，用户可以通过函数 [getLevelFileIndexCacheStatus](https://docs.dolphindb.cn/zh/dita/FunctionsandCommands/FunctionReferences/g/getLevelFileIndexCacheStats.html)  在线查询内存中的索引占用。若加载的索引大小超过了该值，内部会通过一些缓存淘汰算法进行置换，用户可配置 *TSDBLevelFileIndexCacheInvalidPercent* 来调整缓存淘汰算法的阈值。
+    > **注：** 内存中存放索引的区域大小由配置项 *TSDBLevelFileIndexCacheSize* 决定，用户可以通过函数 [getLevelFileIndexCacheStatus](https://docs.dolphindb.cn/zh/dita/FunctionsandCommands/FunctionReferences/g/getLevelFileIndexCacheStats.html)  在线查询内存中的索引占用。若加载的索引大小超过了该值，内部会通过一些缓存淘汰算法进行置换，用户可配置 *TSDBLevelFileIndexCacheInvalidPercent* 来调整缓存淘汰算法的阈值。
 
-1. **查找内存中的数据：** 先搜索 TSDB Cache Engine 中的数据。若数据在 write buffer 中，则采用顺序扫描的方式查找；若在 sorted buffer 种，则利用其有序性，采用二分查找。
-2. **查找磁盘上的数据：** 根据索引查找磁盘 Level File 中各查询字段的数据块，解压到内存。若查询的过滤条件包含 sortKey 字段，即可根据索引加速查询。
-3. **返回查询结果：** 合并上述两步的结果并返回。
+3. **查找内存中的数据：** 先搜索 TSDB Cache Engine 中的数据。若数据在 write buffer 中，则采用顺序扫描的方式查找；若在 sorted buffer 种，则利用其有序性，采用二分查找。
+4. **查找磁盘上的数据：** 根据索引查找磁盘 Level File 中各查询字段的数据块，解压到内存。若查询的过滤条件包含 sortKey 字段，即可根据索引加速查询。
+5. **返回查询结果：** 合并上述两步的结果并返回。
 
 **其中，具体索引流程：**
 
@@ -181,7 +181,7 @@ TSDB 引擎的更新效率取决于 keepDuplicates 参数配置的去重机制�
 2. **查到内存更新：** 取出对应分区所有数据到内存后，更新数据。
 3. **写回更新后的分区数据到新目录：** 将更新后的数据重新写入数据库，系统会使用一个新的版本目录（默认是 “物理表名_cid”，见下图，其中 tick_2 是物理表名）来保存更新后的分区数据，旧版本的分区数据文件将被定时回收（默认 30 min）。
 
-<img src="images/tsdb_explained/update.png" width=60%>
+    <img src="images/tsdb_explained/update.png" width=60%>
 
 - keepDuplicates=LAST 时的更新流程：
 
