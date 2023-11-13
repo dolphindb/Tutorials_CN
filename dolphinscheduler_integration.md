@@ -622,7 +622,7 @@ loadEntrustFV();
 loadEntrustFV(startDate=${startDate},endDate=${endDate},loadType="batch");
 ```
 
-> 注意：需要在DolphinScheduler上面定义局部参数或全局参数 *startDate* 和 *endDate* ，如何定义请参照**本文 1.4.2 小节**。
+> 注意：需要在DolphinScheduler上面定义局部参数或全局参数 *startDate* 和 *endDate* ，如何定义请参照**本文 1.3.2 小节**。
 
 - **创建DolphinDB任务工作流**
 
