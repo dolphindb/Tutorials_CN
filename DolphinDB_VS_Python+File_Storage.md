@@ -6,20 +6,23 @@
 
 为解决这些问题，越来越多的券商和私募机构开始采用 DolphinDB 作为分析型的分布式时序数据库。DolphinDB 提供高效的数据存储和计算能力，使得高频数据的因子计算变得更加便捷和高效。
 
-因此，本文将分别介绍如何基于 DolphinDB 实现因子计算，旨在对比 DolphinDB 一体化因子计算方案与 Python + 各类文件存储的性能差异。通过本文的对比，读者可以了解 DolphinDB 一体化因子计算的优势，并在实际应用中做出合理选择。
+因此，本文将分别介绍如何基于 DolphinDB + 各类文件存储实现因子计算，旨在对比 DolphinDB 一体化因子计算方案与 Python + 各类文件存储的性能差异。通过本文的对比，读者可以了解 DolphinDB 一体化因子计算的优势，并在实际应用中做出更加明智的选择。
+- [Python + 文件存储与 DolphinDB 因子计算性能比较](#python--文件存储与-dolphindb-因子计算性能比较)
+  - [测试基础环境](#测试基础环境)
+    - [软硬件信息](#软硬件信息)
+    - [测试数据](#测试数据)
+  - [测试场景](#测试场景)
+    - [因子计算与代码实现](#因子计算与代码实现)
+  - [计算结果对比](#计算结果对比)
+    - [计算性能对比](#计算性能对比)
+    - [计算准确性对比](#计算准确性对比)
+  - [常见问题解答](#常见问题解答)
+    - [如何复现本文的代码？](#如何复现本文的代码)
+  - [总结](#总结)
+  - [附录](#附录)
 
-- [测试基础环境](#测试基础环境)
-  - [软硬件信息](#软硬件信息)
-  - [测试数据](#测试数据)
-- [测试场景](#测试场景)
-  - [因子计算与代码实现](#因子计算与代码实现)
-- [计算结果对比](#计算结果对比)
-  - [计算性能对比](#计算性能对比)
-  - [计算准确性对比](#计算准确性对比)
-- [常见问题解答](#常见问题解答)
-  - [如何复现本文的代码？](#如何复现本文的代码)
-- [总结](#总结)
-- [附录](#附录)
+
+
 
 ## 测试基础环境
 
@@ -34,21 +37,21 @@
 
 - **硬件环境**
 
-| **硬件名称** | **配置信息**                         |
-| :----------------- | :----------------------------------------- |
-| CPU                | Intel(R) Xeon(R) Silver 4216 CPU @ 2.10GHz |
-| 内存               | 128G                                       |
-| 硬盘               | SSD 500G                                   |
+| **硬件名称** | **配置信息**                               |
+| :----------- | :----------------------------------------- |
+| CPU          | Intel(R) Xeon(R) Silver 4216 CPU @ 2.10GHz |
+| 内存         | 128G                                       |
+| 硬盘         | SSD 500G                                   |
 
 - **软件环境**
 
-| **软件名称** | **版本信息**                   |
-| :----------------- | :----------------------------------- |
-| 操作系统           | CentOS Linux release 7.9.2009 (Core) |
-| DolphinDB          | V 2.00.9.8                           |
-| Python             | V 3.7.6                              |
-| Numpy              | V 1.20.2                             |
-| Pandas             | V 1.3.5                              |
+| **软件名称** | **版本信息**                         |
+| :----------- | :----------------------------------- |
+| 操作系统     | CentOS Linux release 7.9.2009 (Core) |
+| DolphinDB    | V 2.00.9.8                           |
+| Python       | V 3.7.6                              |
+| Numpy        | V 1.20.2                             |
+| Pandas       | V 1.3.5                              |
 
 ### 测试数据
 
@@ -58,20 +61,22 @@ Level 2 行情数据是目前国内证券市场上最为完整，颗粒度最为
 
 快照表测试数据在 DolphinDB 中共55个字段，部分字段展示如下：
 
-|             | **字段名** | **数据类型** |
-| :---------- | :--------------- | :----------------- |
-| **1** | SecurityID       | SYMBOL             |
-| **2** | DateTime         | TIMESTAMP          |
-| **3** | BidPrice         | DOUBLE             |
-| **4** | BidOrderQty      | INT                |
-| **5** | ……             | ……               |
+|       | **字段名**  | **数据类型** |
+| :---- | :---------- | :----------- |
+| **1** | SecurityID  | SYMBOL       |
+| **2** | DateTime    | TIMESTAMP    |
+| **3** | BidPrice    | DOUBLE       |
+| **4** | BidOrderQty | INT          |
+| **5** | ……          | ……           |
 
 部分数据示例如下：
 
-| **SecurityID** | **DateTime**      | **BidPrice**                                                                | **BidOrderQty**                                 |
-| :------------------- | :---------------------- | :-------------------------------------------------------------------------------- | :---------------------------------------------------- |
-| 000155               | 2021.12.01T09:41:00.000 | [29.3000,29.2900,29.2800,29.2700,29.2600,29.2500,29.2400,29.2300,29.2200,29.2100] | [3700,11000,1400,1700,300,600,3800,200,600,1700]      |
-| 000688               | 2021.12.01T09:40:39.000 | [13.5300,13.5100,13.5000,13.4800,13.4700,13.4500,13.4400,13.4200,13.4000,13.3800] | [500,1200,102200,5500,700,47000,1000,6500,18400,1000] |
+| **SecurityID** | **DateTime**            | **BidPrice**                                                 | **BidOrderQty**                                       |
+| :------------- | :---------------------- | :----------------------------------------------------------- | :---------------------------------------------------- |
+| 000155         | 2021.12.01T09:41:00.000 | [29.3000,29.2900,29.2800,29.2700,29.2600,29.2500,29.2400,29.2300,29.2200,29.2100] | [3700,11000,1400,1700,300,600,3800,200,600,1700]      |
+| 000688         | 2021.12.01T09:40:39.000 | [13.5300,13.5100,13.5000,13.4800,13.4700,13.4500,13.4400,13.4200,13.4000,13.3800] | [500,1200,102200,5500,700,47000,1000,6500,18400,1000] |
+
+
 
 ## 测试场景
 
@@ -100,6 +105,8 @@ Level 2 行情数据是目前国内证券市场上最为完整，颗粒度最为
 有效十档范围内表示不考虑已不在十档范围内的档位，即表示只考虑以下区间的档位：
 
 ![images/DolphinDB_VS_Python+File_Storage/DolphinDB_VS_Python+File_Storage_3.png](images/DolphinDB_VS_Python+File_Storage/DolphinDB_VS_Python+File_Storage_3.png)
+
+
 
 #### DolphinDB 中因子实现
 
@@ -130,6 +137,8 @@ def level10_Diff(price, qty, buy, lag=20){
         return msum(amtDiff, lag, 1).nullFill(0)
 }
 ```
+
+
 
 #### Python 中因子实现
 
@@ -201,6 +210,8 @@ def level10_Diff(df, lag=20):
     return temp[["SecurityID","DateTime", "amtDiff"]].fillna(0)
 ```
 
+
+
 ## 计算结果对比
 
 ### 计算性能对比
@@ -210,19 +221,19 @@ Level 2 行情快照数据一天的数据量超过 10 G，因此金融量化工�
 - **表一 16 核心计算性能比较**：
 
 | **存储方式\因子**  | **十档买卖委托均价线性回归斜率(s)/性能提升（倍数）** | **十档净委买增额(s)/性能提升（倍数）** |
-| :----------------------- | :--------------------------------------------------------- | :------------------------------------------- |
-| **DolphinDB**      | 2.4                                                        | 2.3                                          |
-| **Python+pickle**  | 254.3/**104.8**                                      | 105.9/**45.4**                         |
-| **Python+parquet** | 309.4/**127.5**                                      | 147.9/**63.4**                         |
-| **Python+feather** | 291.1/**120.0**                                      | 130.6/**56.0**                         |
-| **Python+Hdf5**    | 281.4/**116.0**                                      | 132.0/**56.6**                         |
-| **Python+Npz**     | 346.7/**142.9**                                      | 175.2/**75.1**                         |
+| :----------------- | :------------------------------------------------------- | :----------------------------------------- |
+| **DolphinDB**      | 2.4                                                      | 2.3                                        |
+| **Python+pickle**  | 254.3/**104.8**                                          | 105.9/**45.4**                             |
+| **Python+parquet** | 309.4/**127.5**                                          | 147.9/**63.4**                             |
+| **Python+feather** | 291.1/**120.0**                                          | 130.6/**56.0**                             |
+| **Python+Hdf5**    | 281.4/**116.0**                                          | 132.0/**56.6**                             |
+| **Python+Npz**     | 346.7/**142.9**                                          | 175.2/**75.1**                             |
 
 - **表二 8 核心计算性能比较**：
 
 | **存储方式\因子**  | **十档买卖委托均价线性回归斜率(s)/性能提升（倍数）** | **十档净委买增额(s)/性能提升（倍数）** |
-| :----------------------- | :--------------------------------------------------------- | :------------------------------------------- |
-| **DolphinDB**      | 4.5                                                        | 4.4                                          |
+| :----------------- | :--------------------------------------------------- | :------------------------------------- |
+| **DolphinDB**      | 4.5                                                  | 4.4                                    |
 | **Python+pickle**  | 489.3/**102.8**                                      | 231.6/**60.0**                         |
 | **Python+parquet** | 638.7/**143.0**                                      | 296.3/**67.9**                         |
 | **Python+feather** | 594.2/**133.1**                                      | 261.9/**60.0**                         |
@@ -232,8 +243,8 @@ Level 2 行情快照数据一天的数据量超过 10 G，因此金融量化工�
 - **表三 4 核心计算性能比较**：
 
 | **存储方式\因子**  | **十档买卖委托均价线性回归斜率(s)/性能提升（倍数）** | **十档净委买增额(s)/性能提升（倍数）** |
-| :----------------------- | :--------------------------------------------------------- | :------------------------------------------- |
-| **DolphinDB**      | 6.5                                                        | 6.8                                          |
+| :----------------- | :--------------------------------------------------- | :------------------------------------- |
+| **DolphinDB**      | 6.5                                                  | 6.8                                    |
 | **Python+pickle**  | 1014.9/**155.6**                                     | 363.9/**53.6**                         |
 | **Python+parquet** | 1134.9/**174.0**                                     | 560.9/**82.6**                         |
 | **Python+feather** | 1040.6/**159.6**                                     | 479.7/**70.7**                         |
@@ -243,13 +254,15 @@ Level 2 行情快照数据一天的数据量超过 10 G，因此金融量化工�
 - **表四 1 核心计算性能比较**：
 
 | **存储方式\因子**  | **十档买卖委托均价线性回归斜率(s)/性能提升（倍数）** | **十档净委买增额(s)/性能提升（倍数）** |
-| :----------------------- | :--------------------------------------------------------- | :------------------------------------------- |
-| **DolphinDB**      | 21.8                                                       | 22.0                                         |
-| **Python+pickle**  | 3638.2/**166.5**                                     | 1461.8/**66.3**                        |
-| **Python+parquet** | 4450.4/**203.7**                                     | 1759.3/**79.8**                        |
-| **Python+feather** | 3994.0/**182.8**                                     | 1773.7/**80.5**                        |
-| **Python+Hdf5**    | 3996.9/**182.9**                                     | 1774.5/**80.5**                        |
-| **Python+Npz**     | 5031.4/**230.3**                                     | 2437.3/**110.6**                       |
+| :----------------- | :------------------------------------------------------- | :----------------------------------------- |
+| **DolphinDB**      | 21.8                                                     | 22.0                                       |
+| **Python+pickle**  | 3638.2/**166.5**                                         | 1461.8/**66.3**                            |
+| **Python+parquet** | 4450.4/**203.7**                                         | 1759.3/**79.8**                            |
+| **Python+feather** | 3994.0/**182.8**                                         | 1773.7/**80.5**                            |
+| **Python+Hdf5**    | 3996.9/**182.9**                                         | 1774.5/**80.5**                            |
+| **Python+Npz**     | 5031.4/**230.3**                                         | 2437.3/**110.6**                           |
+
+
 
 从比对结果可以看到，本次测试中，在不同 CPU 核数和不同文件存储形式维度下，对于十档买卖委托均价线性回归斜率，DolphinDB 一体化计算比 Python+ 各类存储文件最高可达近200倍提升，平均约100倍左右的提升。考虑两种计算方式的特点，原因大概如下：
 
@@ -263,6 +276,8 @@ Level 2 行情快照数据一天的数据量超过 10 G，因此金融量化工�
 - 代码实现方面，DolphinDB 的库内 SQL计算更易于实现因子计算调用及并行调用。
 - 并行计算方面，DolphinDB 可以自动使用当前可用的 CPU 资源，而Python 脚本需要通过并行调度代码实现，但更易于控制并发度。
 - 计算速度方面，DolphinDB 的库内计算比 Python + 各类文件存储 的计算方式快 50 至 200 倍之间。
+
+
 
 ### 计算准确性对比
 
@@ -281,6 +296,8 @@ print(assert_frame_equal)
 """
 ```
 
+
+
 ## 常见问题解答
 
 ### 如何复现本文的代码？
@@ -289,47 +306,63 @@ print(assert_frame_equal)
 
 - **第一步 DolphinDB 部署**
 
-首先我们需要下载 DolphinDB 并完成单节点 server 部署搭建，这一步骤在 Linux 系统和 Windows 系统中均可以完成，详细细节可以参考下面的链接：
+首先我们需要下载 DolphinDB 并完成单节点 server 部署搭建，这一步骤在 Linux 系统和 Windows 系统中均可以完成，详情可以参考下面的链接：
 
 [单节点部署与升级 (dolphindb.cn)](https://docs.dolphindb.cn/help/dita/md/standalone_server.html)
 
 - **第二步 DolphinDB 客户端安装**
 
-安装并启动 GUI 或者 vsCode，连接到 server 后即可复现 DolphinDB 脚本，详细细节参考下面的链接：
+安装并启动 GUI 或者 VSCode，连接到 server 后即可复现 DolphinDB 脚本，详情参考下面的链接：
 
 [使用DolphinDB数据库及客户端](https://docs.dolphindb.cn/help/dita/new_chap_getstarted_ddbserver_and_clients.html)
 
 [DolphinDB VS Code 插件](https://docs.dolphindb.cn/help/dita/md/vscode_extension.html)
 
-- **第三步 运行 DolphinDB 代码和 Python 代码**
+- **第三步 上传压缩包并解压代码**
 
-  - 执行截图中的代码生成模拟数据
+将 [Python_plus_file_VS_dolphindb_on_factor_calc.zip](script/DolphinDB_VS_Python+File_Storage/python_plus_file_VS_dolphindb_on_factor_calc.zip) 上传至服务器。注意：此处服务器路径为：/home/ddb/workfile/demo/，用户需根据实际情况修改路径。
 
-    ![images/DolphinDB_VS_Python+File_Storage/DolphinDB_VS_Python+File_Storage_4.png](images/DolphinDB_VS_Python+File_Storage/DolphinDB_VS_Python+File_Storage_4.png "snapshot模拟数据生成")
-  - 执行截图中的文件 DolphinDB 中的数据导出为 csv 格式文件
+在 Linux 中运行如下命令，将压缩包移动到对应文件夹并解压缩：
+
+```
+cd /home/ddb/workfile/demo/
+
+unzip python_plus_file_VS_dolphindb_on_factor_calc.zip -d ./
+```
+  
+- **第四步 依次运行 DolphinDB 代码和 Python 代码**
+
+  - 运行 00_dolphindb_script/00_genSimulatedData.dos，生成模拟数据
+
+    ![images/DolphinDB_VS_Python+File_Storage/DolphinDB_VS_Python+File_Storage_4.png](images/DolphinDB_VS_Python+File_Storage/DolphinDB_VS_Python+File_Storage_4.png "snapshot模拟数据生成" )
+
+    
+
+  - 运行 00_dolphindb_script/01_saveAsCsv.dos，将模拟数据保存为csv文件
 
     ![images/DolphinDB_VS_Python+File_Storage/DolphinDB_VS_Python+File_Storage_5.png](images/DolphinDB_VS_Python+File_Storage/DolphinDB_VS_Python+File_Storage_5.png "snapshot数据导出")
 
-    服务器对应目录下可以查到对应 csv 文件
+  - 运行 00_dolphindb_script/02_level10Diff.dos，在 DolphinDB 中计算因子1
 
-    ![images/DolphinDB_VS_Python+File_Storage/DolphinDB_VS_Python+File_Storage_6.png](images/DolphinDB_VS_Python+File_Storage/DolphinDB_VS_Python+File_Storage_6.png)
-  - 在 Python 中运行每个文件将导出的 csv 格式数据转换为对应类型的数据保存到指定路径（以Pickle为例）
+    ![images/DolphinDB_VS_Python+File_Storage/DolphinDB_VS_Python+File_Storage_6.png](images/DolphinDB_VS_Python+File_Storage/DolphinDB_VS_Python+File_Storage_6.png "计算因子1")
 
-    ![images/DolphinDB_VS_Python+File_Storage/DolphinDB_VS_Python+File_Storage_7.png](images/DolphinDB_VS_Python+File_Storage/DolphinDB_VS_Python+File_Storage_7.png "导出为pickle")
+  - 运行 00_dolphindb_script/03_level10InferPriceTrend.dos，在 dolphindb 中计算因子2
 
-    结果如下：
+    ![images/DolphinDB_VS_Python+File_Storage/DolphinDB_VS_Python+File_Storage_7.png](images/DolphinDB_VS_Python+File_Storage/DolphinDB_VS_Python+File_Storage_7.png "计算因子2")
 
-    ![images/DolphinDB_VS_Python+File_Storage/DolphinDB_VS_Python+File_Storage_8.png](images/DolphinDB_VS_Python+File_Storage/DolphinDB_VS_Python+File_Storage_8.png)
-  - 在 DolphinDB 中计算因子
+  - 运行 00_python_script/save_given_format_file/04_save_pickle.py，将 csv 文件保存为 pickle 文件
 
-    ![images/DolphinDB_VS_Python+File_Storage/DolphinDB_VS_Python+File_Storage_9.png](images/DolphinDB_VS_Python+File_Storage/DolphinDB_VS_Python+File_Storage_9.png "十档买卖委托均价线性回归斜率")
+    ![images/DolphinDB_VS_Python+File_Storage/DolphinDB_VS_Python+File_Storage_8.png](images/DolphinDB_VS_Python+File_Storage/DolphinDB_VS_Python+File_Storage_8.png "pickle文件")
+    
+  - 运行 00_python_script/calc_factor/05_level10Diff_pickle.py，在 python 中计算因子1
 
-    ![images/DolphinDB_VS_Python+File_Storage/DolphinDB_VS_Python+File_Storage_10.png](images/DolphinDB_VS_Python+File_Storage/DolphinDB_VS_Python+File_Storage_10.png "十档净委买增额")
-  - 在 Python 中计算相应存储方式的因子（以pickle为例）
+    ![images/DolphinDB_VS_Python+File_Storage/DolphinDB_VS_Python+File_Storage_9.png](images/DolphinDB_VS_Python+File_Storage/DolphinDB_VS_Python+File_Storage_9.png "py计算因子1")
 
-    ![images/DolphinDB_VS_Python+File_Storage/DolphinDB_VS_Python+File_Storage_11.png](images/DolphinDB_VS_Python+File_Storage/DolphinDB_VS_Python+File_Storage_11.png "十档买卖委托均价线性回归斜率")
+  - 运行 00_python_script/calc_factor/06_level10InferPriceTrend_pickle.py，在 python 中计算因子2
 
-    ![images/DolphinDB_VS_Python+File_Storage/DolphinDB_VS_Python+File_Storage_12.png](images/DolphinDB_VS_Python+File_Storage/DolphinDB_VS_Python+File_Storage_12.png "十档净委买增额")
+    ![images/DolphinDB_VS_Python+File_Storage/DolphinDB_VS_Python+File_Storage_10.png](images/DolphinDB_VS_Python+File_Storage/DolphinDB_VS_Python+File_Storage_10.png "py计算因子2")
+
+此处以 pickle 为例，若希望测试其他文件形式，请先运行对应脚本保存对应格式的文件，再运行因子计算的脚本。
 
 ## 总结
 
@@ -348,4 +381,4 @@ print(assert_frame_equal)
 
 本教程中的对比测试使用了以下测试脚本：
 
- [Python+ 文件存储与 DolphinDB 因子计算性能比较.zip](script/DolphinDB_VS_Python+File_Storage/Python+文件存储与DolphinDB因子计算性能比较.zip)
+ [Python+ 文件存储与 DolphinDB 因子计算性能比较.zip](script/DolphinDB_VS_Python+File_Storage/python_plus_file_VS_dolphindb_on_factor_calc.zip)
