@@ -218,6 +218,7 @@
     - [DolphinDB AMD 插件最佳实践指南](best_implementation_for_AMD_Plugin.md)
     - [DolphinDB Python Parser 在金融量化分析场景的入门教程](DolphinDB_Python_Parser_Intro_for_Quantitative_Finance.md)
     - [模拟撮合引擎应用教程](matching_engine_simulator.md)
+    - [DolphinDB与任务调度器DolphinScheduler的集成](dolphinscheduler_integration.md)
   - 物联网：
     - [DolphinDB在工业物联网的应用](iot_demo.md)
     - [物联网时序数据查询案例](iot_query_case.md)
