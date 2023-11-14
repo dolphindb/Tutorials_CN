@@ -51,115 +51,115 @@ DolphinDBOperator 是 Airflow 的 operator 一种，通过 DolphinDBOperator 可
 - `sql`: 指定需要运行的 DolphinDB 脚本
 - `file_path`: 可以指定 DolphinDB dos 文件运行脚本
 
-​     DolphinDBOperator 使用示例如下：
+DolphinDBOperator 使用示例如下：
+
 - 通过 sql 参数指定任务内容运行脚本：
-```
-//在 DolphinDB 中创建一个共享表
-create_parameter_table = DolphinDBOperator(
-        task_id='create_parameter_table',
-        dolphindb_conn_id='dolphindb_test',
-        sql='''
-            undef(`paramTable,SHARED)
-            t = table(1:0, `param`value, [STRING, STRING])
-            share t as paramTable
-            '''
-    )
-```
+
+    ```
+    //在 DolphinDB 中创建一个共享表
+    create_parameter_table = DolphinDBOperator(
+            task_id='create_parameter_table',
+            dolphindb_conn_id='dolphindb_test',
+            sql='''
+                undef(`paramTable,SHARED)
+                t = table(1:0, `param`value, [STRING, STRING])
+                share t as paramTable
+                '''
+        )
+    ```
 - 通过 file_path 指定 dos 文件运行脚本：
-```
-    //CalAlpha001.dos 为 DolphinDB 脚本
-    case1 = DolphinDBOperator(
-        task_id='case1',
-        dolphindb_conn_id='dolphindb_test',
-        file_path=path + "/StreamCalculating/CalAlpha001.dos"
-    )
-```
+
+    ```
+        //CalAlpha001.dos 为 DolphinDB 脚本
+        case1 = DolphinDBOperator(
+            task_id='case1',
+            dolphindb_conn_id='dolphindb_test',
+            file_path=path + "/StreamCalculating/CalAlpha001.dos"
+        )
+    ```
 
 ### 1.4 Airflow 安装部署
 
 - **硬件环境**：
 
-| 硬件名称 | 配置信息                  |
-| :------- | :------------------------ |
-| 主机名   | HostName                  |
-| 外网 IP  | xxx.xxx.xxx.122           |
-| 操作系统 | Linux（内核版本3.10以上） |
-| 内存     | 64 GB                     |
-| CPU      | x86_64（12核心）          |
+    | 硬件名称 | 配置信息                  |
+    | :------- | :------------------------ |
+    | 主机名   | HostName                  |
+    | 外网 IP  | xxx.xxx.xxx.122           |
+    | 操作系统 | Linux（内核版本3.10以上） |
+    | 内存     | 64 GB                     |
+    | CPU      | x86_64（12核心）          |
 
 - **软件环境**：
 
-| 软件名称  | 版本信息  |
-| :-------- | :-------- |
-| DolphinDB | 2.00.9    |
-| Airflow   | 2.5.1     |
-| python    | 3.7及以上 |
+    | 软件名称  | 版本信息  |
+    | :-------- | :-------- |
+    | DolphinDB | 2.00.9    |
+    | Airflow   | 2.5.1     |
+    | python    | 3.7及以上 |
 
-> 注：
+> **注**：
 >
-> 1.本教程使用 SQLite 数据库作为后端存储，如果因 SQLite 版本过低无法启动，可参考[设置数据库](https://airflow.apache.org/docs/apache-airflow/stable/howto/set-up-database.html)，升级 SQLlite 或更改默认数据库。
+> 1. 本教程使用 SQLite 数据库作为后端存储，如果因 SQLite 版本过低无法启动，可参考[设置数据库](https://airflow.apache.org/docs/apache-airflow/stable/howto/set-up-database.html)，升级 SQLlite 或更改默认数据库。
 >
-> 2.在流程开始前建议预先构建 DolphinDB 服务。具体安装方法可以参考 [DolphinDB 高可用集群部署教程](https://gitee.com/dolphindb/Tutorials_CN/blob/master/ha_cluster_deployment.md)。也可以参考基于 [Docker-Compose 的 DolphinDB 多容器集群部署](https://gitee.com/dolphindb/dolphindb-k8s/blob/master/docker-compose_high_cluster.md)。
+> 2. 在流程开始前建议预先构建 DolphinDB 服务。具体安装方法可以参考 [DolphinDB 高可用集群部署教程](https://gitee.com/dolphindb/Tutorials_CN/blob/master/ha_cluster_deployment.md)。也可以参考基于 [Docker-Compose 的 DolphinDB 多容器集群部署](https://gitee.com/dolphindb/dolphindb-k8s/blob/master/docker-compose_high_cluster.md)。
 
 - **主机环境**  
   
-1. 首先，在安装 Airflow 之前要确保主机上安装了 `python3` 、`dolphindb` 、`dolphindb-operator` 三个依赖包。执行以下命令完成对这三个依赖包的安装。 依赖包可从附件中获取。
-```
-pip install --force-reinstall dolphindb
-pip install --force-reinstall dolphindbapi-1.0.0-py3-none-any.whl
-pip install --force-reinstall apache_Airflow_providers_dolphindb-1.0.0-py3-none-any.whl
-```
-
-> :bulb:**注意**：本教程所用 Airflow 安装包仅提供离线版安装方式，在线版安装方式会在正式发布后提供。
-
-2. 安装好 airflow.provide.dolphindb 插件后，启动 Airflow ：
-
-部署以及安装 Airflow 详情见官网：[airflow 快速入门](https://airflow.apache.org/docs/apache-airflow/stable/start.html)。以下为启动 Airflow 的核心代码:
-
-```
-#初始化数据库
-airflow db init
-
-#创建用户
-airflow users create  --username admin  --firstname Peter  --lastname Parker  --role Admin  --email spiderman@superhero.org  --password admin
-
-# 守护进程运行 webserve
-airflow webserver --port 8080 -D
-
-# 守护进程运行 scheduler
-airflow scheduler -D
-```
-
-3. 执行以下命令验证 Airflow 是否成功启动：
-
-```
-ps -aux|grep airflow
-```
-
-预期输出如下图，证明 Airflow 启动成功：
-
-<img src="./images/Best_Practices_for_DolphinDB_and_Python_AirFlow/1_1.png" width=70%>
-
-4. 启动成功后，浏览器中登陆 Airflow 的 web 界面：
-
-- 默认地址：`http://IP:8080`
-- 默认账户：初始化 db 中创建，本文例子中为 `admin`
-- 默认密码：初始化 db 中创建, 本文例子中为 `admin`
-
-<img src="./images/Best_Practices_for_DolphinDB_and_Python_AirFlow/1_2.png" width=70%>
-
-5. 输入上述创建用户名密码即可进入 Airflow 的 UI 界面，如下所示:
-
-<img src="./images/Best_Practices_for_DolphinDB_and_Python_AirFlow/1_3.png" width=70%>
-
-6. 填写 DolphinDB 连接信息后连接到 DolphinDB 数据库。
-
-<img src="./images/Best_Practices_for_DolphinDB_and_Python_AirFlow/1_4.png" width=70%>
-
-
-<img src="./images/Best_Practices_for_DolphinDB_and_Python_AirFlow/1_5.png" width=70%>
-
-连接成功后，在 DolphinDBOperator 中指定 `dolphindb_conn_id='dolphindb_test'`，即可运行 DolphinDB 脚本。上述准备工作完成后，下文以一个股票快照数据的 ETL 过程为例展现 Airflow 如何和 DolphinDB 交互。
+    1. 首先，在安装 Airflow 之前要确保主机上安装了 `python3` 、`dolphindb` 、`dolphindb-operator` 三个依赖包。执行以下命令完成对这三个依赖包的安装。 依赖包可从附件中获取。
+    
+        ```
+        pip install airflow-provider-dolphindb
+        ```       
+    
+    2. 安装好 airflow.provider.dolphindb 插件后，启动 Airflow ：
+    
+        部署以及安装 Airflow 详情见官网：[airflow 快速入门](https://airflow.apache.org/docs/apache-airflow/stable/start.html)。以下为启动 Airflow 的核心代码:
+        
+        ```
+        #初始化数据库
+        airflow db init
+        
+        #创建用户
+        airflow users create  --username admin  --firstname Peter  --lastname Parker  --role Admin  --email spiderman@superhero.org  --password admin
+        
+        # 守护进程运行 webserver
+        airflow webserver --port 8080 -D
+        
+        # 守护进程运行 scheduler
+        airflow scheduler -D
+        ```
+    
+    3. 执行以下命令验证 Airflow 是否成功启动：
+    
+        ```
+        ps -aux|grep airflow
+        ```
+        
+        预期输出如下图，证明 Airflow 启动成功：
+        
+        <img src="./images/Best_Practices_for_DolphinDB_and_Python_AirFlow/1_1.png" width=70%>
+    
+    4. 启动成功后，浏览器中登陆 Airflow 的 web 界面：
+    
+        - 默认地址：`http://IP:8080`
+        - 默认账户：初始化 db 中创建，本文例子中为 `admin`
+        - 默认密码：初始化 db 中创建, 本文例子中为 `admin`
+        
+        <img src="./images/Best_Practices_for_DolphinDB_and_Python_AirFlow/1_2.png" width=70%>
+    
+    5. 输入上述创建用户名密码即可进入 Airflow 的 UI 界面，如下所示:
+    
+        <img src="./images/Best_Practices_for_DolphinDB_and_Python_AirFlow/1_3.png" width=70%>
+    
+    6. 填写 DolphinDB 连接信息后连接到 DolphinDB 数据库。
+    
+        <img src="./images/Best_Practices_for_DolphinDB_and_Python_AirFlow/1_4.png" width=70%>
+    
+    
+        <img src="./images/Best_Practices_for_DolphinDB_and_Python_AirFlow/1_5.png" width=70%>
+    
+        连接成功后，在 DolphinDBOperator 中指定 `dolphindb_conn_id='dolphindb_test'`，即可运行 DolphinDB 脚本。上述准备工作完成后，下文以一个股票快照数据的 ETL 过程为例展现 Airflow 如何和 DolphinDB 交互。
 
 ## 2. Airflow 调度对行情数据 ETL
 
@@ -192,12 +192,12 @@ ps -aux|grep airflow
 
 **DWD 数据明细 - > DWB/DWS 数据汇总**:  对清洗后的快照数据进行计算加工合成 K 线数据
 
-> 注：
-> 1. 本教程使用 DolphinDB 中 module 功能以及 DolphinDB 客户端工具进行工程化管理 DolphinDB 脚本，详细介绍见 [DolphinDB教程: 模块](https://gitee.com/dolphindb/Tutorials_CN/blob/master/module_tutorial.md) 以及 [DolphinDB客户端软件教程](https://gitee.com/dolphindb/Tutorials_CN/blob/master/client_tool_tutorial.md)。
+> **注**：
+> 本教程使用 DolphinDB 中 module 功能以及 DolphinDB 客户端工具进行工程化管理 DolphinDB 脚本，详细介绍见 [DolphinDB教程: 模块](https://gitee.com/dolphindb/Tutorials_CN/blob/master/module_tutorial.md) 以及 [DolphinDB客户端软件教程](https://gitee.com/dolphindb/Tutorials_CN/blob/master/client_tool_tutorial.md)。
 
 ### 2.2 数据介绍
 
-​     本教程选取了 2020.01.04 - 2021.01.08 全市场所有股票的 5 天的 level 2 快照数据。以下是快照表在DolphinDB的结构。BidOrderQty，BidPrice，BidNumOrders，BidOrders，OfferPrice，OfferOrderQty，OfferNumOrders 和 OfferOrders 8个字段分别包含多档数据，在 DolphinDB 中采用 ArrayVector 数据类型来保存：
+本教程选取了 2020.01.04 - 2021.01.08 全市场所有股票的 5 天的 level 2 快照数据。以下是快照表在DolphinDB的结构。BidOrderQty，BidPrice，BidNumOrders，BidOrders，OfferPrice，OfferOrderQty，OfferNumOrders 和 OfferOrders 8个字段分别包含多档数据，在 DolphinDB 中采用 ArrayVector 数据类型来保存：
 
 | 字段名           | 字段含义              | 数据类型（DolphinDB） |
 | :--------------- | :-------------------- | :-------------------- |
@@ -227,91 +227,92 @@ ps -aux|grep airflow
 
 - 创建 snapshot 原始数据存储表：
 
-创建存储原始 snapshot 原始数据的库表，核心代码如下：
-```
-module loadSnapshot::createSnapshotTable
-
-//创建 snapshot 原始数据存储库表
-def createSnapshot(dbName, tbName){
-	login("admin", "123456")
-	if(existsDatabase(dbName)){
-		dropDatabase(dbName)
-	}
-	db1 = database(, VALUE, 2020.01.01..2021.01.01)
-	db2 = database(, HASH, [SYMBOL, 50])
-	//按天和股票代码组合分区
-	db = database(dbName,COMPO,[db1,db2],engine='TSDB')
-	colName = ["SecurityID","DateTime","PreClosePx","OpenPx","HighPx","LowPx","LastPx","TotalVolumeTrade","TotalValueTrade","InstrumentStatus","BidPrice0","BidPrice1","BidPrice2","BidPrice3","BidPrice4","BidPrice5","BidPrice6","BidPrice7","BidPrice8","BidPrice9","BidOrderQty0","BidOrderQty1","BidOrderQty2","BidOrderQty3","BidOrderQty4","BidOrderQty5","BidOrderQty6","BidOrderQty7","BidOrderQty8","BidOrderQty9","BidNumOrders0","BidNumOrders1","BidNumOrders2","BidNumOrders3","BidNumOrders4","BidNumOrders5","BidNumOrders6","BidNumOrders7","BidNumOrders8","BidNumOrders9","BidOrders0","BidOrders1","BidOrders2","BidOrders3","BidOrders4","BidOrders5","BidOrders6","BidOrders7","BidOrders8","BidOrders9","BidOrders10","BidOrders11","BidOrders12","BidOrders13","BidOrders14","BidOrders15","BidOrders16","BidOrders17","BidOrders18","BidOrders19","BidOrders20","BidOrders21","BidOrders22","BidOrders23","BidOrders24","BidOrders25","BidOrders26","BidOrders27","BidOrders28","BidOrders29","BidOrders30","BidOrders31","BidOrders32","BidOrders33","BidOrders34","BidOrders35","BidOrders36","BidOrders37","BidOrders38","BidOrders39","BidOrders40","BidOrders41","BidOrders42","BidOrders43","BidOrders44","BidOrders45","BidOrders46","BidOrders47","BidOrders48","BidOrders49","OfferPrice0","OfferPrice1","OfferPrice2","OfferPrice3","OfferPrice4","OfferPrice5","OfferPrice6","OfferPrice7","OfferPrice8","OfferPrice9","OfferOrderQty0","OfferOrderQty1","OfferOrderQty2","OfferOrderQty3","OfferOrderQty4","OfferOrderQty5","OfferOrderQty6","OfferOrderQty7","OfferOrderQty8","OfferOrderQty9","OfferNumOrders0","OfferNumOrders1","OfferNumOrders2","OfferNumOrders3","OfferNumOrders4","OfferNumOrders5","OfferNumOrders6","OfferNumOrders7","OfferNumOrders8","OfferNumOrders9","OfferOrders0","OfferOrders1","OfferOrders2","OfferOrders3","OfferOrders4","OfferOrders5","OfferOrders6","OfferOrders7","OfferOrders8","OfferOrders9","OfferOrders10","OfferOrders11","OfferOrders12","OfferOrders13","OfferOrders14","OfferOrders15","OfferOrders16","OfferOrders17","OfferOrders18","OfferOrders19","OfferOrders20","OfferOrders21","OfferOrders22","OfferOrders23","OfferOrders24","OfferOrders25","OfferOrders26","OfferOrders27","OfferOrders28","OfferOrders29","OfferOrders30","OfferOrders31","OfferOrders32","OfferOrders33","OfferOrders34","OfferOrders35","OfferOrders36","OfferOrders37","OfferOrders38","OfferOrders39","OfferOrders40","OfferOrders41","OfferOrders42","OfferOrders43","OfferOrders44","OfferOrders45","OfferOrders46","OfferOrders47","OfferOrders48","OfferOrders49","NumTrades","IOPV","TotalBidQty","TotalOfferQty","WeightedAvgBidPx","WeightedAvgOfferPx","TotalBidNumber","TotalOfferNumber","BidTradeMaxDuration","OfferTradeMaxDuration","NumBidOrders","NumOfferOrders","WithdrawBuyNumber","WithdrawBuyAmount","WithdrawBuyMoney","WithdrawSellNumber","WithdrawSellAmount","WithdrawSellMoney","ETFBuyNumber","ETFBuyAmount","ETFBuyMoney","ETFSellNumber","ETFSellAmount","ETFSellMoney"]
-	colType = ["SYMBOL","TIMESTAMP","DOUBLE","DOUBLE","DOUBLE","DOUBLE","DOUBLE","INT","DOUBLE","SYMBOL","DOUBLE","DOUBLE","DOUBLE","DOUBLE","DOUBLE","DOUBLE","DOUBLE","DOUBLE","DOUBLE","DOUBLE","INT","INT","INT","INT","INT","INT","INT","INT","INT","INT","INT","INT","INT","INT","INT","INT","INT","INT","INT","INT","INT","INT","INT","INT","INT","INT","INT","INT","INT","INT","INT","INT","INT","INT","INT","INT","INT","INT","INT","INT","INT","INT","INT","INT","INT","INT","INT","INT","INT","INT","INT","INT","INT","INT","INT","INT","INT","INT","INT","INT","INT","INT","INT","INT","INT","INT","INT","INT","INT","INT","DOUBLE","DOUBLE","DOUBLE","DOUBLE","DOUBLE","DOUBLE","DOUBLE","DOUBLE","DOUBLE","DOUBLE","INT","INT","INT","INT","INT","INT","INT","INT","INT","INT","INT","INT","INT","INT","INT","INT","INT","INT","INT","INT","INT","INT","INT","INT","INT","INT","INT","INT","INT","INT","INT","INT","INT","INT","INT","INT","INT","INT","INT","INT","INT","INT","INT","INT","INT","INT","INT","INT","INT","INT","INT","INT","INT","INT","INT","INT","INT","INT","INT","INT","INT","INT","INT","INT","INT","INT","INT","INT","INT","INT","INT","INT","INT","INT","DOUBLE","DOUBLE","INT","INT","INT","INT","INT","INT","INT","INT","DOUBLE","INT","INT","DOUBLE","INT","INT","INT","INT","INT","INT"]
-	schemaTable = table(1:0,colName, colType)
-	
-	db.createPartitionedTable(table=schemaTable, tableName=tbName, partitionColumns=`DateTime`SecurityID, compressMethods={DateTime:"delta"}, sortColumns=`SecurityID`DateTime, keepDuplicates=ALL)
-}
-```
-
-对于 snapshot 数据，本文采用的数据库分区方案是组合分区，第一层按天分区，第二层对股票代码按 HASH 分50个分区。如何根据数据确定分区方案可参考 [DolphinDB 分区数据库教程](https://gitee.com/dolphindb/Tutorials_CN/blob/master/database.md)。
+    创建存储原始 snapshot 原始数据的库表，核心代码如下：
+    ```
+    module loadSnapshot::createSnapshotTable
+    
+    //创建 snapshot 原始数据存储库表
+    def createSnapshot(dbName, tbName){
+    	login("admin", "123456")
+    	if(existsDatabase(dbName)){
+    		dropDatabase(dbName)
+    	}
+    	db1 = database(, VALUE, 2020.01.01..2021.01.01)
+    	db2 = database(, HASH, [SYMBOL, 50])
+    	//按天和股票代码组合分区
+    	db = database(dbName,COMPO,[db1,db2],engine='TSDB')
+    	colName = ["SecurityID","DateTime","PreClosePx","OpenPx","HighPx","LowPx","LastPx","TotalVolumeTrade","TotalValueTrade","InstrumentStatus","BidPrice0","BidPrice1","BidPrice2","BidPrice3","BidPrice4","BidPrice5","BidPrice6","BidPrice7","BidPrice8","BidPrice9","BidOrderQty0","BidOrderQty1","BidOrderQty2","BidOrderQty3","BidOrderQty4","BidOrderQty5","BidOrderQty6","BidOrderQty7","BidOrderQty8","BidOrderQty9","BidNumOrders0","BidNumOrders1","BidNumOrders2","BidNumOrders3","BidNumOrders4","BidNumOrders5","BidNumOrders6","BidNumOrders7","BidNumOrders8","BidNumOrders9","BidOrders0","BidOrders1","BidOrders2","BidOrders3","BidOrders4","BidOrders5","BidOrders6","BidOrders7","BidOrders8","BidOrders9","BidOrders10","BidOrders11","BidOrders12","BidOrders13","BidOrders14","BidOrders15","BidOrders16","BidOrders17","BidOrders18","BidOrders19","BidOrders20","BidOrders21","BidOrders22","BidOrders23","BidOrders24","BidOrders25","BidOrders26","BidOrders27","BidOrders28","BidOrders29","BidOrders30","BidOrders31","BidOrders32","BidOrders33","BidOrders34","BidOrders35","BidOrders36","BidOrders37","BidOrders38","BidOrders39","BidOrders40","BidOrders41","BidOrders42","BidOrders43","BidOrders44","BidOrders45","BidOrders46","BidOrders47","BidOrders48","BidOrders49","OfferPrice0","OfferPrice1","OfferPrice2","OfferPrice3","OfferPrice4","OfferPrice5","OfferPrice6","OfferPrice7","OfferPrice8","OfferPrice9","OfferOrderQty0","OfferOrderQty1","OfferOrderQty2","OfferOrderQty3","OfferOrderQty4","OfferOrderQty5","OfferOrderQty6","OfferOrderQty7","OfferOrderQty8","OfferOrderQty9","OfferNumOrders0","OfferNumOrders1","OfferNumOrders2","OfferNumOrders3","OfferNumOrders4","OfferNumOrders5","OfferNumOrders6","OfferNumOrders7","OfferNumOrders8","OfferNumOrders9","OfferOrders0","OfferOrders1","OfferOrders2","OfferOrders3","OfferOrders4","OfferOrders5","OfferOrders6","OfferOrders7","OfferOrders8","OfferOrders9","OfferOrders10","OfferOrders11","OfferOrders12","OfferOrders13","OfferOrders14","OfferOrders15","OfferOrders16","OfferOrders17","OfferOrders18","OfferOrders19","OfferOrders20","OfferOrders21","OfferOrders22","OfferOrders23","OfferOrders24","OfferOrders25","OfferOrders26","OfferOrders27","OfferOrders28","OfferOrders29","OfferOrders30","OfferOrders31","OfferOrders32","OfferOrders33","OfferOrders34","OfferOrders35","OfferOrders36","OfferOrders37","OfferOrders38","OfferOrders39","OfferOrders40","OfferOrders41","OfferOrders42","OfferOrders43","OfferOrders44","OfferOrders45","OfferOrders46","OfferOrders47","OfferOrders48","OfferOrders49","NumTrades","IOPV","TotalBidQty","TotalOfferQty","WeightedAvgBidPx","WeightedAvgOfferPx","TotalBidNumber","TotalOfferNumber","BidTradeMaxDuration","OfferTradeMaxDuration","NumBidOrders","NumOfferOrders","WithdrawBuyNumber","WithdrawBuyAmount","WithdrawBuyMoney","WithdrawSellNumber","WithdrawSellAmount","WithdrawSellMoney","ETFBuyNumber","ETFBuyAmount","ETFBuyMoney","ETFSellNumber","ETFSellAmount","ETFSellMoney"]
+    	colType = ["SYMBOL","TIMESTAMP","DOUBLE","DOUBLE","DOUBLE","DOUBLE","DOUBLE","INT","DOUBLE","SYMBOL","DOUBLE","DOUBLE","DOUBLE","DOUBLE","DOUBLE","DOUBLE","DOUBLE","DOUBLE","DOUBLE","DOUBLE","INT","INT","INT","INT","INT","INT","INT","INT","INT","INT","INT","INT","INT","INT","INT","INT","INT","INT","INT","INT","INT","INT","INT","INT","INT","INT","INT","INT","INT","INT","INT","INT","INT","INT","INT","INT","INT","INT","INT","INT","INT","INT","INT","INT","INT","INT","INT","INT","INT","INT","INT","INT","INT","INT","INT","INT","INT","INT","INT","INT","INT","INT","INT","INT","INT","INT","INT","INT","INT","INT","DOUBLE","DOUBLE","DOUBLE","DOUBLE","DOUBLE","DOUBLE","DOUBLE","DOUBLE","DOUBLE","DOUBLE","INT","INT","INT","INT","INT","INT","INT","INT","INT","INT","INT","INT","INT","INT","INT","INT","INT","INT","INT","INT","INT","INT","INT","INT","INT","INT","INT","INT","INT","INT","INT","INT","INT","INT","INT","INT","INT","INT","INT","INT","INT","INT","INT","INT","INT","INT","INT","INT","INT","INT","INT","INT","INT","INT","INT","INT","INT","INT","INT","INT","INT","INT","INT","INT","INT","INT","INT","INT","INT","INT","INT","INT","INT","INT","DOUBLE","DOUBLE","INT","INT","INT","INT","INT","INT","INT","INT","DOUBLE","INT","INT","DOUBLE","INT","INT","INT","INT","INT","INT"]
+    	schemaTable = table(1:0,colName, colType)
+    	
+    	db.createPartitionedTable(table=schemaTable, tableName=tbName, partitionColumns=`DateTime`SecurityID, compressMethods={DateTime:"delta"}, sortColumns=`SecurityID`DateTime, keepDuplicates=ALL)
+    }
+    ```
+    
+    对于 snapshot 数据，本文采用的数据库分区方案是组合分区，第一层按天分区，第二层对股票代码按 HASH 分50个分区。如何根据数据确定分区方案可参考 [DolphinDB 分区数据库教程](https://gitee.com/dolphindb/Tutorials_CN/blob/master/database.md)。
 
 - 创建清洗后 snapshot 数据存储表：
 
-创建清洗后以 Array 格式存储 snapshot 数据的库表，核心代码如下：
-```
-module processSnapshot::createSnapshot_array
-
-//创建清洗后的 snapshot 数据存储表
-def createProcessTable(dbName, tbName){
-	if(existsDatabase(dbName)){
-		dropDatabase(dbName)
-	}
-	db1 = database(, VALUE, 2020.01.01..2021.01.01)
-	db2 = database(, HASH, [SYMBOL, 50])
-	//按天和股票代码组合分区
-	db = database(dbName,COMPO,[db1,db2],engine='TSDB')
-	colName = ["SecurityID","DateTime","PreClosePx","OpenPx","HighPx","LowPx","LastPx","TotalVolumeTrade","TotalValueTrade","InstrumentStatus","BidPrice","BidOrderQty","BidNumOrders","BidOrders","OfferPrice","OfferOrderQty","OfferNumOrders","OfferOrders","NumTrades","IOPV","TotalBidQty","TotalOfferQty","WeightedAvgBidPx","WeightedAvgOfferPx","TotalBidNumber","TotalOfferNumber","BidTradeMaxDuration","OfferTradeMaxDuration","NumBidOrders","NumOfferOrders","WithdrawBuyNumber","WithdrawBuyAmount","WithdrawBuyMoney","WithdrawSellNumber","WithdrawSellAmount","WithdrawSellMoney","ETFBuyNumber","ETFBuyAmount","ETFBuyMoney","ETFSellNumber","ETFSellAmount","ETFSellMoney"]
-	colType = ["SYMBOL","TIMESTAMP","DOUBLE","DOUBLE","DOUBLE","DOUBLE","DOUBLE","INT","DOUBLE","SYMBOL","DOUBLE[]","INT[]","INT[]","INT[]","DOUBLE[]","INT[]","INT[]","INT[]","INT","INT","INT","INT","DOUBLE","DOUBLE","INT","INT","INT","INT","INT","INT","INT","INT","DOUBLE","INT","INT","DOUBLE","INT","INT","INT","INT","INT","INT"]
-	schemaTable = table(1:0, colName, colType)
-	db.createPartitionedTable(table=schemaTable, tableName=tbName, partitionColumns=`DateTime`SecurityID, compressMethods={DateTime:"delta"}, sortColumns=`SecurityID`DateTime, keepDuplicates=ALL)
-}
-```
+    创建清洗后以 Array 格式存储 snapshot 数据的库表，核心代码如下：
+    
+    ```
+    module processSnapshot::createSnapshot_array
+    
+    //创建清洗后的 snapshot 数据存储表
+    def createProcessTable(dbName, tbName){
+    	if(existsDatabase(dbName)){
+    		dropDatabase(dbName)
+    	}
+    	db1 = database(, VALUE, 2020.01.01..2021.01.01)
+    	db2 = database(, HASH, [SYMBOL, 50])
+    	//按天和股票代码组合分区
+    	db = database(dbName,COMPO,[db1,db2],engine='TSDB')
+    	colName = ["SecurityID","DateTime","PreClosePx","OpenPx","HighPx","LowPx","LastPx","TotalVolumeTrade","TotalValueTrade","InstrumentStatus","BidPrice","BidOrderQty","BidNumOrders","BidOrders","OfferPrice","OfferOrderQty","OfferNumOrders","OfferOrders","NumTrades","IOPV","TotalBidQty","TotalOfferQty","WeightedAvgBidPx","WeightedAvgOfferPx","TotalBidNumber","TotalOfferNumber","BidTradeMaxDuration","OfferTradeMaxDuration","NumBidOrders","NumOfferOrders","WithdrawBuyNumber","WithdrawBuyAmount","WithdrawBuyMoney","WithdrawSellNumber","WithdrawSellAmount","WithdrawSellMoney","ETFBuyNumber","ETFBuyAmount","ETFBuyMoney","ETFSellNumber","ETFSellAmount","ETFSellMoney"]
+    	colType = ["SYMBOL","TIMESTAMP","DOUBLE","DOUBLE","DOUBLE","DOUBLE","DOUBLE","INT","DOUBLE","SYMBOL","DOUBLE[]","INT[]","INT[]","INT[]","DOUBLE[]","INT[]","INT[]","INT[]","INT","INT","INT","INT","DOUBLE","DOUBLE","INT","INT","INT","INT","INT","INT","INT","INT","DOUBLE","INT","INT","DOUBLE","INT","INT","INT","INT","INT","INT"]
+    	schemaTable = table(1:0, colName, colType)
+    	db.createPartitionedTable(table=schemaTable, tableName=tbName, partitionColumns=`DateTime`SecurityID, compressMethods={DateTime:"delta"}, sortColumns=`SecurityID`DateTime, keepDuplicates=ALL)
+    }
+    ```
 
 - 创建 K 线结果存储表：
 
-创建分钟级 K 线结果存储表，核心代码如下：
-
-```
-module Factor::createFactorOneMinute
-
-//创建分钟 k 线因子储存表
-def createFactorOneMinute(dbName, tbName){
-	if(existsDatabase(dbName)){
-		dropDatabase(dbName)
-	}
-	//按天分区
-	db = database(dbName, VALUE, 2021.01.01..2021.01.03,engine = `TSDB)
-	colName = `TradeDate`TradeTime`SecurityID`Open`High`Low`Close`Volume`Amount`Vwap
-	colType =[DATE, MINUTE, SYMBOL, DOUBLE, DOUBLE, DOUBLE, DOUBLE, LONG, DOUBLE, DOUBLE]
-	tbSchema = table(1:0, colName, colType)
-  	db.createPartitionedTable(table=tbSchema,tableName=tbName,partitionColumns=`TradeDate,sortColumns=`SecurityID`TradeTime,keepDuplicates=ALL)
-}
-```
-
-创建日级 K 线结果存储表，核心代码如下：
-
-```
-module Factor::createFactorDaily
-
-//创建日 K 线储存表
-def createFactorDaily(dbName, tbName){
-	if(existsDatabase(dbName)){
-		dropDatabase(dbName)
-	}
-	//按年分区
-	db = database(dbName, RANGE, datetimeAdd(2000.01M,(0..50)*12, "M"),engine = `TSDB)
-	colName = `TradeDate`SecurityID`Open`High`Low`Close`Volume`Amount`Vwap
-	colType =[DATE, SYMBOL, DOUBLE, DOUBLE, DOUBLE, DOUBLE, LONG, DOUBLE, DOUBLE]
-	tbSchema = table(1:0, colName, colType)
-  	db.createPartitionedTable(table=tbSchema,tableName=tbName,partitionColumns=`TradeDate,sortColumns=`SecurityID`TradeDate,keepDuplicates=ALL)
-}
-```
+    创建分钟级 K 线结果存储表，核心代码如下：
+    
+    ```
+    module Factor::createFactorOneMinute
+    
+    //创建分钟 k 线因子储存表
+    def createFactorOneMinute(dbName, tbName){
+    	if(existsDatabase(dbName)){
+    		dropDatabase(dbName)
+    	}
+    	//按天分区
+    	db = database(dbName, VALUE, 2021.01.01..2021.01.03,engine = `TSDB)
+    	colName = `TradeDate`TradeTime`SecurityID`Open`High`Low`Close`Volume`Amount`Vwap
+    	colType =[DATE, MINUTE, SYMBOL, DOUBLE, DOUBLE, DOUBLE, DOUBLE, LONG, DOUBLE, DOUBLE]
+    	tbSchema = table(1:0, colName, colType)
+      	db.createPartitionedTable(table=tbSchema,tableName=tbName,partitionColumns=`TradeDate,sortColumns=`SecurityID`TradeTime,keepDuplicates=ALL)
+    }
+    ```
+    
+    创建日级 K 线结果存储表，核心代码如下：
+    
+    ```
+    module Factor::createFactorDaily
+    
+    //创建日 K 线储存表
+    def createFactorDaily(dbName, tbName){
+    	if(existsDatabase(dbName)){
+    		dropDatabase(dbName)
+    	}
+    	//按年分区
+    	db = database(dbName, RANGE, datetimeAdd(2000.01M,(0..50)*12, "M"),engine = `TSDB)
+    	colName = `TradeDate`SecurityID`Open`High`Low`Close`Volume`Amount`Vwap
+    	colType =[DATE, SYMBOL, DOUBLE, DOUBLE, DOUBLE, DOUBLE, LONG, DOUBLE, DOUBLE]
+    	tbSchema = table(1:0, colName, colType)
+      	db.createPartitionedTable(table=tbSchema,tableName=tbName,partitionColumns=`TradeDate,sortColumns=`SecurityID`TradeDate,keepDuplicates=ALL)
+    }
+    ```
 
 #### 2.3.2 数据清洗
 
@@ -379,6 +380,7 @@ def calFactorOneMinute(dbName, tbName, mutable factorTable){
 ```
 
 日级 K 线合成并入库, 核心代码如下：
+
 ```
 module Factor::calFactorDaily1
 
@@ -502,249 +504,251 @@ DAG 生成后，在如下 Web 页面显示 DAG 使用的变量可以动态修改
 
 - **DolphinDBOperator 全量处理数据**
 
-通过 DolphinDBOperator 将上述的数据入库、清洗、计算等设置为 DAG 中的任务
-
-全量处理核心代码如下：
-```
-   loadSnapshot = DolphinDBOperator(
-        task_id='loadSnapshot',
-        dolphindb_conn_id='dolphindb_test',
-        sql='''
-            pnodeRun(clearAllCache)
-            undef(all)
-            go;
-            //使用 module，加载已封装好的建表及入库函数
-            use loadSnapshot::createSnapshotTable
-            use  loadSnapshot::loadSnapshotData
-            //通过参数共享表获取参数
-            params = dict(paramTable[`param], paramTable[`value])
-            dbName = params[`ETL_dbName_origin]
-            tbName = params[`ETL_tbName_origin]
-            startDate = date(params[`ETL_start_date])
-            endDate = date(params[`ETL_end_date])
-            fileDir = params[`ETL_filedir]
-            //结果库表不存在则创建
-            if(not existsDatabase(dbName)){
-                loadSnapshot::createSnapshotTable::createSnapshot(dbName, tbName)
-            }
-            //调用清洗函数，后台多进程写入，提高写入效率
-            start = now()
-            for (loadDate in startDate..endDate){
-                submitJob("loadSnapshot"+year(loadDate)+monthOfYear(loadDate)+dayOfMonth(loadDate), "loadSnapshot", loadSnapshot::loadSnapshotData::loadSnapshot{, dbName, tbName, fileDir}, loadDate)
-            }
-            //查看写入任务是否完成，以保证后续处理部分数据源完整
-            do{
-                cnt = exec count(*) from getRecentJobs() where jobDesc="loadSnapshot" and endTime is null
-            }
-            while(cnt != 0)
-            //查看导入过程中是否有异常，有异常则抛出异常
-            cnt = exec count(*) from pnodeRun(getRecentJobs) where jobDesc="loadSnapshot" and errorMsg is not null and receivedTime > start
-            if (cnt != 0){
-                error = exec errorMsg from pnodeRun(getRecentJobs) where jobDesc="loadSnapshot" and errorMsg is not null and receivedTime > start
-                throw error[0]
-            }
-            '''
-    )
-    processSnapshot = DolphinDBOperator(
-        task_id='processSnapshot',
-        dolphindb_conn_id='dolphindb_test',
-        sql='''
-            pnodeRun(clearAllCache)
-            undef(all)
-            go;
-            //使用 module，加载已封装好的建表及入库函数
-            use processSnapshot::createSnapshot_array
-            use processSnapshot::processSnapshotData
-            //通过参数共享表获取参数
-            params = dict(paramTable[`param], paramTable[`value])
-            dbName_orig = params[`ETL_dbName_origin]
-            tbName_orig = params[`ETL_tbName_origin]
-            dbName_process = params[`ETL_dbName_process]
-            tbName_process = params[`ETL_tbName_process]
-            startDate = date(params[`ETL_start_date])
-            endDate = date(params[`ETL_end_date])
-            //结果库表不存在则创建
-            if(not existsDatabase(dbName_process)){
-                processSnapshot::createSnapshot_array::createProcessTable(dbName_process, tbName_process)
-            }
-            //后台多进程处理，提高处理效率
-            start = now()
-            for (processDate in startDate..endDate){
-                submitJob("processSnapshot"+year(processDate)+monthOfYear(processDate)+dayOfMonth(processDate), "processSnapshot", processSnapshot::processSnapshotData::process{, dbName_orig, tbName_orig, dbName_process, tbName_process}, processDate)
-            }
-            //查看清洗任务是否完成，以保证后续处理部分数据源完整
-            do{
-                cnt = exec count(*) from getRecentJobs() where jobDesc="processSnapshot" and endTime is null
-            }
-            while(cnt != 0)
-            //查看清洗过程中是否有异常，有异常则抛出异常
-            cnt = exec count(*) from pnodeRun(getRecentJobs) where jobDesc="processSnapshot" and errorMsg is not null and receivedTime > start
-            if (cnt != 0){
-                error = exec errorMsg from pnodeRun(getRecentJobs) where jobDesc="processSnapshot" and errorMsg is not null and receivedTime > start
-                throw error[0]
-            }
-            '''
-    )
-    calMinuteFactor = DolphinDBOperator(
-        task_id='calMinuteFactor',
-        dolphindb_conn_id='dolphindb_test',
-        sql='''
-            pnodeRun(clearAllCache)
-            undef(all)
-            go;
-            //使用 module，加载已封装好的建表及入库函数
-            use Factor::createFactorOneMinute
-            use Factor::calFactorOneMinute
-            //通过参数共享表获取参数
-            params = dict(paramTable[`param], paramTable[`value])
-            dbName = params[`ETL_dbName_process]
-            tbName = params[`ETL_tbName_process]	
-            dbName_factor = params[`ETL_dbName_factor]
-            tbName_factor = params[`ETL_tbName_factor]
-            //结果库表不存在则创建
-            if(not existsDatabase(dbName_factor)){
-                createFactorOneMinute(dbName_factor, tbName_factor)
-            }
-            factorTable = loadTable(dbName_factor, tbName_factor)
-            //调用计算函数
-            calFactorOneMinute(dbName, tbName,factorTable)
-            '''
-    )
-    calDailyFactor = DolphinDBOperator(
-        task_id='calDailyFactor',
-        dolphindb_conn_id='dolphindb_test',
-        sql='''
-            pnodeRun(clearAllCache)
-            undef(all)
-            go;
-            //使用 module，加载已封装好的建表及入库函数
-            use Factor::createFactorDaily
-            use Factor::calFactorDaily1	
-            //通过参数共享表获取参数
-            params = dict(paramTable[`param], paramTable[`value])
-            dbName = params[`ETL_dbName_process]
-            tbName = params[`ETL_tbName_process]	
-            dbName_factor = params[`ETL_dbName_factor_daily]
-            tbName_factor = params[`ETL_tbName_factor_daily]
-            //结果库表不存在则创建
-            if(not existsDatabase(dbName_factor)){
-                createFactorDaily(dbName_factor, tbName_factor)
-            }
-            //调用计算函数
-            factorTable = loadTable(dbName_factor, tbName_factor)
-            Factor::calFactorDaily1::calFactorDaily(dbName, tbName,factorTable)
-            '''
-    )
-```
-
-根据任务间的依赖关系，构建 DAG，示例如下：
-```
-    start_task >> create_parameter_table >> given_param >> loadSnapshot >> processSnapshot >> calMinuteFactor >> calDailyFactor
-```
+    通过 DolphinDBOperator 将上述的数据入库、清洗、计算等设置为 DAG 中的任务
+    
+    全量处理核心代码如下：
+    ```
+       loadSnapshot = DolphinDBOperator(
+            task_id='loadSnapshot',
+            dolphindb_conn_id='dolphindb_test',
+            sql='''
+                pnodeRun(clearAllCache)
+                undef(all)
+                go;
+                //使用 module，加载已封装好的建表及入库函数
+                use loadSnapshot::createSnapshotTable
+                use  loadSnapshot::loadSnapshotData
+                //通过参数共享表获取参数
+                params = dict(paramTable[`param], paramTable[`value])
+                dbName = params[`ETL_dbName_origin]
+                tbName = params[`ETL_tbName_origin]
+                startDate = date(params[`ETL_start_date])
+                endDate = date(params[`ETL_end_date])
+                fileDir = params[`ETL_filedir]
+                //结果库表不存在则创建
+                if(not existsDatabase(dbName)){
+                    loadSnapshot::createSnapshotTable::createSnapshot(dbName, tbName)
+                }
+                //调用清洗函数，后台多进程写入，提高写入效率
+                start = now()
+                for (loadDate in startDate..endDate){
+                    submitJob("loadSnapshot"+year(loadDate)+monthOfYear(loadDate)+dayOfMonth(loadDate), "loadSnapshot", loadSnapshot::loadSnapshotData::loadSnapshot{, dbName, tbName, fileDir}, loadDate)
+                }
+                //查看写入任务是否完成，以保证后续处理部分数据源完整
+                do{
+                    cnt = exec count(*) from getRecentJobs() where jobDesc="loadSnapshot" and endTime is null
+                }
+                while(cnt != 0)
+                //查看导入过程中是否有异常，有异常则抛出异常
+                cnt = exec count(*) from pnodeRun(getRecentJobs) where jobDesc="loadSnapshot" and errorMsg is not null and receivedTime > start
+                if (cnt != 0){
+                    error = exec errorMsg from pnodeRun(getRecentJobs) where jobDesc="loadSnapshot" and errorMsg is not null and receivedTime > start
+                    throw error[0]
+                }
+                '''
+        )
+        processSnapshot = DolphinDBOperator(
+            task_id='processSnapshot',
+            dolphindb_conn_id='dolphindb_test',
+            sql='''
+                pnodeRun(clearAllCache)
+                undef(all)
+                go;
+                //使用 module，加载已封装好的建表及入库函数
+                use processSnapshot::createSnapshot_array
+                use processSnapshot::processSnapshotData
+                //通过参数共享表获取参数
+                params = dict(paramTable[`param], paramTable[`value])
+                dbName_orig = params[`ETL_dbName_origin]
+                tbName_orig = params[`ETL_tbName_origin]
+                dbName_process = params[`ETL_dbName_process]
+                tbName_process = params[`ETL_tbName_process]
+                startDate = date(params[`ETL_start_date])
+                endDate = date(params[`ETL_end_date])
+                //结果库表不存在则创建
+                if(not existsDatabase(dbName_process)){
+                    processSnapshot::createSnapshot_array::createProcessTable(dbName_process, tbName_process)
+                }
+                //后台多进程处理，提高处理效率
+                start = now()
+                for (processDate in startDate..endDate){
+                    submitJob("processSnapshot"+year(processDate)+monthOfYear(processDate)+dayOfMonth(processDate), "processSnapshot", processSnapshot::processSnapshotData::process{, dbName_orig, tbName_orig, dbName_process, tbName_process}, processDate)
+                }
+                //查看清洗任务是否完成，以保证后续处理部分数据源完整
+                do{
+                    cnt = exec count(*) from getRecentJobs() where jobDesc="processSnapshot" and endTime is null
+                }
+                while(cnt != 0)
+                //查看清洗过程中是否有异常，有异常则抛出异常
+                cnt = exec count(*) from pnodeRun(getRecentJobs) where jobDesc="processSnapshot" and errorMsg is not null and receivedTime > start
+                if (cnt != 0){
+                    error = exec errorMsg from pnodeRun(getRecentJobs) where jobDesc="processSnapshot" and errorMsg is not null and receivedTime > start
+                    throw error[0]
+                }
+                '''
+        )
+        calMinuteFactor = DolphinDBOperator(
+            task_id='calMinuteFactor',
+            dolphindb_conn_id='dolphindb_test',
+            sql='''
+                pnodeRun(clearAllCache)
+                undef(all)
+                go;
+                //使用 module，加载已封装好的建表及入库函数
+                use Factor::createFactorOneMinute
+                use Factor::calFactorOneMinute
+                //通过参数共享表获取参数
+                params = dict(paramTable[`param], paramTable[`value])
+                dbName = params[`ETL_dbName_process]
+                tbName = params[`ETL_tbName_process]	
+                dbName_factor = params[`ETL_dbName_factor]
+                tbName_factor = params[`ETL_tbName_factor]
+                //结果库表不存在则创建
+                if(not existsDatabase(dbName_factor)){
+                    createFactorOneMinute(dbName_factor, tbName_factor)
+                }
+                factorTable = loadTable(dbName_factor, tbName_factor)
+                //调用计算函数
+                calFactorOneMinute(dbName, tbName,factorTable)
+                '''
+        )
+        calDailyFactor = DolphinDBOperator(
+            task_id='calDailyFactor',
+            dolphindb_conn_id='dolphindb_test',
+            sql='''
+                pnodeRun(clearAllCache)
+                undef(all)
+                go;
+                //使用 module，加载已封装好的建表及入库函数
+                use Factor::createFactorDaily
+                use Factor::calFactorDaily1	
+                //通过参数共享表获取参数
+                params = dict(paramTable[`param], paramTable[`value])
+                dbName = params[`ETL_dbName_process]
+                tbName = params[`ETL_tbName_process]	
+                dbName_factor = params[`ETL_dbName_factor_daily]
+                tbName_factor = params[`ETL_tbName_factor_daily]
+                //结果库表不存在则创建
+                if(not existsDatabase(dbName_factor)){
+                    createFactorDaily(dbName_factor, tbName_factor)
+                }
+                //调用计算函数
+                factorTable = loadTable(dbName_factor, tbName_factor)
+                Factor::calFactorDaily1::calFactorDaily(dbName, tbName,factorTable)
+                '''
+        )
+    ```
+    
+    根据任务间的依赖关系，构建 DAG，示例如下：
+    ```
+        start_task >> create_parameter_table >> given_param >> loadSnapshot >> processSnapshot >> calMinuteFactor >> calDailyFactor
+    ```
 
 - **DolphinDBOperator 增量数据入库**
 
-增量数据任务构建代码如下：
-```
-addLoadSnapshot = DolphinDBOperator(
-        task_id='addLoadSnapshot',
-        dolphindb_conn_id='dolphindb_test',
-        sql='''
-            pnodeRun(clearAllCache)
-            undef(all)
-            go;
-            //使用module，加载已封装好的入库函数
-            use  addLoadSnapshot::loadSnapshotData
-            //通过参数共享表获取参数
-            params = dict(paramTable[`param], paramTable[`value])
-            dbName = params[`ETL_dbName_origin]
-            tbName = params[`ETL_tbName_origin]
-            fileDir = params[`ETL_filedir]
-            //获取交易日历
-            MarketDays = getMarketCalendar("CFFEX")
-            //是交易日则进行数据入库
-            if(today() in MarketDays ){
+    增量数据任务构建代码如下：
+    
+    ```
+    addLoadSnapshot = DolphinDBOperator(
+            task_id='addLoadSnapshot',
+            dolphindb_conn_id='dolphindb_test',
+            sql='''
+                pnodeRun(clearAllCache)
+                undef(all)
+                go;
+                //使用module，加载已封装好的入库函数
+                use  addLoadSnapshot::loadSnapshotData
+                //通过参数共享表获取参数
+                params = dict(paramTable[`param], paramTable[`value])
+                dbName = params[`ETL_dbName_origin]
+                tbName = params[`ETL_tbName_origin]
                 fileDir = params[`ETL_filedir]
-                addLoadSnapshot::loadSnapshotData::loadSnapshot(today(), dbName, tbName, fileDir)
-            }
-            '''
-    )
-    addProcessSnapshot = DolphinDBOperator(
-        task_id='addProcessSnapshot',
-        dolphindb_conn_id='dolphindb_test',
-        sql='''
-            pnodeRun(clearAllCache)
-            undef(all)
-            go;
-            //使用module，加载已封装好的清洗函数
-            use addProcessSnapshot::processSnapshotData
-            //通过参数共享表获取参数
-            params = dict(paramTable[`param], paramTable[`value])
-            dbName_orig = params[`ETL_dbName_origin]
-            tbName_orig = params[`ETL_tbName_origin]
-            dbName_process = params[`ETL_dbName_process]
-            tbName_process = params[`ETL_tbName_process]
-            //获取交易日历
-            MarketDays = getMarketCalendar("CFFEX")
-            //是交易日则进行数据处理
-            if(today() in MarketDays ){
-                addProcessSnapshot::processSnapshotData::process(today(), dbName_orig, tbName_orig, dbName_process, tbName_process)
-            }
-            '''
-    )
-    addCalMinuteFactor= DolphinDBOperator(
-        task_id='addCalMinuteFactor',
-        dolphindb_conn_id='dolphindb_test',
-        sql='''
-            pnodeRun(clearAllCache)
-            undef(all)
-            go;
-            //使用module，加载已封装好的计算函数
-            use addFactor::calFactorOneMinute
-            //通过参数共享表获取参数
-            params = dict(paramTable[`param], paramTable[`value])
-            dbName = params[`ETL_dbName_process]
-            tbName = params[`ETL_tbName_process]	
-            dbName_factor = params[`ETL_dbName_factor]
-            tbName_factor = params[`ETL_tbName_factor]
-            factorTable = loadTable(dbName_factor, tbName_factor)
-            //获取交易日历
-            MarketDays = getMarketCalendar("CFFEX")
-            //是交易日则调用计算函数合成分钟K线
-            if(today() in MarketDays ){
-                	addFactor::calFactorOneMinute::calFactorOneMinute(dbName, tbName,today(), factorTable)
-            }
-            '''
-    )
-    addCalDailyFactor= DolphinDBOperator(
-        task_id='addCalDailyFactor',
-        dolphindb_conn_id='dolphindb_test',
-        sql='''
-            pnodeRun(clearAllCache)
-            undef(all)
-            go;
-            //使用module，加载已封装好的计算函数
-            use addFactor::calFactorDaily1	
-            //通过参数共享表获取参数
-            params = dict(paramTable[`param], paramTable[`value])
-            dbName = params[`ETL_dbName_process]
-            tbName = params[`ETL_tbName_process]	
-            dbName_factor = params[`ETL_dbName_factor_daily]
-            tbName_factor = params[`ETL_tbName_factor_daily]
-            factorTable = loadTable(dbName_factor, tbName_factor)
-            //获取交易日历
-            MarketDays = getMarketCalendar("CFFEX")
-            //是交易日则调用计算函数合成日K线
-            if(today() in MarketDays ){
-                addFactor::calFactorDaily1::calFactorDaily(dbName, tbName,today(), factorTable)
-            }
-            '''
-    )
-```
-根据任务间的依赖关系，构建 DAG，示例如下：
-```
-    start_task >> create_parameter_table >> given_param >> addLoadSnapshot >> addProcessSnapshot >> addCalMinuteFactor >> addCalDailyFactor
-```
+                //获取交易日历
+                MarketDays = getMarketCalendar("CFFEX")
+                //是交易日则进行数据入库
+                if(today() in MarketDays ){
+                    fileDir = params[`ETL_filedir]
+                    addLoadSnapshot::loadSnapshotData::loadSnapshot(today(), dbName, tbName, fileDir)
+                }
+                '''
+        )
+        addProcessSnapshot = DolphinDBOperator(
+            task_id='addProcessSnapshot',
+            dolphindb_conn_id='dolphindb_test',
+            sql='''
+                pnodeRun(clearAllCache)
+                undef(all)
+                go;
+                //使用module，加载已封装好的清洗函数
+                use addProcessSnapshot::processSnapshotData
+                //通过参数共享表获取参数
+                params = dict(paramTable[`param], paramTable[`value])
+                dbName_orig = params[`ETL_dbName_origin]
+                tbName_orig = params[`ETL_tbName_origin]
+                dbName_process = params[`ETL_dbName_process]
+                tbName_process = params[`ETL_tbName_process]
+                //获取交易日历
+                MarketDays = getMarketCalendar("CFFEX")
+                //是交易日则进行数据处理
+                if(today() in MarketDays ){
+                    addProcessSnapshot::processSnapshotData::process(today(), dbName_orig, tbName_orig, dbName_process, tbName_process)
+                }
+                '''
+        )
+        addCalMinuteFactor= DolphinDBOperator(
+            task_id='addCalMinuteFactor',
+            dolphindb_conn_id='dolphindb_test',
+            sql='''
+                pnodeRun(clearAllCache)
+                undef(all)
+                go;
+                //使用module，加载已封装好的计算函数
+                use addFactor::calFactorOneMinute
+                //通过参数共享表获取参数
+                params = dict(paramTable[`param], paramTable[`value])
+                dbName = params[`ETL_dbName_process]
+                tbName = params[`ETL_tbName_process]	
+                dbName_factor = params[`ETL_dbName_factor]
+                tbName_factor = params[`ETL_tbName_factor]
+                factorTable = loadTable(dbName_factor, tbName_factor)
+                //获取交易日历
+                MarketDays = getMarketCalendar("CFFEX")
+                //是交易日则调用计算函数合成分钟K线
+                if(today() in MarketDays ){
+                    	addFactor::calFactorOneMinute::calFactorOneMinute(dbName, tbName,today(), factorTable)
+                }
+                '''
+        )
+        addCalDailyFactor= DolphinDBOperator(
+            task_id='addCalDailyFactor',
+            dolphindb_conn_id='dolphindb_test',
+            sql='''
+                pnodeRun(clearAllCache)
+                undef(all)
+                go;
+                //使用module，加载已封装好的计算函数
+                use addFactor::calFactorDaily1	
+                //通过参数共享表获取参数
+                params = dict(paramTable[`param], paramTable[`value])
+                dbName = params[`ETL_dbName_process]
+                tbName = params[`ETL_tbName_process]	
+                dbName_factor = params[`ETL_dbName_factor_daily]
+                tbName_factor = params[`ETL_tbName_factor_daily]
+                factorTable = loadTable(dbName_factor, tbName_factor)
+                //获取交易日历
+                MarketDays = getMarketCalendar("CFFEX")
+                //是交易日则调用计算函数合成日K线
+                if(today() in MarketDays ){
+                    addFactor::calFactorDaily1::calFactorDaily(dbName, tbName,today(), factorTable)
+                }
+                '''
+        )
+    ```
+    根据任务间的依赖关系，构建 DAG，示例如下：
+    
+    ```
+        start_task >> create_parameter_table >> given_param >> addLoadSnapshot >> addProcessSnapshot >> addCalMinuteFactor >> addCalDailyFactor
+    ```
 
 #### 2.5.4 生成 DAG
 
@@ -752,72 +756,74 @@ addLoadSnapshot = DolphinDBOperator(
 
 - **第一步 DolphinDB 项目部署**
 
-将 DolphinDB 项目中的 *addETL* 和 *fullETL* 项目分别导入 DolphinDB GUI (DolphinDB 客户端工具)中：
-
-<img src="./images/Best_Practices_for_DolphinDB_and_Python_AirFlow/2_7.png" width=50%>
-
-将 *addETL* 及 *fullETL* 项目中的 module 模块上传至 Airflow 中已建立连接的 DolphinDB server 中：
-
-<img src="./images/Best_Practices_for_DolphinDB_and_Python_AirFlow/2_8.png" width=60%>
+    将 DolphinDB 项目中的 *addETL* 和 *fullETL* 项目分别导入 DolphinDB GUI (DolphinDB 客户端工具)中：
+    
+    <img src="./images/Best_Practices_for_DolphinDB_and_Python_AirFlow/2_7.png" width=50%>
+    
+    将 *addETL* 及 *fullETL* 项目中的 module 模块上传至 Airflow 中已建立连接的 DolphinDB server 中：
+    
+    <img src="./images/Best_Practices_for_DolphinDB_and_Python_AirFlow/2_8.png" width=60%>
 
 - **第二步 python 项目部署**
 
-将 *python* 项目中的 python 脚本放置到 *<Airflow_install_Dir/airflow/dags>* 目录下。注意，新建的 DAG 任务并不会马上出现在界面上，默认需要等待5分钟后刷新，也可修改 *airflow.cfg* 文件中的 *dag_dir_list_interval* 调整刷新间隔。
+    将 *python* 项目中的 python 脚本放置到 *<Airflow_install_Dir/airflow/dags>* 目录下。注意，新建的 DAG 任务并不会马上出现在界面上，默认需要等待5分钟后刷新，也可修改 *airflow.cfg* 文件中的 *dag_dir_list_interval* 调整刷新间隔。
 
 - **第三步 Airflow 变量导入**
 
-在 Airflow 网页中进入 Admin-->Variables，将 *Variables.json* 文件上传，将变量导入 Airflow 中，并根据实际情况调整变量值。
+    在 Airflow 网页中进入 Admin-->Variables，将 *Variables.json* 文件上传，将变量导入 Airflow 中，并根据实际情况调整变量值。
 
-<img src="./images/Best_Practices_for_DolphinDB_and_Python_AirFlow/2_9.png" width=70%>
+    <img src="./images/Best_Practices_for_DolphinDB_and_Python_AirFlow/2_9.png" width=70%>
 
 - **第四步 上传原始数据文件**
 
-将数据文件上传至服务器，并根据数据文件的实际存放路径，在 Airflow 中修改 `ETL_filedir` 变量。如运行增量 ETL 任务，需要将数据文件名中的日期改为当前日期，如：*20230330snapshot.csv*，以避免无数据导致任务失败。
-
-最终实现 DAG 如下所示：
-
-**全量数据入库**：
-
-<img src="./images/Best_Practices_for_DolphinDB_and_Python_AirFlow/2_10.png" width=80%>
-
-**增量数据入库**：
-
-<img src="./images/Best_Practices_for_DolphinDB_and_Python_AirFlow/2_11.png" width=80%>
-
-运行任务后，任务实例为绿色代表任务运行成功；红色表示任务运行失败；橙色则表示该任务所依赖的上游任务运行失败，任务未启动。
+    将数据文件上传至服务器，并根据数据文件的实际存放路径，在 Airflow 中修改 `ETL_filedir` 变量。如运行增量 ETL 任务，需要将数据文件名中的日期改为当前日期，如：*20230330snapshot.csv*，以避免无数据导致任务失败。
+    
+    最终实现 DAG 如下所示：
+    
+    **全量数据入库**：
+    
+    <img src="./images/Best_Practices_for_DolphinDB_and_Python_AirFlow/2_10.png" width=80%>
+    
+    **增量数据入库**：
+    
+    <img src="./images/Best_Practices_for_DolphinDB_and_Python_AirFlow/2_11.png" width=80%>
+    
+    运行任务后，任务实例为绿色代表任务运行成功；红色表示任务运行失败；橙色则表示该任务所依赖的上游任务运行失败，任务未启动。
 
 ## 3. 常见问题解答(FAQ)
 
 ### 3.1 如何捕获 DolphinDB 脚本中的 print 函数打印的信息
 
 - DolphinDB 脚本的 print 的信息为标准输出，可以在 `airflow-scheduler.out` 中找到，如下图所示：
-<img src="./images/Best_Practices_for_DolphinDB_and_Python_AirFlow/3_1.png" width=80%>
+
+    <img src="./images/Best_Practices_for_DolphinDB_and_Python_AirFlow/3_1.png" width=80%>
 
 ### 3.2 DolphinDB 脚本中的异步作业 submitjob 如何检测其完成状态
 
 - 通过 DolphinDB 的函数 `getRecntJobs` 获取后台作业信息, 之后在 DolphinDB DAG 中添加判断逻辑, 代码示例如下：
 
-```
-DolphinDBOperator(
-        task_id='processSnapshot',
-        dolphindb_conn_id='dolphindb_test',
-        sql='''
-          //检查所有任务是否全部完成
-            do{
-                cnt = exec count(*) from getRecentJobs() where jobDesc="processSnapshot" and endTime is null
-            }
-            while(cnt != 0)
-            //检查后台任务是否成功，失败则抛出异常
-            cnt = exec count(*) from pnodeRun(getRecentJobs) where jobDesc="processSnapshot" and errorMsg is not null and receivedTime > start
-            if (cnt != 0){
-                error = exec errorMsg from pnodeRun(getRecentJobs) where jobDesc="processSnapshot" and errorMsg is not null and receivedTime > start
-                throw error[0]
-            }
-            '''
-    )
-```
+    ```
+    DolphinDBOperator(
+            task_id='processSnapshot',
+            dolphindb_conn_id='dolphindb_test',
+            sql='''
+              //检查所有任务是否全部完成
+                do{
+                    cnt = exec count(*) from getRecentJobs() where jobDesc="processSnapshot" and endTime is null
+                }
+                while(cnt != 0)
+                //检查后台任务是否成功，失败则抛出异常
+                cnt = exec count(*) from pnodeRun(getRecentJobs) where jobDesc="processSnapshot" and errorMsg is not null and receivedTime > start
+                if (cnt != 0){
+                    error = exec errorMsg from pnodeRun(getRecentJobs) where jobDesc="processSnapshot" and errorMsg is not null and receivedTime > start
+                    throw error[0]
+                }
+                '''
+        )
+    ```
 
 ### 3.3 执行 Airflow 中经常遇到连接超时断开，该如何处理
+
 <img src="./images/Best_Practices_for_DolphinDB_and_Python_AirFlow/3_2.png" width=70%>
 
 当遇到如上问题，可能是网络延时导致的，可以在建立连接时设置参数，如上图，在 DolphinDB 连接中设置 *KeepAliveTime* 及 *reconnect* 参数即可。
@@ -830,15 +836,15 @@ DolphinDBOperator(
 
 - 任务失败后，DolphinDBOperator 会将具体的错误信息打印在日志中，可通过查看日志信息，定位异常代码并进行修改。查看日志信息步骤如下：
 
-<img src="./images/Best_Practices_for_DolphinDB_and_Python_AirFlow/3_3.png" width=80%>
-
-<img src="./images/Best_Practices_for_DolphinDB_and_Python_AirFlow/3_4.png" width=70%>
-
-<img src="./images/Best_Practices_for_DolphinDB_and_Python_AirFlow/3_5.png" width=80%>
+    <img src="./images/Best_Practices_for_DolphinDB_and_Python_AirFlow/3_3.png" width=80%>
+    
+    <img src="./images/Best_Practices_for_DolphinDB_and_Python_AirFlow/3_4.png" width=70%>
+    
+    <img src="./images/Best_Practices_for_DolphinDB_and_Python_AirFlow/3_5.png" width=80%>
 
 ## 4. 总结
 
-​      本教程从一个常用行情数据 ETL 案例出发，着重阐述了如何将 Airflow 调度框架与 DolphinDB 数据库结合起来进行结构化 ETL 作业管理, 以此来节省时间，提高效率，降低运维成本。同时，由于篇幅有限，涉及到DolphinDB 和 Airflow 框架的一些其它操作未能更进一步展示，用户在使用过程中需要按照实际情况进行调整。也欢迎大家对本教程中可能存在的纰漏和缺陷批评指正。
+本教程从一个常用行情数据 ETL 案例出发，着重阐述了如何将 Airflow 调度框架与 DolphinDB 数据库结合起来进行结构化 ETL 作业管理, 以此来节省时间，提高效率，降低运维成本。同时，由于篇幅有限，涉及到DolphinDB 和 Airflow 框架的一些其它操作未能更进一步展示，用户在使用过程中需要按照实际情况进行调整。也欢迎大家对本教程中可能存在的纰漏和缺陷批评指正。
 
 ## 法律声明
 
