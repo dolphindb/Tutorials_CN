@@ -106,7 +106,7 @@ DolphinDBOperator 使用示例如下：
 
 - **主机环境**  
   
-    1. 首先，在安装 Airflow 之前要确保主机上安装了 `python3` 、`dolphindb` 、`dolphindb-operator` 三个依赖包。执行以下命令完成对这三个依赖包的安装。 依赖包可从附件中获取。
+    1. 执行以下命令安装 Airflow：
     
         ```
         pip install airflow-provider-dolphindb
@@ -848,11 +848,9 @@ DAG 生成后，在如下 Web 页面显示 DAG 使用的变量可以动态修改
 
 ## 法律声明
 
-基于Apache License 2.0的使用许可协议，本文中所涉及到的 Airflow 相关安装包及源代码，作为 DolphinDB Airflow 插件的组成部分而存在，但 Airflow 安装包或源代码的版权归属于 Apache Software Foundation。  
+基于 Apache License 2.0 的使用许可协议，本文中所涉及到的 Airflow 相关安装包及源代码，作为 DolphinDB Airflow 插件的组成部分而存在，但 Airflow 安装包或源代码的版权归属于 Apache Software Foundation。  
 
 ## 附件
-
-- 依赖包：[pydolphindb-1.0.0-py3-none-any.whl](script/Best_Practices_for_DolphinDB_and_Python_AirFlow/Dependencies)，[apache_airflow_providers_dolphindb-1.0.0-py3-none-any.whl](script/Best_Practices_for_DolphinDB_and_Python_AirFlow/Dependencies) 
 
 - DolphinDB 工程项目：[addETL](script/Best_Practices_for_DolphinDB_and_Python_AirFlow/DolphinDB_projects/addETL)，[fullETL](script/Best_Practices_for_DolphinDB_and_Python_AirFlow/DolphinDB_projects/fullETL) 
 
