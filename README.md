@@ -233,6 +233,7 @@
     - [使用 DolphinDB 和机器学习对地震波形数据进行预测](Earthquake_Prediction_with_DolphinDB_and_Machine_Learning.md)
     - [PIP 降采样算法文章](PIP_in_DolphinDB.md)
     - [使用 Node-RED 构建 DolphinDB 低代码平台](node_red_tutorial_iot.md)
+    - [DolphinDB基于Glibc升级的性能优化实战案例](performance_optimization_based_on_glibc.md)
 
 - 入门和测试
 
