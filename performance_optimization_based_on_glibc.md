@@ -13,7 +13,7 @@
   - [3.3 解压高版本 glibc 到自定义位置](#33-解压高版本-glibc-到自定义位置)
   - [3.4 下载 patchelf](#34-下载-patchelf)
   - [3.5 文件备份](#35-文件备份)
-  - [3.6 修改文件的rpath和interpreter](#36-修改文件的rpath和interpreter)
+  - [3.6 修改文件的 rpath 和 interpreter](#36-修改文件的-rpath-和-interpreter)
   - [3.7 验证 glibc 库路径](#37-验证-glibc-库路径)
 - [4 性能测试与对比](#4-性能测试与对比)
 - [5 小结](#5-小结)
@@ -143,7 +143,7 @@ cp libstdc++.so.6 libstdc++.so.6.bak
 cp libtcmalloc_minimal.so.4 libtcmalloc_minimal.so.4.bak
 ```
 
-### 3.6 修改文件的rpath和interpreter
+### 3.6 修改文件的 rpath 和 interpreter
 
 <font color=#B22222>**1）关闭 DolphinDB**</font>
 
