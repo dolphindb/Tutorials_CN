@@ -8,7 +8,7 @@ symbols = array(SYMBOL, 0, 100)
 yearDirs = files(rootDir)[`filename]
 for(yearDir in yearDirs){
 	path = rootDir + "/" + yearDir
-	s = files(path)[`filename].upper().strReplace(".CSV","")
+	symbols = files(path)[`filename].upper().strReplace(".CSV","")
 }
 symbols = symbols.distinct().sort!().append!("999999");
 symRanges = symbols.cutPoints(100)
