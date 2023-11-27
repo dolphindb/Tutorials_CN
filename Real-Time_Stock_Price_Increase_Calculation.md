@@ -37,13 +37,13 @@
 
 | **字段名称** | **数据类型** | **数据说明** |
 | :----------- | :----------- | :----------- |
-| securityID   | SYMBOL       | 证券代码     |
-| dateTime     | TIMESTAMP    | 日期时间     |
-| preClosePx   | DOUBLE       | 昨收价       |
-| openPx       | DOUBLE       | 开始价       |
-| highPx       | DOUBLE       | 最高价       |
-| lowPx        | DOUBLE       | 最低价       |
-| lastPx       | DOUBLE       | 最新价       |
+| SecurityID   | SYMBOL       | 证券代码     |
+| DateTime     | TIMESTAMP    | 日期时间     |
+| PreClosePx   | DOUBLE       | 昨收价       |
+| OpenPx       | DOUBLE       | 开始价       |
+| HighPx       | DOUBLE       | 最高价       |
+| LowPx        | DOUBLE       | 最低价       |
+| LastPx       | DOUBLE       | 最新价       |
 | ……           | ……           | ……           |
 
 ### 1.2 计算指标
@@ -290,21 +290,21 @@ Grafana 中的 Query 代码：
 
 - 1 min 涨幅榜
 
-```
-select SecurityID, DateTime, factor_1min from changeCrossSectionalTable order by rank_1min
-```
+    ```
+    select SecurityID, DateTime, factor_1min from changeCrossSectionalTable order by rank_1min
+    ```
 
 - 5 min 涨幅榜
 
-```
-select SecurityID, DateTime, factor_5min from changeCrossSectionalTable order by rank_5min
-```
+    ```
+    select SecurityID, DateTime, factor_5min from changeCrossSectionalTable order by rank_5min
+    ```
 
 - 10 min 涨幅榜
 
-```
-select SecurityID, DateTime, factor_10min from changeCrossSectionalTable order by rank_10min
-```
+    ```
+    select SecurityID, DateTime, factor_10min from changeCrossSectionalTable order by rank_10min
+    ```
 
 ### 2.6 历史数据回放
 
