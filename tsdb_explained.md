@@ -43,7 +43,7 @@
 
 ## 1. TSDB vs OLAP
 
-关于 TSDB 和 OLAP 适用场景的描述性说明，请参照教程：[TSDB 存储引擎介绍](https://docs.dolphindb.cn/zh/dita/md/tsdb_engine.html) 
+关于 TSDB 和 OLAP 适用场景的描述性说明，请参照教程：[TSDB 存储引擎介绍](https://docs.dolphindb.cn/zh/md/tsdb_engine.html) 
 
 为了便于用户由浅入深地进行学习，本文开头提供了一个 TSDB 和 OLAP 引擎的区别表，以帮助用户对两者的区别有一个概括性的认识。除了列出区别点外，表格中标注了一些使用上的注意点；表格中的术语请参照表尾的术语对照表。
 
@@ -115,7 +115,7 @@ DolphinDB 的 TSDB 引擎是基于 LSM-Tree 架构进行开发的，因此大部
 
 #### 2.2.1 写入流程
 
-TSDB 引擎写入整体上和 OLAP 一致，都是通过两阶段协议进行提交。写入时，先写 Redo Log（每个写事务都会产生一个 Redo Log），并写入 Cache Engine 缓存，最后 由后台线程异步批量写入磁盘。需要注意的是，TSDB 引擎和 OLAP 引擎各自单独维护 Redo 以及 Cache Engine，用户需要通过不同的配置项去设置两个引擎的 Cache Engine 大小，分别为 OLAPCacheEngineSize 和 TSDBCacheEngineSize。[功能配置](https://docs.dolphindb.cn/zh/dita/DatabaseandDistributedComputing/Configuration/ConfigParamRef.html) 
+TSDB 引擎写入整体上和 OLAP 一致，都是通过两阶段协议进行提交。写入时，先写 Redo Log（每个写事务都会产生一个 Redo Log），并写入 Cache Engine 缓存，最后 由后台线程异步批量写入磁盘。需要注意的是，TSDB 引擎和 OLAP 引擎各自单独维护 Redo 以及 Cache Engine，用户需要通过不同的配置项去设置两个引擎的 Cache Engine 大小，分别为 OLAPCacheEngineSize 和 TSDBCacheEngineSize。[功能配置](https://docs.dolphindb.cn/zh/DatabaseandDistributedComputing/Configuration/ConfigParamRef.html) 
 
 **具体的写入流程如下：**
 
@@ -151,7 +151,7 @@ TSDB 引擎写入整体上和 OLAP 一致，都是通过两阶段协议进行提
 1. **分区剪枝：** 根据查询语句进行分区剪枝，缩窄查询范围。
 2. **加载索引：** 遍历涉及到的分区下的所有 Level File，将其尾部的索引信息加载到内存中（索引信息采用惰性缓存策略，即不会在节点启动时被立即加载进内存，而是在第一次查询命中该分区时才被加载进内存）。查询命中的分区的索引信息一旦被加载到内存后，会一直缓存在内存中（除非因内存不够被置换），后续查询若涉及该分区则不会重复此步骤，而是直接从内存中读取索引信息。
 
-    > **注：** 内存中存放索引的区域大小由配置项 *TSDBLevelFileIndexCacheSize* 决定，用户可以通过函数 [getLevelFileIndexCacheStatus](https://docs.dolphindb.cn/zh/dita/FunctionsandCommands/FunctionReferences/g/getLevelFileIndexCacheStats.html)  在线查询内存中的索引占用。若加载的索引大小超过了该值，内部会通过一些缓存淘汰算法进行置换，用户可配置 *TSDBLevelFileIndexCacheInvalidPercent* 来调整缓存淘汰算法的阈值。
+    > **注：** 内存中存放索引的区域大小由配置项 *TSDBLevelFileIndexCacheSize* 决定，用户可以通过函数 [getLevelFileIndexCacheStatus](https://docs.dolphindb.cn/zh/FunctionsandCommands/FunctionReferences/g/getLevelFileIndexCacheStats.html)  在线查询内存中的索引占用。若加载的索引大小超过了该值，内部会通过一些缓存淘汰算法进行置换，用户可配置 *TSDBLevelFileIndexCacheInvalidPercent* 来调整缓存淘汰算法的阈值。
 
 3. **查找内存中的数据：** 先搜索 TSDB Cache Engine 中的数据。若数据在 write buffer 中，则采用顺序扫描的方式查找；若在 sorted buffer 种，则利用其有序性，采用二分查找。
 4. **查找磁盘上的数据：** 根据索引查找磁盘 Level File 中各查询字段的数据块，解压到内存。若查询的过滤条件包含 sortKey 字段，即可根据索引加速查询。
@@ -191,7 +191,7 @@ TSDB 引擎的更新效率取决于 keepDuplicates 参数配置的去重机制�
 
 更新后的数据和旧的数据可能同时存储在磁盘上，但查询时，由于会按照 LAST 机制进行去重，因此可以保证不会查询出旧的数据。旧数据会在 Level File 合并操作时进行删除。
 
-若需要深入了解更新方法、更新流程以及不同策略的更新性能，请参考教程：[分布式表数据更新原理和性能介绍](https://docs.dolphindb.cn/zh/dita/md/dolphindb_update.html) 
+若需要深入了解更新方法、更新流程以及不同策略的更新性能，请参考教程：[分布式表数据更新原理和性能介绍](https://docs.dolphindb.cn/zh/md/dolphindb_update.html) 
 
 #### 2.2.4 删除流程
 
@@ -300,7 +300,7 @@ Level File 层级间的组织形式如下图所示：
 
 多次写入后，多个相同的 sortKey 的数据可能分散在不同的 Level File 里。查询时，系统会将所有满足条件的数据读到内存，然后再根据去重机制进行去重。为此，TSDB 设计了文件合并的机制，通过合并操作（compaction）大大减少文件数，有效的清除无效数据，减少碎片化查找，提高磁盘空间利用率（压缩率提升）以及提升查询性能。
 
-**文件合并机制：** 若一层的 Level File 超过 10 个，或者单层文件总大小超过下一层单个文件的大小，则做一次合并操作，合并时会根据参数 keepDuplicates 指定的去重策略进行去重。文件数过多时，用户也可以在线调用函数 [triggerTSDBCompaction](https://docs.dolphindb.cn/zh/dita/FunctionsandCommands/FunctionReferences/t/triggerTSDBCompaction.html)  手动触发合并，以减少文件数，**提升查询性能**。合并状态可以通过调用函数 [getTSDBCompactionTaskStatus](https://docs.dolphindb.cn/zh/dita/FunctionsandCommands/FunctionReferences/g/getTSDBCompactionTaskStatus.html)  进行查询。
+**文件合并机制：** 若一层的 Level File 超过 10 个，或者单层文件总大小超过下一层单个文件的大小，则做一次合并操作，合并时会根据参数 keepDuplicates 指定的去重策略进行去重。文件数过多时，用户也可以在线调用函数 [triggerTSDBCompaction](https://docs.dolphindb.cn/zh/FunctionsandCommands/FunctionReferences/t/triggerTSDBCompaction.html)  手动触发合并，以减少文件数，**提升查询性能**。合并状态可以通过调用函数 [getTSDBCompactionTaskStatus](https://docs.dolphindb.cn/zh/FunctionsandCommands/FunctionReferences/g/getTSDBCompactionTaskStatus.html)  进行查询。
 
 **但需要注意：** 合并操作非常消耗 CPU 和磁盘 IO，会造成一定程度的写放大。且对于每个 volume 而言，合并是单线程进行的，当合并任务很多时，耗时将会非常久。如果在写入高峰期，发生合并操作，会降低整个系统的吞吐量。因此，**建议用户使用 scheduleJob 定时（在业务不密集的时间段）触发手动合并任务。**
 
@@ -345,7 +345,7 @@ db = database(directory=dbName, partitionType=COMPO, partitionScheme=[db1, db2],
        - 粒度过小：若采用了值分区可以考虑改成范围分区，例如按天改成按月；若采用了 HASH 分区，可以考虑改小 HASH 分区数。
        - 粒度过大：若采用了范围分区可以考虑改成值分区，例如按年改成按月；若采用了 HASH 分区，可以考虑改大 HASH 分区数；若是一级分区，可以考虑用组合分区，此时新增一级通常是 HASH 分区，例按天单分区，粒度过大，考虑二级按股票代码 HASH 分区。
 
-合理设置分区至关重要，如需了解详细的分区机制和如何设计合理的分区，可参见 [数据库分区](https://docs.dolphindb.cn/zh/dita/md/database.html) 
+合理设置分区至关重要，如需了解详细的分区机制和如何设计合理的分区，可参见 [数据库分区](https://docs.dolphindb.cn/zh/md/database.html) 
 
 - **是否允许并发写入同一分区：**　
 
@@ -388,8 +388,8 @@ db.createPartitionedTable(table=tbSchema, tableName=tbName, partitionColumns=`Tr
 
 - 对字段应用合适的压缩算法（compressMethods）：
 
-  - 对重复较高的字符串，使用 SYMBOL 类型存储。需要注意单个分区下 SYMBOL 字段的唯一值数不能超过 2^21(2097152) 个，否则会抛异常，见 [S00003](https://docs.dolphindb.cn/zh/dita/ErrorCodeList/S00003/err003.html) 。
-  - 对时序数据或顺序数据（整型）可以使用 delta 算法存储，压缩性能测试可以参考 [物联网应用范例](https://docs.dolphindb.cn/zh/dita/md/iot_examples.html#%E6%8F%90%E5%8D%87%E6%95%B0%E6%8D%AE%E5%8E%8B%E7%BC%A9%E6%AF%94) 。
+  - 对重复较高的字符串，使用 SYMBOL 类型存储。需要注意单个分区下 SYMBOL 字段的唯一值数不能超过 2^21(2097152) 个，否则会抛异常，见 [S00003](https://docs.dolphindb.cn/zh/ErrorCodeList/S00003/err003.html) 。
+  - 对时序数据或顺序数据（整型）可以使用 delta 算法存储，压缩性能测试可以参考 [物联网应用范例](https://docs.dolphindb.cn/zh/md/iot_examples.html#%E6%8F%90%E5%8D%87%E6%95%B0%E6%8D%AE%E5%8E%8B%E7%BC%A9%E6%AF%94) 。
   - 其余默认 lz4 压缩算法。
 
 - 合理设置排序字段（sortColumns）：
@@ -417,7 +417,7 @@ db.createPartitionedTable(table=tbSchema, tableName=tbName, partitionColumns=`Tr
 
   - 降维是对每个 sortKey 的字段进行的，因此有几个 sortKey 字段就需要指定几个降维函数。
   - 常用的降维函数是 hashBucket，即进行哈希映射。
-  - 降维后可以通过 [getTSDBSortKeyEntry](https://docs.dolphindb.cn/zh/dita/FunctionsandCommands/FunctionReferences/g/getTSDBSortKeyEntry.html)  查询每个分区的 sortKey 信息。
+  - 降维后可以通过 [getTSDBSortKeyEntry](https://docs.dolphindb.cn/zh/FunctionsandCommands/FunctionReferences/g/getTSDBSortKeyEntry.html)  查询每个分区的 sortKey 信息。
 
 - 数据去重（keepDuplicates）：
 
@@ -626,7 +626,7 @@ Level File 的去重操作是在合并阶段完成的。若磁盘上存在较多
 - 数据重复率较高
 - 数据已经入库，不再变化（后续不再修改和写入）
 
-用户也可以在线调用函数 [triggerTSDBCompaction](https://docs.dolphindb.cn/zh/dita/FunctionsandCommands/FunctionReferences/t/triggerTSDBCompaction.html)  手动触发合并，以减少文件数，**提升查询性能**。合并状态可以通过调用函数 [getTSDBCompactionTaskStatus](https://docs.dolphindb.cn/zh/dita/FunctionsandCommands/FunctionReferences/g/getTSDBCompactionTaskStatus.html)  进行查询。
+用户也可以在线调用函数 [triggerTSDBCompaction](https://docs.dolphindb.cn/zh/FunctionsandCommands/FunctionReferences/t/triggerTSDBCompaction.html)  手动触发合并，以减少文件数，**提升查询性能**。合并状态可以通过调用函数 [getTSDBCompactionTaskStatus](https://docs.dolphindb.cn/zh/FunctionsandCommands/FunctionReferences/g/getTSDBCompactionTaskStatus.html)  进行查询。
 
 ## 5. TSDB 引擎场景实践案例
 
@@ -636,18 +636,18 @@ Level File 的去重操作是在合并阶段完成的。若磁盘上存在较多
 
 | **场景**         | **教程链接**                                 | **场景描述**                                 | **存储方案**                                 |
 | -------------- | ---------------------------------------- | ---------------------------------------- | ---------------------------------------- |
-| 中高频多因子库存储      | [中高频多因子库存储最佳实践](https://docs.dolphindb.cn/zh/dita/md/best_practices_for_multi_factor.html) | 测试 TSDB 宽表存储和 TSDB 窄表存储，在 HDD 和 SDD 这两种不同的硬件配置下的存储性能。 | 推荐采用 TSDB 窄表存储                           |
-| Level 2 行情数据存储 | [金融 PoC 用户历史数据导入指导手册之股票 level2 逐笔篇](https://docs.dolphindb.cn/zh/dita/md/LoadDataForPoc.html)<br> [处理 Level 2 行情数据实例](https://docs.dolphindb.cn/zh/dita/md/Level-2_stock_data_processing.html)<br> [搭建行情回放服务的最佳实践](https://docs.dolphindb.cn/zh/dita/md/appendices_market_replay_bp.html) | 介绍行情快照、逐笔委托、逐笔成交的存储方案，以及数据导入的处理流程。       | 引擎：TSDB<br>分区方案：交易日按值分区+标的哈希20分区<br>sortColumns：market，SecurityID，TradeTime |
-| 公募基金数据存储       | [公募基金历史数据基础分析教程](https://docs.dolphindb.cn/zh/dita/md/public_fund_basic_analysis.html) | 提供公开市场数据导入 TSDB 引擎的示例脚本。                 | 数据量较小，故存储为 TSDB 引擎维度表，sortColumns 为日期列。  |
-| 实时波动率预测        | [金融实时实际波动率预测](https://docs.dolphindb.cn/zh/dita/md/machine_learning_volatility.html) | 比较数据预处理阶段，OLAP 引擎和 TSDB 引擎的存储效率。         | 使用 TSDB 引擎，将多档数据以 [Array Vector](https://gitee.com/link?target=https%3A%2F%2Fwww.dolphindb.cn%2Fcn%2Fhelp%2FDataTypesandStructures%2FDataForms%2FVector%2FarrayVector.html) 的形式存储，原 40 列数据合并为 4 列，在数据压缩率、数据查询和计算性能上都会有大幅提升。 |
-| ETL 数据清洗优化     | [利用 DolphinDB 高效清洗数据](https://docs.dolphindb.cn/zh/dita/md/data_ETL.html) | 优化 ETL 数据清洗流程的性能。                        | 利用 TSDB 的索引机制，可以通过扫描稀疏索引文件，来查询对应的数据块ID。进而只读取对应数据块，从而避免全表扫描。 |
+| 中高频多因子库存储      | [中高频多因子库存储最佳实践](https://docs.dolphindb.cn/zh/md/best_practices_for_multi_factor.html) | 测试 TSDB 宽表存储和 TSDB 窄表存储，在 HDD 和 SDD 这两种不同的硬件配置下的存储性能。 | 推荐采用 TSDB 窄表存储                           |
+| Level 2 行情数据存储 | [金融 PoC 用户历史数据导入指导手册之股票 level2 逐笔篇](https://docs.dolphindb.cn/zh/md/LoadDataForPoc.html)<br> [处理 Level 2 行情数据实例](https://docs.dolphindb.cn/zh/md/Level-2_stock_data_processing.html)<br> [搭建行情回放服务的最佳实践](https://docs.dolphindb.cn/zh/md/appendices_market_replay_bp.html) | 介绍行情快照、逐笔委托、逐笔成交的存储方案，以及数据导入的处理流程。       | 引擎：TSDB<br>分区方案：交易日按值分区+标的哈希20分区<br>sortColumns：market，SecurityID，TradeTime |
+| 公募基金数据存储       | [公募基金历史数据基础分析教程](https://docs.dolphindb.cn/zh/md/public_fund_basic_analysis.html) | 提供公开市场数据导入 TSDB 引擎的示例脚本。                 | 数据量较小，故存储为 TSDB 引擎维度表，sortColumns 为日期列。  |
+| 实时波动率预测        | [金融实时实际波动率预测](https://docs.dolphindb.cn/zh/md/machine_learning_volatility.html) | 比较数据预处理阶段，OLAP 引擎和 TSDB 引擎的存储效率。         | 使用 TSDB 引擎，将多档数据以 [Array Vector](https://gitee.com/link?target=https%3A%2F%2Fwww.dolphindb.cn%2Fcn%2Fhelp%2FDataTypesandStructures%2FDataForms%2FVector%2FarrayVector.html) 的形式存储，原 40 列数据合并为 4 列，在数据压缩率、数据查询和计算性能上都会有大幅提升。 |
+| ETL 数据清洗优化     | [利用 DolphinDB 高效清洗数据](https://docs.dolphindb.cn/zh/md/data_ETL.html) | 优化 ETL 数据清洗流程的性能。                        | 利用 TSDB 的索引机制，可以通过扫描稀疏索引文件，来查询对应的数据块ID。进而只读取对应数据块，从而避免全表扫描。 |
 
 ### 物联网场景
 
 | **案例**           | **教程链接**                                 | **场景描述**                      | **存储方案**                                 |
 | ---------------- | ---------------------------------------- | ----------------------------- | ---------------------------------------- |
-| 地震波形数据存储         | [地震波形数据存储解决方案](https://docs.dolphindb.cn/zh/dita/md/Seismic_waveform_data_storage.html) | 介绍地震波形数据的存储方案，包含分区方案和字段压缩方案。  | 引擎：TSDB <br>分区方案：设备 ID 值分区+ 按天值分区 <br>sortColumns：设备 ID + 时间戳 |
-| 实时数据异常预警：流数据入库存储 | [物联网实时数据异常率预警](https://docs.dolphindb.cn/zh/dita/md/knn_iot.html) | 数据预警场景，订阅数据持久化部分采用 TSDB 引擎存储。 | **消费数据入库：**<br>引擎：TSDB<br>分区方案：设备代码值分区+ 按小时值分区<br>sortColumns：设备代码 + 时间戳<br> **聚合计算结果入库：**<br>引擎：TSDB<br>分区方案：设备代码值分区+ 按天值分区<br>sortColumns：设备代码 + 时间戳 |
+| 地震波形数据存储         | [地震波形数据存储解决方案](https://docs.dolphindb.cn/zh/md/Seismic_waveform_data_storage.html) | 介绍地震波形数据的存储方案，包含分区方案和字段压缩方案。  | 引擎：TSDB <br>分区方案：设备 ID 值分区+ 按天值分区 <br>sortColumns：设备 ID + 时间戳 |
+| 实时数据异常预警：流数据入库存储 | [物联网实时数据异常率预警](https://docs.dolphindb.cn/zh/md/knn_iot.html) | 数据预警场景，订阅数据持久化部分采用 TSDB 引擎存储。 | **消费数据入库：**<br>引擎：TSDB<br>分区方案：设备代码值分区+ 按小时值分区<br>sortColumns：设备代码 + 时间戳<br> **聚合计算结果入库：**<br>引擎：TSDB<br>分区方案：设备代码值分区+ 按天值分区<br>sortColumns：设备代码 + 时间戳 |
 
  
 ## 6. 总结
@@ -682,12 +682,12 @@ TSDB 引擎较 OLAP 引擎而言，内部实现机制更加复杂，对用户开
 
 | **功能**                 | **函数**                                   | **描述**                           |
 | ------------------------ | ---------------------------------------- | -------------------------------- |
-| Level File 合并          | [triggerTSDBCompaction](https://docs.dolphindb.cn/zh/dita/FunctionsandCommands/FunctionReferences/t/triggerTSDBCompaction.html) <br> [getTSDBCompactionTaskStatus](https://docs.dolphindb.cn/zh/dita/FunctionsandCommands/FunctionReferences/g/getTSDBCompactionTaskStatus.html) | 触发合并  <br> 获取合并任务状态                         |
-| 异步排序                 | [enableTSDBAsyncSorting](https://docs.dolphindb.cn/zh/dita/FunctionsandCommands/FunctionReferences/e/enableTSDBAsyncSorting.html) <br> [disableTSDBAsyncSorting](https://docs.dolphindb.cn/zh/dita/FunctionsandCommands/FunctionReferences/d/disableTSDBAsyncSorting.html) <br>  | 开启异步排 <br> 关闭异步排序序                         |
-| Cache Engine             | [flushTSDBCache](https://docs.dolphindb.cn/zh/dita/FunctionsandCommands/FunctionReferences/f/flushTSDBCache.html)  <br> [setTSDBCacheEngineSize](https://docs.dolphindb.cn/zh/dita/FunctionsandCommands/FunctionReferences/s/setTSDBCacheEngineSize.html) <br>[getTSDBCacheEngineSize](https://docs.dolphindb.cn/zh/dita/FunctionsandCommands/FunctionReferences/g/getTSDBCacheEngineSize.html) | 将 TSDB Cache Engine 中的数据强制刷盘 <br>  设置 TSDB Cache Engine 的内存大小 <br>  获取 TSDB Cache Engine 的内存大小 |
-| 索引                     | [getLevelFileIndexCacheStatus](https://docs.dolphindb.cn/zh/dita/FunctionsandCommands/FunctionReferences/g/getLevelFileIndexCacheStats.html) <br> invalidateLevelIndexCache | 获取所有 level file 的索引内存占用的情况  <br>    手动删除索引缓存 |
-| SYMBOL 字段的缓存                             | [getTSDBCachedSymbolBaseMemSize](https://docs.dolphindb.cn/zh/dita/FunctionsandCommands/FunctionReferences/g/getTSDBCachedSymbolBaseMemSize.html) | 获取 TSDB 引擎中 SYMBOL 类型的字典编码的缓存大小。 |
-| 元数据信息                                    | [getTSDBMetaData](https://docs.dolphindb.cn/zh/dita/FunctionsandCommands/FunctionReferences/g/getTSDBMetaData.html) <br> [getTSDBSortKeyEntry](https://docs.dolphindb.cn/zh/dita/FunctionsandCommands/FunctionReferences/g/getTSDBSortKeyEntry.html) | 获取 TSDB 引擎 chunk 的元数据信息  <br> 获取 TSDB 引擎已经写入磁盘的 chunk 的 sort key 信息         |
+| Level File 合并          | [triggerTSDBCompaction](https://docs.dolphindb.cn/zh/FunctionsandCommands/FunctionReferences/t/triggerTSDBCompaction.html) <br> [getTSDBCompactionTaskStatus](https://docs.dolphindb.cn/zh/FunctionsandCommands/FunctionReferences/g/getTSDBCompactionTaskStatus.html) | 触发合并  <br> 获取合并任务状态                         |
+| 异步排序                 | [enableTSDBAsyncSorting](https://docs.dolphindb.cn/zh/FunctionsandCommands/FunctionReferences/e/enableTSDBAsyncSorting.html) <br> [disableTSDBAsyncSorting](https://docs.dolphindb.cn/zh/FunctionsandCommands/FunctionReferences/d/disableTSDBAsyncSorting.html) <br>  | 开启异步排 <br> 关闭异步排序序                         |
+| Cache Engine             | [flushTSDBCache](https://docs.dolphindb.cn/zh/FunctionsandCommands/FunctionReferences/f/flushTSDBCache.html)  <br> [setTSDBCacheEngineSize](https://docs.dolphindb.cn/zh/FunctionsandCommands/FunctionReferences/s/setTSDBCacheEngineSize.html) <br>[getTSDBCacheEngineSize](https://docs.dolphindb.cn/zh/FunctionsandCommands/FunctionReferences/g/getTSDBCacheEngineSize.html) | 将 TSDB Cache Engine 中的数据强制刷盘 <br>  设置 TSDB Cache Engine 的内存大小 <br>  获取 TSDB Cache Engine 的内存大小 |
+| 索引                     | [getLevelFileIndexCacheStatus](https://docs.dolphindb.cn/zh/FunctionsandCommands/FunctionReferences/g/getLevelFileIndexCacheStats.html) <br> invalidateLevelIndexCache | 获取所有 level file 的索引内存占用的情况  <br>    手动删除索引缓存 |
+| SYMBOL 字段的缓存                             | [getTSDBCachedSymbolBaseMemSize](https://docs.dolphindb.cn/zh/FunctionsandCommands/FunctionReferences/g/getTSDBCachedSymbolBaseMemSize.html) | 获取 TSDB 引擎中 SYMBOL 类型的字典编码的缓存大小。 |
+| 元数据信息                                    | [getTSDBMetaData](https://docs.dolphindb.cn/zh/FunctionsandCommands/FunctionReferences/g/getTSDBMetaData.html) <br> [getTSDBSortKeyEntry](https://docs.dolphindb.cn/zh/FunctionsandCommands/FunctionReferences/g/getTSDBSortKeyEntry.html) | 获取 TSDB 引擎 chunk 的元数据信息  <br> 获取 TSDB 引擎已经写入磁盘的 chunk 的 sort key 信息         |
 
 触发集群中所有分区 Level File 合并脚本参考：
 
@@ -703,12 +703,7 @@ select * from pnodeRun(getTSDBCompactionTaskStatus) where endTime is null
 
 ### 8.3 常见问题 Q & A
 
-| **问题**                                   | **回答**                                   |
-| ---------------------------------------- | ---------------------------------------- |
-| 创建报错 TSDB engine is not enabled.         | 1. 检查 server 版本是否为 2.00 版本， 1.30 版本不支持 TSDB 引擎。 <br> 2. 检查配置文件是否设置了 TSDBCacheEngineSize 配置项。 |
-| TSDB 更新数据后，查询发现更新的数据出现在表末尾，而不是按时间序排序。    | TSDB 引擎只保证 level file 内部是有序的，但是 level file 间可能是无序的，可以尝试通过调用 triggerTSDBCompaction 函数手动触发 level file 文件的合并。 |
-| 1.30 版本的 server 和 2.00 版本有什么区别？          | 相较于 1.30 版本，2.00 版本还支持了 TSDB 引擎， array vector 数据形式，DECIMAL 数据类型等功能。 |
-| 如果希望表的数据写入后去重，可以使用 TSDB 引擎，然后将 sortColumns 设置为去重键吗？ | - 如果去重键只有一个字段，不建议设置为 sortColumns，因为此时该字段会被作为 sortKey，去重后，一个 sortKey 只对应一条记录，会造成索引膨胀，影响查询效率。<br>- 如果去重键有多个字段，需要评估每个 sortKey 对应的数据量，若数据量很少，也不建议将其设置为 sortColumns。 <br> 比较推荐的方案是**使用 upsert! 方法**写入数据，以达到数据去重的目的。 |
+<table style="undefined;table-layout: fixed; width: 1360px"><colgroup><col style="width: 590px"><col style="width: 770px"></colgroup><thead><tr><th>问题<br></th><th>回答<br></th></tr></thead><tbody><tr><td>创建报错 TSDB engine is not enabled.</td><td>1. 检查 server 版本是否为 2.00 版本， 1.30 版本不支持 TSDB 引擎。<br><br>2. 检查配置文件是否设置了 TSDBCacheEngineSize 配置项。</td></tr><tr><td>TSDB 更新数据后，查询发现更新的数据出现在表末尾，而不是按时间序排序。</td><td>TSDB 引擎只保证 level file 内部是有序的，但是 level file 间可能是无序的，可以尝试通过调用 triggerTSDBCompaction 函数手动触发 level file 文件的合并。<br> </td></tr><tr><td>1.30 版本的 server 和 2.00 版本有什么区别？</td><td>相较于 1.30 版本，2.00 版本还支持了 TSDB 引擎， array vector 数据形式，DECIMAL 数据类型等功能。</td></tr><tr><td>如果希望表的数据写入后去重，可以使用 TSDB 引擎，然后将 sortColumns 设置为去重键吗？</td><td>- 如果去重键只有一个字段，不建议设置为 sortColumns，因为此时该字段会被作为 sortKey，去重后，一个 sortKey 只对应一条记录，会造成索引膨胀，影响查询效率。<br><br>- 如果去重键有多个字段，需要评估每个 sortKey 对应的数据量，若数据量很少，不建议将其设置为 sortColumns。<br><br>推荐使用 upsert! 方法写入数据，以达到数据去重的目的。 </td></tr><tr><td>TSDB 引擎查询性能低于预期。</td><td>- sortKey 字段设置是否合理，可以调用 getTSDBSortKeyEntry 函数查询 sortKey 的信息。<br><br>- LevelFile 的索引缓存是否设置过小。若每次查询设计的数据范围较大，可能造成索引的频繁置换，此时可以通过调整配置项 TSDBLevelFileIndexCacheSize，来调大索引的缓存空间，调整后需重启集群。</td></tr></tbody></table>
 
 ### 8.4 案例脚本
 
