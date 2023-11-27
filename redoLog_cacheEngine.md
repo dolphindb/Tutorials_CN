@@ -1,17 +1,17 @@
 # redo log 和 cache engine：相关概念和配置说明
 
-  - [1. redo log/cache engine相关概念](#1-redo-logcache-engine相关概念)
-    - [1.1 什么是 redo log](#11-什么是-redo-log)
-    - [1.2 什么是 cache engine](#12-什么是-cache-engine)
-    - [1.3 redo log 和 cache engine 的写入和回收](#13-redo-log-和-cache-engine-的写入和回收)
-    - [1.4 为什么需要redo log/cache engine](#14-为什么需要redo-logcache-engine)
-  - [2. 配置说明](#2-配置说明)
-    - [2.1 redo log 相关配置和函数](#21-redo-log-相关配置和函数)
-    - [2.2 cache engine 相关配置和函数](#22-cache-engine-相关配置和函数)
-  - [3. 性能的影响与优化建议](#3-性能的影响与优化建议)
-    - [3.1 磁盘负载和内存使用](#31-磁盘负载和内存使用)
-    - [3.2 对节点启动的影响](#32-对节点启动的影响)
-    - [3.3 相关性能优化的建议](#33-相关性能优化的建议)
+- [1. redo log/cache engine相关概念](#1-redo-logcache-engine相关概念)
+  - [1.1 什么是 redo log](#11-什么是-redo-log)
+  - [1.2 什么是 cache engine](#12-什么是-cache-engine)
+  - [1.3 redo log 和 cache engine 的写入和回收](#13-redo-log-和-cache-engine-的写入和回收)
+  - [1.4 为什么需要redo log/cache engine](#14-为什么需要redo-logcache-engine)
+- [2. 配置说明](#2-配置说明)
+  - [2.1 redo log 相关配置和函数](#21-redo-log-相关配置和函数)
+  - [2.2 cache engine 相关配置和函数](#22-cache-engine-相关配置和函数)
+- [3. 性能的影响与优化建议](#3-性能的影响与优化建议)
+  - [3.1 磁盘负载和内存使用](#31-磁盘负载和内存使用)
+  - [3.2 对节点启动的影响](#32-对节点启动的影响)
+  - [3.3 相关性能优化的建议](#33-相关性能优化的建议)
 
 这篇教程重点介绍了 DolphinDB 中的 redo log 和 cache engine 机制以及其配置对整体性能的影响。
 
@@ -22,7 +22,7 @@
 - OLAP 存储引擎可以不开启 redo log，但启用了 redo log 之后必须启用 cache engine
 
 
-## 1. redo log/cache engine 相关概念
+## 1. redo log/cache engine相关概念
 
 
 ### 1.1 什么是 redo log
@@ -40,12 +40,12 @@ cache engine 是 DolphinDB 中的一种数据写入缓存机制，它是为了�
 
 <figure align="left">
     <img src="./images/redoLog_cacheEngine/1_1.png" width=60%>
-    <figcaption>数据写入过程</figcaption>
+    <figcaption>数据写入与回收过程</figcaption>
 </figure>
 
 由上图可知，数据整体的写入流程可以分成三个部分：
 
-（1）数据写入 redo log 并落盘，一个事务的数据存成一个文件。
+（1）数据写入 redo log，一个事务的数据存成一个文件。
 
 （2）数据写入 cache engine， 并由 cache engine 异步写入数据到列文件（OLAP）或者 level file（TSDB）。
 
@@ -56,9 +56,9 @@ cache engine 是 DolphinDB 中的一种数据写入缓存机制，它是为了�
 cache engine 的回收，在写入磁盘后完成。
 
 - 定期回收
-  - OLAP引擎：系统每30秒检查一次回收条件
-  - TSDB引擎：系统每60秒检查一次回收条件
-- 文件大小达到一定阈值时回收（`redoLogPurgeLimit`）
+  - OLAP引擎：每30秒
+  - TSDB引擎：每60秒
+- cache engine 的内存占用大小达到一定阈值时回收
   - OLAP 引擎：当缓存中的数据量达到 OLAPCacheEngineSize 的 30% 时，cache engine 会将内容写到**列文件**，完成回收。
   - TSDB 引擎：将当数据量达到 TSDBCacheEngineSize 大小后，cache engine 将内容写入 **level file** （类似于 leveldb 的 flush memtable 的过程），完成回收。
 - 通过 `flushOLAPCache`，`flushTSDBCache` 手动清理缓存
@@ -78,10 +78,9 @@ cache engine 的回收，在写入磁盘后完成。
 
 使用 redo log 的主要优势为：
 
-- 大大减少了磁盘的写入次数。因为在事务提交时只需要将日志文件刷新到磁盘，而不是将事务涉及到的所有文件刷新。
-- 顺序写入性能更好。这点对于 OLAP 引擎来说优化更加明显。
+- 顺序写入性能更好，在事务提交时只需要将日志文件刷新到磁盘，而不是将事务涉及到的所有文件刷新。这点对于 OLAP 引擎来说优化更加明显。
 
-cache engine 能够提升写入性能，尤其是在数据表列数过多的情况下。
+cache engine 大大减少了磁盘的写入次数，能够提升写入性能，尤其是在数据表列数过多的情况下。
 
 DolphinDB 采用列式存储，一个分区内的每一列数据单独存放在一个文件中。如果表的列数过多（比如物联网场景下同时记录几千个指标），每进行一次数据写入，就要对几千个物理文件进行操作（打开，写入，关闭等）。如果把多次少量的写入缓存起来，一次批量写入，就可以节省许多对文件进行打开和关闭带来的时间开销，从而在整体上提升系统的写入性能。
 
@@ -142,7 +141,6 @@ DolphinDB 采用列式存储，一个分区内的每一列数据单独存放在�
 
 - redo log 会增加磁盘占用，在数据文件以外额外写 redo log 文件增加了数据的写入量。
 - cache engine 可以减少磁盘负载，因为写入的次数减少了，少量多次的写入变成了批次写入。
-- redo log 会增加对内存的使用，这是由于系统内部对还未写到磁盘上的数据文件进行了缓存。
 - cache engine也会增加内存占用，因为系统对还未写入磁盘的数据进行了缓存。
 
 ### 3.2 对节点启动的影响
@@ -176,5 +174,5 @@ redo log 过大可能导致节点启动时间过长，可能有以下原因：
 >
 >  jobLogFile: 各个节点的 query 日志，记录各个 query 的执行情况，可以写到 HDD 磁盘。在 *cluster.cfg* 中设置。
 
-2. 合理配置 redo log 的内存大小和垃圾回收周期，一般建议将内存配置为1~4GB，回收周期配置为 60 秒。
+2. 合理配置 redo log 的磁盘空间上限和垃圾回收周期，一般建议配置磁盘空间不超过 4GB，不低于 1GB，回收周期配置为 60 秒。
 3. 合理配置 cache engine 的内存大小，不宜过大或过小，最大不超过数据节点内存配置的 1/4，设置为 1~4GB 适合大部分情况。具体结合机器硬件与写入数据的速率来决定。
