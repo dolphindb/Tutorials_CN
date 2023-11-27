@@ -134,7 +134,7 @@ def writeRemoteDB(t, ip, port, dbName,tableName,writeData){
 	conn(login{`admin,`123456})
 	remoteRun(conn,writeData,dbName,tableName,t)
 }
-def synDataBaseOnline(ip, port,writeRemoteDB=writeRemoteDB){
+def synDataBaseOnline(ip, port){
 	ds = sqlDS(<select * from loadTable("dfs://db1","mt") where Timestamp > timestamp(date(now())) and Timestamp < now()>)
 	mr(ds, writeRemoteDB{,ip,port,"dfs://db1","mt",writeData},,, false)
 }
