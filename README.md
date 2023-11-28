@@ -93,7 +93,7 @@
   
 - 连接器
 
-  - [DolphinDB Python API使用教程](../../../api_python3/blob/master/README_CN.md)
+  - [DolphinDB Python API使用教程](../../../api_python3/blob/master/README_CN_NEW/Introduction.md)
   - [DolphinDB Python API离线安装](python_api_install_offline.md)
   - [Java API使用教程](../../../api-java/blob/master/README_CN.md)
 
@@ -101,7 +101,7 @@
 
   - [JDBC 使用教程](../../../jdbc/blob/master/README_CN.md)
   - [C# API使用教程](../../../api-csharp/blob/master/README_CN.md)
-  - [C++ API使用教程](../../../api-cplusplus/blob/master/README_CN.md)
+  - [C++ API使用教程](../../../api-cplusplus/blob/main/README_CN.md)
   - [C++ API 数据写入使用指南](ddb_cpp_api_connector.md)
   - [用VS2017编译DolphinDB C++ API动态库](cpp_api_vs2017_tutorial.md)
   - [C++ API 数据读写指南](c%2B%2Bapi.md)
