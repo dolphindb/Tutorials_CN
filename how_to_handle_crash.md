@@ -263,7 +263,7 @@ job2=submitJob("write2","",writeData,pt,1..300,1000,1000)
 
 ### 4.4 自定义开发插件俘获异常
 
-DolphinDB支持用户自定义开发插件以扩展系统功能。插件与DolphinDB server在同一个进程中运行。若插件崩溃，整个系统（server）就会崩溃。因此，在开发插件时要注意完善错误检测机制。除了插件函数所在线程可以抛出异常（server在调用插件函数时俘获了异常），其他线程都必须自己俘获异常，不得抛出异常。详情请参阅[DolphinDB Plugin](https://gitee.com/dolphindb/DolphinDBPlugin/tree/master#dolphindb-plugin)。
+DolphinDB支持用户自定义开发插件以扩展系统功能。插件与DolphinDB server在同一个进程中运行。若插件崩溃，整个系统（server）就会崩溃。因此，在开发插件时要注意完善错误检测机制。除了插件函数所在线程可以抛出异常（server在调用插件函数时俘获了异常），其他线程都必须自己俘获异常，不得抛出异常。详情请参阅[DolphinDB Plugin](https://gitee.com/dolphindb/DolphinDBPlugin/tree/release200#dolphindb-plugin)。
 
 ## 5. 总结
 
