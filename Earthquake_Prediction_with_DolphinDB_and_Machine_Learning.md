@@ -384,13 +384,11 @@ subscribeTable(tableName = "pickerStream",actionName="tensorFlowPredict", offset
 
 ### 插件及脚本文件
 
-- filterpicker
-- rtseis
-- tf
+- [filterpicker](https://docs.dolphindb.cn/zh/appendices/earthquake/filterpicker.zip)
+- [rtseis](https://docs.dolphindb.cn/zh/appendices/earthquake/rtseis.zip)
+- [tf](https://docs.dolphindb.cn/zh/appendices/earthquake/tf.zip)
+- [printTensorName.py](https://docs.dolphindb.cn/zh/appendices/earthquake/printTensorName.py)
 
-- printTensorName.py
-
-以上三个插件及 printTensorName.py 可以在 [Earthquake_Prediction_with_DolphinDB_and_Machine_Learning](https://www.dolphindb.cn/downloads/docs/) 上下载并解压便可获取。
 
 ### 表结构
 
