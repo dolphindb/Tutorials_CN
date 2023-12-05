@@ -93,7 +93,7 @@
   
 - 连接器
 
-  - [DolphinDB Python API使用教程](../../../api_python3/blob/master/README_CN_NEW/Introduction.md)
+  - [DolphinDB Python API使用教程](../../../api_python3/blob/master/README_CN.md)
   - [DolphinDB Python API离线安装](python_api_install_offline.md)
   - [Java API使用教程](../../../api-java/blob/master/README_CN.md)
 
