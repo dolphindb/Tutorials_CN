@@ -258,6 +258,7 @@
   - [从 OceanBase 迁移到 DolphinDB](OceanBase_to_DolphinDB.md)
   - [从 Oracle 迁移到 DolphinDB](Oracle_to_DolphinDB.md)
   - [从 Postgre/Greenplum 迁移到 DolphinDB](migrate_data_from_Postgre_and_Greenplum_to_DolphinDB.md)
+  - [从 ClickHouse 迁移到 DolphinDB](ClickHouse_to_DolphinDB.md)
  
 - 开源项目
 
