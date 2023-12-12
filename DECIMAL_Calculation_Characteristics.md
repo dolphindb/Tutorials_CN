@@ -53,8 +53,8 @@ typestr(cumPositiveStreak(a))
 | **计算函数**                                                 | **输入类型** | **输出类型** |
 | :----------------------------------------------------------- | :----------- | :----------- |
 | sum/cumsum/msum/tmsum/msumTopN/cumsumTopN/tmsumTopN/cumPositiveStreak | DECIMAL32    | DECIMAL64    |
-| DECIMAL64                                                    | DECIMAL128   |              |
-| DECIMAL128                                                   | DECIMAL128   |              |
+|                                                     | DECIMAL64   |        DECIMAL128      |
+|                                                    | DECIMAL128   |        DECIMAL128      |
 
 除了上述函数外，cum、m、tm、TopN 系列的函数，包括它们对应的原始的函数，比如 `avg`、`std`、`var`、`skew` 等，以 DECIMAL 类型作为输入，都将返回 DOUBLE 类型的输出结果。
 
