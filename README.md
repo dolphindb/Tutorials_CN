@@ -154,7 +154,7 @@
     - [HttpClient 插件使用说明（介绍如何使用该插件整合外部消息平台的数据）](send_messages_external_systems.md "介绍如何使用该插件整合外部消息平台的数据")
     - [MQTT 插件使用说明（用于向 MQTT 服务器发布或订阅消息）](../../../DolphinDBPlugin/blob/release200/mqtt/README_CN.md "用于通过该插件向 MQTT 服务器发布或订阅消息")
     - [zmq 插件使用说明（用于 zmq 消息队列库的请求应答、发布、订阅和管道消息传输）](../../../DolphinDBPlugin/blob/release200/zmq/README.md "用于 zmq 消息队列库的请求应答、发布、订阅和管道消息传输")
-    - [Kafka 插件使用说明（用于发布或订阅 Kafka 流服务）](../../../DolphinDBPlugin/blob/release200/kafka/README_CN.md "用于发布或订阅 Kafka 流服务")
+
   - 机器学习
     - [SVM 插件使用说明（用于在机器学习数据处理中对 DolphinDB 对象执行支持向量机模型的训练和预测）](../../../DolphinDBPlugin/blob/release200/svm/README.md "用于对 DolphinDB 对象执行 SVM 模型的训练和预测")
     - [XGBoost 插件使用说明（用于机器学习数据的训练、预测、模型保存和加载）](../../../DolphinDBPlugin/blob/release200/xgboost/README_CN.md "用于机器学习数据的训练、预测、模型保存和加载")
