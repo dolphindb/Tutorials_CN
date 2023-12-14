@@ -49,6 +49,7 @@
   - [DolphinDB 集群间的异步复制](Asynchronous_Replication.md)
   - [DolphinDB 中有关 array vector 的最佳实践指南](Array_Vector.md)
   - [Debezium + Kafka 实时同步 MySQL 数据到 DolphinDB](Debezium_and_Kafka_data_sync.md)
+  - [使用 summary 函数生成大规模数据统计信息](generate_large_scale_statistics_with_summary.md)
   
   
 - 编程语言
