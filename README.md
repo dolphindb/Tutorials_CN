@@ -57,7 +57,7 @@
   - [函数化编程案例](functional_programming_cases.md)
   - [模块复用教程](module_tutorial.md)
   - [通用计算教程](general_computing.md)
-  - [即时编译(JIT)教程](jit.md)
+    <!-- - [即时编译(JIT)教程](jit.md) -->
   - [元编程教程](meta_programming.md)
   - [自定义聚合函数](udaf.md)
   - [矩阵计算](matrix.md)
@@ -182,7 +182,7 @@
   - [DolphinDB中有关时间信息的最佳实践指南](timezone.md)
   - 金融：
     - [在DolphinDB中计算K线](OHLC.md)
-    - [实时计算高频因子](hf_factor_streaming.md)
+    - [实时计算高频因子](hf_factor_streaming.md) 
     - [DolphinDB教程：面板数据的处理](panel_data.md)
     - [金融高频因子的流批统一计算：DolphinDB响应式状态引擎](reactive_state_engine.md)
     - [股票行情数据导入实例](stockdata_csv_import_demo.md)
@@ -205,7 +205,7 @@
     - [中高频多因子库存储最佳实践](best_practices_for_multi_factor.md)
     - [金融 PoC 用户历史数据导入指导手册之股票 level2 逐笔篇](LoadDataForPoc.md)
     - [DolphinDB NSQ 插件最佳实践指南](best_implementation_for_NSQ_Plugin.md)
-    - [通过 DolphinDB JIT 功能加速计算 ETF 期权隐含波动率和希腊值](IV_Greeks_Calculation_for_ETF_Options_Using_JIT.md)
+      <!-- - [通过 DolphinDB JIT 功能加速计算 ETF 期权隐含波动率和希腊值](IV_Greeks_Calculation_for_ETF_Options_Using_JIT.md) -->
     - [DolphinDB 流数据连接引擎应用：多数据源流式实时关联处理](streaming-real-time-correlation-processing.md)
     - [基于 DolphinDB 与 Python Celery 框架的因子计算平台构建](Python_Celery.md)
     - [快速搭建 Level-2 快照数据流批一体因子计算平台最佳实践](Level2_Snapshot_Factor_Calculation.md)
