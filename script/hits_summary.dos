@@ -1,0 +1,140 @@
+login("admin","123456")
+// 建库
+dbName = "dfs://clickdb";
+if (existsDatabase(dbName)) {
+    dropDatabase(dbName)
+}
+// 建表
+CREATE TABLE hits(
+    WatchID LONG,    
+    JavaEnable SHORT,
+    Title STRING,
+    GoodEvent SHORT  ,
+    RawTime STRING  ,
+    EventDate DATE  ,
+    CounterID INT  ,
+    ClientIP INT  ,
+    RegionID INT  ,
+    UserID LONG  ,
+    CounterClass SHORT  ,
+    OS SHORT  ,
+    UserAgent SHORT  ,
+    URL STRING  ,
+    Referer STRING  ,
+    IsRefresh SHORT  ,
+    RefererCategoryID SHORT  ,
+    RefererRegionID INT  ,
+    URLCategoryID SHORT  ,
+    URLRegionID INT  ,
+    ResolutionWidth SHORT  ,
+    ResolutionHeight SHORT  ,
+    ResolutionDepth SHORT  ,
+    FlashMajor SHORT  ,
+    FlashMinor SHORT  ,
+    FlashMinor2 STRING  ,
+    NetMajor SHORT  ,
+    NetMinor SHORT  ,
+    UserAgentMajor SHORT  ,
+    UserAgentMinor STRING  ,
+    CookieEnable SHORT  ,
+    JavascriptEnable SHORT  ,
+    IsMobile SHORT  ,
+    MobilePhone SHORT  ,
+    MobilePhoneModel STRING  ,
+    Params STRING  ,
+    IPNetworkID INT  ,
+    TraficSourceID SHORT  ,
+    SearchEngineID SHORT  ,
+    SearchPhrase STRING  ,
+    AdvEngineID SHORT  ,
+    IsArtifical SHORT  ,
+    WindowClientWidth SHORT  ,
+    WindowClientHeight SHORT  ,
+    ClientTimeZone SHORT  ,
+    ClientEventTime STRING  ,
+    SilverlightVersion1 SHORT  ,
+    SilverlightVersion2 SHORT  ,
+    SilverlightVersion3 INT  ,
+    SilverlightVersion4 SHORT  ,
+    PageCharset STRING  ,
+    CodeVersion INT  ,
+    IsLink SHORT  ,
+    IsDownload SHORT  ,
+    IsNotBounce SHORT  ,
+    FUniqID LONG  ,
+    OriginalURL STRING  ,
+    HID INT  ,
+    IsOldCounter SHORT  ,
+    IsEvent SHORT  ,
+    IsParameter SHORT  ,
+    DontCountHits SHORT  ,
+    WithHash SHORT  ,
+    HitColor SYMBOL  ,
+    LocalEventTime STRING  ,
+    Age SHORT  ,
+    Sex SHORT  ,
+    Income SHORT  ,
+    Interests SHORT  ,
+    Robotness SHORT  ,
+    RemoteIP INT  ,
+    WindowName INT  ,
+    OpenerName INT  ,
+    HistoryLength SHORT  ,
+    BrowserLanguage STRING  ,
+    BrowserCountry STRING  ,
+    SocialNetwork STRING  ,
+    SocialAction STRING  ,
+    HTTPError SHORT  ,
+    SendTiming INT  ,
+    DNSTiming INT  ,
+    ConnectTiming INT  ,
+    ResponseStartTiming INT  ,
+    ResponseEndTiming INT  ,
+    FetchTiming INT  ,
+    SocialSourceNetworkID SHORT  ,
+    SocialSourcePage STRING  ,
+    ParamPrice LONG  ,
+    ParamOrderID STRING  ,
+    ParamCurrency STRING  ,
+    ParamCurrencyID SHORT  ,
+    OpenstatServiceName STRING  ,
+    OpenstatCampaignID STRING  ,
+    OpenstatAdID STRING  ,
+    OpenstatSourceID STRING  ,
+    UTMSource STRING  ,
+    UTMMedium STRING  ,
+    UTMCampaign STRING  ,
+    UTMContent STRING  ,
+    UTMTerm STRING  ,
+    FromTag STRING  ,
+    HasGCLID SHORT  ,
+    RefererHash LONG  ,
+    URLHash LONG  ,
+    CLID INT  ,
+)
+go;
+colNames = hits.columnNames();
+schemaTb = schema(hits);
+schemaTb = schemaTb.colDefs[,:2]
+insert into schemaTb values(`EventTime, `DATETIME)
+tmpTable = table(1:0, schemaTb[`name], schemaTb[`typeString]) 
+
+db1=database(,VALUE,2013.07.01..2013.08.01)
+db2=database(,HASH,[LONG, 7])
+db = database(dbName, partitionType=COMPO, partitionScheme=[db1, db2], engine=`TSDB)
+
+
+pt = createPartitionedTable(db, tmpTable, `hits, `EventDate`UserID, ,sortColumns=`UserID`EventTime, sortKeyMappingFunction=[hashBucket{, 1000}]);
+
+// 数据导入
+def updateTime(mutable t, v) {
+    tmp = schema(t).colDefs
+    insert into tmp(name,typeString) values(`EventTime, `DATETIME)
+    table1 = table(1:0,tmp[`name],tmp[`typeString])
+    table1.append!(select * , temporalParse(RawTime, 'yyyy-MM-dd HH:mm:ss') as NewTime from t)
+    return table1
+}
+loadTextEx(db, `hits, `UserID, "/path/to/csvDataFile", sortColumns=`UserID`EventTime, schema=schemaTb, transform=updateTime{,0})
+
+// 随机采取总分区数一半的分区作为样本
+summary(pt, partitionSampling = 0.5)
