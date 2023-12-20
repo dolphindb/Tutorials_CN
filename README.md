@@ -58,7 +58,7 @@
   - [函数化编程案例](functional_programming_cases.md)
   - [模块复用教程](module_tutorial.md)
   - [通用计算教程](general_computing.md)
-    <!-- - [即时编译(JIT)教程](jit.md) -->
+  - [即时编译(JIT)教程](jit.md) 
   - [元编程教程](meta_programming.md)
   - [自定义聚合函数](udaf.md)
   - [矩阵计算](matrix.md)
