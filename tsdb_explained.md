@@ -324,7 +324,7 @@ Level File 层级间的组织形式如下图所示：
 
 下述脚本以创建一个组合分区的数据库为例，和 OLAP 引擎创库时的区别仅在于 engine 设置不同：
 
-```sql
+```
 db1 = database(, VALUE, 2020.01.01..2021.01.01)
 db2 = database(, HASH, [SYMBOL, 100])
 db = database(directory=dbName, partitionType=COMPO, partitionScheme=[db1, db2], engine="TSDB")
@@ -532,7 +532,7 @@ db.createPartitionedTable(table=tbSchema,tableName=tbName,partitionColumns=`trad
 
 - 进行点查（命中 sortKey）
 
-```sql
+```
 select * from loadTable(dbName, tbName_all) where machineId=999
 ```
 
@@ -542,7 +542,7 @@ select * from loadTable(dbName, tbName_all) where machineId=999
 | FIRST              | 9,541   | 27.7          | 26.7          |
 | LAST               | 9,507   | 29.7          | 26.3          |
 
-```sql
+```
 select * from loadTable(dbName, tbName_all) where machineId=999 and datetime=2023.07.10
 ```
 
@@ -552,7 +552,7 @@ select * from loadTable(dbName, tbName_all) where machineId=999 and datetime=202
 | FIRST              | 916     | 7.6           | 6.6           |
 | LAST               | 968     | 8.1           | 6.8           |
 
-```sql
+```
 select * from loadTable(dbName, tbName_all) where machineId=999 and datetime=2023.07.10 and datetime between 2023.07.10 09:00:01.000 and 2023.07.10 09:00:03.000
 ```
 
@@ -564,7 +564,7 @@ select * from loadTable(dbName, tbName_all) where machineId=999 and datetime=202
 
 - 查询单个分区所有记录
 
-```sql
+```
 select * from loadTable(dbName, tbName_all) where datetime=2023.07.10
 ```
 
@@ -576,7 +576,7 @@ select * from loadTable(dbName, tbName_all) where datetime=2023.07.10
 
 - 查询全表的总记录数（命中元数据）
 
-```sql
+```
 select count(*) from loadTable(dbName, tbName)
 ```
 

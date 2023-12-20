@@ -72,7 +72,7 @@ symbol,exchange,cycle,tradingDay,date,time,open,high,low,close,volume,turnover,u
 
 用脚本创建如下分布式数据库（按天进行值分区）：
 
-```sql
+```
 login(`admin,`123456)
 dataFilePath="/home/data/candle_201801.csv"
 dbPath="dfs://DolphinDBdatabase"
@@ -107,7 +107,7 @@ def i2t(mutable t){
 调用 `loadTextEx` 函数导入 csv 文件的数据到分布式表，这里指定 `transform` 参数为 `i2t` 函数，导入时会自动应用 `i2t` 函数处理数据。
 
 
-```sql
+```
 tmpTB=loadTextEx(dbHandle=db, tableName=`tb1, partitionColumns=`date, filename=dataFilePath, transform=i2t);
 ```
 
@@ -116,7 +116,7 @@ tmpTB=loadTextEx(dbHandle=db, tableName=`tb1, partitionColumns=`date, filename=d
 
 查看表内前 2 行数据，可以看到结果符合预期。
 
-```sql
+```
 select top 2 * from loadTable(dbPath,`tb1);
 
 symbol exchange cycle tradingDay date       time               open  high  low   close volume  turnover   unixTime
@@ -536,7 +536,7 @@ loop(loadText, fileDir + "/" + files(fileDir).filename).unionAll(false)
 
 使用高阶函数 [`moving`](https://www.dolphindb.cn/cn/help/Functionalprogramming/TemplateFunctions/moving.html?highlight=moving)。下例编写自定义函数 rangeTest 对每个窗口的数据进行上述区间判断，返回 true 或 false。
 
-```sql
+```
 defg rangeTest(close, downlimit, uplimit){
   size = close.size() - 1
   return between(close.subarray(0:size), downlimit.last():uplimit.last()).sum() >= size*0.75

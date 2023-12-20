@@ -99,7 +99,7 @@
 ## 3. SQL优化
 这些指标的计算SQL语句由以下几部分组成：
 
-```sql
+```
 SELECT 指标计算函数(参数)
 FROM 数据源
 WHERE 日期筛选条件,股票筛选条件,交易时间筛选条件
@@ -113,7 +113,7 @@ GROUP BY 股票代码, interval(时间列,时间单位,缺失值填充方式)
 数据采用OLAP存储引擎存储。
 
 根据指标定义公式，以列为单位进行计算，开发者能够快速写出以下SQL代码：
-```sql
+```
 /**
 part1: Define calculation function
 */
@@ -172,7 +172,7 @@ result = select
 
 上述公式定义中都是列与列之间的计算，实际计算往往发生在`BidPrice`，`BidOrderQty`，`OfferPrice`，`OfferOrderQty`这4个大组之间（每组10列），因此可以将这四个大组看成n行10列的矩阵。在SQL中进行matrix拼接，再传入聚合函数中进行矩阵运算，示例代码如下：
 
-```sql
+```
 /**
 part1: Define calculation function
 */
@@ -224,7 +224,7 @@ result1 = select
 ### 3.3 高性能1：V2.00的TSDB存储和计算
 
 DolphinDB V2.00新增了TSDB存储引擎，在创建分区数据库和表时与OLAP存储引擎的不同之处是必须指定`engine`和`sortColumns`，创建语句如下：
-```sql
+```
 dbName = "dfs://snapshot_SH_L2_TSDB"
 tableName = "snapshot_SH_L2_TSDB"
 dbTime = database(, VALUE, 2020.01.01..2020.12.31)
@@ -250,7 +250,7 @@ createPartitionedTable(dbHandle=db, table=tbTemp, tableName=tableName, partition
 
 DolphinDB从V2.00.4开始，分布式表的存储支持[数组向量（array vector）](https://www.dolphindb.cn/cn/help/200/DataTypesandStructures/DataForms/Vector/arrayVector.html)，因此在数据存储时可以把`BidPrice0-9`、`BidOrderQty0-9`、`OfferPrice0-9`、`OfferOrderQty0-9`共40列数据以array vector形式存储为`BidPrice`、`BidOrderQty`、`OfferPrice`、`OfferOrderQty`4列，SQL的示例代码如下：
 
-```sql
+```
 /**
 part1: Define calculation function
 */
@@ -302,7 +302,7 @@ result = select
 
 OLAP存储引擎创建分区数据库的代码：
 
-```sql
+```
 dbName = "dfs://snapshot_SH_L2_OLAP"
 dbTime = database(, VALUE, 2020.01.01..2020.12.31)
 dbSymbol = database(, HASH, [SYMBOL, 20])
@@ -311,7 +311,7 @@ db = database(dbName, COMPO, [dbTime, dbSymbol])
 
 TSDB存储引擎创建分区数据库的代码：
 
-```sql
+```
 dbName = "dfs://snapshot_SH_L2_TSDB"
 dbTime = database(, VALUE, 2020.01.01..2020.12.31)
 dbSymbol = database(, HASH, [SYMBOL, 20])
@@ -326,7 +326,7 @@ DolphinDB的分区规则是建立在数据库层面上的，本案例中，OLAP�
 
 OLAP存储引擎创建分区数据表的代码：
 
-```sql
+```
 dbName = "dfs://snapshot_SH_L2_OLAP"
 db = database(dbName)
 tableName = "snapshot_SH_L2_OLAP"
@@ -335,7 +335,7 @@ createPartitionedTable(dbHandle=db, table=tbTemp, tableName=tbName, partitionCol
 
 TSDB存储引擎创建分区数据表的代码：
 
-```sql
+```
 dbName = "dfs://snapshot_SH_L2_TSDB"
 db = database(dbName)
 tableName = "snapshot_SH_L2_TSDB"

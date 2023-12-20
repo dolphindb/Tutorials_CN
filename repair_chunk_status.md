@@ -49,7 +49,7 @@ DolphinDB上版本状态说明分布在Controller和Datanode上，正常情况�
 
 - 查看Controller上所有chunk的版本：
 
-  ```sql
+  ```
   select * from getClusterChunksStatus()
   ```
 
@@ -85,14 +85,14 @@ Controller上版本有3个状态：CONSTRUCTING,  RECOVERING,  COMPLETE（对应
 
 查询Controller上版本可能有问题的chunk：
 
-```sql
+```
 select * from getClusterChunksStatus()  where  state != 'COMPLETE'
 select * from rpc(getControllerAlias(), getClusterChunksStatus) where  state != 'COMPLETE'
 ```
 
 - 查看Datanode上所有chunk的版本
 
-  ```sql
+  ```
   select * from pnodeRun(getAllChunks)
   ```
 
@@ -125,7 +125,7 @@ chunk的最终状态为FIN，其他状态都是临时状态，Datanode启动后�
 
 查看Datanode上所有非正常的chunk的状态：
 
-```sql
+```
 select * from getAllChunks() where state != 0 
 ```
 
@@ -161,7 +161,7 @@ Controller和Datanode 启动后，正常情况下，所有chunk都处于终态�
 
 查询Controller上版本可能有问题的chunk：
 
-```sql
+```
 select * from rpc(getControllerAlias(), getClusterChunksStatus) where  state != 'COMPLETE'
 ```
 
@@ -243,7 +243,7 @@ updateChunkVersionOnMaster("deb91fa2-f05a-3096-5941-b80feda42562",270)
 
 如下场景：
 
-```sql
+```
 select * from rpc(getControllerAlias(), getClusterChunksStatus)
 ```
 
@@ -289,7 +289,7 @@ restoreControllerMetaFromDatanode()函数，chunk 信息未加载完毕前执行
 
 示例脚本如下：
 
-```sql
+```
 dbName="/stocks_orderbook"
 fileCond=dbName + "%"
 t=exec substr(file,strlen(dbName)) from rpc(getControllerAlias(),getClusterChunksStatus) where file like fileCond, state != "COMPLETE"

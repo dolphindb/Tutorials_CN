@@ -444,7 +444,7 @@ mysql> select * from taqTs limit 5;
 
 然后在 DolphinDB 中加载 MySQL 插件，将 MySQL 数据导入到 DolphinDB 内存表，具体代码如下：
 
-```sql
+```
 // 加载插件
 loadPlugin("/DolphinDB/server/plugins/mysql/PluginMySQL.txt");
 

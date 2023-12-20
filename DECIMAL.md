@@ -43,7 +43,7 @@ DolphinDB 目前支持 DECIMAL 类型的数据结构有：标量、向量、表�
 
 DolphinDB 中的 DECIMAL 类型的数据创建方式不同于 mysql 。在 mysql 中 DECIMAL 在创建时需要指定两个描述精度的数字，分别是 precision 和 scale，即 decimal (p, s)，p 代表整个 DECIMAL 包括整数和小数部分一共有多少位数字，s 代表 DECIMAL 的小数部分包含多少位数字。而在 DolphinDB 中定义一个 DECIMAL 类型的标量，我们只需要输入一个整型/浮点型/字符串类型的标量，并通过指定 scale，便可将其转换成DECIMAL 类型的数据，比如：
 
-```sql
+```
 a=decimal32(142, 2)
 //output：142.00
 
@@ -60,7 +60,7 @@ c=decimal32(`1.23456, 3)
 
 用户可以使用函数 bigarray 声明一个 DECIMAL32/DECIMAL64 类型的大数组，语法如下：
 
-```sql
+```
 bigarray(DECIMAL32(scale), initialSize, [capacity], [defaultValue])
 bigarray(DECIMAL64(scale), initialSize, [capacity], [defaultValue])
 
@@ -71,7 +71,7 @@ x.append!(1..1000)
 
 用户可以使用函数 array 声明一个 DECIMAL32/DECIMAL64 类型的数组，语法如下：
 
-```sql
+```
 array(DECIMAL32(scale), [initialSize], [capacity], [defaultValue])
 array(DECIMAL64(scale), [initialSize], [capacity], [defaultValue])
 
@@ -81,14 +81,14 @@ x=array(DECIMAL32(3), 10, 10, 2.3)
 
 或者使用以下方式进行数据类型转换：
 
-```sql
+```
 m=[decimal32(1.2356, 3), decimal32(2.59874, 3), decimal32(-5.23564, 3)]
 n=decimal32([1.2356, 2.59874, -5.23564], 3)
 ```
 
 用户可以使用数组向量 arrayVector 声明一个 DECIMAL32/DECIMAL64 类型的大数组，语法如下：
 
-```sql
+```
 array(DECIMAL32(scale)[], [initialSize], [capacity], [defaultValue])
 array(DECIMAL64(scale)[], [initialSize], [capacity], [defaultValue])
 
@@ -103,13 +103,13 @@ x.append!([val1, val2])
 
 在 DolphinDB 中定义一个含有 DECIMAL 类型的 column，可以在建表时参考如下定义方式：
 
-```sql
+```
 t=table(100:0, `id`val1`val2, [INT, DECIMAL32(4), DECIMAL64(8)])
 ```
 
 可以向该表中插入 DECIMAL 类型的数据或整型/浮点型/字符串类型的数据。例如：
 
-```sql
+```
 insert into t values(1, decimal32(2.345, 4), decimal64(2.3654, 8));
 or
 insert into t values(1, 2.345, 2.3654);
@@ -117,7 +117,7 @@ insert into t values(1, 2.345, 2.3654);
 
 除了内存表支持存储 DECIMAL 类型的数据， 同样在 OLAP 和 TSDB 引擎中也支持存储 DECIMAL 类型的数据。示例如下：
 
-```sql
+```
 // 在olap引擎中：
 dbName="dfs://testDecimal_olap"
 if(existsDatabase(dbName)){
@@ -164,14 +164,14 @@ DECIMAL32/DECIMAL64 类型的数值范围如下表所示，其中，DECIMAL32(S)
 
 在创建 DECIMAL32/DECIMAL64 类型的数据时，会首先考虑有效数值范围和 scale 的有效范围，超出限定范围，则做溢出处理。若小数位超出 DECIMAL32/DECIMAL64 的 scale 有效范围，系统将报错：“Scale is out of bounds”。例如：
 
-```sql
+```
 decimal32(1.2, 10)
 decimal64(1.2, 19)
 ```
 
 同样，若整数位数超出数据类型所能表示的最大位数也会做溢出处理，系统将报错：“Decimal math overflow”。例如：
 
-```sql
+```
 decimal32(1000000000, 1)
 decimal32(`1000000000, 1)
 ```
@@ -180,7 +180,7 @@ decimal32(`1000000000, 1)
 
 即使创建数值时其没有超出有效数值范围，但随着数据在计算过程中小数位数的增多或者数值的增大，也有可能超出有效数值范围，导致溢出。例如：
 
-```sql
+```
 6*decimal32(4.2, 8)
 6*decimal32(100000000, 1)
 ```
@@ -192,13 +192,13 @@ decimal32(`1000000000, 1)
 注意：
 1. 2.00.8 版本 server 会将其它数据类型转换为对应的 DECIMAL 类型。如下例，将100与 DECIMAL32 比较，会将100转换为 decimal32(100,8)，此时会报数据溢出的错误：
 
-```sql
+```
 decimal32(1, 8) < 100
 //output: Decimal math overflow
 ```
 2. 2.00.9 及以上版本，在进行 DECIMAL 类型与其它数据类型的比较时，系统会将所有数据类型都转换为 DECIMAL64。此时运行上例，不会出现数据溢出的报错。
 
-```sql
+```
 decimal32(1, 8) < 100
 //output: true
 ```
@@ -211,7 +211,7 @@ DolphinDB 数据库规定了 DECIMAL 类型的数据之间进行算术运算的�
 
 ​        规则一：`DECIMAL32(S1) <op> DECIMAL32(S2) => DECIMAL32(S)`
 
-```sql
+```
 m=decimal32(1.23, 3)+decimal32(2.45, 2)
 //output:3.680
 //typestr:DECIMAL32
@@ -219,7 +219,7 @@ m=decimal32(1.23, 3)+decimal32(2.45, 2)
 
 ​        规则二：`DECIMAL64(S1) <op> DECIMAL64(S2) => DECIMAL64(S)`
 
-```sql
+```
 m=decimal64(1.23, 3)+decimal64(2.45, 2)
 //output:3.680
 //typestr:DECIMAL64
@@ -227,7 +227,7 @@ m=decimal64(1.23, 3)+decimal64(2.45, 2)
 
 ​        规则三：`DECIMAL64(S1) <op> DECIMAL32(S2) => DECIMAL64(S)`
 
-```sql
+```
 m=decimal64(1.23, 3)+decimal32(2.45, 2)
 //output:3.680
 //typestr:DECIMAL64
@@ -235,7 +235,7 @@ m=decimal64(1.23, 3)+decimal32(2.45, 2)
 
 ​        规则四：`DECIMAL32(S1) <op> DECIMAL64(S2) => DECIMAL64(S)`
 
-```sql
+```
 m=decimal32(1.23, 3)+decimal64(2.45, 2)
 //output:3.680
 //typestr:DECIMAL64
@@ -246,7 +246,7 @@ DolphinDB 数据库中 DECIMAL 类型的数据算术运算结果的 `scale` 由�
 - 对于加法和减法: `S = max(S1, S2)`
 - 对于乘法: `S = S1 + S2`
 
-```sql
+```
 m=decimal64(1.23, 3)*decimal32(2.45, 2)
 //output:3.01350
 //typestr:DECIMAL64
@@ -254,7 +254,7 @@ m=decimal64(1.23, 3)*decimal32(2.45, 2)
 
 - 对于除法: `S = S1`
 
-```sql
+```
 m=decimal64(1.23, 3)/decimal32(2.45, 2)
 //output:0.502
 //typestr:DECIMAL64
@@ -274,7 +274,7 @@ m=decimal64(1.23, 3)/decimal32(2.45, 2)
 
 ​       1. 使用 saveText 函数获得一个 *test_decimal.csv* 文件。
 
-```sql
+```
 WORK_DIR="/hdd/hdd1/test_decimal/"
 n=1000
 t=table(rand(1..100, n) as id, rand(2022.11.23T12:39:56+1..100, n) as datetimev, rand(`AAPL`ARS`BSA, n) as sym, rand(rand(100.0, 10) join take(00f, 10), n) as val1, rand(rand(100.0, 10) join take(00f, 10), n) as val2)
@@ -283,7 +283,7 @@ saveText(t, WORK_DIR+"test_decimal.csv")
 
 ​       2. 使用 loadText 函数将 *test_decimal.csv* 中的部分列转换为 DECIMAL 类型。
 
-```sql
+```
 shemaTable=table(`id`timev`sym`val1`val2 as name, [`INT, `DATETIME, `SYMBOL, "DECIMAL32(4)", "DECIMAL64(5)"] as type)
 re=loadText(filePath, , shemaTable)
 ```

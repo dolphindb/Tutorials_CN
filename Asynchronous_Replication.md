@@ -226,7 +226,7 @@ loadTable(dbName, tbName).append!(t)
 
 执行以下语句确认数据已同步到从集群中：
 
-```sql
+```
 select count(*) from loadTable("dfs://testDB", "testTB")
 ```
 

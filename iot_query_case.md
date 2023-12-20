@@ -68,13 +68,13 @@ sortColumns=[`deviceId,`ts]
 库表创建完成后，模拟 2022-01-01 至 2022-01-12 的数据，具体代码详见附录 [DolphinDB 脚本](script/iot_query_case/Noise_V3.dos)。
 
 可以通过 SQL 查询验证下数据集大小：
-```sql
+```
 select count(*) from  loadTable(database("dfs://NoiseDB"),"noise") where date between 2022.01.01:2022.01.102> 1260010000
 ```
 
 导入完成后，每个分区下生成3个level 0 file，未满足自动合并条件（大于等于10个 levelFile），需要进行手动合并。
 
-```sql
+```
 chunkIds = exec chunkId from getChunksMeta() where type=1
 for (x in chunkIds) {
   triggerTSDBCompaction(x)

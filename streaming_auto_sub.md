@@ -147,7 +147,7 @@ tail -1000f /opt/DolphinDB/server/dolphindb.log
 
 通过 GUI 连接相应的数据节点，执行登录代码：
 
-```sql
+```
 login("admin", "123456")
 ```
 
@@ -157,7 +157,7 @@ login("admin", "123456")
 
 执行流数据发布表订阅状信息询函数：
 
-```sql
+```
 getStreamingStat().pubTables
 ```
 
@@ -167,7 +167,7 @@ getStreamingStat().pubTables
 
 执行响应式状态引擎信息询函数：
 
-```sql
+```
 getStreamEngineStat().ReactiveStreamEngine
 ```
 
@@ -177,7 +177,7 @@ getStreamEngineStat().ReactiveStreamEngine
 
 执行时间序列引擎信息询函数：
 
-```sql
+```
 getStreamEngineStat().TimeSeriesEngine
 ```
 
@@ -193,7 +193,7 @@ DolphinDB 提供了便捷的历史数据回放工具，主要是通过 replay �
 
 本教程回放的对象是一个内存表数据，包含了 5 只股票某天的历史 Level2 快照数据，csv 文本文件（见附件）的存储路径为：/data/snapshot/stockData.csv，回放的代码如下，在时间维度加速了 1000 倍进行回放：
 
-```sql
+```
 //replay
 filePath = "/data/snapshot/stockData.csv"
 schema = table(loadTable("dfs://snapshot", "snapshot").schema().colDefs.name as name, loadTable("dfs://snapshot", "snapshot").schema().colDefs.typeString as type)
@@ -203,7 +203,7 @@ replay(inputTables=snapshot, outputTables=snapshotStream, dateColumn=`Date, time
 
 大约 26 s 以后，5 只股票某天的历史数据回放完毕，执行下述代码查看某只股票的分钟处理指标：
 
-```sql
+```
 select * from snapshotAggr1min where SecurityID="000001.SZ"
 ```
 
@@ -213,7 +213,7 @@ select * from snapshotAggr1min where SecurityID="000001.SZ"
 
 同时可以执行下述代码，查询写入数据库的持久化数据的条数：
 
-```sql
+```
 select count(*) from loadTable("dfs://snapshot", "snapshot")
 ```
 

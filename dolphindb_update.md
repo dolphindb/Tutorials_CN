@@ -41,7 +41,7 @@ DolphinDB 提供 3 种更新分布式表的方法：
 
     方法1，下列 update SQL语句执行后，ID 为1的所有记录的 vol 值更新为1：
 
-    ```sql
+    ```
     update pt set vol = 1 where ID = 1
     ```
 
