@@ -135,7 +135,7 @@ unzip dolphindb.zip -d </path/to/directory>
 
   在数据节点的 Web 交互编程界面执行以下语句创建数据库和分区表：
 
-  ```sql
+  ```
   // 创建存储的数据库和分区表
   login("admin", "123456")
   dbName = "dfs://testDB"
@@ -151,7 +151,7 @@ unzip dolphindb.zip -d </path/to/directory>
   ```
   然后，执行以下语句模拟生成 5000 个股票 1 天的 1 分钟 K 线数据并写入上面创建的分区表：
 
-  ```sql
+  ```
   // 模拟数据并写入分区表
   n = 1210000
   randPrice = round(10+rand(1.0, 100), 2)
@@ -199,13 +199,13 @@ unzip dolphindb.zip -d </path/to/directory>
 
   在计算节点的 Web 交互编程界面执行以下语句加载分区表对象，此时只加载了分区表的元数据，并未加载分区表全量数据，所以响应时间非常快：
 
-  ```sql
+  ```
   // 加载分区表对象
   pt = loadTable("dfs://testDB", "testTB")
   ```
   然后，执行以下语句查询股票表中每天包含的数据条数：
 
-  ```sql
+  ```
   // SQL 返回数据量少的时候，可以直接取回客户端展示
   select count(*) from pt group by date(DateTime) as Date
   ```
@@ -215,7 +215,7 @@ unzip dolphindb.zip -d </path/to/directory>
 
   执行以下语句计算每支股票每天的 OHLC 值：
 
-  ```sql
+  ```
   // SQL 返回数据量较大时，可以赋值给变量，占用 server 端内存，客户端分页取回展示
   result = select first(LastPx) as Open, max(LastPx) as High, min(LastPx) as Low, last(LastPx) as Close from pt group by date(DateTime) as Date, SecurityID
   ```
@@ -283,7 +283,7 @@ unzip dolphindb.zip -d </path/to/directory>
 
   在数据节点的 Web 交互编程界面执行以下语句创建数据库和分区表：
 
-  ```sql
+  ```
   // 创建存储的数据库和分区表
   login("admin", "123456")
   dbName = "dfs://testDB"
@@ -299,7 +299,7 @@ unzip dolphindb.zip -d </path/to/directory>
   ```
   然后，执行以下语句模拟生成 5000 个股票 1天的 1 分钟 K 线数据并写入上面创建的分区表：
 
-  ```sql
+  ```
   // 模拟数据并写入分区表
   n = 1210000
   randPrice = round(10+rand(1.0, 100), 2)
@@ -347,13 +347,13 @@ unzip dolphindb.zip -d </path/to/directory>
 
   在计算节点的 Web 交互编程界面执行以下语句加载分区表对象，此时只加载了分区表的元数据，并未加载分区表全量数据，所以响应时间非常快：
 
-  ```sql
+  ```
   // 加载分区表对象
   pt = loadTable("dfs://testDB", "testTB")
   ```
   然后，执行以下语句查询股票表中每天包含的数据条数：
 
-  ```sql
+  ```
   // SQL 返回数据量少的时候，可以直接取回客户端展示
   select count(*) from pt group by date(DateTime) as Date
   ```
@@ -363,7 +363,7 @@ unzip dolphindb.zip -d </path/to/directory>
 
   执行以下语句计算每支股票每天的 OHLC 值：
 
-  ```sql
+  ```
   // SQL 返回数据量较大时，可以赋值给变量，占用 server 端内存，客户端分页取回展示
   result = select first(LastPx) as Open, max(LastPx) as High, min(LastPx) as Low, last(LastPx) as Close from pt group by date(DateTime) as Date, SecurityID
   ```
