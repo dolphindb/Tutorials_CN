@@ -20,6 +20,7 @@ DolphinDB 是一款高性能分布式时序数据库。与传统的关系数据�
 - [3.4 历史数据访问（窗口计算和迭代）](#34-历史数据访问窗口计算和迭代)
 - [3.5 循环](#35-循环)
 - [4.1 数组向量 (array vector)](#41-数组向量-array-vector)
+- [4.2 即时编译(JIT)](#42-即时编译jit)
 - [4.3 性能测试](#43-性能测试)
 
 
@@ -1158,7 +1159,7 @@ def averagePress3(bidPrice, bidOrderQty, offerPrice, offerOrderQty, lag){
 
 ③ 因为对 array vector 的切片索引也是有开销的，所以并不是所有因子转化为 array vector 的形式都会有性能提升。如果因子涉及对十档数据的大量复杂操作，则使用 array vector 作为输入会有明显的性能提升；如果因子只是对某档数据进行计算，比如计算中只会使用到的第一档数据，那么更适合多档多列的存储方式。
 
-<!--
+
 ## 4.2 即时编译(JIT)
 
 DolphinDB 底层由 C++ 实现，脚本中的一次函数调用会转化为多次 C++ 内的虚拟函数调用。在不能使用向量化的情况下，解释成本会比较高。
@@ -1232,7 +1233,7 @@ metrics = <[dateTime, weightedAveragedPrice(bidPrice0, bidOrderQty0, offerPrice0
 - **区别 5**：JIT 版本中函数定义里不能设置默认参数。
 
 比如 `def foo(x, y){}` 是可以的，但 `def foo(x, y=1){}` 不可以。
--->
+
 
 ## 4.3 性能测试
 

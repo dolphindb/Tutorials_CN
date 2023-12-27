@@ -108,7 +108,7 @@ while i<=10000000:
 
 第一步，执行以下脚本检查分区状态是否正常，返回为空，即所有副本状态正常。只有在分区状态不处于 RECOVERING 状态下才可进行后续步骤。
 
-```sql
+```
 select * from rpc(getControllerAlias(), getClusterChunksStatus) where state != "COMPLETE" 
 ```
 

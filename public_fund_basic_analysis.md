@@ -64,7 +64,7 @@
 
 > 10 万行以下的单表数据建议用 DolphinDB 的维度表存储。
 
-```sql
+```
 csvDataPath = "/ssd/ssd2/data/fundData/publicFundData.csv"
 dbName = "dfs://publicFundDB"
 tbName = "publicFundData"
@@ -89,7 +89,7 @@ loadTable(dbName, tbName).append!(tmp)
 
 数据导入后，可以执行相关 SQL 语句对维度表数据进行预览，执行下述代码加载包含元数据的表对象，此步骤并未加载维度表数据到内存，所以执行耗时非常短，变量 fundData 几乎不占用内存资源：
 
-```sql
+```
 fundData = loadTable("dfs://publicFundDB", "publicFundData")
 ```
 
@@ -97,7 +97,7 @@ fundData = loadTable("dfs://publicFundDB", "publicFundData")
 
 > 如果单次 SQL 查询返回的结果较大，必须将查询的结果返回给一个变量，然后双击 GUI 的 Variables 进行分页查看，因为分页查看的话数据是分段传输的，而不是一次性从服务端传输回客户端，避免 GUI 客户端被阻塞的情况。 
 
-```sql
+```
 select top 10 * from fundData
 ```
 
@@ -105,7 +105,7 @@ select top 10 * from fundData
 
 因为公开市场数据表中的总数据量比较小，所以可以对其进行全表查询，并将返回的查询结果赋值给一个内存表变量 publicFundData，然后双击 GUI 的 Variables 处的 publicFundData 进行数据分页浏览：
 
-```sql
+```
 publicFundData = select * from fundData
 ```
 
@@ -119,19 +119,19 @@ publicFundData = select * from fundData
 
 查询公开数据表的数据，并计算综合费率 Fee，最终将查询结果赋值给内存表变量 fundFee ， 具体代码如下：
 
-```sql
+```
 fundFee = select *, (MFee + CFee + SFee) as Fee from fundData
 ```
 
 查询综合费率最低的 50 只债券型公募基金， 具体代码如下：
 
-```sql
+```
 select top 50 * from fundFee where Type == "债券型" order by Fee
 ```
 
 查询综合费率最低的 50 只债券型且不是指数型的公募基金， 具体代码如下：
 
-```sql
+```
 select top 50 * from  fundFee where Type == "债券型", not(FullName like "%指数%") order by Fee
 ```
 
@@ -139,7 +139,7 @@ select top 50 * from  fundFee where Type == "债券型", not(FullName like "%指
 
 DolphinDB 的 [stat 函数](https://www.dolphindb.cn/cn/help/200/FunctionsandCommands/FunctionReferences/s/stat.html)可以快速生成数据的统计信息，包括平均值、最大值、最小值、计数、中位数和标准差等，[quantile 函数](https://www.dolphindb.cn/cn/help/200/FunctionsandCommands/FunctionReferences/q/quantile.html)可以快速计算分位数，可以通过 [def](https://www.dolphindb.cn/cn/help/200/Objects/FunctionCall.html) 自定义一个信息摘要统计函数，然后对 Type 列进行分组计算，具体代码如下：
 
-```sql
+```
 // user defined summary statistics function
 def describe(x){
 	y = stat(x)
@@ -158,7 +158,7 @@ select describe(Fee) as `count`mean`std`min`q_25`q_50`q_75`max`median from fundF
 
 #### 1.3.4 按基金类型分组后的分布直方图
 
-```sql
+```
 /**plot fees histogram*/
 // Type="REITs"
 (exec Fee from fundFee where Type="REITs").plotHist(binNum=100)
@@ -195,7 +195,7 @@ select describe(Fee) as `count`mean`std`min`q_25`q_50`q_75`max`median from fundF
 
 工作日数据表的数据量相对比较小，建议使用 DolphinDB 的[维度表](https://www.dolphindb.cn/cn/help/200/FunctionsandCommands/FunctionReferences/c/createTable.html)进行存储。以 csv 数据文件导入 DolphinDB 维度表为例，具体代码如下：
 
-```sql
+```
 csvDataPath = "/ssd/ssd2/data/fundData/workday.csv"
 dbName = "dfs://publicFundDB"
 tbName = "workday"
@@ -237,7 +237,7 @@ loadTable(dbName, tbName).append!(tmp)
 
 截止 2022 年 7 月，历史净值数据表的数据量大约是 1 千多万条，建议使用 DolphinDB 的[分区表](https://www.dolphindb.cn/cn/help/200/FunctionsandCommands/FunctionReferences/c/createPartitionedTable.html)进行存储，分区方法是在时间维度按照年为最小单位进行分区。以 csv 数据文件导入 DolphinDB 分区表为例，具体代码如下：
 
-```sql
+```
 csvDataPath = "/ssd/ssd2/data/fundData/publicFundNetValue.csv"
 dbName = "dfs://publicFundDB"
 tbName = "publicFundNetValue"
@@ -290,13 +290,13 @@ loadTable(dbName, tbName).append!(tmp)
 
 数据导入后，执行下述代码加载包含元数据的表对象，此步骤并未加载分区表数据到内存，所以执行耗时非常短，变量 fundNetValue 几乎不占用内存资源：
 
-```sql
+```
 fundNetValue = loadTable("dfs://publicFundDB", "publicFundNetValue")
 ```
 
 进行工作日的过滤，具体代码如下：
 
-```sql
+```
 dateRange = exec distinct(TradeDate) from fundNetValue
 firstDate = min(dateRange) 
 lastDate =  max(dateRange)
@@ -305,20 +305,20 @@ workdays = exec day from loadTable("dfs://publicFundDB", "workday") where market
 
 查询基金的复权净值并通过 panel 函数生成面板数据，具体代码如下：
 
-```sql
+```
 oriData = select TradeDate, SecurityID, AdjNetValue from fundNetValue
 panelData = panel(row=oriData.TradeDate, col=oriData.SecurityID, metrics=oriData.AdjNetValue, rowLabel=workdays, parallel=true)
 ```
 
 使用 DolphinDB 的 [percentChange 函数](https://www.dolphindb.cn/cn/help/200/FunctionsandCommands/FunctionReferences/p/percentChange.html)计算复权净值日收益率，NULL 值的填充最大窗口是 10，具体代码如下：
 
-```sql
+```
 returnsMatrix = panelData.ffill(10).percentChange()
 ```
 
 returnsMatrix 是一个 1 万多列的矩阵变量，可以执行下述代码快速查看部分计算结果：
 
-```sql
+```
 returnsMatrix[0:3]
 ```
 
@@ -328,7 +328,7 @@ returnsMatrix[0:3]
 
 计算公募基金在历史上的数量，并绘图：
 
-```sql
+```
 fundNum = matrix(rowCount(returnsMatrix)).rename!(returnsMatrix.rowNames(), ["count"])
 plot(fundNum.loc( ,`count), fundNum.rowNames(), '公募基金在历史上的数量变化', LINE)
 ```
@@ -339,13 +339,13 @@ plot(fundNum.loc( ,`count), fundNum.rowNames(), '公募基金在历史上的数�
 
 执行下述代码，计算公募基金的**季度平均收益率**：
 
-```sql
+```
 qavgReturns = returnsMatrix.setIndexedMatrix!().resample("Q", mean)	
 ```
 
 执行下述代码，绘制某只基金的**季度平均收益率曲线**：
 
-```sql
+```
 plot(qavgReturns["160211.SZ"], chartType=LINE)
 ```
 
@@ -355,7 +355,7 @@ plot(qavgReturns["160211.SZ"], chartType=LINE)
 
 执行下述代码，构建基金名称和基金类型一一对应的字典：
 
-```sql
+```
 fundData = loadTable("dfs://publicFundDB", "publicFundData")
 fundType = select SecurityID, Type from fundData where SecurityID in returnsMatrix.colNames() order by Type
 fundTypeMap = dict(fundType["SecurityID"], fundType["Type"])
@@ -363,7 +363,7 @@ fundTypeMap = dict(fundType["SecurityID"], fundType["Type"])
 
 为了更好地展示数据，改变日收益率矩阵列的排序和列的名称，具体代码如下：
 
-```sql
+```
 tReturnsMatrix = returnsMatrix[fundType["SecurityID"]]
 newNames = fundType["Type"] + "_" + fundType["SecurityID"].strReplace(".", "_").strReplace("!", "1")
 tReturnsMatrix.rename!(newNames)
@@ -374,13 +374,13 @@ tReturnsMatrix[0:3]
 
 执行下述代码，计算各个类型基金的**年度平均收益率**：
 
-```sql
+```
 yearReturnsMatrix = ((returnsMatrix+1).resample("A", prod)-1).nullFill(0).regroup(fundTypeMap[returnsMatrix.colNames()], mean, byRow=false)
 ```
 
 执行下述代码，绘制部分类型基金的**年度平均收益柱状图**：
 
-```sql
+```
 yearReturnsMatrix = yearReturnsMatrix.loc( , ["债券型", "股票型", "混合型"])
 yearReturnsMatrix.loc(year(yearReturnsMatrix.rowNames())>=2014, ).plot(chartType=BAR)
 ```
@@ -406,7 +406,7 @@ yearReturnsMatrix.loc(year(yearReturnsMatrix.rowNames())>=2014, ).plot(chartType
 
 * 去除“货币市场型“和”REITS“类型的基金
 
-```sql
+```
 uReturnsMatrix = returnsMatrix.loc(,(each(count, returnsMatrix) > 1000 && returnsMatrix.ilastNot() >=  returnsMatrix.rows() - 30)&&!(fundTypeMap[returnsMatrix.colNames()] in ["货币市场型", "REITs"]))
 ```
 
@@ -418,7 +418,7 @@ uReturnsMatrix = returnsMatrix.loc(,(each(count, returnsMatrix) > 1000 && return
 
 - 年化波动率 = 收益率标准差 × 242^0.5
 
-```sql
+```
 exp = mean(uReturnsMatrix)*242
 vol = std(uReturnsMatrix)*sqrt(242)
 ```
@@ -427,7 +427,7 @@ vol = std(uReturnsMatrix)*sqrt(242)
 
 年化无风险资产的收益率一般可以选择用长期国债到期收率来估计，本教程使用的年化无风险资产的收益率为 0.28，计算夏普比率的代码如下所示：
 
-```sql
+```
 sharpe = (exp - 0.028)/vol
 ```
 
@@ -435,7 +435,7 @@ sharpe = (exp - 0.028)/vol
 
 执行下述代码，生成年化收益率、年化波动率和夏普比率数据表：
 
-```sql
+```
 perf = table(uReturnsMatrix.colNames() as SecurityID, fundTypeMap[uReturnsMatrix.colNames()] as Type, exp*100 as exp, vol*100 as vol, sharpe)
 ```
 
@@ -443,7 +443,7 @@ perf = table(uReturnsMatrix.colNames() as SecurityID, fundTypeMap[uReturnsMatrix
 
 - 年化收益率直方图
 
-  ```sql
+  ```
   (exec exp from perf where exp > -10, exp < 40).plotHist(400)
   ```
   
@@ -452,7 +452,7 @@ perf = table(uReturnsMatrix.colNames() as SecurityID, fundTypeMap[uReturnsMatrix
 
 - 年化波动率直方图
 
-  ```sql
+  ```
   (exec vol from perf where vol < 40).plotHist(400)
   ```
   
@@ -461,7 +461,7 @@ perf = table(uReturnsMatrix.colNames() as SecurityID, fundTypeMap[uReturnsMatrix
 
 - 夏普比率直方图
 
-  ```sql
+  ```
   (exec sharpe from perf where sharpe > 0).plotHist(200)
   ```
   
@@ -470,7 +470,7 @@ perf = table(uReturnsMatrix.colNames() as SecurityID, fundTypeMap[uReturnsMatrix
 
 - 风险收益散点图
 
-  ```sql
+  ```
   mask = select * from perf where sharpe>0, vol<40, exp<40 
   plot(mask["exp"], mask["vol"], ,SCATTER)
   ```
@@ -492,20 +492,20 @@ perf = table(uReturnsMatrix.colNames() as SecurityID, fundTypeMap[uReturnsMatrix
 * 各个类型基金中夏普比率最大的 50 只基金
 * 选取 2015 年 1 月 1 日以后的基金数据
 
-```sql
+```
 filterTB = select * from perf where exp<40, vol<40, sharpe>0 context by Type csort sharpe desc limit 50
 returnsMatrix50 = returnsMatrix.loc(2015.01.01:, returnsMatrix.colNames() in filterTB["SecurityID"])
 ```
 
 **计算年度收益率**
 
-```sql
+```
 yearReturnsMatrix50 = transpose((returnsMatrix50 .setIndexedMatrix!()+1).resample("A", prod)-1).nullFill(0)
 ```
 
 **查看指定类型基金的年度收益率**
 
-```sql
+```
 yearReturnsMatrix50.loc(fundTypeMap[yearReturnsMatrix50.rowNames()] == "股票型", )
 ```
 
@@ -521,13 +521,13 @@ yearReturnsMatrix50.loc(fundTypeMap[yearReturnsMatrix50.rowNames()] == "股票�
 
 **计算相关系数**
 
-```sql
+```
 corrMatrix = pcross(corr, returnsMatrix50)
 ```
 
 **查看指定类型之间的相关系数**
 
-```sql
+```
 corrMatrix.loc(fundTypeMap[corrMatrix.rowNames()]=="股票型", fundTypeMap[corrMatrix.rowNames()]=="股票型")
 ```
 
@@ -539,13 +539,13 @@ corrMatrix.loc(fundTypeMap[corrMatrix.rowNames()]=="股票型", fundTypeMap[corr
 
 执行下述代码，获取 2010 年 1 月 1 日到 2020 年 12 月 31 日买入时的复权净值数据：
 
-```sql
+```
 filterPanelData = panelData.loc(2010.01.01..2020.12.31, view=true)
 ```
 
 执行下述代码，获取 2020 年 12 月 31 日前买入并持有一年后的复权净值数据：
 
-```sql
+```
 // 获取持有一年后的复权净值数据
 dayIndex = panelData.rowNames().temporalAdd(-1,'y')
 workdays = select * from loadTable("dfs://publicFundDB", "workday")
@@ -555,21 +555,21 @@ filterPanelDataTmp = panelData.loc(workeDayIndex>=panelData.rowNames()[0]&&worke
 
 执行下述代码，计算持有区间的累计收益率：
 
-```sql
+```
 filterPanelDataTmp, filterPanelData = align(filterPanelDataTmp, filterPanelData)
 cumulativeReturn = (filterPanelDataTmp - filterPanelData) / filterPanelData
 ```
 
 执行下述代码，计算收益率有超过 1000 个数据的基金持有一年的平均收益率：
 
-```sql
+```
 filterCumulativeReturn = cumulativeReturn[x->count(x) > 1000]
 select SecurityID, mean from table(filterCumulativeReturn.colNames() as SecurityID, mean(filterCumulativeReturn) as mean) order by mean desc
 ```
 
 执行下述代码，计算每只基金买入持有一年后的累计收益率大于 0.2 的可能性：
 
-```sql
+```
 result = each(count, cumulativeReturn[cumulativeReturn>0.2]) \ cumulativeReturn.rows()
 (select SecurityID, prop from table(cumulativeReturn.colNames() as SecurityID, result as prop) order by prop desc).head(30)
 ```
@@ -608,7 +608,7 @@ returnsMatrix.resample('Q').mean()
 
 计算季度平均收益率：
 
-```sql
+```
 returnsMatrix.setIndexedMatrix!().resample("Q", mean)
 ```
 

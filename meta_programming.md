@@ -368,7 +368,7 @@ mt       |vn       |bc |cc  |stt |vt |gn |bk   |sc |vas |pm |dls        |dt     
 
 需要对每天的数据都执行一组查询。为了便于理解，这里我们使用了以下4个查询。实际应用中可能会有几千个查询。
 
-```sql
+```
 select * from t where vn=50982208,bc=25,cc=814,stt=11,vt=2, dls=2020.02.05, mt<52355979 order by mt desc limit 1
 select * from t where vn=50982208,bc=25,cc=814,stt=12,vt=2, dls=2020.02.05, mt<52355979 order by mt desc limit 1
 select * from t where vn=51180116,bc=25,cc=814,stt=12,vt=2, dls=2020.02.05, mt<52354979 order by mt desc limit 1

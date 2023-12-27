@@ -52,7 +52,7 @@
 
     - DolphinDB：
 
-      ```sql
+      ```
       defg getAnnualReturn(value){
             return pow(1 + ((last(value) - first(value))\first(value)), 252\730) - 1
       }
@@ -77,7 +77,7 @@
   
     - DolphinDB：
   
-      ```sql
+      ```
       defg getAnnualVolatility(value){
       	return std(deltas(value)\prev(value)) * sqrt(252)
       }
@@ -105,7 +105,7 @@
 
     - DolphinDB：
 
-      ```sql
+      ```
       defg getAnnualSkew(value){
       	return skew(deltas(value)\prev(value))
       }
@@ -133,7 +133,7 @@
   
     - DolphinDB：
   
-      ```sql
+      ```
       defg getAnnualKur(value){
       	return kurtosis(deltas(value)\prev(value)) 
       }
@@ -161,7 +161,7 @@
   
     - DolphinDB：
   
-      ```sql
+      ```
       defg getSharp(value){
       	return (getAnnualReturn(value) - 0.03)\getAnnualVolatility(value) as sharpeRat
       }
@@ -188,7 +188,7 @@
   
     - DolphinDB：
   
-      ```sql
+      ```
       def getMaxDrawdown(value){
       	i = imax((cummax(value) - value) \ cummax(value))
       	if (i==0){
@@ -222,7 +222,7 @@
   
     - DolphinDB：
   
-      ```sql
+      ```
       def getDrawdownRatio(value){
       	return getAnnualReturn(value) \ getMaxDrawdown(value)
       }
@@ -249,7 +249,7 @@
   
     - DolphinDB：
   
-      ```sql
+      ```
       def getBeta(value, price){
       	return covar(deltas(value)\prev(value), deltas(price)\prev(price)) \ std(deltas(price)\prev(price))
       }
@@ -280,7 +280,7 @@
   
     - DolphinDB：
   
-      ```sql
+      ```
       def getAlpha(value, price){
       	return getAnnualReturn(value) - 0.03 - getBeta(value, price) * (getAnnualReturn(price) - 0.03)
       }
@@ -339,7 +339,7 @@
   
     - DolphinDB：
   
-      ```sql
+      ```
       def calAllRs2(mret, symList, k){
               rowCount = mret.rows()/k * k
               demeanCum = rolling(cumsum, mret[0:rowCount,] - each(stretch{, rowCount}, rolling(avg, mret, k, k)), k, k)

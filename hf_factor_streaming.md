@@ -16,6 +16,7 @@ DolphinDB是一款高性能分布式时序数据库。与传统的关系数据�
 	- [6.1 使用字典或分区内存表分组存储数据](#61-使用字典或分区内存表分组存储数据)
 	- [6.2 平衡延时和吞吐量](#62-平衡延时和吞吐量)
 	- [6.3 并行计算](#63-并行计算)
+	- [6.4 即时编译](#64-即时编译)
 - [7. 流计算调试](#7-流计算调试)
 	- [7.1 调试消息处理函数](#71-调试消息处理函数)
 	- [7.2 历史数据回测](#72-历史数据回测)
@@ -381,7 +382,6 @@ def factorHandler(mutable historyDict, mutable factors, msg){
 }
 ```
 
-<!--
 ### 6.4 即时编译
 
 消息处理函数若逻辑较复杂，需要用到for循环，while循环和if-else等语句，无法使用向量化运算但又对运行速度有极高要求，可使用DolphinDB中的即时编译（JIT）功能，以显著提升性能。关于即时编译功能的更多介绍，请参考[DolphinDB即时编译教程](./jit.md)。
@@ -467,7 +467,7 @@ subscribeTable(tableName="quotes", actionName="act_factor", offset=-1, handler=f
 
 replay(inputTables=quotesData, outputTables=quotes, dateColumn=`date, timeColumn=`time)
 ```
--->
+
 
 ## 7. 流计算调试
 

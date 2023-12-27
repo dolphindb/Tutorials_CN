@@ -416,7 +416,7 @@ DolphinDB 开发了 Grafana 数据源插件，用户在 Grafana 面板上通过�
 
 Grafana 中的 Query 代码：
 
-```sql
+```
 select * from warningTable
 ```
 
