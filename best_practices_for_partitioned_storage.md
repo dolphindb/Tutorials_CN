@@ -571,11 +571,11 @@ partitioned by tradetime
 #### 期权快照
 
 ```
-create database "dfs://ctp"
+create database "dfs://ctp_options"
 partitioned by VALUE(2020.01.01..2021.01.01), HASH([SYMBOL, 20])
 engine='TSDB'
 
-create table "dfs://ctp"."options"(
+create table "dfs://ctp_options"."options"(
     TradingDay DATE[comment="交易日期", compress="delta"]
     ExchangeID SYMBOL
     LastPrice DOUBLE
@@ -622,11 +622,11 @@ keepDuplicates=ALL
 #### 期货快照
 
 ```
-create database "dfs://ctp"
+create database "dfs://ctp_futures"
 partitioned by VALUE(2020.01.01..2021.01.01), HASH([SYMBOL, 10])
 engine='TSDB'
 
-create table "dfs://ctp"."futures"(
+create table "dfs://ctp_futures"."futures"(
     TradingDay DATE[comment="交易日期", compress="delta"]
     ExchangeID SYMBOL
     LastPrice DOUBLE
