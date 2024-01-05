@@ -59,7 +59,7 @@
 | 优化查询方法                    | 命中分区剪枝；通过索引加速查询。                         | 命中分区剪枝；读取整列数据较为高效，因此查询整个分区或整列数据时具有查询优势。  |
 | 是否支持去重                    | 支持，基于 sortColumns 去重                     | 不支持                                      |
 | 读写数据是否有序                  | 每批刷盘的数据会按照 sortColumns 排序。<br>**注：查询时，只保证单个 Level File 内的数据是有序的，Level File 之间的数据顺序不能保证。** | 按写入顺序写入磁盘。<br>**注：单个分区内，查询结果的顺序和写入顺序一致；跨分区查询时，单分区数据和写入顺序一致，系统会按固定的分区顺序合并各分区的查询结果返回给用户端，因此重复查询仍维持结果的一致性。** |
-| 增删改                       | **增：** 每次写入的数据可能存储在不同的 Level File。Level File 是不可修改和追加的。<br>**删：** 读数据到内存，删除后再写回（2.00.11 版本将支持软删除功能，即删除数据会以追加的方式写入，并打上删除标记，真正的删除操作将在文件合并时进行）<br>**改：** 取决于去重机制keepDuplicates=LAST：直接追加写入到一个新的 Level File，文件合并时会将旧数据删除 keepDuplicates=FIRST/ALL：读数据到内存，更新后再写回 | **增：** 直接追加到列尾<br>**删：** 读取相关分区下的所有列文件到内存，删除后再写回<br>**改：** 读列文件到内存，更新完再写回 |
+| 增删改                       | **增：** 每次写入的数据可能存储在不同的 Level File。Level File 是不可修改和追加的。<br>**删：** keepDuplicates=LAST 时，若 softDelete=true，则会先打上删除标记，追加写入到一个新的 Level File，然后在文件合并时将旧数据删除；若 softDelete=false，则读数据到内存，更新后再写回。keepDuplicates=FIRST/ALL 时：读数据到内存，更新后再写回 <br>**改：** 取决于去重机制keepDuplicates=LAST：直接追加写入到一个新的 Level File，文件合并时会将旧数据删除 keepDuplicates=FIRST/ALL：读数据到内存，更新后再写回 | **增：** 直接追加到列尾<br>**删：** 读取相关分区下的所有列文件到内存，删除后再写回<br>**改：** 读列文件到内存，更新完再写回 |
 | DDL & DML 操作（仅列出两者存在区别的点） | 不支持 rename!（修改字段名），replaceColumn!（修改字段的值或类型），dropColumns! （删除列字段）等操作 | 支持左述操作                                   |
 | 资源开销（仅列出两者存在区别的点）         | 内存：排序开销，索引缓存；磁盘：合并 Level File 的 IO 开销。   | 不存在左述开销                                  |
 
@@ -195,19 +195,19 @@ TSDB 引擎的更新效率取决于 keepDuplicates 参数配置的去重机制�
 
 #### 2.2.4 删除流程
 
-TSDB 引擎的删除流程和 keepDuplicates=ALL/FIRST 时的更新流程基本一致，即按分区取数，删除后写入一个新版本的目录。
+TSDB 引擎的删除流程和更新流程一致，即：
 
-**具体流程：**
+指定 keepDuplicates=ALL/FIRST 时，按分区全量取数，根据条件删除后写入一个新版本目录；
 
-1. **分区剪枝：** 根据查询语句进行分区剪枝，缩窄查询范围。
-2. **查到内存删除：** 取出对应分区所有数据到内存后，根据条件删除数据。
-3. **写回删除后的分区数据到新目录：** 将删除后的数据重新写入数据库，系统会使用一个新的 CHUNK 目录（默认是 “物理表名_cid”）来保存写入的数据，旧的文件将被定时回收（默认 30 min）。
+指定 keepDuplicates=LAST 时，若同时指定 softDelete=true，则取出待删除的数据打上删除标记（软删除），再以追加的方式写回数据库；若指定 softDelete=false，则同 keepDuplicates=ALL/FIRST 时的删除流程。
+
+具体流程详见 2.2.3 更新流程的介绍。
 
 > **注：**
 >
-> 1. 更新操作（keepDuplicates=ALL / FIRST）和删除操作是按分区全量修改，因此需要确保每次更新删除操作涉及分区总大小不会超过系统的可用内存大小，否正会造成内存溢出。
+> 1. 在配置 keepDuplicates=ALL / FIRST 场景下，更新操作（keepDuplicates=ALL / FIRST）和删除操作是按分区全量修改，因此需要确保每次更新删除操作涉及分区总大小不会超过系统的可用内存大小，否正会造成内存溢出。
 >
-> 2. 更新操作（keepDuplicates=LAST）是按照直接追加的方式增量修改，更新效率更高，若业务场景需要高频更新，可以配置此策略。
+> 2. 在配置 keepDuplicates=LAST 场景下，更新操作和删除操作是按照直接追加的方式增量修改，效率更高，若业务场景需要高频更新和删除，可以配置此策略。
 
 ### 2.3 排序列 sortColumns
 
@@ -361,11 +361,11 @@ db = database(directory=dbName, partitionType=COMPO, partitionScheme=[db1, db2],
 
 ### 3.3 创建数据表
 
-创建分布式表/维度表时，与 OLAP 引擎不同， TSDB 需要额外设置 sortColumns 这个必选参数，以及 keepDuplicates,  sortKeyMappingFunction 这两个可选参数。
+创建分布式表/维度表时，与 OLAP 引擎不同， TSDB 需要额外设置 sortColumns 这个必选参数，以及 keepDuplicates,  sortKeyMappingFunction, softDelete 这几个可选参数。
 
 ```cpp
 // 函数
-createPartitionedTable(dbHandle, table, tableName, [partitionColumns], [compressMethods], [sortColumns], [keepDuplicates=ALL], [sortKeyMappingFunction])
+createPartitionedTable(dbHandle, table, tableName, [partitionColumns], [compressMethods], [sortColumns], [keepDuplicates=ALL], [sortKeyMappingFunction], [softDelete=false])
 
 // 标准 SQL
 create table dbPath.tableName (
