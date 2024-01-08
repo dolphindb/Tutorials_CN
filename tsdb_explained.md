@@ -6,7 +6,7 @@
 - 如果希望直接上手搭建 TSDB 数据库，推荐从第 3 章开始阅读。
 - 第 4 章给出了 TSDB 查询优化案例。
 - 更多 TSDB 的实践案例，请参考第 5 章的场景指南。
-- 第 8 章附录列出了 TSDB 相关的配置项、运维函数以及常见问题一览表。
+- 第 7 章附录列出了 TSDB 相关的配置项、运维函数以及常见问题一览表。
 
 - [TSDB 存储引擎详解](#tsdb-存储引擎详解)
   - [阅读指南](#阅读指南)
@@ -28,12 +28,12 @@
     - [金融场景](#金融场景)
     - [物联网场景](#物联网场景)
   - [6. 总结](#6-总结)
-  - [7. 展望](#7-展望)
-  - [8. 附录](#8-附录)
-    - [8.1 TSDB 引擎配置项汇总](#81-tsdb-引擎配置项汇总)
-    - [8.2 TSDB 引擎运维函数汇总](#82-tsdb-引擎运维函数汇总)
-    - [8.3 常见问题 Q \& A](#83-常见问题-q--a)
-    - [8.4 案例脚本](#84-案例脚本)
+  - [7. 附录](#7-附录)
+    - [7.1 TSDB 引擎配置项汇总](#71-tsdb-引擎配置项汇总)
+    - [7.2 TSDB 引擎运维函数汇总](#72-tsdb-引擎运维函数汇总)
+    - [7.3 常见问题 Q \& A](#73-常见问题-q--a)
+    - [7.4 案例脚本](#74-案例脚本)
+
 
 时序数据是一种按照时间顺序排列的数据集合，例如传感器数据、金融市场数据、网络日志等。由于时序数据具有时间上的连续性和大量的时间戳，传统的关系型数据库或通用数据库在处理大规模时序数据时可能效率较低。因此，针对时序数据进行优化的专用数据库——TSDB 变得越来越重要。
 
@@ -53,7 +53,7 @@
 | 数据形式和类型（区别点）              | Array Vector、BLOB 类型                     | 不支持左述两类数据                                |
 | 数据压缩                      | 以 block 为压缩单元                            | 以列文件为压缩单元。<br>**注：一般情况下，OLAP 压缩率会高于 TSDB。** |
 | 数据加载（最小单元）                | 每个分区的 Level File 文件中的 block              | 每个分区的子表的列文件                              |
-| 写入方式                      | 顺序写入<br>**注：TSDB 引擎每次都追加生成一个新的 Level File 文件，磁盘几乎没有寻道压力。** | 顺序写入<br>**注：OLAP 引擎列文件过多时，写入时会增加磁盘（HDD）的寻道时间。** |
+| 写入方式                      | 顺序写入<br>**注：TSDB 引擎每次刷盘都会直接存储为新的 Level File 文件，无需像 OLAP 引擎一样追加到对应列文件，磁盘几乎没有寻道压力。** | 顺序写入<br>**注：OLAP 引擎列文件过多时，写入时会增加磁盘（HDD）的寻道时间。** |
 | 查找方式                      | 1. 分区剪枝 <br>查 Cache Engine 缓存（分为两个部分）：<br> &nbsp;&nbsp; a. unsorted buffer：遍历 <br> &nbsp;&nbsp; b. sorted buffer：二分查找<br> 3. 查找磁盘：根据索引快速定位到 block <br> **注：TSDB 没有用户态的缓存机制，只有操作系统的缓存。** | 1. 分区剪枝查<br>2. Cache Engine 缓存<br>3. 查找磁盘：读取相关列文件后遍历查找 <br> **注：OLAP 会维护用户态缓存。第一次查询后，会将上次查询的列文件缓存在内存中。** 该部分缓存会保存在内存中，直到缓存占用达到warningMemSize，系统才会回收部分内存。用户也可以调用 clearAllCache 手动清理缓存 。 |
 | 是否支持索引                    | 支持，以 sortKey 字段的组合值作为索引。                 | 不支持                                      |
 | 优化查询方法                    | 命中分区剪枝；通过索引加速查询。                         | 命中分区剪枝；读取整列数据较为高效，因此查询整个分区或整列数据时具有查询优势。  |
@@ -310,7 +310,7 @@ Level File 层级间的组织形式如下图所示：
 
 ### 3.1 数据库部署
 
-在使用 TSDB 引擎前，可以按需调整系统的配置项（TSDB 引擎相关的配置项一览表见[附录 8.1](#81-tsdb-引擎配置项汇总)），以充分发挥系统的性能。本节主要介绍其中几个重点参数：
+在使用 TSDB 引擎前，可以按需调整系统的配置项（TSDB 引擎相关的配置项一览表见[附录 7.1](#71-tsdb-引擎配置项汇总)），以充分发挥系统的性能。本节主要介绍其中几个重点参数：
 
 - TSDBRedoLogDir：为了提高写入效率，建议将 TSDB redo log 配置在 SSD 盘。
 - TSDBCacheEngineSize：默认是 1G，写入压力较大的场景可以适当调大该值。
@@ -662,15 +662,9 @@ TSDB 引擎较 OLAP 引擎而言，内部实现机制更加复杂，对用户开
   - sortKey 组合数是否过多（可以在创建分布式表时指定 sortKeyMappingFunction 进行降维）。
   - Level File 文件数是否过多（可以手动调用 triggerTSDBCompaction 触发合并，减少 Level File文件数）。
 
-## 7. 展望
+## 7. 附录
 
-**部分 TSDB 引擎的功能将在未来版本进行完善：**
-
-- **删除数据：** 目前是读取数据到内存删除后写回磁盘，后续版本将实现软删除，即删除数据将以追加的方式写入，系统给删除的数据打上标记，查询时基于标记将数据进行过滤，真正的删除操作会在合并阶段进行。
-
-## 8. 附录
-
-### 8.1 TSDB 引擎配置项汇总
+### 7.1 TSDB 引擎配置项汇总
 
 | **功能**                              | **配置项**                          | **描述**                                        |
 | ------------------------------------- | ----------------------------------- | ------------------------------------------------ |
@@ -678,7 +672,7 @@ TSDB 引擎较 OLAP 引擎而言，内部实现机制更加复杂，对用户开
 | Cache Engine                          | TSDBCacheEngineSize <br> TSDBCacheTableBufferThreshold <br> TSDBCacheFlushWorkNum <br>  TSDBAsyncSortingWorkerNum           | 设置 TSDB 存储引擎 cache engine 的容量（单位为 GB） <br> TSDB 引擎缓存数据进行批量排序的阈值 <br>TSDB cache engine 刷盘的工作线程数 <br> TSDB cache engine 异步排序的工作线程数|
 | Index                                 | TSDBLevelFileIndexCacheSize <br> TSDBLevelFileIndexCacheInvalidPercent | TSDB 存储引擎 level file 元数据内存占用空间上限 <br> TSDB 引擎 level file 索引缓存淘汰后保留数据的百分比。|
 
-### 8.2 TSDB 引擎运维函数汇总
+### 7.2 TSDB 引擎运维函数汇总
 
 | **功能**                 | **函数**                                   | **描述**                           |
 | ------------------------ | ---------------------------------------- | -------------------------------- |
@@ -701,11 +695,11 @@ for(chunkID in chunkIDs){
 select * from pnodeRun(getTSDBCompactionTaskStatus) where endTime is null
 ```
 
-### 8.3 常见问题 Q & A
+### 7.3 常见问题 Q & A
 
 <table style="undefined;table-layout: fixed; width: 1360px"><colgroup><col style="width: 590px"><col style="width: 770px"></colgroup><thead><tr><th>问题<br></th><th>回答<br></th></tr></thead><tbody><tr><td>创建报错 TSDB engine is not enabled.</td><td>1. 检查 server 版本是否为 2.00 版本， 1.30 版本不支持 TSDB 引擎。<br><br>2. 检查配置文件是否设置了 TSDBCacheEngineSize 配置项。</td></tr><tr><td>TSDB 更新数据后，查询发现更新的数据出现在表末尾，而不是按时间序排序。</td><td>TSDB 引擎只保证 level file 内部是有序的，但是 level file 间可能是无序的，可以尝试通过调用 triggerTSDBCompaction 函数手动触发 level file 文件的合并。<br> </td></tr><tr><td>1.30 版本的 server 和 2.00 版本有什么区别？</td><td>相较于 1.30 版本，2.00 版本还支持了 TSDB 引擎， array vector 数据形式，DECIMAL 数据类型等功能。</td></tr><tr><td>如果希望表的数据写入后去重，可以使用 TSDB 引擎，然后将 sortColumns 设置为去重键吗？</td><td>- 如果去重键只有一个字段，不建议设置为 sortColumns，因为此时该字段会被作为 sortKey，去重后，一个 sortKey 只对应一条记录，会造成索引膨胀，影响查询效率。<br><br>- 如果去重键有多个字段，需要评估每个 sortKey 对应的数据量，若数据量很少，不建议将其设置为 sortColumns。<br><br>推荐使用 upsert! 方法写入数据，以达到数据去重的目的。 </td></tr><tr><td>TSDB 引擎查询性能低于预期。</td><td>- sortKey 字段设置是否合理，可以调用 getTSDBSortKeyEntry 函数查询 sortKey 的信息。<br><br>- LevelFile 的索引缓存是否设置过小。若每次查询设计的数据范围较大，可能造成索引的频繁置换，此时可以通过调整配置项 TSDBLevelFileIndexCacheSize，来调大索引的缓存空间，调整后需重启集群。</td></tr></tbody></table>
 
-### 8.4 案例脚本
+### 7.4 案例脚本
 
 [test_4_1.dos](script/tsdb_explained/test_4_1.dos)
 
