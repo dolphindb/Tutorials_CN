@@ -1,6 +1,6 @@
 ## DolphinDB 教程
 
-**致亲爱的 DolphinDB 用户**：自 2024 年 1 月 4 日新的文档中心上线于 [DolphinDB 官网](https://www.dolphindb.cn/) 后，DolphinDB 位于 Github/Gitee 的 **Tutorials_CN** 仓库下的教程将不再维护。您可访问 [DolphinDB 文档中心教程篇](https://docs.dolphindb.cn/zh/tutorials/about_tutorials.html) 阅读此前发布及新发布的教程，并可在该文档中心内获取到其他 DolphinDB 产品文档内容，包括 DolphinDB 原用户手册、错误码、版本发布说明、插件使用说明、API 与连接器使用说明、快速上手指南等。欢迎通过 DolphinDB 的用户群组或发送电子邮件至 [support@dolphindb.com](support@dolphindb.com) 反馈您的宝贵意见。
+**致亲爱的 DolphinDB 用户**：自 2024 年 1 月 4 日新的文档中心上线于 [DolphinDB 官网](https://www.dolphindb.cn/) 后，DolphinDB 位于 Github/Gitee 的 **Tutorials_CN** 仓库下的教程将不再维护。您可访问 [DolphinDB 文档中心教程篇](https://docs.dolphindb.cn/zh/tutorials/about_tutorials.html) 阅读此前发布及新发布的教程，并可在该[文档中心](https://docs.dolphindb.cn/zh/about/ddb_docs_intro.html)内获取到其他 DolphinDB 产品文档内容，包括 DolphinDB 原用户手册、错误码、版本发布说明、插件使用说明、API 与连接器使用说明、快速上手指南等。欢迎通过 DolphinDB 的用户群组或发送电子邮件至 [support@dolphindb.com](support@dolphindb.com) 反馈您的宝贵意见。
 
 - 安装和部署
 
