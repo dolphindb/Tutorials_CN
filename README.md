@@ -1,5 +1,7 @@
 ## DolphinDB 教程
 
+**致 DolphinDB 用户**：自 2024 年 1 月 4 日新的文档中心上线于 [DolphinDB 官网](https://www.dolphindb.cn/) 后，DolphinDB 位于 Github/Gitee 的 Tutorials_CN 仓库下的教程将不再维护。您可访问 [DolphinDB 文档中心教程篇](https://docs.dolphindb.cn/zh/tutorials/about_tutorials.html) 阅读此前发布的教程及新发布的教程或由。欢迎通过 DolphinDB 的用户群组或发送电子邮件至 [support@dolphindb.com](support@dolphindb.com) 反馈您的宝贵意见。
+
 - 安装和部署
 
   - [安装使用指南](dolphindb_user_guide.md)
