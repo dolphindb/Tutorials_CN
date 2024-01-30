@@ -145,7 +145,7 @@
     - [Parquet 插件使用说明（Apache Parquet 协议下的数据列式存储、读取和转换）](../../../DolphinDBPlugin/blob/release200/parquet/README_CN.md "Apache Parquet 协议下的数据列式存储、读取和转换")
     - [Kafka 插件说明（用于发布或订阅 Apache Kafka 流服务）](../../../DolphinDBPlugin/blob/release200/kafka/README_CN.md "用于发布或订阅 Apache Kafka 流服务")
   - 金融市场行情数据
-    - [amdQuote 插件使用说明（如何在 Linux 下安装和使用该插件连接 AMD 行情服务器获取行情信息）](../../../DolphinDBPlugin/blob/release200/amdQuote/README.md "如何在 Linux 下安装和使用该插件连接 AMD 行情服务器获取行情信息")
+    - [amdQuote 插件使用说明（如何在 Linux 下安装和使用该插件连接 AMD 行情服务器获取行情信息）](../../../DolphinDBPlugin/blob/release200.11/amdQuote/README.md "如何在 Linux 下安装和使用该插件连接 AMD 行情服务器获取行情信息")
     - [Insight 插件说明（介绍如何在 Linux 下通过该插件获取交易所行情数据）](../../../DolphinDBPlugin/blob/release200/insight/README.md "用于获取交易所行情数据，仅限 Linux 系统")
     - [Matching Engine 插件使用说明（用于为股票市场、商品市场或其他金融交易所匹配和执行买入和卖出订单）](../../../DolphinDBPlugin/blob/release200/MatchingEngine/README.md "用于为股票市场、商品市场或其他金融交易所匹配和执行买入和卖出订单")
     - [NSQ 插件使用说明（用于获取上海和深圳交易市场的行情数据）](../../../DolphinDBPlugin/blob/release200/nsq/README.md "用于获取上海和深圳交易市场的行情数据")
