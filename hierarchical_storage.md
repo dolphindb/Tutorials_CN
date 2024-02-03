@@ -39,7 +39,7 @@ coldVolumes=file://home/mypath/hdd/<ALIAS>,s3://bucket1/data/<ALIAS>
 
 不同数据节点需要配置不同的 `coldVolumes` 路径，否则可能会造成不同 `datanode` 间数据的相互覆盖。这里通过 `<ALIAS>` 宏定义，让每个 `datanode` 将数据放到 */home/mypath/hdd/* 目录下按照节点别名命名的目录中。
 
-如果您配置了 S3 路径，那么还需要配置 AWS S3 插件，以及 S3 的 `AccessKeyId`，`SecretAccessKey`，`Region` 等信息：
+如果您配置了 S3 路径，那么还需要配置 AWS S3 插件，以及 S3 的 `AccessKeyId`, `SecretAccessKey`, `Region`, `EndPoint` 等信息：
 
 ```
 pluginDir=plugins //指定节点的插件目录，需要将AWS S3插件放到plugins目录下
@@ -47,10 +47,11 @@ preloadModules=plugins::awss3 //系统启动后自动加载AWS S3插件
 s3AccessKeyId={your_access_key_id}
 s3SecretAccessKey={your_access_screet_key}
 s3Region={your_s3_region}
+s3Endpoint={your_s3_Endpoint}
 ```
 
-- 有关配置的详情，参考[分级存储 — DolphinDB 2.0 documentation](https://www.dolphindb.cn/cn/help/DatabaseandDistributedComputing/Database/TieredStorage.html) 。
-- 有关AWS S3插件的用法，参考[aws/README.md · dolphindb/DolphinDBPlugin - Gitee](https://gitee.com/dolphindb/DolphinDBPlugin/blob/release200/aws/README.md) 。
+- 有关配置的详情，参考：[分级存储](https://docs.dolphindb.cn/zh/db_distr_comp/cfg/cfg_para_ref.html#configparamref__tieredstoragesection)。
+- 有关AWS S3插件的用法，参考：[aws插件](https://docs.dolphindb.cn/zh/plugins/aws/aws.html) 。
 
 
 
