@@ -1,7 +1,5 @@
 ## DolphinDB 教程
 
-**致亲爱的 DolphinDB 用户**：自 2024 年 1 月 4 日新的文档中心上线于 [DolphinDB 官网](https://www.dolphindb.cn/) 后，DolphinDB 位于 Github/Gitee 的 **Tutorials_CN** 仓库下的教程将不再维护。您可访问 [DolphinDB 文档中心教程篇](https://docs.dolphindb.cn/zh/tutorials/about_tutorials.html) 阅读此前发布及新发布的教程，并可在该[文档中心](https://docs.dolphindb.cn/zh/about/ddb_docs_intro.html)内获取到其他 DolphinDB 产品文档内容，包括 DolphinDB 原用户手册、错误码、版本发布说明、插件使用说明、API 与连接器使用说明、快速上手指南等。欢迎通过 DolphinDB 的用户群组或发送电子邮件至 [support@dolphindb.com](support@dolphindb.com) 反馈您的宝贵意见。
-
 - 安装和部署
 
   - [安装使用指南](dolphindb_user_guide.md)
@@ -194,6 +192,7 @@
     - [DolphinDB机器学习在金融行业的应用：实时实际波动率预测](machine_learning_volatility.md)
     - [DolphinDB流计算在金融行业的应用：实时计算分钟资金流](streaming_capital_flow_order_by_order.md)
     - [基于DolphinDB的因子计算最佳实践](best_practice_for_factor_calculation.md)
+    - [基于 DolphinDB 的 Barra 多因子风险模型实践](barra_multi_factor_risk_model_0.md)
     - [SQL优化案例：深度不平衡、买卖压力指标、波动率计算](sql_performance_optimization_wap_di_rv.md)
     - [SQL优化案例：外汇掉期估值计算](FxSwapValuation.md)
     - [DolphinDB流计算在金融行业的应用：实时计算日累计逐单资金流](streaming_capital_flow_daily.md)
