@@ -342,8 +342,8 @@ getIndustry(startTime = 2022.01.01,endTime = 2023.01.02,method = 'SW_2021')
 
 ![图片-20231113-091342.png](./images/barra_multi_factor_risk_model/对应的部分返回结果图一.png)
 
-
-对应的部分返回结果图一
+<center style="color: black;">对应的部分返回结果图一</center>
+<br>
 
 
 ```
@@ -353,6 +353,7 @@ getIndusrtyWeighted(startTime = 2022.01.03,endTime = 2023.01.02,method = 'SW_202
 ![图片-20231113-091423.png](./images/barra_multi_factor_risk_model/对应的部分返回结果图二.png)
 
 <center style="color: black;">对应的部分返回结果图二</center>
+<br>
 
 
 ```
@@ -362,6 +363,7 @@ getIndusrtyFactor(startTime = 2022.01.03,endTime = 2023.01.02,method = 'SW_2021'
 ![图片-20231113-091522.png](./images/barra_multi_factor_risk_model/对应的部分返回结果图三.png)
 
 <center style="color: black;">对应的部分返回结果图三</center>
+<br>
 
 ### 2.3 因子预处理
 
