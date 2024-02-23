@@ -1,0 +1,11 @@
+ <svg xmlns:xlink="http://www.w3.org/1999/xlink" width="3.227ex" height="2.509ex" style="vertical-align: -0.671ex;" viewBox="0 -791.3 1389.4 1080.4" role="img" focusable="false" xmlns="http://www.w3.org/2000/svg" aria-labelledby="MathJax-SVG-1-Title">
+<title id="MathJax-SVG-1-Title">\mathbf{D}_{\mathbf{0}} </title>
+<defs aria-hidden="true">
+<path stroke-width="1" id="E1-MJMAINB-44" d="M39 624V686H270H310H408Q500 686 545 680T638 649Q768 584 805 438Q817 388 817 338Q817 171 702 75Q628 17 515 2Q504 1 270 0H39V62H147V624H39ZM655 337Q655 370 655 390T650 442T639 494T616 540T580 580T526 607T451 623Q443 624 368 624H298V62H377H387H407Q445 62 472 65T540 83T606 129Q629 156 640 195T653 262T655 337Z"></path>
+<path stroke-width="1" id="E1-MJMAINB-30" d="M266 654H280H282Q500 654 524 418Q529 370 529 320Q529 125 456 52Q397 -10 287 -10Q110 -10 63 154Q45 212 45 316Q45 504 113 585Q140 618 185 636T266 654ZM374 548Q347 604 286 604Q247 604 218 575Q197 552 193 511T188 311Q188 159 196 116Q202 87 225 64T287 41Q339 41 367 87Q379 107 382 152T386 329Q386 518 374 548Z"></path>
+</defs>
+<g stroke="currentColor" fill="currentColor" stroke-width="0" transform="matrix(1 0 0 -1 0 0)" aria-hidden="true">
+ <use xlink:href="#E1-MJMAINB-44" x="0" y="0"></use>
+ <use transform="scale(0.707)" xlink:href="#E1-MJMAINB-30" x="1248" y="-213"></use>
+</g>
+</svg>

@@ -1,0 +1,197 @@
+use barra::barraFactorsCal
+use barra::barraFactorsMerge
+use barra::barraFactorsModel
+/* Barra多因子模型全流程*/
+
+/* 1.收益风险模型
+ */
+ 
+// 一级因子收益率回归  （可以获得多因子模型的R2、t-stat、月频的因子收益、特质收益、风险因子协方差矩阵、特质风险表、bias统计量，因为结果较多，如需查看，推荐持久化后再查看结果，或者可以取出来部分较少的结果）
+retOut1 = getRetTable(facTable1,adjust = true)                                    // adjust采用Newey-West协方差调整、当市场收益率存在序列自相关时采用此方法
+retOut1 = getRetTable(facTable1,adjust = false,shrink = false)                    // shrink采用贝叶斯收缩调整特异性风险、推荐使用
+retOut1 = getRetTable(facTable1,adjust = true,shrink = true)                      // 特异性风险采用bayesian shrinkage
+retOut1 = getRetTable(facTable1,adjust = true,shrink = true,eigenfactor = true)   // 因子风险采用eigenfactor adjust,当市场关联密切时采用此方法
+retOut1 = getRetTable(facTable1,adjust = true,shrink = true,eigenfactor = true)   // 综上，推荐使用
+retOut1 = getRetTable(facTable1,adjust = false,shrink = true,eigenfactor = true)  // 综上，推荐使用
+retOut1 = getRetTable(facTable1,adjust = false,shrink = true,eigenfactor = true)  // 综上，推荐使用
+retOut1 = getRetTable(fTable,adjust = false,shrink = true,eigenfactor = false)    // 综上，推荐使用
+undef(`retOut)
+retOut = getRetTable(facTable1,adjust = true,shrink = false ,eigenfactor = false)  // 综上，推荐使用
+
+// 例如
+retOut1.stock_risk[string(2022.12.30)]   // 12.30的特质收益协方差矩阵
+retOut1.fac_risk[string(2022.12.30)]     // 12.30的风险因子协方差矩阵
+retOut1.R2                               // R2
+retOut1.res                              // 特质收益
+retOut1.tstat                            // t-stat
+retOut1.fac_ret                          // 因子收益
+retOut1.bias                             // bias统计量
+
+select `All_Factors_R2,mean(stR2) from retOut.R2  where record_date between 2022.01.01 and 2023.01.01
+
+plot(retOut1.R2.stR2,retOut1.R2.record_date,"𝑆𝑡𝑢𝑑𝑒𝑛𝑡𝑖𝑧𝑒𝑑 R2 月频时序图")
+
+retOut2 = getRetTable(facTable2)     // 二级因子收益率回归,相应可以得到对应模型检验结果
+retOut3 = getRetTable(fTable)        // 三级因子收益率回归,相应可以得到对应模型检验结果
+predictOut = getPredicOut(facTable1)         // 结果较多，如需查看，推荐持久化后再查看结果，或者可以取出来部分较少的结果，除去预测收益外，包含R2、t-stat、月频的因子收益、特质收益、风险因子协方差矩阵、特质风险表、bias统计量的所有结果
+pr = select * from predictOut.predict_ret    // 利用本期因子暴露预测最后一期的收益率
+
+predictOut.R2                               // 预测模型R2
+predictOut.res                              // 预测模型特质收益
+predictOut.tstat                            // 预测模型t-stat
+predictOut.fac_ret                          // 预测模型因子收益
+predictOut.bias                             // 预测模型bias统计量
+
+
+/* 2.预测个股收益
+ */ 
+predictOut = getPredicOut(facTable1)         // 结果较多，如需查看，推荐持久化后再查看结果，或者可以取出来部分较少的结果，除去预测收益外，包含R2、t-stat、月频的因子收益、特质收益、风险因子协方差矩阵、特质风险表、bias统计量的所有结果
+pr = select * from predictOut.predict_ret    // 利用本期因子暴露预测最后一期的收益率
+predictOut.R2                               // 预测模型R2
+predictOut.res                              // 预测模型特质收益
+predictOut.tstat                            // 预测模型t-stat
+predictOut.fac_ret                          // 预测模型因子收益
+predictOut.bias                             // 预测模型bias统计量
+
+
+/* 3.组合权重优化
+ */  
+optionCode = exec stock_code from getPredicOut(facTable1).predict_ret order by return_day desc limit 20             // 初步筛选stock1
+optionCode = exec stock_code from getPredicOut(facTable2).predict_ret order by return_day desc limit 20  
+
+// 控制收益、最小化风险模型
+portWeight1 = getOptimizeWeights(facTable = facTable1,retOut = retOut1,st = st,et = et, method ="minRiskControlRet",r = 0.05,optionCode = optionCode)      // 获得权重组合
+portWeight2 = getOptimizeWeights(facTable = facTable2,retOut = retOut2,st = st,et = et, method ="minRiskControlRet",r = 0.05,optionCode = optionCode)
+
+index_code = '000300'
+CodePre = set(exec stock_code from getPredicOut(facTable1).predict_ret order by return_day desc limit 200)           // 初步筛选stock2
+CodeWeight = set(exec stock_code from getBenchMark(st=st,et=et,code = index_code) where i_weight != 0)
+CodeFac =set(exec stock_code from facTable1 )
+optionCode = (CodePre&CodeWeight&CodeFac).keys()
+portWeight3 = getOptimizeWeights(facTable = facTable1,retOut = retOut1,st = st,et = et, method ="minRiskControlRet",r = 0.005,deStyle = true,optionCode = optionCode)      // 获得权重组合,并实现在风格上的风险敞口为0
+portWeight3 = getOptimizeWeights(facTable = facTable1,retOut = retOut1,st = st,et = et, method ="minRiskControlRet",r = 0.005,deIndustry = true,optionCode = optionCode)   // 获得权重组合,并实现在行业上的风险敞口为0
+portWeight4 = getOptimizeWeights(facTable = facTable2,retOut = retOut2,st = st,et = et, method ="minRiskControlRet",r = 0.05,optionCode = optionCode)
+
+
+
+
+/* 4.资产配置评估
+ */  
+
+/* 4.1事后资产配置评估
+ */
+ 
+/* 4.1.1 事后因子组合评估
+ */
+
+// 合成一级、二级因子 
+//  firstFactors中一级因子和二级因子名称任起；firstFactors中二级因子的名称需要与secondFactors中的二级因子的名称一一对应；secondFactors中的三级因子需要与输入的因子表factorsTable 字段名对应（支持大小写匹配）
+//  一级因子和二级因子的json，可根据检验结果修改关系,若有需求，可自行添加其他因子
+index_code = '000300'
+st = 2022.01.03 
+et = 2023.01.02
+normlizing = true
+scaling = true
+decap = true
+industry_method = 'CITIC'
+industry_weighted = true
+Factors = getAllFactors(st= st,et = et, normlizing = normlizing,scaling = scaling,decap = decap,industry_method = industry_method,industry_weighted = industry_weighted)
+// 5min 18s
+
+firstFactors = {
+    "Quality":["Earnings_Quality","Earnings_Variability","Investment_Quality","Leverage","Profitability"],
+    "Value":["Btop","Earning_Yield","Long_Term_Reversal"],
+    "Growth":"Growth",
+    "Liquidity":"Liquidity",
+    "Volatility":["Beta","Residual_Volatility"],
+    "Size":["Size","Mid_Cap"],
+    "Momentum":"Momentum",
+    "Dividend_Yield":"Dividend_Yield"
+}   
+
+// 二级因子和三级因子的json，可根据检验结果修改关系，三级因子一般需要选择ttm和lyr种类的因子
+// 三级因子字典表
+/* ['abs','acf_ttm','acf_lyr','vsal_ttm','vsal_lyr','vern_ttm','vern_lyr','vflo_ttm','vflo_lyr','cetop_ttm','cetop_lyr','etop_ttm','etop_lyr','egro_ttm','egro_lyr','sgro_ttm','sgro_lyr','agro','igro','mlev','dtoa','blev','stom','stoq','stoa','atvr','ltrstr','lthalpha','midcap','rstr','halpha','ato_ttm','ato_lyr','roa_ttm','roa_lyr','btop','dtop','hbeta','hsigma','dastd','cmra','lncap','cxgro','gp_ttm','gp_lyr','gpm_ttm','gpm_lyr','em'] */
+secondFactors = {
+"Earnings_Quality":["abs","acf_ttm"],
+"Earnings_Variability":["vsal_ttm","vern_ttm","vflo_ttm"],
+"Investment_Quality":["agro","igro","cxgro"],
+"Leverage":["mlev","dtoa","blev"],
+"Profitability":["ato_ttm","gp_ttm","gpm_ttm","roa_ttm"],
+"Btop":"btop",
+"Earning_Yield":["cetop_ttm","etop_ttm","em"],
+"Long_Term_Reversal":["ltrstr","lthalpha"],
+"Growth":["egro_ttm","sgro_ttm"],
+"Liquidity":["stom","stoq","stoa","atvr"],
+"Beta":"hbeta",
+"Residual_Volatility":["hsigma","dastd","cmra"],
+"Size":"lncap",
+"Mid_Cap":"midcap",
+"Momentum":["rstr","halpha"],
+"Dividend_Yield":"dtop"
+}
+
+// 3.8s
+fTable = getRegTable(factorsTable = true,tbName = Factors,st= st,et = et, normlizing = normlizing ,scaling = scaling ,decap = decap,industry_method = industry_method,industry_weighted = industry_weighted)
+
+// 10s
+factorsValid = getFactorsValidation(factorsTable = true,tbName = Factors,st = st,et = et , normlizing = normlizing,scaling = scaling,decap = decap,industry_method = industry_method,industry_weighted = industry_weighted)
+
+// 179ms
+facTable1 = getFSLevelFactor(fTable,factorsValid,firstFactors,secondFactors,false, "equal",level = "F")
+
+// 1 min 35 s
+retOut = getRetTable(facTable1,adjust = true,shrink = false ,eigenfactor = false)  
+
+// 710ms
+// 获取所有因子的时序bias统计量的值和所有个股的时序bias统计量值
+biasOut = getFacSpecialBias(retOut)
+
+// 因子bias
+tmpfBias = select bias_stat from biasOut.fac_bias pivot by record_date,valueType
+tmpfBias = tmpfBias[23:]
+tbfBias = sql(select = sqlCol(tmpfBias.columnNames()[1:9]),from = tmpfBias).eval()
+plot(tbfBias,tmpfBias.record_date,extras={multiYAxes: false},title = "因子模型因子Bias统计量时序图")
+plot(tbfBias,tmpfBias.record_date,extras={multiYAxes: false})
+code0 = parseExpr("rowAvg("+ concat(tmpfBias.columnNames()[1:],',') + ")")
+avgfBias =  sql(select = sqlColAlias(code0,'avg_bias_stat'),from = tmpfBias ).eval()
+plot(avgfBias,tmpfBias.record_date,extras={multiYAxes: false},title = "因子均值Bias统计量时序图")
+plot(avgfBias,tmpfBias.record_date,extras={multiYAxes: false})
+
+// 个股特异bias
+tmpsBias = select mean(bias_stat) from biasOut.stock_bias group by record_date
+tmpsBias = tmpsBias[23:]
+plot(tmpsBias.avg_bias_stat,tmpsBias.record_date,extras={multiYAxes: false},title = "因子模型特异风险Bias统计量时序图")
+
+/* 4.1.2 简单资产配置评估
+ */
+// 计算指数配置的Bias统计量
+tmpIndexbiasbn = getFacSpecialBias(retOut,'000300','equal').stock_bias
+tmpIndexBias = select wavg(bias_stat,weight) from tmpIndexbiasbn group by record_date
+plot(tmpIndexBias.wavg_bias_stat,tmpIndexBias.record_date,extras={multiYAxes: false})
+
+tmpIndexbiasbn = getFacSpecialBias(retOut,'000300','float_market').stock_bias
+tmpIndexBias = select wavg(bias_stat,weight) from tmpIndexbiasbn group by record_date
+plot(tmpIndexBias.wavg_bias_stat,tmpIndexBias.record_date,extras={multiYAxes: false})
+
+/* 4.2 事前资产配置评估
+计算预测模型的bias、q统计量
+需要给出月频的资产组合优化权重模型的结果
+下面例子为模拟
+模型不变，例如都是控制收益、最小化风险--->此处权重需要通过组合权重优化，通过机器学习
+利用前n-1期数据预测第n期，给出第n期的统计量，如果需要获取每一期的统计量、每一期对模型给出估计后，都应该把前t期的tbName、facTable、retOut结果代入到该函数（设为第t期），得到第t期的统计量结果 */
+
+bm = select stock_code,record_date,month(record_date) as month,i_weight from  getBenchMark(st=st,et=et,code = index_code)
+bmBegin = select first(i_weight) as i_weight from bm group by stock_code,month 
+getPortfolioTest(bmBegin,facTable1,retOut,st,et)
+
+/* 计算预测模型的bias、q统计量 */
+// 真实数据
+index_code = '000300'
+st = 2022.01.03 
+et = 2023.01.02
+outAccurary = getPortfolioAccuracy(st,et,facTable1,retOut,index_code,'equal')
+outAccurary = outAccurary[2:]
+baseline = take(1,(shape outAccurary)[0])
+plot(table(outAccurary.bias_statistic,baseline),outAccurary.record_date,extras={multiYAxes: false})
+mean(outAccurary) 

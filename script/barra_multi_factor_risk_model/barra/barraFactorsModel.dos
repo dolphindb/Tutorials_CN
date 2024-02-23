@@ -1,0 +1,736 @@
+module barra::barraFactorsModel
+use barra::barraFactorsCal
+use barra::barraFactorsMerge
+//----------------------------------------------------------------------------------------------------------------------
+/* Barra多因子模型模块
+ * 1.收益风险模型：getRetTable()
+ *      1.1 收益预测
+ *      1.2 风险调整：共性风险调整、特异性风险调整
+ * 2.预测个股收益：getPredicOut()
+ * 3.组合权重优化：getOptimWts()
+ * 4.资产配置评估：事前资产配置getPortfolioAccuracy()、事后资产配置评估getFacSpecialBias()
+ */
+
+
+/* getXnn
+计算因子矩阵的投影阵对角元的聚合函数（计算帽子矩阵） 此处为什么是X'(XX')X 
+Input:   
+         x
+
+Output：
+        diag
+*/
+
+
+defg getXnn(x){
+    t = matrix(x)
+    // return blob(concat(diag(transpose(t)**(t**transpose(t)).pinverse()**t),","))
+    return blob(concat(diag(transpose(t)**inverse((t**transpose(t)))**t),","))
+}
+
+/* Newye_West
+Newye_West调整得到协方差矩阵
+Input:   
+         ret                    收益率表
+         q                      收益率自相关阶数
+Output:  
+         cov                    Newye_West调整后的协方差阵
+*/
+
+def Newye_West(ret,q=5){
+    T = (shape ret)[0]
+    retnew = ret
+    code0 =  sqlColAlias(parseExpr(retnew.columnNames()[1:] + "-(mean(" +retnew.columnNames()[1:] + "))"),retnew.columnNames()[1:]) //demean处理
+    retnew = sql(select = code0,from = retnew).eval()
+    cov = 1\(T-1)*transpose(matrix(retnew)) ** matrix(retnew) //V_F = 1/(T-1)SigmaSum(F_t**F_t')，样本风险矩阵
+    for(i in 1..q){//计算Γ1-Γq
+        code1 = parseExpr("move("+ retnew.columnNames() + ","+ string(i) + ")") //MA(q)调整
+        cov += (1-(i\(1+q)))*1\(T-1)*transpose(matrix(retnew)) ** matrix(sql(select = code1,from = retnew).eval())  
+        // Bartlett kernel weights  ： 1-(i\(1+q))
+    }
+    return 1\2*cov+1\2*transpose(cov) //使得矩阵对称、半正定
+}
+
+// 34-38核心代码
+
+/* BayesShrinkage
+BayesShrinkage调整特质波动率
+Input:   
+         cov                    特质收益率协方差阵
+         weight                 市值权重
+         q                      λ_F 压缩系数
+         
+Output:  
+         cov                    BayesShrinkage调整后的协方差阵
+*/
+
+
+def BayesShrinkage(cov,weight,q=1){
+    names = cov.columnNames().regexReplace("code_","")
+    tb = table(names,matrix(sqrt(diag(cov))))
+    tb.rename!([`stock_code,`volat])
+    tmp = select * from lj(tb,weight,`stock_code)
+    tmpRank = select stock_code,volat,weights,asof(quantileSeries(weights,0..9 \10),weights)+1 as rank from tmp order by rank
+    tmpRankvsn = select stock_code,volat,wavg(volat,weights) as vsn,rank from tmpRank context by rank
+    ranksum = select rank,count(*) from tmpRankvsn group by rank 
+    tmpRankvsn = select * from lj(tmpRankvsn,ranksum,`rank)
+    tmpRanknow = select stock_code,volat,vsn,sqrt(sum(pow(volat-vsn,2))\count) as sum_sigma from  tmpRankvsn context by rank   //Appendix C C4
+    covnow = select stock_code,volat,vsn,q*abs(volat-vsn)\(sum_sigma+q*abs(volat-vsn)) as vn from tmpRanknow //Appendix C C3
+    covnow = select stock_code,volat*(1-vn)+vn*vsn as shrinkageSigma from covnow //Appendix C C1-C2
+    diags = exec shrinkageSigma from lj(tb,covnow,`stock_code)
+    return cov - diag(diag(cov))+ diag(diags)
+}
+
+
+/* eigenCovAdjusted
+eigenCovAdjusted调整风格因子协方差
+Input:   
+         cov                    因子收益率协方差阵
+         M                      蒙特卡罗模拟：重采样次数
+         
+Output:  
+         cov                    eigenCovAdjusted调整后的协方差阵
+*/
+
+def eigenCovAdjusted(covf,T=12,M = 500){
+    name = covf.columnNames()
+    rfname = name[0:first(at(name like "%industry%"))]
+    cov = covf[0:rfname.size()][0:rfname.size(),:]
+    cov = matrix(cov)
+    k = (shape cov)[0]
+    out = eig(cov) //对应Appendix B2，特征分解
+    vec = out.vectors
+    val = out.values
+    vk = take(0,(shape cov)[0])
+    for(i in 1..M){ //通过蒙特卡罗生成模拟的协方差矩阵
+        setRandomSeed(i);
+        // 生成服从多元正态分布的随机数。返回的结果是一个矩阵。
+        bm = randMultivariateNormal(mean = take(0,k),covar = diag(val),count = T) 
+        fm = bm**vec  //100-101对应Appendix B3
+        covFm = fm.covarMatrix() //100-101对应对应Appendix B4
+        out1 = eig(covFm) //100-101对应对应Appendix B5
+        vecm = out1.vectors
+        dm = out1.values
+        dmslide = diag(transpose(vecm)**cov**vecm) //对应Appendix B6
+        vk+=dmslide\dm //对应Appendix B7
+    }
+    vk = sqrt(vk\M)
+    val = val*pow(vk,2)
+    // 拼接因子收益率协方差矩阵+其他协方差矩阵
+    tmp = concatMatrix([concatMatrix([vec**diag(val)**transpose(vec),covf[first(at(name like "%industry%")):,0:first(at(name like "%industry%"))]],false),covf[:,first(at(name like "%industry%")):]]) //对应Appendix B9，通过计算得到的特征根做缩放
+    tmp.rename!(name)
+    return tmp
+} //94-108
+
+
+
+/* getAllFactorValidate
+获取moving wls多因子回归结果统计量的聚合函数
+Input:   y          因变量
+         x          自变量
+         w          权重
+Output:  
+         wls stat "beta","tstat","R2","AdjustedR2","Residual" */
+
+
+defg getAllFactorValidate(y,x,w){
+    // tmp = wls(y,x,w,0,2)
+    tmp = wls(y,x,w,1,2)
+    tmp2 = select * from tmp.RegressionStat where item = "R2" or item = "AdjustedR2"
+    return concat(blob(concat("beta" <- tmp.Coefficient.beta,',')) <- "," <- blob(concat("tstat" <-tmp.Coefficient.tstat,','))  <- "," <-blob(concat("Residual" <- tmp.Residual,","))<- "," <-blob(concat("R2" <- tmp2.statistics,",")))
+}
+
+
+
+
+/* getBenchMark
+获取组合权重
+Input:   
+         st                2022.01.03(Default)
+         et                2023.01.02(Default)
+         index             指数代码  000300、399101
+Output:  
+         weightTable   
+*/
+
+
+
+def getBenchMark(st=2022.01.03,et =2023.01.02,code = '000300'){
+    tmp = select index_code,stock_code,record_date,i_weight from loadTable("dfs://index_weight","index_member_weight") where  index_code = code and record_date>=st,record_date<=et
+    return tmp 
+}
+
+/* getRetTable 最核心的代码!!! 
+计算因子收益率,并返回每一期的因子协方差矩阵(因子风险)、特质性收益协方差矩阵(个股风险)、stR2、tstat、bias_statistic、Q_statistic
+Input:   
+         facTable         NULL  (Default)               因子表(必须)                        (getFSLevelFactor函数返回的全因子表）
+         adjust           true  (Default)               是否进行Newye_West调整
+         shrink           true  (Default)               是否进行贝叶斯收缩
+         eigenfactor      true  (Default)               是否进行特征因子调整
+         
+Output:  
+         factorsRetTable   
+*/
+
+
+def getRetTable(facTable = NULL,adjust = true,shrink=true,eigenfactor=true){
+    cname = facTable.columnNames()
+    indepen = concat(cname[2:(last(at(cname like '%industry%'))+1)],',')
+    // 开始回归
+    // colname：因子列
+    colname = cname[2:(last(at(cname like '%industry%'))+1)]
+    rd = exec distinct record_date from facTable order by record_date
+    n = colname.size()
+    count = facTable.size()
+    d = nunique(facTable.stock_code)
+    //  wls stat "beta" <- "tstat"  <- "Residual" <- "R2" 
+    code = parseExpr("getAllFactorValidate"+"(return_day,["+  indepen + "],weights)")
+    factorState = sql(select=(sqlCol(`record_date),sqlColAlias(code,'Reg_stat')),from = facTable,groupBy = sqlCol(`record_date)).eval()
+    factorState = makeUnifiedCall(unpivot,[factorState,`record_date,'Reg_stat']).eval()
+    // beta系数->因子收益率
+    beta = transpose(matrix(double(split(split(factorState.value,'tstat')[0],',')))[1:(n+2),:])
+    beta.rename!(`market_factor join colname)
+    beta = table(rd as record_date,beta)
+    // t统计量
+    tstat = transpose(matrix(double(split(split(factorState.value,'tstat')[1],',')))[1:(n+2),:])
+    tstat.rename!(`market_factor join colname)
+    tstat = table(rd as record_date,tstat)
+    // 残差
+    residuals = pow(table(matrix(double(split(split(split(factorState.value,'Residual')[1],'R2')[0],',')))[1:(d+1),:].reshape(count:1)),2)
+    residuals.rename!("All"+"_residual2")
+
+    //超额收益^2/残差
+    tmpCom = select record_date,stock_code,pow(return_day,2) as excess_return2,weights from facTable order by record_date
+    tmpCal = table(tmpCom,residuals)
+    // 此处假设市场因子收益为1
+    markFac = matrix(take(1.0,(shape facTable)[0]))
+    markFac.rename!([`market_factor])
+    facmark = table(facTable.record_date,facTable.stock_code,markFac)
+
+    facTableM = lj(facmark,facTable,`record_date`stock_code)
+    tmp = sql(select =(sqlCol(colname).reverse() <- sqlCol(`market_factor) <- sqlCol(`stock_code) <- sqlCol(`record_date) ).reverse(),from =facTableM,orderBy = sqlCol(`record_date)).eval()
+    // tp = select * from tmp where record_date between 2022.01.01 and 2023.01.30
+    // tmpup1 = tp.unpivot(`record_date`stock_code,tp.columnNames()[2:])
+    // x =  select toArray(value) as newvalue from tmpup1 group by record_date,valueType order by record_date,valueType
+
+    // markey_factor+AllFactors 收益率窄表
+    tname = tmp.columnNames()[2:]
+    tmpup = tmp.unpivot(`record_date`stock_code,tname[:first(at(tname like "industry%"))])
+    // tmpup = tmp.unpivot(`record_date`stock_code,tname)
+    x =  select toArray(value) as newvalue from tmpup group by record_date,valueType order by record_date,valueType
+    // getXnn_newvalue:DOUBLE, blob(concat(double(take(0, d)),",")):BLOB
+
+    // 计算Hat Matrix
+    // result = select getXnn(newvalue) from x group by record_date
+    result = select getXnn(newvalue) from x group by record_date
+    // X'X可能满秩，此时结果为空，此时做填充
+    replaceColumn!(result, `getXnn_newvalue, string(result["getXnn_newvalue"]))
+    update result set getXnn_newvalue = blob(concat(double(take(0, d)),",")) where getXnn_newvalue is null
+
+    // 计算stR2,并根据因子合并成窄表
+    resXnn = table(matrix(double(split(result.getXnn_newvalue,","))).reshape() as Xnn)
+    resXnn = sql(select=(sqlColAlias(sqlCol(`Xnn),"All" + "_Xnn")),from = resXnn).eval()
+    tmpCal = table(tmpCal,resXnn)
+    code0 = parseExpr("wsum(weights,ratio(All_residual2,(1-All_Xnn)))")
+    code1 = makeUnifiedCall(wsum,[sqlCol(`weights),sqlCol(`excess_return2)])
+    code2 = expr(1,-,expr(code0,\,code1))
+    tmpR2 = sql(select = (sqlCol(`record_date),sqlColAlias(code2,"All"+"_factors")),from = tmpCal,groupBy = sqlCol(`record_date)).eval()
+    tmpR2up = makeUnifiedCall(unpivot,[tmpR2 ,`record_date,"All"+"_factors" ]).eval()
+    tmpR2up.rename!(`value,`stR2)
+
+    // residuals，个股收益
+    res = table(matrix(double(split(split(split(factorState.value,'Residual')[1],'R2')[0],',')))[1:(d+1),:].reshape(count:1))
+    res.rename!("special_ret")
+    res = table(facTable.record_date,facTable.stock_code,res)
+    
+    // weighted = sqrt((1\pow(1..12,2)).reverse())
+    // wtstb = table(distinct(facTable.record_date) as record_date,weighted as ws)
+    // res_rolling = select record_date,stock_code,ws * special_ret as special_ret  from lj(res,wtstb,`record_date)
+
+    // R2
+    R2 = tmpR2up
+
+    // bias统计量，基于因子收益率\mstd(move(因子收益率,1),504)  ---》 因子收益率\因子收益率波动收益
+    // 计算取定时间窗口的std 交易日是252天 取两年的窗口
+    
+    // 此处是BIAS，后续Q统计量会用上
+    code3 = sqlColAlias(parseExpr(colname+ "\\" + "mstd(move(" + colname+",1),504,1)"),colname+'_bias')
+    tmpbias = sql(select = (code3.reverse() <- sqlCol(`record_date)).reverse(),from = beta).eval()
+    tmpbias.nullFill!(0)  
+    
+    // 计算Bias^2 通统计量
+    code4 = sqlColAlias(expr(unifiedExpr(parseExpr("pow(" + tmpbias.columnNames()[1:] + ",2)"),take(+,n-1)),\,n),`bias2)
+    // code5 = sql
+    // bias statistic2
+    biast = sql(select = code4,from = tmpbias).eval()
+
+    // 因子预测收益率窄表
+    betaup = beta.unpivot(`record_date, colname)
+    x = select toArray(value) as newvalue from betaup group by record_date
+    weighted = ewmMean(0..(rd.size()-1),halfLife=7)\sum(ewmMean(0..(rd.size()-1),halfLife=7))
+    
+    // 计算特异协方差矩阵
+    rescof = select toArray(special_ret) as newvalue from res group by record_date
+    sc = "code_"+string(exec distinct stock_code from facTable order by stock_code)    
+    rescov = dict(STRING,ANY)
+    if(!adjust){
+        for(dates in rd){
+            rescof1 = select * from  rescof where record_date >= temporalAdd(dates,-3,"M") and record_date <= dates
+            tb = matrix(rescof1.newvalue).covarMatrix()
+            tb.rename!(sc)
+            if(shrink){
+                weight = select stock_code,weights from facTable where record_date = dates
+                tb = BayesShrinkage(tb,weight,sum(biast*weighted).bias2[0])
+                // tb = BayesShrinkage(tb,weight)            
+            }
+            tb = table(tb)
+            // tb = table(tb)* sum(biast*weighted).bias2[0]
+            // tb = table(tb)
+            tb.rename!(sc)
+            rescov[string(dates)] = tb
+        }
+    }else{
+        for(dates in rd){
+            res1 = select record_date,"code_" + stock_code as stock_code,special_ret from res
+            resnow = select special_ret from res1  pivot by record_date,stock_code 
+            resnow1 = select * from resnow where  record_date >= temporalAdd(dates,-3,"M") and record_date <= dates
+            tb = Newye_West(resnow1,q=60)
+            tb.rename!(sc)
+            if(shrink){
+                weight = select stock_code,weights from facTable where record_date = dates
+                tb = BayesShrinkage(tb,weight,sum(biast*weighted).bias2[0])
+                // tb = BayesShrinkage(tb,weight)
+            }
+            tb = table(tb)
+
+            tb.rename!(sc)
+            rescov[string(dates)] = tb
+            
+        }
+    }
+
+    // 计算因子协方差矩阵
+    covf = dict(STRING,ANY)
+ 
+    if(!adjust){
+        for(dates in rd){
+            x1 = select * from  x where record_date >= temporalAdd(dates,-3,"M") and record_date <= dates
+            countdate = exec nunique(record_date) from x1
+            tb = matrix(x1.newvalue).covarMatrix() //协方差矩阵，Appendix B:B1
+            // tb = matrix(x1.newvalue).covarMatrix()
+            tb.rename!(colname)
+            if(eigenfactor&&countdate>=12){
+                // rolling-12 must have 12 out
+                tb = eigenCovAdjusted(tb,10)
+            }
+           
+            covf[string(dates)] = tb
+            // covf[string(dates)] = tb* sum(biast*weighted).bias2[0]
+        }
+    }else{
+        for(dates in rd){
+            // rolling 12-month
+            beta1 = select * from  beta where record_date >= temporalAdd(dates,-3,"M") and record_date <= dates
+            countdate = exec nunique(record_date) from beta1 
+            betaStyle = sql(select= sqlCol(beta1.columnNames()[0] join beta1.columnNames()[2:]),from = beta1 ).eval()
+            tb = Newye_West(betaStyle,q=60)
+            // tb = Newye_West(betaStyle,q=2)
+            tb.rename!(colname)
+            if(eigenfactor&&countdate>=12){
+                tb = eigenCovAdjusted(tb,10)
+            }
+            
+            covf[string(dates)] = tb
+            // covf[string(dates)] = tb* sum(biast*weighted).bias2[0]
+        }
+    }
+    rd = rd.sort()
+    bias = table(rd,sqrt(biast))
+    bias.rename!([`record_date,`bias_statistic])
+    ret = dict(STRING, ANY)
+    ret["fac_ret"] = beta //因子收益率预测
+    ret["tstat"] = tstat //t统计量
+    ret["R2"] = R2 //实际上是stdR2
+    ret["res"] = res //残差
+    ret["fac_risk"] = covf //收益率协方差矩阵
+    ret["stock_risk"] = rescov //特异性风险矩阵
+    ret["bias"] = bias //偏差统计量
+    return ret
+}
+
+
+// ----------------------------------------------------------------------------------------------------------------------
+
+
+/* 2.预测个股收益：getPredicOut()
+ */
+
+
+/* getPredicOut
+用本月初（即上月末的因子暴露预测本月末的个股收益）计算预期个股、因子收益率,并返回预期模型的因子协方差矩阵(因子风险)、特质性收益协方差矩阵(个股风险)、stR2、tstat
+Input:   
+         facTable         NULL  (Default)                    (必须)因子表                        getFSLevelFactor函数得到的全因子表,默认最后一期（t）时间（全因子表数据至少包含前t-1期完整数据）为要预测的时间
+         
+Output:  getAbs
+         predictRetTable   
+*/
+
+def getPredicOut(facTable = NULL){
+    date_now = exec last(record_date) from facTable
+    date_old = exec last(record_date) from facTable where record_date != date_now
+    code0 = sqlCol(facTable.columnNames()[0:(at(facTable.columnNames()=='return_day'))[0]])
+    // 滞后 ret，实现本期和下一期的预测
+    code1 = parseExpr("move(return_day,-1) as return_day")
+    // 模型拟合
+    facTable_lag = sql(select = (code0 <- code1 <- sqlCol(`weights)),from = facTable,groupFlag = 0,groupBy = sqlCol(`stock_code)).eval()
+    facTable_reg = select * from facTable_lag where record_date < date_old
+    // 调用 getRetTable 函数实现预测，基于滞后一期的因子载荷矩阵和当期的因子收益做回归
+    predict = getRetTable(facTable_reg)
+    res = select last(special_ret) as special_ret from predict.res group by stock_code
+    info = select stock_code,record_date from facTable_lag where record_date == date_now
+    code2 = sqlCol(facTable.columnNames()[2:(at(facTable.columnNames()=='return_day'))[0]])
+    pfr = select * from predict.fac_ret where  record_date != date_now 
+    tb  = table(concatMatrix([matrix(take(1.0,(shape res.special_ret)[0])),matrix(sql(select = code2 ,from = facTable_lag,where = <record_date == date_old>).eval())])**transpose(matrix(last(pfr))[1:])) + res.special_ret
+    tb.rename!(`return_day)
+    tb = table(info,tb)
+    predict['predict_ret'] = tb
+    return predict
+}
+
+
+// ----------------------------------------------------------------------------------------------------------------------
+
+
+/* 3.组合权重优化：getOptimizeWeights()
+ */
+
+
+
+/* getOptimWts
+组合权重优化中的聚合函数
+Input:   
+         covf              因子收益协方差矩阵
+         delta             特质收益协方差矩阵
+         st                2022.01.03(Default)                
+         et                2023.01.02(Default)
+         ret               预期收益
+         r                 0.05                               设置的最小收益
+         tbName            因子暴露
+         deIndustry        true                               行业中性
+         deStyle           true                               风格中性
+ 
+Output:  
+         weightTable       返回预测的资产配置权重
+*/
+
+
+defg getOptimWts(covf,delta,ret,r,tbName,deIndustry,xIndustry,deStyle,xStyle,w = NULL){
+    X = transpose(matrix(tbName))
+    H = X**matrix(covf)**transpose(X) + matrix(delta) //目标函数
+    //print(shape H)
+    n = (shape delta)[0]
+    A = transpose(matrix(-eye(n),-ret))
+    b = (take(double(0),n) <- -r).reshape((n+1):1) // 基准收益率
+    // A = -eye(n)
+    // b = (take(double(0),n)).reshape(n:1)
+    Aeq = take(1,n).reshape(1:n)
+    beq = matrix([1])
+    
+    // 约束条件
+    // 行业中性
+    if(deIndustry){
+        Aeq = concatMatrix([Aeq,transpose(xIndustry)],false)
+        beq = concatMatrix([beq,transpose(xIndustry)**w],false)
+    }
+    // 风格因子中性
+    if(deStyle){
+        Aeq = concatMatrix([Aeq,transpose(xStyle)],false)
+        beq = concatMatrix([beq,transpose(xStyle)**w],false)
+    }
+    f = take(0,n)
+    return concat(quadprog(H,f,A,b,Aeq,beq),',')
+}
+
+
+/* getOptimizeWeights
+组合权重优化,实现行业中性、风格中性的策略（控制最小预期收益，最小化风险），得出资产组合权重，如果没有输出说明现有资产配置无法达到设置的最小预期收益,默认最后一期时间为要预测的资产配置权重
+Input:   
+         facTable          NULL  (Default)                    (必须)因子回归表                     (getFSLevelFactor函数返回的全因子回归表表）
+         retOut            NULL  (Default)                    (必须)因子收益表                    （getRetTable函数返回的全因子收益表）
+         st                2022.01.03(Default)                
+         et                2023.01.02(Default)
+         method            minRiskControlRet                  控制收益、最小化风险
+         deIndustry        true                               行业中性
+         deStyle           true                               风格中性
+         index_code        '000300'                           基准代码
+         r                 0.05                               设置的最小收益
+         optionCode        组合中的备选stock_code               以stringVector形式传入  
+ 
+Output:  
+         weightTable       返回预测的资产配置权重
+*/
+
+
+
+def getOptimizeWeights(facTable = NULL,retOut = NULL,st=2022.01.03,et =2023.01.02,method = "minRiskControlRet",deIndustry = false,deStyle  = false ,index_code  = '000300',r=0.05,optionCode = NULL){
+    benchmark = getBenchMark(st=st,et=et,code = index_code)
+    pred = exec return_day from getPredicOut(facTable).predict_ret where stock_code in optionCode
+    ft  = select * from facTable where stock_code in optionCode
+    ft = select * from lj(ft,benchmark,`stock_code`record_date) order by record_date
+    dates = exec last(record_date) from ft
+    update ft set i_weight = 0 where i_weight = NULL
+    iname = ft.columnNames()[ft.columnNames() like "%industry%"]
+    sname = ft.columnNames()[2:(first(at(ft.columnNames() like "%industry%")))]
+    index = at(retOut.stock_risk[string(dates)].columnNames() in (exec "code_" + distinct stock_code from ft))
+    fnames = ft.columnNames()[2:]   
+    reg = sql(select =( (sqlCol(fnames[0:(last(at(fnames like "%industry%"))+1)]).reverse() <- sqlCol(`record_date) <- sqlCol(`stock_code)).reverse()),from = ft).eval()
+    regup = reg.unpivot(`record_date`stock_code,reg.columnNames()[2:])
+    x =  select toArray(value) as newvalue from regup group by record_date,valueType order by record_date,valueType
+    xStyle = matrix(sql(select = sqlCol(sname),from  = reg,where = <record_date == dates>).eval())
+    xIndustry = matrix(sql(select = sqlCol(iname),from  = reg,where = <record_date == dates>).eval())
+    w = matrix(sql(select = sqlCol(`i_weight),from  = ft,where = <record_date == dates>).eval())
+    // 核心代码
+    if(method == "minRiskControlRet"){
+        // 求得优化目标 ，factor_rsik -> V_f；stock_risk -> delta； pred-> r（预测的收益率）；r -> r_min
+        try{tmp = select dates as record_date,getOptimWts(matrix(retOut.fac_risk[string(dates)]),matrix(retOut.stock_risk[string(dates)])[index,index],matrix(pred),r,newvalue,deIndustry,xIndustry,deStyle,xStyle,w) from x where record_date = dates}catch(ex){print(ex);print "优化配置不存在，请尝试调整控制收益，预测收益，预期资产配置，增加样本"; return}        
+    }
+    // 预测优化风险
+    risktb = table(matrix(double(tmp.getOptimWts.split('[')[0])))*2
+    risktb.rename!("risk")
+
+    tb = table(transpose(matrix(double(tmp.getOptimWts.split('[')[1].split(',')))))
+    tb.rename!("code_"+optionCode)
+    return table(tmp.record_date,risktb,tb)
+}
+
+
+/* 4.资产配置评估：事前资产配置getPortfolioAccuracy()、事后资产配置评估getFacSpecialBias()
+    计算预测模型的bias、q统计量，需要给出月频的资产组合优化权重模型的结果，假设模型不变，例如都是控制收益、最小化风险
+    利用前n-1期数据预测第n期，给出第n期的统计量，如果需要获取每一期的统计量、每一期对模型给出估计后，都应该把前t期的tbName、facTable、retOut结果代入到该函数（设为第t期），得到第t期的统计量结果 
+*/
+
+
+
+
+
+/* getPortfolioTest-基于给定组合的权重，计算预测组合的bias（组合的ret(\sum{w_{i}r_{i}})\组合的sigma(XV_{f}X'+Δ)）、q统计量
+计算资产组合的偏差统计量、Q-统计量
+Input:                                      
+         tbName            NULL   (Default)                  资产组合配置表，必须提供已有的资产组合配置              必须包含三列（record_date，stock_code，i_weight）
+         facTable          NULL   (Default)                  (必须)因子回归表                                           (getFSLevelFactor函数返回的全因子回归表）
+         retOut            NULL  (Default)                   (必须)因子收益表                                           （getRetTable函数返回的全因子收益表）    
+         st                2022.01.03(Default)                
+         et                2023.01.02(Default)
+Output:  
+         predictRetTable   
+*/
+// tbName,facTable,retOut,st,et=bmBegin,facTable1,retOut1,stnew,dates
+
+def getPortfolioTest(tbName = NULL,facTable = NULL,retOut = NULL,st=2022.01.03,et =2023.01.02){
+    codebm = exec distinct stock_code from tbName
+    tmpdates = table(getMarketCalendar("CFFEX",st,et) as record_date)
+    tmpdates = select last(record_date) as record_date from tmpdates group by month(record_date)
+    date = exec distinct record_date from tmpdates order by record_date //此处为什么是每月最后一个交易日？
+    
+    // // 收益
+    mr0 = select last(record_date) as record_date,stock_code, (last(price_close)-first(price_open))\first(price_open) as return_day from loadTable("dfs://k_day","k_day") where record_date >= st and record_date <= et group by month(record_date),stock_code
+    mr0 = select * from mr0 where record_date in date
+    mr0.rename!(`month_record_date,`month)
+    ft  = select record_date,stock_code,return_day,i_weight from lj(mr0,tbName,`month`stock_code) where stock_code in codebm
+    update ft set i_weight = 0 where i_weight is null
+    // 权重归一
+    ft  = select record_date,stock_code,return_day,i_weight,sum(i_weight) as sum_weight from ft context by record_date
+    ft1  = select record_date,stock_code,return_day,i_weight\sum_weight as i_weight from ft 
+
+    //此处有问题，若先in过滤，收益率与因子回归表的收益率并不一致
+    // mr = select last(record_date) as record_date,stock_code, (last(price_close)-first(price_open))\first(price_open) as return_day from loadTable("dfs://k_day","k_day") where record_date in date and record_date >= st and record_date <= et group by month(record_date),stock_code
+    // mr.rename!(`month_record_date,`month)
+    // ft  = select record_date,stock_code,return_day,i_weight from lj(mr,tbName,`month`stock_code) where stock_code in codebm
+    // update ft set i_weight = 0 where i_weight is null
+    // 权重归一
+    // ft  = select record_date,stock_code,return_day,i_weight,sum(i_weight) as sum_weight from ft context by record_date
+    // ft2  = select record_date,stock_code,return_day,i_weight\sum_weight as i_weight from ft 
+
+    // select * from ej(ft1,ft2,`record_date`stock_code)
+
+    // 预测资产组合的收益
+    tmp = select record_date,wsum(return_day,i_weight) as month_port_ret from ft group by record_date
+
+    // 预测资产组合的风险
+    rd = exec distinct record_date from facTable where record_date>=st and record_date<=et order by record_date
+    dates  = exec last(record_date) from ft where record_date in rd
+    i = 0
+
+    // 通过
+    code = exec distinct stock_code from ft where stock_code in  retOut.stock_risk[string(dates)].columnNames().regexReplace("code_","")
+    sigma = take(double(0),count(rd))
+
+    for(dates in rd){
+        // 根据组合筛选因子
+        index = at(retOut.stock_risk[string(dates)].columnNames() in (exec "code_" + distinct stock_code from ft where record_date = dates))
+        tmpft = select * from ft where record_date = dates and stock_code in code 
+        facTabletmp = select * from facTable where record_date = dates
+
+        // // 方案一：基于得到的facTabletmp计算对应的风险（可选择是否执行，推荐执行）
+        // retOut1 = getRetTable(facTable = facTabletmp, adjust = true,shrink = true ,eigenfactor = true)
+        // facTabletmp = facTable[index]
+        // fname = facTabletmp.columnNames() 
+        // // 因子暴露矩阵
+        // mx =  matrix(sql(select = (sqlCol(fname[2:at(fname == "return_day")[0]])),from = facTabletmp).eval())
+        // // 与优化目标一致，计算组合的风险矩阵（因子收益率协方差矩阵、特质收益协方差矩阵）；权重给定，fac_risk、stock_risk为模型计算得出，以计算组合的风险
+        // sigma[i] = sqrt(transpose(matrix(tmpft.i_weight))**(mx**matrix(retOut1.fac_risk[string(dates)])**transpose(mx) + matrix(retOut1.stock_risk[string(dates)])[index,index])**matrix(tmpft.i_weight)[0])
+
+        // 方案二：基于AllTables的BARRA模型结果retOut预测风险
+        fname = facTabletmp.columnNames() 
+        facTabletmp = facTable[index]
+        // 因子暴露矩阵
+        mx =  matrix(sql(select = (sqlCol(fname[2:at(fname == "return_day")[0]])),from = facTabletmp).eval())
+        sigma[i] = sqrt(transpose(matrix(tmpft.i_weight))**(mx**matrix(retOut.fac_risk[string(dates)])**transpose(mx) + matrix(retOut.stock_risk[string(dates)])[index,index])**matrix(tmpft.i_weight)[0])
+        i = i+1
+    }
+
+    sigma[0] = NULL
+    tmp  = table(tmp,sigma)
+    // update tmp set sigma = sigma.bfill()
+    rs = select month_port_ret\sigma as bn ,mean(month_port_ret\sigma) as meanBn from tmp 
+    dcount = rd.size()
+    // bias = exec sqrt(sum(pow(bn-meanBn,2))\(dcount-1)) from  rs
+    // q = mean(exec pow(bn,2)-log(pow(bn,2)) from rs)
+    bias = select sqrt(sum(pow(bn-meanBn,2))\(dcount-1)) from  rs
+    q = mean(select pow(bn,2)-log(pow(bn,2)) from rs)
+    out = table(bias,q)
+    out.rename!([`bias_statistic,`q_statistic])
+    out = table(dates as record_date,out)
+    // return concat(bias join q,',')
+    return out
+}
+
+
+
+/* getPortfolioAccuracy
+计算资产组合的时序偏差统计量、Q-统计量
+Input:                                      
+         facTable          NULL   (Default)                  (必须)因子回归表                                           (getFSLevelFactor函数返回的全因子回归表）
+         retOut            NULL  (Default)                   (必须)因子收益表                                           （getRetTable函数返回的全因子收益表）    
+         st                2022.01.03(Default)                
+         et                2023.01.02(Default)
+         index_code        指定资产组合                        '000300'、'399101'
+         method            权重配比方法                        "float_value"  流通市值加权，"equal" 等权
+Output:  
+         accuracyTable   
+*/
+
+
+
+def getPortfolioAccuracy(st,et,facTable,retOut,index_code,method = "float_value"){
+    // 基于getBenchMark为已有的资产组合
+    bm = select stock_code,record_date,month(record_date) as month,i_weight from  getBenchMark(st=st,et=et,code = index_code)
+    
+    // 权重组合
+    if(method == 'float_value'){ //流通市值加权
+        bmBegin = select first(i_weight) as i_weight from bm group by stock_code,month                      
+    }else if(method == 'equal'){ //等权
+        bmBegin = select first(month) as first_month from bm group by stock_code,month
+        bmBegin = select stock_code,first_month as month,1\nunique(stock_code) as i_weight from bmBegin context by first_month
+    }
+    
+    rd = exec distinct record_date from facTable where record_date>=st and record_date<et order by record_date
+    i=0
+    for(dates in rd){//dates=rd[0]
+        if(temporalAdd(dates,-12,'M') > st){
+            stnew = temporalAdd(dates,-12,'M')
+        }else{
+            stnew = st
+        }
+        
+        bmBeginEnd =  select * from bmBegin where month between month(stnew) and month(dates)
+        if(i==0){
+            out = getPortfolioTest(bmBeginEnd,facTable,retOut,stnew,dates)
+        }else{
+            out.append!(getPortfolioTest(bmBeginEnd,facTable,retOut,stnew,dates))
+        }
+        i+=1  
+    }
+    return out
+}
+
+
+
+
+
+/* getFacSpecialBias
+获取因子的Bias时序统计量和获取个股的特质收益统计量;计算模型的bias，并与市场已有组合Join，得到事后资产组合的bias
+Input:   
+            retOut              getRetTable()函数返回的结果
+            index_name          指数代码
+            method              等权方法或者流通市值方法 'equal' 'float_market'
+Output:  
+            Bias统计量
+*/
+
+
+def getFacSpecialBias(retOut,index_name = NULL,method = 'equal'){
+    rd = exec distinct record_date from retOut.res
+    st = first(rd)
+    et = last(rd)
+    cname = retOut.fac_risk[string(rd[0])].columnNames()
+        
+    // 因子偏差
+    // facSigma = table(take(double(NULL),(shape retOut.fac_risk[string(rd[0])])[0]) as )
+    facSigma = array(ANY)
+    for(dates in rd){
+        facSigma.append!(sqrt(diag(retOut.fac_risk[string(dates)])))
+    }
+    facRet = sql(select = (sqlCol(cname).reverse() <- sqlCol(`record_date)).reverse(),from = retOut.fac_ret).eval()
+    facRetup = facRet.unpivot(`record_date,cname)
+    facRetup.rename!(`value,`fac_ret)
+    facSigma = table(facRet.record_date,transpose(matrix(facSigma)))
+    facSigma.rename!(facSigma.columnNames()[1:],cname)
+    facSigmaup = facSigma.unpivot(`record_date,cname)
+    facSigmaup.rename!(`value,`fac_sigma)
+    bk = select record_date,valueType,fac_ret\fac_sigma as bkt from ej(facRetup,facSigmaup,`record_date`valueType)
+    tmpbk = select record_date,valueType,pow(mavg(bkt,12,12)-bkt,2) as powbias from bk context by valueType
+    tmpbiasbk =  select record_date,valueType,sqrt(msum(powbias,12,12)\11) as bias_stat from tmpbk context by valueType
+    // facBias = select mean(bias_stat) from tmpbiasbk group by valueType
+ 
+    // 特异风险偏差
+    sname = retOut.stock_risk[string(rd[0])].columnNames()
+    stockSigma = array(ANY)
+    for(dates in rd){
+        stockSigma.append!(sqrt(diag(matrix(retOut.stock_risk[string(dates)]))))
+    }
+    speRetup = retOut.res
+    stockSigma = table(facRet.record_date,transpose(matrix(stockSigma)))
+    stockSigma.rename!(stockSigma.columnNames()[1:],sname)
+    stockSigmaup = stockSigma.unpivot(`record_date,sname)
+    stockSigmaup.rename!(`value`valueType,`stock_sigma`stock_code)
+    update stockSigmaup set stock_code = stock_code.regexReplace("code_","")
+    bn = select record_date,stock_code,special_ret\stock_sigma as bnt from ej(speRetup,stockSigmaup,`record_date`stock_code)
+    tmpbn = select record_date,stock_code,pow(mavg(bnt,12,12)-bnt,2) as powbias from bn context by stock_code
+    tmpbiasbn = select record_date,stock_code,sqrt(msum(powbias,12,12)\11) as bias_stat from tmpbn context by stock_code
+    // stockBias = select mean(bias_stat) from tmpbiasbn group by stock_code
+    if(index_name != NULL){
+        if(method == 'equal'){
+            bm = select last(index_code) as index_code,last(stock_code) as stock_code,last(record_date) as record_date  from loadTable("dfs://index_weight","index_member_weight") where  index_code = index_name and record_date>=st,record_date<=et group by index_code,stock_code,month(record_date)
+            bm = select index_code,stock_code,record_date,1\nunique(stock_code) as weight from bm context by month_record_date
+            tmpIndexbiasbn = select record_date,stock_code,bias_stat,weight from lj(bm,tmpbiasbn,`record_date`stock_code) where bias_stat is not null
+            bias = dict(STRING, ANY)
+            bias["fac_bias"] = tmpbiasbk
+            bias["stock_bias"] = tmpIndexbiasbn
+            return bias
+        }else{
+            bm = select index_code,stock_code,record_date,i_weight from loadTable("dfs://index_weight","index_member_weight") where  index_code = index_name and record_date>=st,record_date<=et
+            tmpIndexbiasbn = select record_date,stock_code,bias_stat,i_weight as weight from lj(bm,tmpbiasbn,`record_date`stock_code) where bias_stat is not null
+            tmpIndexbiasbn = select record_date,stock_code,bias_stat,weight\sum(weight) as weight from tmpIndexbiasbn context by record_date
+            bias = dict(STRING, ANY)
+            bias["fac_bias"] = tmpbiasbk
+            bias["stock_bias"] = tmpIndexbiasbn
+            return bias
+        }
+    }
+    bias = dict(STRING, ANY)
+    bias["fac_bias"] = tmpbiasbk
+    bias["stock_bias"] = tmpbiasbn
+    return bias
+}
+

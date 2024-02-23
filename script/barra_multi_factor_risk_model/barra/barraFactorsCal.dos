@@ -1,0 +1,1402 @@
+module barra::barraFactorsCal
+//----------------------------------------------------------------------------------------------------------------------
+/* 因子计算模块
+ * 1.计算风格因子-getXXX：例如getAbs()
+ * 2.计算行业因子-getIndustryXXX：例如getIndustryFactor()
+ */
+
+// ----------------------------------------------------------------------------------------------------------------------
+/* 
+ *1.计算风格因子-getXXX，例如getAbs()
+ */
+
+/* convertFreq
+Convert the frequency of factors by forward-fill method or other methods 
+Input:   tbName     table name to be convert
+         from       frequency
+         to         frequency
+         startTime  2023.01.03(Default) 
+         endTime    2022.01.02(Default)
+Output:  table
+         
+Example: convertFreq(tmpBalance) */
+
+def convertFreq(tbName=NULL,from = 'q',to = 'm',startTime = 2022.01.03,endTime = 2023.01.02){
+    if(from == 'q'){
+        if(to == 'm'){
+            // 获取交易日
+            tmpdates = table(getMarketCalendar("CFFEX",startTime,endTime) as record_date)
+            tmpdates = select last(record_date) as record_date from tmpdates group by month(record_date)
+            date = select distinct record_date from tmpdates order by record_date
+            tmptb = tbName
+            tname = tmptb.columnNames()
+            if(`comp_id in tname){
+                comp_id = select distinct comp_id from tmptb
+                tmpAj = cj(date,comp_id)
+                // 实现升频
+                if(`report_date in tname){
+                    newTmp = select * from aj(tmpAj,tmptb,`comp_id`record_date,`comp_id`report_date) order by comp_id
+                }else if(`record_date in tname){
+                    newTmp = select * from aj(tmpAj,tmptb,`comp_id`record_date) order by comp_id
+                }
+                
+            }else{
+                stock_code = select distinct stock_code from tmptb
+                tmpAj = cj(date,stock_code)
+                // 实现升频
+                if(`report_date in tname){
+                    newTmp = select * from aj(tmpAj,tmptb,`stock_code`record_date,`comp_id`report_date) order by stock_code
+                }else if(`record_date in tname){
+                    newTmp = select * from aj(tmpAj,tmptb,`stock_code`record_date) order by stock_code
+                }
+            }
+            return newTmp
+        }
+    }
+    if(from == 'y'){
+        if(to == 'm'){
+            // 获取交易日
+            tmpdates = table(getMarketCalendar("CFFEX",startTime,endTime) as record_date)
+            tmpdates = select last(record_date) as record_date from tmpdates group by month(record_date)
+            date = select distinct record_date as month from tmpdates order by record_date
+            tmptb = tbName
+            stock_code = select distinct stock_code from tmptb
+            // for left join
+            tmpAj = cj(month(date),stock_code)
+            // 实现升频
+            newTmp = select * from lj(tmpAj,tmptb,`stock_code) order by stock_code,year
+            update newTmp set month = temporalAdd(month,year-year(month),'y') 
+            alter table newTmp drop year
+            return select * from newTmp where month >= month(startTime), month < month(endTime)
+        }
+    }
+    if(from == 'd'){
+        if(to == 'm'){
+            tmpdates = table(getMarketCalendar("CFFEX",startTime,endTime) as record_date)
+            tmpdates = select last(record_date) as record_date from tmpdates group by month(record_date)
+            date = exec distinct record_date as month from tmpdates order by record_date
+            tmptb = tbName
+            return select * from tmptb where record_date in date
+        }
+    }
+}
+
+
+
+/* getWeighted
+The aggregation defined to obtain the moving weighted values.
+Input:   weighted           权重
+         value              被加权值
+Output:  weighted_value     加权后的值
+ */
+
+defg getWeighted(weighted,value){
+    return wavg(value,weighted)
+}
+
+
+
+/* getWlsAlpha
+The aggregation function defined to obtain the moving weighted LS alpha.
+Input:   weighted   权重值
+         x          若 X 为向量，则返回与 X 具有相同长度的向量。若 X 为矩阵/表则在每一列进行计算, 返回相同维度的矩阵/表。
+         y          因变量
+         
+Output:  alpha      wls 回归后的alpha值
+
+Example:
+
+        windowsReturn = 5
+        halfLife = 5
+        lagged = 1
+        record_date = table(2022.01.01 + 1..10 as record_date)
+        stock_code = table("00000" + string(1..10) as stock_code)
+        tmp = table(cj(record_date,stock_code),rand(0.99,100) as index_return,rand(0.99,100) as return_day )
+        weighted = ewmMean(0..(windowsReturn-1),halfLife=halfLife)\sum(ewmMean(0..(windowsReturn-1),halfLife=halfLife))
+        tmpAlpha = select record_date,stock_code,move(moving(getWlsAlpha{weighted},[index_return,return_day],windowsReturn,windowsReturn),lagged) as alpha from tmp context by stock_code 
+
+*/
+
+
+defg getWlsAlpha(weighted,x,y){
+    return wls(y,x,weighted)[0]
+}
+
+
+
+/* getWlsBeta
+The aggregation function defined to obtain the moving weighted LS beta.
+Input:   weighted   权重值
+         x          若 X 为向量，则返回与 X 具有相同长度的向量。若 X 为矩阵/表则在每一列进行计算, 返回相同维度的矩阵/表。
+         y          因变量
+         
+Output:  beta       wls 回归后的beta值
+
+Example:
+
+        windowsReturn = 5
+        halfLife = 5
+        lagged = 1
+        record_date = table(2022.01.01 + 1..10 as record_date)
+        stock_code = table("00000" + string(1..10) as stock_code)
+        tmp = table(cj(record_date,stock_code),rand(0.99,100) as index_return,rand(0.99,100) as return_day )
+        weighted = ewmMean(0..(windowsReturn-1),halfLife=halfLife)\sum(ewmMean(0..(windowsReturn-1),halfLife=halfLife))
+        tmpAlpha = select record_date,stock_code,move(moving(getWlsBeta{weighted},[index_return,return_day],windowsReturn,windowsReturn),lagged) as alpha from tmp context by stock_code 
+*/
+
+
+defg getWlsBeta(weighted,x,y){
+    return wls(y,x,weighted)[1]
+}
+
+
+/* getWlsSigma
+The aggregation function defined to obtain the moving weighted LS std of Residual.
+Input:   weighted   权重值
+         x          若 X 为向量，则返回与 X 具有相同长度的向量。若 X 为矩阵/表则在每一列进行计算, 返回相同维度的矩阵/表。
+         y          因变量
+         
+Output:  std of Residual  wls 回归后的残差的标准差值 
+
+Example:
+
+        windowsReturn = 5
+        halfLife = 5
+        lagged = 1
+        record_date = table(2022.01.01 + 1..10 as record_date)
+        stock_code = table("00000" + string(1..10) as stock_code)
+        tmp = table(cj(record_date,stock_code),rand(0.99,100) as index_return,rand(0.99,100) as return_day )
+        weighted = ewmMean(0..(windowsReturn-1),halfLife=halfLife)\sum(ewmMean(0..(windowsReturn-1),halfLife=halfLife))
+        tmpAlpha = select record_date,stock_code,move(moving(getWlsSigma{weighted},[index_return,return_day],windowsReturn,windowsReturn),lagged) as alpha from tmp context by stock_code 
+*/
+
+
+defg getWlsSigma(weighted,x,y){
+    return wls(y,x,weighted,1,2)["Residual"].std()
+}
+
+
+
+
+/* ABS
+Accruals - Balance Sheet Version
+Input:   startTime  2022.01.03(Default)
+    adjusted   false     (Default)  adjust factor by counting depreciation or not 
+    endTime    2023.01.02(Default) 
+Output:  report_date  stock_code  comp_id  
+    ABS factor */
+
+
+def getAbs(startTime = 2022.01.03,endTime = 2023.01.02,adjusted = false ){
+    // startTimed = temporalAdd(startTime,-3,"M")
+    tmpBalance = select report_date,comp_id,total_liability,total_non_current_liability,total_current_liability,cash_equi_valents,total_assets from loadTable("dfs://comp_quater","comp_balance_sheet") where publish_date < endTime and report_date >temporalAdd(startTime,-6,'M') and report_date < endTime
+    tmpStockInfo = select stock_code,comp_id from loadTable("dfs://stock_info","stock_basic_info")
+    if(adjusted){
+        tmpFixAsset = select report_date,comp_id,ending_accu_depreciation - opening_accu_depreciation as de from loadTable("dfs://comp_quater","comp_fixed_asset") where report_date >temporalAdd(startTime,-6,'M') and report_date < endTime 
+        tmpIntaAsset = select  report_date,comp_id,-current_increase  as am from loadTable("dfs://comp_quater","comp_intangible_asset") where report_date >temporalAdd(startTime,-6,'M') and report_date < endTime
+        tmp = select report_date,comp_id,total_liability,total_non_current_liability,total_current_liability,cash_equi_valents,total_assets,de,am from ej(ej(tmpBalance,tmpFixAsset,`comp_id`report_date,`comp_id`report_date),tmpIntaAsset,`comp_id`report_date,`comp_id`report_date)
+        tmp1 = select record_date,stock_code,sum(total_liability) as total_liability,sum(total_non_current_liability) as total_non_current_liability,sum(total_current_liability) as total_current_liability,sum(cash_equi_valents) as cash_equi_valents,sum(total_assets) as total_assets,sum(de) as de,sum(am) as am from ej(tmpStockInfo,convertFreq(tmp,startTime =startTime,endTime =endTime),`comp_id,`comp_id) group by record_date,stock_code order by stock_code
+        return select record_date,stock_code,- (eachPre(sub,(total_assets-cash_equi_valents-total_non_current_liability-total_current_liability-de-am)\total_assets)) as Abs from tmp1 // where record_date >=startTime 
+    }else{
+        tmp = select record_date,stock_code,sum(total_liability) as total_liability,sum(total_non_current_liability) as total_non_current_liability,sum(total_current_liability) as total_current_liability,sum(cash_equi_valents) as cash_equi_valents,sum(total_assets) as total_assets from ej(tmpStockInfo,convertFreq(tmpBalance,startTime =temporalAdd(startTime,-1,'M'),endTime =endTime),`comp_id,`comp_id) group by record_date,stock_code order by stock_code
+        return select record_date,stock_code,-(eachPre(sub,(total_assets-cash_equi_valents-total_non_current_liability-total_current_liability)\total_assets)) as Abs from tmp context by stock_code having record_date >startTime and record_date < endTime
+    }
+}
+
+
+
+/* ACF
+Accruals - Cash flow Statement Version
+Input:   method  String: 'TTM'(Default),'LYR'  
+            startTime  2022.01.03(Default)
+            adjusted   false     (Default)  adjust factor by counting depreciation or not 
+            endTime    2023.06.02(Default)
+Output:  record_date  stock_code  comp_id  
+            ACF factor */
+
+
+def getAcf(method='TTM',startTime = 2022.01.03,endTime = 2023.01.02,adjusted = false){
+    tmpBalance = select report_date,comp_id,total_assets from loadTable("dfs://comp_quater","comp_balance_sheet") where publish_date < endTime and report_date >temporalAdd(startTime,-6,'M') and report_date < endTime
+    tmpStockInfo = select stock_code,comp_id from loadTable("dfs://stock_info","stock_basic_info")
+    if(adjusted){
+        tmpFixAsset = select report_date,comp_id,ending_accu_depreciation - opening_accu_depreciation as de from loadTable("dfs://comp_quater","comp_fixed_asset") where report_date >temporalAdd(startTime,-6,'M') and report_date < endTime 
+        tmpIntaAsset = select report_date,comp_id,-current_increase  as am from loadTable("dfs://comp_quater","comp_intangible_asset") where report_date >temporalAdd(startTime,-6,'M') and report_date < endTime 
+        tmp = select report_date,comp_id,total_assets,de,am from ej(ej(tmpBalance,tmpFixAsset,`comp_id`report_date,`comp_id`report_date),tmpIntaAsset,`comp_id`report_date,`comp_id`report_date)    
+        tmpCpte = select record_date,stock_code,sum(total_assets) as total_assets,sum(de) as de ,sum(am) as am from ej(tmpStockInfo,convertFreq(tmp,startTime =startTime,endTime =endTime),`comp_id,`comp_id) group by record_date,stock_code order by stock_code
+        if(method == 'TTM'){
+            tmpTtm = select record_date,stock_code,net_profit_parent_company_ttm,net_cash_flows_oper_act_ttm,net_increase_cash_cash_equ_ttm from loadTable("dfs://k_day","k_derivative_day") where record_date in (exec report_date from tmp)and record_date > startTime and record_date < endTime
+            return select record_date,stock_code,-(net_profit_parent_company_ttm-net_cash_flows_oper_act_ttm-net_increase_cash_cash_equ_ttm+de+am)\total_assets as acf_ttm from ej(tmpCpte,tmpTtm,`stock_code`record_date,`stock_code`record_date)
+        }
+        else if(method == 'LYR'){
+            tmpLyr = select record_date,lpad(regexReplace(stock_code,"[^0-9]",""),6,`0) as stock_code,net_profit_parent_company_lyr,net_cash_flows_oper_act_lyr,net_increase_cash_cash_equ_lyr from loadTable("dfs://k_day","k_derivative_day") where record_date in (exec report_date from tmp)and record_date > startTime and record_date < endTime
+            return select record_date,stock_code,-(net_profit_parent_company_lyr-net_cash_flows_oper_act_lyr-net_increase_cash_cash_equ_lyr+de+am)\total_assets as acf_lyr from ej(tmpCpte,tmpLyr,`stock_code`record_date,`stock_code`record_date)
+        }
+        else {print('no such method')}
+    }else{
+        tmp = select record_date,stock_code,sum(total_assets) as total_assets from ej(tmpStockInfo,convertFreq(tmpBalance,startTime =startTime,endTime =endTime),`comp_id,`comp_id) group by record_date,stock_code order by stock_code
+        if(method == 'TTM'){
+            tmpTtm = select record_date,stock_code,net_profit_parent_company_ttm,net_cash_flows_oper_act_ttm,net_increase_cash_cash_equ_ttm from loadTable("dfs://k_day","k_derivative_day") where record_date in (exec record_date from tmp)and record_date > startTime and record_date < endTime
+            return select record_date,stock_code,-(net_profit_parent_company_ttm-net_cash_flows_oper_act_ttm-net_increase_cash_cash_equ_ttm)\total_assets as acf_ttm from ej(tmp,tmpTtm,`stock_code`record_date,`stock_code`record_date)
+        }
+        else if(method == 'LYR'){
+            tmpLyr = select record_date,lpad(regexReplace(stock_code,"[^0-9]",""),6,`0) as stock_code,net_profit_parent_company_lyr,net_cash_flows_oper_act_lyr,net_increase_cash_cash_equ_lyr from loadTable("dfs://k_day","k_derivative_day") where record_date in (exec record_date from tmp)and record_date > startTime and record_date < endTime
+            return select record_date,stock_code,-(net_profit_parent_company_lyr-net_cash_flows_oper_act_lyr-net_increase_cash_cash_equ_lyr)\total_assets as acf_lyr from ej(tmp,tmpLyr,`stock_code`record_date,`stock_code`record_date)
+        }
+        else {print('no such method')}
+    }   
+}
+
+
+
+
+
+/* VSAL
+Variability in Sales
+Input:   method  String: 'LYR'(Default),'TTM'
+            startTime  2022.01.03(Default)
+            windows      1825d   (Default)
+            endTime    2023.01.02(Default) 
+Output:  stock_code
+            record_date
+            VSAL factor */
+
+
+def getVsal(method='LYR',startTime = 2022.01.03,endTime = 2023.01.02,windows = 1825){
+    startWindows = temporalAdd(startTime,-windows,'d')
+    tmpdates = table(getMarketCalendar("CFFEX",startWindows,endTime) as record_date)
+    tmpdates = select last(record_date) as record_date from tmpdates group by month(record_date)
+    date = select distinct record_date as month from tmpdates order by record_date
+    if(method == 'TTM'){
+        tmpTtm = select stock_code,record_date,int(split(string(record_date),'.')[1]) as month,oper_income_ttm from loadTable("dfs://k_day","k_derivative_day") where record_date in date
+        vsalTtm = select stock_code,record_date,tmstd(record_date,oper_income_ttm,duration(windows+"d"))/tmavg(record_date,oper_income_ttm,duration(windows+"d")) as vsal_ttm from tmpTtm context by stock_code,month having record_date >= startTime and record_date < endTime
+        return vsalTtm
+    }
+    else if(method == 'LYR'){
+        tmpLyr = select stock_code,record_date,int(split(string(record_date),'.')[1]) as month,oper_income_lyr from loadTable("dfs://k_day","k_derivative_day") where record_date in date
+        vsalLyr = select stock_code,record_date,tmstd(record_date,oper_income_lyr,duration(windows+"d"))/tmavg(record_date,oper_income_lyr,duration(windows+"d")) as vsal_lyr from tmpLyr context by stock_code,month having record_date >= startTime and record_date < endTime 
+        return vsalLyr
+    }
+    else {print('no such method')}
+}
+
+
+
+
+
+/* VERN
+Variability in Earnings
+Input:   method  String: 'LYR'(Default),'TTM'
+            startTime  2022.01.03(Default)
+            windows      1825d   (Default)
+            endTime    2023.01.02(Default) 
+Output:  stock_code
+            record_date
+            VERN factor */
+
+
+def getVern(method='LYR',startTime = 2022.01.03,endTime = 2023.01.02,windows = 1825){
+    startWindows = temporalAdd(startTime,-windows,'d')
+    tmpdates = table(getMarketCalendar("CFFEX",startWindows,endTime) as record_date)
+    tmpdates = select last(record_date) as record_date from tmpdates group by month(record_date)
+    date = select distinct record_date as month from tmpdates order by record_date
+    if(method == 'TTM'){
+        tmpTtm = select stock_code,record_date,int(split(string(record_date),'.')[1]) as month,net_profit_parent_company_ttm from loadTable("dfs://k_day","k_derivative_day") where record_date in date
+        vernTtm = select stock_code,record_date,tmstd(record_date,net_profit_parent_company_ttm,duration(windows+"d"))/tmavg(record_date,net_profit_parent_company_ttm,duration(windows+"d")) as vern_ttm from tmpTtm context by stock_code,month having record_date >= startTime and record_date < endTime
+        return vernTtm
+    }
+    else if(method == 'LYR'){
+        tmpLyr = select stock_code,record_date,int(split(string(record_date),'.')[1]) as month,net_profit_parent_company_lyr from loadTable("dfs://k_day","k_derivative_day") where record_date in date
+        vernLyr = select stock_code,record_date,tmstd(record_date,net_profit_parent_company_lyr,duration(windows+"d"))/tmavg(record_date,net_profit_parent_company_lyr,duration(windows+"d")) as vern_lyr from tmpLyr context by stock_code,month having record_date >= startTime and record_date < endTime
+        return vernLyr
+    }
+    else {print('no such method')}
+}
+
+
+
+
+/* VFLO
+Variability in Cash-flows
+Input:   method  String: 'LYR'(Default),'TTM'
+            startTime  2022.01.03(Default)
+            windows      1825d   (Default)
+            endTime    2023.01.02(Default) 
+Output:  stock_code  
+            record_date
+            VFLO factor */
+
+
+def getVflo(method='LYR',startTime = 2022.01.03,endTime = 2023.01.02,windows = 1825){
+    startWindows = temporalAdd(startTime,-windows,'d')
+    tmpdates = table(getMarketCalendar("CFFEX",startWindows,endTime) as record_date)
+    tmpdates = select last(record_date) as record_date from tmpdates group by month(record_date)
+    date = select distinct record_date as month from tmpdates order by record_date
+    if(method == 'TTM'){
+        tmpTtm = select stock_code,record_date,int(split(string(record_date),'.')[1]) as month,net_increase_cash_cash_equ_ttm from loadTable("dfs://k_day","k_derivative_day") where record_date in date
+        vfloTtm = select stock_code,record_date,tmstd(record_date,net_increase_cash_cash_equ_ttm,duration(windows+"d"))/tmavg(record_date,net_increase_cash_cash_equ_ttm,duration(windows+"d")) as vflo_ttm from tmpTtm context by stock_code,month having record_date >= startTime and record_date < endTime
+        return vfloTtm
+    }
+    else if(method == 'LYR'){
+        tmpLyr = select stock_code,record_date,int(split(string(record_date),'.')[1]) as month,net_increase_cash_cash_equ_lyr from loadTable("dfs://k_day","k_derivative_day") where record_date in date
+        vfloLyr = select stock_code,record_date,tmstd(record_date,net_increase_cash_cash_equ_lyr,duration(windows+"d"))/tmavg(record_date,net_increase_cash_cash_equ_lyr,duration(windows+"d")) as vflo_lyr from tmpLyr context by stock_code,month having record_date >= startTime and record_date < endTime
+        return vfloLyr
+    }
+    else {print('no such method')}
+}
+
+
+
+
+/* CETOP
+Cash-Earnings-to-Price
+Input:   method  String: 'TTM'(Default),'LYR' 
+            startTime  2022.01.03(Default)
+            endTime    2023.01.02(Default) 
+Output:  stock_code 
+            record_date
+            CETOP factor */
+
+
+def getCetop(method='TTM',startTime = 2022.01.03,endTime = 2023.01.02){
+    //startWindows = temporalAdd(startTime,-windows,'y')
+    if(method == 'TTM'){
+        tmpTtm = select stock_code,record_date,net_cash_flows_oper_act_ttm from loadTable("dfs://k_day","k_derivative_day") where record_date >= startTime and record_date < endTime  order by stock_code
+        tmpTtm = convertFreq(tmpTtm,from = 'd',to = 'm' , startTime =startTime,endTime = endTime)
+        tmv = select stock_code,record_date,total_market_value*10000 as total_market_value from loadTable("dfs://k_day","k_derivative_day") where record_date >= startTime and record_date < endTime and stock_code in (exec distinct stock_code from tmpTtm) 
+        tmv = convertFreq(tmv,from = 'd',to = 'm' , startTime =startTime,endTime = endTime)
+        return select stock_code,record_date,net_cash_flows_oper_act_ttm\total_market_value as cetop_ttm from aj(tmpTtm,tmv,`stock_code`record_date) 
+    }
+    else if(method == 'LYR'){
+        tmpLyr = select stock_code,record_date,net_cash_flows_oper_act_lyr from loadTable("dfs://k_day","k_derivative_day") where record_date >= startTime and record_date < endTime 
+        tmpLyr = convertFreq(tmpLyr,from = 'd',to = 'm' , startTime =startTime,endTime = endTime)
+        tmv = select stock_code,record_date,total_market_value*10000 as total_market_value from loadTable("dfs://k_day","k_derivative_day") where record_date >= startTime and record_date < endTime and stock_code in (exec distinct stock_code from tmpLyr) 
+        tmv = convertFreq(tmv,from = 'd',to = 'm' , startTime =startTime,endTime = endTime)
+        return select stock_code,record_date,net_cash_flows_oper_act_lyr\total_market_value as cetop_lyr from aj(tmpLyr,tmv,`stock_code`record_date) 
+    }
+    else {print('no such method')}
+}
+
+
+
+/* ETOP
+Earnings-to-Price
+Input:   method  String: 'TTM'(Default),'LYR' 
+            startTime  2022.01.03(Default)
+            endTime    2023.01.02(Default) 
+Output:  stock_code 
+            record_date
+            ETOP factor */
+
+
+def getEtop(method='TTM',startTime = 2022.01.03,endTime = 2023.01.02){
+    if(method == 'TTM'){
+        tmpTtm = select stock_code,record_date,net_profit_parent_company_ttm from loadTable("dfs://k_day","k_derivative_day") where record_date >= startTime and record_date < endTime 
+        tmpTtm = convertFreq(tmpTtm,from = 'd',to = 'm' , startTime =startTime,endTime = endTime)
+        tmv = select stock_code,record_date,total_market_value*10000 as total_market_value from loadTable("dfs://k_day","k_derivative_day") where record_date >= startTime and record_date < endTime and stock_code in (exec distinct stock_code from tmpTtm) 
+        tmv = convertFreq(tmv,from = 'd',to = 'm' , startTime =startTime,endTime = endTime)
+        return select stock_code,record_date,net_profit_parent_company_ttm\total_market_value as etop_ttm from aj(tmpTtm,tmv,`stock_code`record_date) 
+    }
+    else if(method == 'LYR'){
+        tmpLyr = select stock_code,record_date,net_profit_parent_company_lyr from loadTable("dfs://k_day","k_derivative_day") where record_date >= startTime and record_date < endTime 
+        tmpLyr = convertFreq(tmpLyr,from = 'd',to = 'm' , startTime =startTime,endTime = endTime)
+        tmv = select stock_code,record_date,total_market_value*10000 as total_market_value from loadTable("dfs://k_day","k_derivative_day") where record_date >= startTime and record_date < endTime and stock_code in (exec distinct stock_code from tmpLyr) 
+        tmv = convertFreq(tmv,from = 'd',to = 'm' , startTime =startTime,endTime = endTime)
+        return select stock_code,record_date,net_profit_parent_company_lyr\total_market_value as etop_lyr from aj(tmpLyr,tmv,`stock_code`record_date) 
+    }
+    else {print('no such method')}
+}
+
+
+/* EGRO
+Earnings per Share Growth Rate
+Input:   method  String: 'LYR'(Default),'TTM'
+            startTime  2022.01.03(Default)
+            windows      1825d   (Default)
+            endTime    2023.01.02(Default) 
+Output:  stock_code 
+            record_date
+            EGRO factor */
+
+
+def getEgro(method='LYR',startTime = 2022.01.03,endTime = 2023.01.02,windows = 1825){
+    startWindows = temporalAdd(startTime,-windows,'d')
+    windows_year = int(windows\365)
+    if(method == 'TTM'){
+        tmpTtm = select stock_code,record_date,net_profit_parent_company_ttm from loadTable("dfs://k_day","k_derivative_day") where record_date >= startWindows and record_date < endTime 
+        tmpTtm =  convertFreq(tmpTtm,from = 'd',to = 'm' , startTime =startWindows,endTime = endTime)
+        ts = select stock_code,record_date ,total_share*10000 as total_share from loadTable("dfs://k_day","k_derivative_day") where record_date >= startWindows and record_date < endTime and stock_code in (exec distinct stock_code from tmpTtm) order by stock_code,record_date
+        ts = select record_date,stock_code,tmsum(record_date,total_share,1y) as total_share_ttm from ts context by stock_code
+        tmpPerShare = select stock_code,record_date,net_profit_parent_company_ttm\total_share_ttm as per_share_annual_return,int(split(string(record_date),'.')[1]) as month from aj(tmpTtm,ts,`stock_code`record_date) 
+        tmpPerShare = select stock_code,record_date,per_share_annual_return,rank(record_date) as year,month from tmpPerShare context by month,stock_code order by month,stock_code
+        return select stock_code,record_date,tmbeta(record_date,per_share_annual_return,year,duration(windows_year+`y))\tmavg(record_date,per_share_annual_return,duration(windows_year+`y)) as egro_ttm from tmpPerShare context by stock_code,month having record_date >=startTime and record_date<endTime
+    }
+    else if(method == 'LYR'){
+        tmpLyr = select stock_code,record_date,net_profit_parent_company_lyr from loadTable("dfs://k_day","k_derivative_day") where record_date >= startWindows and record_date < endTime 
+        tmpLyr =  convertFreq(tmpLyr,from = 'd',to = 'm' , startTime =startWindows,endTime = endTime)
+        ts = select stock_code,record_date ,total_share*10000 as total_share from loadTable("dfs://k_day","k_derivative_day") where record_date >= startWindows and record_date < endTime and stock_code in (exec distinct stock_code from tmpLyr) order by stock_code,record_date
+        ts = select record_date,stock_code,tmsum(record_date,total_share,1y) as total_share_lyr from ts context by stock_code
+        tmpPerShare = select stock_code,record_date,net_profit_parent_company_lyr\total_share_lyr as per_share_annual_return,int(split(string(record_date),'.')[1]) as month from aj(tmpLyr,ts,`stock_code`record_date) 
+        tmpPerShare = select stock_code,record_date,per_share_annual_return,rank(record_date) as year,month from tmpPerShare context by month,stock_code order by month,stock_code
+        return select stock_code,record_date,tmbeta(record_date,per_share_annual_return,year,duration(windows_year+`y))\tmavg(record_date,per_share_annual_return,duration(windows_year+`y)) as egro_lyr from tmpPerShare context by stock_code,month having record_date >=startTime and record_date<endTime
+
+    }
+    else {print('no such method')}
+}
+
+
+
+
+
+/* SGRO
+Earnings Sales per Share Growth Rate
+Input:   method  String: 'LYR'(Default),'TTM'
+            startTime  2022.01.03(Default)
+            windows      1825d   (Default)
+            endTime    2023.01.02(Default) 
+Output:  stock_code 
+            record_date
+            SGRO factor */
+
+
+def getSgro(method='LYR',startTime = 2022.01.03,endTime = 2023.01.02,windows = 1825){
+    startWindows = temporalAdd(startTime,-windows,'d')
+    windows_year = int(windows\365)
+    if(method == 'TTM'){
+        tmpTtm = select stock_code,record_date,oper_income_ttm from loadTable("dfs://k_day","k_derivative_day") where record_date >= startWindows and record_date < endTime 
+        tmpTtm =  convertFreq(tmpTtm,from = 'd',to = 'm' , startTime =startWindows,endTime = endTime)
+        ts = select stock_code,record_date ,total_share*10000 as total_share from loadTable("dfs://k_day","k_derivative_day") where record_date >= startWindows and record_date < endTime and stock_code in (exec distinct stock_code from tmpTtm) order by stock_code,record_date
+        ts = select record_date,stock_code,tmsum(record_date,total_share,1y) as total_share_ttm from ts context by stock_code
+        tmpPerShare = select stock_code,record_date,oper_income_ttm\total_share_ttm as per_share_annual_income,int(split(string(record_date),'.')[1]) as month from aj(tmpTtm,ts,`stock_code`record_date) 
+        tmpPerShare = select stock_code,record_date,per_share_annual_income,rank(record_date) as year,month from tmpPerShare context by month,stock_code order by month,stock_code
+        return select stock_code,record_date,tmbeta(record_date,per_share_annual_income,year,duration(windows_year+`y))\tmavg(record_date,per_share_annual_income,duration(windows_year+`y)) as sgro_ttm from tmpPerShare context by stock_code,month having record_date >=startTime and record_date<endTime 
+    }
+    else if(method == 'LYR'){
+        tmpLyr = select stock_code,record_date,oper_income_lyr from loadTable("dfs://k_day","k_derivative_day") where record_date >= startWindows and record_date < endTime 
+        tmpLyr =  convertFreq(tmpLyr,from = 'd',to = 'm' , startTime =startWindows,endTime = endTime)
+        ts = select stock_code,record_date ,total_share*10000 as total_share from loadTable("dfs://k_day","k_derivative_day") where record_date >= startWindows and record_date < endTime and stock_code in (exec distinct stock_code from tmpLyr) order by stock_code,record_date
+        ts = select record_date,stock_code,tmsum(record_date,total_share,1y) as total_share_lyr from ts context by stock_code
+        tmpPerShare = select stock_code,record_date,oper_income_lyr\total_share_lyr as per_share_annual_income,int(split(string(record_date),'.')[1]) as month from aj(tmpLyr,ts,`stock_code`record_date) 
+        tmpPerShare = select stock_code,record_date,per_share_annual_income,rank(record_date) as year,month from tmpPerShare context by month,stock_code order by month,stock_code
+        return select stock_code,record_date,tmbeta(record_date,per_share_annual_income,year,duration(windows_year+`y))\tmavg(record_date,per_share_annual_income,duration(windows_year+`y)) as sgro_lyr from tmpPerShare context by stock_code,month having record_date >=startTime and record_date<endTime
+    }
+    else {print('no such method')}
+}
+
+
+
+
+/* AGRO
+Total Assets Growth Rate
+Input:   
+            startTime  2022.01.03(Default)
+            windows      1825d   (Default)
+            endTime    2023.01.02(Default) 
+Output:  stock_code 
+            record_date
+            AGRO factor */
+
+
+def getAgro(startTime = 2022.01.03,endTime = 2023.01.02,windows = 1825){
+    startWindows = temporalAdd(startTime,-windows,'d')
+    windows_year = int(windows\365)
+    tmpBalance = select report_date,comp_id,total_assets from loadTable("dfs://comp_quater","comp_balance_sheet") where report_date > startWindows and report_date < endTime and publish_date < endTime
+    tmpStockInfo = select lpad(regexReplace(stock_code,"[^0-9]",""),6,`0) as stock_code,comp_id from loadTable("dfs://stock_info","stock_basic_info")
+    tmp = select stock_code,record_date,sum(total_assets) as total_assets from ej(tmpStockInfo,convertFreq(tmpBalance,startTime=startWindows,endTime=endTime),`comp_id,`comp_id) group by stock_code,record_date
+    tmp = select stock_code,record_date,total_assets,rank(record_date) as year,int(split(string(record_date),'.')[1]) as month from tmp 
+    tmp1 = select stock_code,record_date,total_assets,year, month from tmp context by month,stock_code order by month,stock_code
+    agro = select stock_code,record_date,-tmbeta(record_date,total_assets,year,duration(windows_year+`y))\tmavg(record_date,total_assets,duration(windows_year+`y)) as agro from tmp1 context by stock_code,month having record_date >=startTime and record_date<endTime 
+    return agro
+}
+
+
+
+
+
+/* IGRO
+Issuance growth
+Input:   
+            startTime  2022.01.03(Default)
+            windows      1825d   (Default)
+            endTime    2023.01.02(Default) 
+Output:  stock_code 
+            record_date
+            IGRO factor */
+
+
+def getIgro(startTime = 2022.01.03,endTime = 2023.01.02,windows = 1825){
+    startWindows = temporalAdd(startTime,-windows,'d')
+    windows_year = int(windows\365)
+    tmpStockMetrics = select record_date,stock_code,total_share*10000 as total_share from loadTable("dfs://k_day","k_derivative_day") where record_date > startWindows and record_date < endTime order by stock_code,record_date
+    tmpStockMetrics = select record_date,stock_code,tmsum(record_date,total_share,1y) as total_share from tmpStockMetrics context by stock_code
+    tmp = select record_date,stock_code,total_share from convertFreq(tmpStockMetrics,from = 'd',to = 'm',startTime = startWindows ,endTime = endTime)
+    tmp = select record_date,stock_code,total_share,rank(record_date) as year,int(split(string(record_date),'.')[1]) as month from tmp
+    tmp1 = select stock_code,record_date,total_share, year, month from tmp context by month,stock_code order by month,stock_code
+    igro = select stock_code,record_date,-tmbeta(record_date,total_share,year,duration(windows_year+`y))\tmavg(record_date,total_share,duration(windows_year+`y)) as igro from tmp1 context by stock_code,month having record_date >=startTime and record_date<endTime 
+    return igro
+}
+
+
+
+
+/* MLEV
+Market Leverage
+Input:   
+            startTime  2022.01.03(Default)
+            windows       365d   (Default)
+            endTime    2023.01.02(Default) 
+Output:  stock_code 
+            record_date
+            MLEV factor */
+
+
+def getMlev(startTime = 2022.01.03,endTime = 2023.01.02,windows = 365){
+    startWindows = temporalAdd(startTime,-windows-31,'d')
+    endWindows = temporalAdd(endTime,-windows,'d')
+    tmpBalance = select temporalAdd(report_date,windows,'d') as report_date,comp_id,total_non_current_liability from loadTable("dfs://comp_quater","comp_balance_sheet") where report_date >= startWindows and report_date < endWindows and publish_date < endTime
+    tmpStockInfo = select stock_code,comp_id from loadTable("dfs://stock_info","stock_basic_info")
+    tmpStockMetrics = select record_date,stock_code,move(total_market_value,-1) as total_market_value from loadTable("dfs://k_day","k_derivative_day")  where record_date >= startTime and record_date < endTime
+    tmp = select record_date,stock_code,sum(total_non_current_liability) as total_non_current_liability from ej(tmpStockInfo,convertFreq(tmpBalance,startTime=startTime,endTime=endTime),`comp_id,`comp_id) group by record_date,stock_code order by stock_code
+    tmp1 = select record_date,stock_code,total_non_current_liability ,total_market_value from ej(tmp,convertFreq(tmpStockMetrics,from = 'd',to='m',startTime =startTime,endTime=endTime),`record_date`stock_code,`record_date`stock_code)
+    // tmp1 = select record_date,stock_code,comp_id,total_non_current_liability.bfill() as total_non_current_liability,total_market_value from ej(tmp,convertFreq(tmpStockMetrics,from = 'd',to='m',startTime =startTime,endTime=endTime),`record_date`stock_code,`record_date`stock_code)
+    mlev = select record_date,stock_code,(total_non_current_liability+total_market_value*10000)\(total_market_value*10000) as Mlev from tmp1
+    return mlev
+}
+
+
+
+
+
+/* DTOA
+Debt-to-Assets
+Input:   
+            startTime  2022.01.03(Default)
+            windows       365d   (Default)
+            endTime    2023.01.02(Default) 
+Output:  stock_code 
+            record_date
+            DTOA factor */
+
+def getDtoa(startTime = 2022.01.03,endTime = 2023.01.02,windows = 365){
+    startWindows = temporalAdd(startTime,-windows-31,'d')
+    endWindows = temporalAdd(endTime,-windows,'d')
+    tmpBalance = select temporalAdd(report_date,windows,'d') as report_date,comp_id,total_assets,total_liability from loadTable("dfs://comp_quater","comp_balance_sheet") where report_date > startWindows and report_date < endWindows and publish_date < endTime
+    tmpStockInfo = select stock_code,comp_id from loadTable("dfs://stock_info","stock_basic_info")
+    
+    tmp = select record_date,stock_code,sum(total_assets) as total_assets,sum(total_liability) as total_liability from ej(tmpStockInfo,convertFreq(tmpBalance,startTime=startTime,endTime=endTime),`comp_id,`comp_id) group by record_date,stock_code order by stock_code
+    
+    dtoa = select record_date,stock_code,(total_liability)\total_assets as Dtoa from tmp
+    return dtoa
+}
+
+
+
+
+/* BLEV
+Book Leverage
+Input:   
+            startTime  2022.01.03(Default)
+            windows      365d    (Default)
+            endTime    2023.01.02(Default) 
+Output:  stock_code 
+            record_date
+            BLEV factor */
+
+
+def getBlev(startTime = 2022.01.03,endTime = 2023.01.02,windows = 365){
+    startWindows = temporalAdd(startTime,-windows-31,'d')
+    endWindows = temporalAdd(endTime,-windows,'d')
+    tmpBalance = select temporalAdd(report_date,windows,'d') as report_date,comp_id,total_non_current_liability,total_share_holder_equity from loadTable("dfs://comp_quater","comp_balance_sheet") where report_date > startWindows and report_date < endWindows and publish_date < endTime
+    tmpStockInfo = select stock_code,comp_id from loadTable("dfs://stock_info","stock_basic_info")
+    tmp = select record_date,stock_code,sum(total_non_current_liability) as total_non_current_liability,sum(total_share_holder_equity) as total_share_holder_equity from ej(tmpStockInfo,convertFreq(tmpBalance,startTime=startTime,endTime=endTime),`comp_id,`comp_id) group by record_date,stock_code order by stock_code
+    blev = select record_date,stock_code,(total_non_current_liability+total_share_holder_equity)\total_share_holder_equity as Blev from tmp
+    return blev
+}
+
+
+
+
+
+
+
+/* STOM
+Monthly Share Turnover
+Input:   
+            startTime  2022.01.03(Default)
+            windows       21d    (Default)
+            endTime    2023.01.02(Default) 
+Output:  stock_code 
+            record_date
+            STOM factor */
+
+def getStom(startTime = 2022.01.03,endTime = 2023.01.02,windows = 21){
+    startWindows = temporalAdd(startTime,-int(windows\21),'M')
+    tmpStockMetrics = select record_date,stock_code,float_share from loadTable("dfs://k_day","k_derivative_day") where record_date >= startWindows and record_date < endTime
+    tmpStockPrice = select stock_code,record_date,turnover_total from loadTable("dfs://k_day","k_day") where  record_date >= startWindows and record_date < endTime
+    tmp = select record_date,stock_code,turnover_total\(float_share*10000) as turn_rate from ej(tmpStockMetrics,tmpStockPrice,`record_date`stock_code,`record_date`stock_code) order by stock_code,record_date
+    stom = select record_date,stock_code,log(tmsum(record_date,turn_rate,windows)) as Stom from tmp context by stock_code
+    return convertFreq(stom,from = 'd',to = 'm',startTime = startTime,endTime = endTime)
+}
+
+
+
+
+/* STOQ
+Quarterly Share Turnover
+Input:   
+            startTime  2022.01.03(Default)
+            windows        63d   (Default)
+            endTime    2023.01.02(Default) 
+Output:  stock_code 
+            record_date
+            STOQ factor */
+
+def getStoq(startTime = 2022.01.03,endTime = 2023.01.02,windows = 63){
+    startWindows = temporalAdd(startTime,-int(windows\21),'M')
+    tmpStockMetrics = select record_date,stock_code,float_share from loadTable("dfs://k_day","k_derivative_day") where record_date >= startWindows and record_date < endTime
+    tmpStockPrice = select stock_code,record_date,turnover_total from loadTable("dfs://k_day","k_day") where  record_date >= startWindows and record_date < endTime
+    tmp = select record_date,stock_code,turnover_total\(float_share*10000) as turn_rate from ej(tmpStockMetrics,tmpStockPrice,`record_date`stock_code,`record_date`stock_code) order by stock_code,record_date
+    stoq = select record_date,stock_code,log(windows\21*tmsum(record_date,turn_rate,windows)) as Stoq from tmp context by stock_code
+    return convertFreq(stoq,from = 'd',to = 'm',startTime = startTime,endTime = endTime)
+}
+
+
+
+/* STOA
+Annual Share Turnover
+Input:   
+            startTime  2022.01.03(Default)
+            windows       365d   (Default)
+            endTime    2023.01.02(Default) 
+Output:  stock_code 
+            record_date
+            STOA factor */
+
+def getStoa(startTime = 2022.01.03,endTime = 2023.01.02,windows = 365){
+    startWindows = temporalAdd(startTime,-windows,'d')
+    tmpStockMetrics = select record_date,stock_code,float_share from loadTable("dfs://k_day","k_derivative_day") where record_date >= startWindows and record_date < endTime
+    tmpStockPrice = select stock_code,record_date,turnover_total from loadTable("dfs://k_day","k_day") where  record_date >= startWindows and record_date < endTime
+    tmp = select record_date,stock_code,turnover_total\(float_share*10000) as turn_rate from ej(tmpStockMetrics,tmpStockPrice,`record_date`stock_code,`record_date`stock_code) order by stock_code,record_date
+    stoa = select record_date,stock_code,log(1\int(windows\31)*tmsum(record_date,turn_rate,duration(windows+"d"))) as Stoa from tmp context by stock_code
+    return convertFreq(stoa,from = 'd',to = 'm',startTime = startTime,endTime = endTime)
+}
+
+
+
+
+
+/* ATVR
+Annualized Traded Value Ratio
+Input:   
+            startTime  2022.01.03(Default)
+            windows       252d   (Default)
+            halfLife       63d   (Default)
+            endTime    2023.01.02(Default) 
+Output:  stock_code 
+            record_date
+            ATVR factor */
+
+
+
+
+def getAtvr(startTime = 2022.01.03,endTime = 2023.01.02,windows = 252,halfLife = 63){
+    startWindows = temporalAdd(startTime,-int(windows\252),'y')
+    tmpStockMetrics = select record_date,stock_code,turnover_rate from loadTable("dfs://k_day","k_derivative_day") where record_date >= startWindows and record_date < endTime and turnover_rate is not null order by stock_code,record_date
+    weighted = ewmMean(0..(windows-1),halfLife=halfLife)\sum(ewmMean(0..(windows-1),halfLife=halfLife))
+    atvr = select record_date,stock_code,moving(getWeighted{weighted},turnover_rate,windows,windows) as Atvr from tmpStockMetrics context by stock_code having record_date >= startTime and record_date < endTime
+    return convertFreq(atvr,from = 'd',to = 'm',startTime = startTime,endTime = endTime)
+}
+
+
+
+
+
+
+
+/* LTRSTR
+Long-term Relative Strength
+Input:   
+            startTime  2022.01.03(Default)
+            windowsReturn 1040d  (Default)
+            windowsAvg     11d   (Default)
+            lagged        273d   (Default)
+            halfLife      260d   (Default)
+            endTime    2023.01.02(Default) 
+Output:  stock_code 
+            record_date
+            LTRSTR factor */
+
+
+
+def getLtrstr(startTime = 2022.01.03,endTime = 2023.01.02,windowsReturn = 1040,windowsAvg = 11,lagged = 273,halfLife = 260){
+    startWindows =  temporalAdd(startTime,-int((windowsReturn+lagged)\252)-1,`y)
+    startTimed =  temporalAdd(startTime,-1,'M')
+    // 选择基准指数代码
+    tmpIndexPrice = select record_date,(price_close-price_open)\price_open as index_return from loadTable("dfs://k_day","k_index_day") where record_date >= startWindows and record_date < endTime and index_code = '000300'
+    tmpStockPrice = select record_date,stock_code,return_day from loadTable("dfs://k_day","k_day") where record_date >= startWindows and record_date < endTime 
+    // tmpStockPrice = select record_date,stock_code,return_day ,avg(return_day) as index_return from tmpStockPrice context by record_date
+    tmp = select record_date,stock_code,log((return_day+1)\(index_return+1)) as excess_return from ej(tmpIndexPrice,tmpStockPrice,`record_date,`record_date) order by stock_code,record_date
+    // tmp = select record_date,stock_code,log((return_day+1)\(index_return+1)) as excess_return from tmpStockPrice order by stock_code,record_date
+    weighted = ewmMean(0..(windowsReturn-1),halfLife=halfLife)\sum(ewmMean(0..(windowsReturn-1),halfLife=halfLife))
+    weightedExcessRet = select record_date,stock_code,move(moving(getWeighted{weighted},excess_return,windowsReturn,windowsReturn),lagged) as wghdExRet from tmp context by stock_code having record_date >= startTimed and record_date < endTime
+    ltrstr =  select record_date,stock_code,tmavg(record_date,wghdExRet,windowsAvg) as Ltrstr from weightedExcessRet context by stock_code having record_date >= startTime and record_date < endTime
+    return convertFreq(ltrstr,from = 'd',to = 'm',startTime = startTime,endTime = endTime)
+}
+
+
+
+
+/* LTHALPHA
+Long-term Historical Alpha
+Input:   
+            startTime  2022.01.03(Default)
+            windowsReturn 1040d  (Default)
+            windowsAvg     11d   (Default)
+            lagged        273d   (Default)
+            halfLife      260d   (Default)
+            endTime    2023.01.02(Default) 
+Output:  stock_code 
+            record_date
+            LTHALPHA factor */
+
+
+
+def getLthalpha(startTime = 2022.01.03,endTime = 2023.01.02,windowsReturn = 1040,windowsAvg = 11,lagged = 273,halfLife = 260){
+    startWindows =  temporalAdd(startTime,-int((windowsReturn+lagged)\252)-1,`y)
+    startTimed =  temporalAdd(startTime,-1,'M')
+    tmpIndexPrice = select record_date,(price_close-price_open)\price_open as index_return from loadTable("dfs://k_day","k_index_day") where record_date >= startWindows and record_date < endTime and index_code = '000300'
+    tmpStockPrice = select record_date,stock_code,return_day from loadTable("dfs://k_day","k_day") where record_date >= startWindows and record_date < endTime 
+    tmp = select record_date,stock_code,return_day,index_return from ej(tmpIndexPrice,tmpStockPrice,`record_date,`record_date) order by stock_code,record_date
+    weighted = ewmMean(0..(windowsReturn-1),halfLife=halfLife)\sum(ewmMean(0..(windowsReturn-1),halfLife=halfLife))
+    // weightedRet = select record_date,stock_code,moving(getWeighted{weighted},return_day,windowsReturn,windowsReturn) as wghdRet,moving(getWeighted{weighted},index_return,windowsReturn,windowsReturn) as wghdIdxRet from tmp context by stock_code 
+    tmpAlpha = select record_date,stock_code,move(moving(getWlsAlpha{weighted},[index_return,return_day],windowsReturn,windowsReturn),lagged) as alpha from tmp context by stock_code having record_date >= startTimed and record_date < endTime
+    lthalpha = select record_date,stock_code,tmavg(record_date,alpha,windowsAvg) as Lthalpha from tmpAlpha context by stock_code having record_date >= startTime and record_date < endTime
+    return convertFreq(lthalpha,from = 'd',to = 'm',startTime = startTime,endTime = endTime)
+}
+
+
+
+
+
+
+/* MIDCAP
+Cube of Size Exposure
+Input:   
+            startTime  2022.01.03(Default)
+            endTime    2023.01.02(Default) 
+Output:  stock_code 
+            record_date
+            MIDCAP factor */
+
+
+def getMidcap(startTime = 2022.01.03,endTime = 2023.01.02){
+    tmpStockMetrics = select record_date,month(record_date) as record_month,stock_code,float_market_value  from loadTable("dfs://k_day","k_derivative_day") where record_date >= startTime and record_date < endTime
+    tmpS = select sum(float_market_value) as sum_float_market_value from tmpStockMetrics group by record_month cgroup by  stock_code order by stock_code
+    tmpStockMetrics = select record_date,stock_code,sum_float_market_value from lj(tmpStockMetrics,tmpS,`record_month`stock_code)
+    tmpStockMetrics = select record_date,stock_code,sum_float_market_value * 10000 as float_market_value,pow(sum_float_market_value,3) as power_float_market_value from convertFreq(tmpStockMetrics,from = 'd',to = 'm',startTime = startTime,endTime = endTime)
+    coef = select record_date,stock_code,float_market_value,power_float_market_value,ols(power_float_market_value,float_market_value)[0] as alpha, ols(power_float_market_value,float_market_value)[1] as beta from tmpStockMetrics context by record_date
+    midcap = select record_date,stock_code,power_float_market_value - (alpha + beta* float_market_value) as orthog_power_float_market_value from coef
+    tmp =  select record_date,stock_code,orthog_power_float_market_value,percentile(midcap.orthog_power_float_market_value,2.5,"lower") as lower,percentile(midcap.orthog_power_float_market_value,97.5,"higher") as higher from midcap context by record_date
+    tmpMidcap = select record_date,stock_code,case when orthog_power_float_market_value <lower then lower when orthog_power_float_market_value >higher then higher else orthog_power_float_market_value end as tmpMidcap from tmp
+    midcap = select record_date,stock_code,zscore(tmpMidcap) as Midcap  from tmpMidcap context by record_date
+    return midcap
+}
+
+
+
+
+
+
+
+/* RSTR
+Relative Strength 12-month
+Input:   
+            startTime  2022.01.03(Default)
+            windowsReturn 252d   (Default)
+            windowsAvg     11d   (Default)
+            lagged         11d   (Default)
+            halfLife      126d   (Default)
+            endTime    2023.01.02(Default) 
+Output:  stock_code 
+            record_date
+            RSTR factor */
+
+
+
+def getRstr(startTime = 2022.01.03,endTime = 2023.01.02,windowsReturn = 252,windowsAvg = 11,lagged = 11,halfLife = 126){
+    startWindows =  temporalAdd(startTime,-int((windowsReturn+lagged)\252)-1,`y)
+    startTimed =  temporalAdd(startTime,-1,'M')
+    tmpIndexPrice = select record_date,(price_close-price_open)\price_open as index_return from loadTable("dfs://k_day","k_index_day") where record_date >= startWindows and record_date < endTime and index_code = '000300'
+    tmpStockPrice = select record_date,stock_code,return_day from loadTable("dfs://k_day","k_day") where record_date >= startWindows and record_date < endTime 
+    tmp = select record_date,stock_code,log((return_day+1)\(index_return+1)) as excess_return from ej(tmpIndexPrice,tmpStockPrice,`record_date,`record_date) order by stock_code,record_date
+    weighted = ewmMean(0..(windowsReturn-1),halfLife=halfLife)\sum(ewmMean(0..(windowsReturn-1),halfLife=halfLife))
+    weightedExcessRet = select record_date,stock_code,move(moving(getWeighted{weighted},excess_return,windowsReturn,windowsReturn),lagged) as wghdExRet from tmp context by stock_code having record_date >= startTimed and record_date < endTime
+    rstr =  select record_date,stock_code,tmavg(record_date,wghdExRet,windowsAvg) as Rstr from weightedExcessRet context by stock_code having record_date >= startTime and record_date < endTime
+    return convertFreq(rstr,from = 'd',to = 'm',startTime = startTime,endTime = endTime)
+}
+
+
+
+
+
+
+
+
+/* HALPHA
+Historical Alpha
+Input:   
+            startTime  2022.01.03(Default)
+            windowsReturn 1040d  (Default)
+            windowsAvg     11d   (Default)
+            lagged         11d   (Default)
+            halfLife      126d   (Default)
+            endTime    2023.01.02(Default) 
+Output:  stock_code 
+            record_date
+            HALPHA factor */
+
+
+
+def getHalpha(startTime = 2022.01.03,endTime = 2023.01.02,windowsReturn = 252,windowsAvg = 11,lagged = 11,halfLife = 126){
+    startWindows =  temporalAdd(startTime,-int((windowsReturn+lagged)\252)-1,`y)
+    startTimed =  temporalAdd(startTime,-1,'M')
+    tmpIndexPrice = select record_date,(price_close-price_open)\price_open as index_return from loadTable("dfs://k_day","k_index_day") where record_date >= startWindows and record_date < endTime and index_code = '000300'
+    tmpStockPrice = select record_date,stock_code,return_day from loadTable("dfs://k_day","k_day") where record_date >= startWindows and record_date < endTime 
+    tmp = select record_date,stock_code,return_day,index_return from ej(tmpIndexPrice,tmpStockPrice,`record_date,`record_date) order by stock_code,record_date
+    weighted = ewmMean(0..(windowsReturn-1),halfLife=halfLife)\sum(ewmMean(0..(windowsReturn-1),halfLife=halfLife))
+    // weightedRet = select record_date,stock_code,moving(getWeighted{weighted},return_day,windowsReturn,windowsReturn) as wghdRet,moving(getWeighted{weighted},index_return,windowsReturn,windowsReturn) as wghdIdxRet from tmp context by stock_code 
+    tmpAlpha = select record_date,stock_code,move(moving(getWlsAlpha{weighted},[index_return,return_day],windowsReturn,windowsReturn),lagged) as alpha from tmp context by stock_code having record_date >= startTimed and record_date < endTime
+    halpha = select record_date,stock_code,tmavg(record_date,alpha,windowsAvg) as Halpha from tmpAlpha context by stock_code having record_date >= startTime and record_date < endTime
+    return convertFreq(halpha,from = 'd',to = 'm',startTime = startTime,endTime = endTime)
+}
+
+
+
+
+
+/* ATO
+Asset Turnover
+Input:   method  String: 'TTM'(Default),'LYR'
+            startTime  2022.01.03(Default)
+            endTime    2023.01.02(Default) 
+Output:  stock_code 
+            record_date
+            ATO factor */
+
+
+def getAto(method='TTM',startTime = 2022.01.03,endTime = 2023.01.02){
+    tmpStockInfo = select stock_code,comp_id from loadTable("dfs://stock_info","stock_basic_info")
+    tmpBalance = select comp_id,report_date,total_assets from loadTable("dfs://comp_quater","comp_balance_sheet") where report_date >= temporalAdd(startTime,-6,'M') and report_date < endTime and publish_date < endTime 
+    tmpBalance = convertFreq(tmpBalance,startTime=startTime,endTime=endTime)
+    if(method == 'TTM'){
+        tmpTtm = select stock_code,record_date,oper_income_ttm from loadTable("dfs://k_day","k_derivative_day") where record_date >= startTime and record_date < endTime
+        tmpTtm =  convertFreq(tmpTtm,from = 'd',to = 'm' , startTime =startTime,endTime = endTime)
+        tmp = select record_date,stock_code,sum(total_assets) as total_assets from ej(tmpStockInfo,tmpBalance,`comp_id,`comp_id) group by record_date,stock_code order by stock_code
+        atoTtm = select record_date,stock_code,oper_income_ttm\total_assets as Ato_ttm from ej(tmp, tmpTtm ,`record_date`stock_code,`record_date`stock_code)
+        return atoTtm
+        
+    }
+    else if(method == 'LYR'){
+        tmpLyr = select stock_code,record_date,oper_income_lyr from loadTable("dfs://k_day","k_derivative_day") where record_date >= startTime and record_date < endTime
+        tmpLyr =  convertFreq(tmpLyr,from = 'd',to = 'm' , startTime =startTime,endTime = endTime)
+        tmp = select record_date,stock_code,sum(total_assets) as total_assets from ej(tmpStockInfo,tmpBalance,`comp_id,`comp_id) group by record_date,stock_code order by stock_code
+        atoLyr = select record_date,stock_code,oper_income_lyr\total_assets as Ato_lyr from ej(tmp,tmpLyr,`record_date`stock_code,`record_date`stock_code)
+        return atoLyr
+    }
+    else {print('no such method')}
+}
+
+
+
+
+
+
+
+/* ROA
+Asset Turnover
+Input:   method  String: 'TTM'(Default),'LYR'
+            startTime  2022.01.03(Default)
+            endTime    2023.01.02(Default) 
+Output:  stock_code 
+            record_date
+            ROA factor */
+
+
+def getRoa(method='TTM',startTime = 2022.01.03,endTime = 2023.01.02){
+    tmpStockInfo = select stock_code,comp_id from loadTable("dfs://stock_info","stock_basic_info")
+    tmpBalance = select comp_id,report_date,total_assets from loadTable("dfs://comp_quater","comp_balance_sheet") where report_date >= temporalAdd(startTime,-6,'M') and report_date < endTime and publish_date < endTime
+    tmpBalance = convertFreq(tmpBalance,startTime=startTime,endTime=endTime)
+    if(method == 'TTM'){
+        tmpTtm = select stock_code,record_date,net_profit_parent_company_ttm from loadTable("dfs://k_day","k_derivative_day") where record_date >= startTime and record_date < endTime
+        tmpTtm =  convertFreq(tmpTtm,from = 'd',to = 'm' , startTime =startTime,endTime = endTime)
+        
+        tmp = select record_date,stock_code,sum(total_assets) as total_assets from ej(tmpStockInfo,tmpBalance,`comp_id,`comp_id) group by record_date,stock_code order by stock_code
+        roaTtm = select record_date,stock_code,net_profit_parent_company_ttm\total_assets as Roa_ttm from ej(tmp,tmpTtm,`record_date`stock_code,`record_date`stock_code)
+        return roaTtm
+        
+    }
+    else if(method == 'LYR'){
+        tmpLyr = select stock_code,record_date,net_profit_parent_company_lyr from loadTable("dfs://k_day","k_derivative_day") where record_date >= startTime and record_date < endTime
+        tmpLyr =  convertFreq(tmpLyr,from = 'd',to = 'm' , startTime =startTime,endTime = endTime)
+        
+        tmp = select record_date,stock_code,sum(total_assets) as total_assets from ej(tmpStockInfo,tmpBalance,`comp_id,`comp_id) group by record_date,stock_code order by stock_code
+        roaLyr = select record_date,stock_code,net_profit_parent_company_lyr\total_assets as Roa_lyr from ej(tmp,tmpLyr,`record_date`stock_code,`record_date`stock_code)
+        return roaLyr
+    }
+    else {print('no such method')}
+}
+
+
+
+
+
+/* BTOP
+Book-to-Price
+Input:   
+            startTime  2022.01.03(Default)
+            endTime    2023.01.02(Default) 
+Output:  stock_code 
+            record_date
+            BTOP factor */
+
+
+def getBtop(startTime = 2022.01.03,endTime = 2023.01.02){
+    tmpStockInfo = select stock_code,comp_id from loadTable("dfs://stock_info","stock_basic_info")
+    tmpBalance = select comp_id,report_date,total_share_holder_equity from loadTable("dfs://comp_quater","comp_balance_sheet") where report_date>temporalAdd(startTime,-6,'M') and report_date < endTime and publish_date < endTime
+    tmpBalance = convertFreq(tmpBalance,startTime=startTime,endTime=endTime)
+    
+    tmpStockMetrics = select stock_code,record_date,total_market_value*10000 as total_market_value from loadTable("dfs://k_day","k_derivative_day") where record_date >= startTime and record_date < endTime
+    tmpStockMetrics =  convertFreq(tmpStockMetrics,from = 'd',to = 'm' , startTime =startTime,endTime = endTime)
+    
+    tmp = select record_date,stock_code,sum(total_share_holder_equity) as total_share_holder_equity  from ej(tmpStockInfo,tmpBalance,`comp_id,`comp_id) group by record_date,stock_code order by stock_code
+    btop = select record_date,stock_code,total_share_holder_equity\total_market_value as Btop from ej(tmp,tmpStockMetrics,`record_date`stock_code,`record_date`stock_code)
+    return btop    
+}
+
+
+
+
+
+
+/* DTOP
+Dividend-to-Price
+Input:   
+            startTime  2022.01.03(Default)
+            windows       365d   (Default)
+            endTime    2023.01.02(Default) 
+Output:  stock_code 
+            record_date
+            DTOP factor */
+
+
+def getDtop(startTime = 2022.01.03,endTime = 2023.01.02,windows = 365){
+    startWindows =  temporalAdd(startTime,-windows,'d')
+    tmpStockMetrics = select stock_code,record_date,price_close\price_div_dps as dps,last(price_close) as monthEnd_price from loadTable("dfs://k_day","k_derivative_day") where price_div_dps is not null and record_date >= startWindows and record_date < endTime  context by stock_code + string(month(record_date)) order by record_date
+    tmpDtop = select stock_code,record_date,tmsum(record_date,dps,duration(windows + "d"))\monthEnd_price as Dtop from tmpStockMetrics context by stock_code having record_date > startTime and record_date < endTime 
+    return convertFreq(tmpDtop,from = 'd',to = 'm' , startTime =startTime,endTime = endTime)
+}
+
+
+
+
+/* HBETA
+Historical Beta
+Input:   
+            startTime  2022.01.03(Default)
+            windowsReturn 252d   (Default)
+            halfLife       63d   (Default)
+            endTime    2023.01.02(Default) 
+Output:  stock_code 
+            record_date
+            HBETA factor */
+
+
+
+def getHbeta(startTime = 2022.01.03,endTime = 2023.01.02,windowsReturn = 252,halfLife = 63){
+    startWindows =  temporalAdd(startTime,-int((windowsReturn)\252)-1,`y)
+    startTimed =  temporalAdd(startTime,-1,'M')
+    tmpIndexPrice = select record_date,(price_close-price_open)\price_open as index_return from loadTable("dfs://k_day","k_index_day") where record_date >= startWindows and record_date < endTime and index_code = '000300' 
+    tmpStockPrice = select record_date,stock_code,return_day from loadTable("dfs://k_day","k_day") where record_date >= startWindows and record_date < endTime 
+    tmp = select record_date,stock_code,return_day,index_return from ej(tmpStockPrice,tmpIndexPrice,`record_date,`record_date) order by stock_code,record_date
+    weighted = ewmMean(0..(windowsReturn-1),halfLife=halfLife)\sum(ewmMean(0..(windowsReturn-1),halfLife=halfLife))
+    tmpBeta = select record_date,stock_code,moving(getWlsBeta{weighted},[index_return,return_day],windowsReturn,windowsReturn) as Hbeta from tmp context by stock_code having record_date >= startTimed and record_date < endTime
+    return convertFreq(tmpBeta,from = 'd',to = 'm',startTime = startTime,endTime = endTime)
+}
+
+
+
+
+
+
+/* HSIGMA
+Historical Sigma
+Input:   
+            startTime  2022.01.03(Default)
+            windowsReturn 252d   (Default)
+            halfLife       63d   (Default)
+            endTime    2023.01.02(Default) 
+Output:  stock_code 
+            record_date
+            HSIGMA factor */
+
+
+
+def getHsigma(startTime = 2022.01.03,endTime = 2023.01.02,windowsReturn = 252,halfLife = 63){
+    startWindows =  temporalAdd(startTime,-int((windowsReturn)\252)-1,`y)
+    startTimed =  temporalAdd(startTime,-1,'M')
+    tmpIndexPrice = select record_date,(price_close-price_open)\price_open as index_return from loadTable("dfs://k_day","k_index_day") where record_date >= startWindows and record_date < endTime and index_code = '000300'
+    tmpStockPrice = select record_date,stock_code,return_day from loadTable("dfs://k_day","k_day") where record_date >= startWindows and record_date < endTime 
+    tmp = select record_date,stock_code,return_day,index_return from ej(tmpIndexPrice,tmpStockPrice,`record_date,`record_date) order by stock_code,record_date
+    weighted = ewmMean(0..(windowsReturn-1),halfLife=halfLife)\sum(ewmMean(0..(windowsReturn-1),halfLife=halfLife))
+    tmpSigma = select record_date,stock_code,moving(getWlsSigma{weighted},[index_return,return_day],windowsReturn,windowsReturn) as Hsigma from tmp context by stock_code having record_date >= startTimed and record_date < endTime
+    return convertFreq(tmpSigma,from = 'd',to = 'm',startTime = startTime,endTime = endTime)
+}
+
+
+
+
+
+/* DASTD
+Daily Standard Deviation
+Input:   
+            startTime  2022.01.03(Default)
+            windowsReturn 252d   (Default)
+            halfLife       42d   (Default)
+            endTime    2023.01.02(Default) 
+Output:  stock_code 
+            record_date
+            DASTD factor */
+
+
+
+def getDastd(startTime = 2022.01.03,endTime = 2023.01.02,windowsReturn = 252,halfLife = 42){
+    startWindows =  temporalAdd(startTime,-int((windowsReturn)\252)-1,`y)
+    startTimed =  temporalAdd(startTime,-1,'M')
+    tmpStockPrice = select record_date,stock_code,return_day from loadTable("dfs://k_day","k_day") where record_date >= startWindows and record_date < endTime 
+    tmpIndexPrice = select record_date,(price_close-price_open)\price_open as index_return from loadTable("dfs://k_day","k_index_day") where record_date >= startWindows and record_date < endTime and index_code = '000300'
+    tmp = select record_date,stock_code,return_day-index_return as excess_return from ej(tmpIndexPrice,tmpStockPrice,`record_date,`record_date) order by stock_code,record_date
+    tmpStockRetSquare = select record_date,stock_code,pow(excess_return-mean(excess_return),2) as square_ret from tmp context by stock_code
+    weighted = ewmMean(0..(windowsReturn-1),halfLife=halfLife)\sum(ewmMean(0..(windowsReturn-1),halfLife=halfLife))
+    tmpDastd = select record_date,stock_code,sqrt(moving(getWeighted{weighted},square_ret,windowsReturn,windowsReturn)) as Dastd from tmpStockRetSquare context by stock_code having record_date >= startTimed and record_date < endTime
+    return convertFreq(tmpDastd,from = 'd',to = 'm',startTime = startTime,endTime = endTime)
+}
+
+
+
+
+
+/* CMRA
+Cumulative Range
+Input:   
+            startTime  2022.01.03(Default)
+            windowsReturn  365d  (Default)
+            endTime    2023.01.02(Default) 
+Output:  stock_code 
+            record_date
+            CMRA factor */
+
+
+
+def getCmra(startTime = 2022.01.03,endTime = 2023.01.02,windowsReturn = 365){
+    startWindows =  temporalAdd(startTime,-windowsReturn,'d')
+    tmpStockPrice = select record_date,stock_code,return_day from loadTable("dfs://k_day","k_day") where record_date >= startWindows and record_date < endTime 
+    tmpIndexPrice = select record_date,(price_close-price_open)\price_open as index_return from loadTable("dfs://k_day","k_index_day") where record_date >= startWindows and record_date < endTime and index_code = '000300'
+    tmp = select record_date,stock_code,return_day-index_return as excess_return from ej(tmpIndexPrice,tmpStockPrice,`record_date,`record_date) order by stock_code,record_date
+    code0 = sqlColAlias(parseExpr("tmsum(record_date,log(excess_return+1),duration(" +  string(1..int(windowsReturn\30)) + "M" + "))"),"sum_log_excessret" + string(1..int(windowsReturn\30)) + "m")
+    whereConditions = expr(startWindows, <=, sqlCol(`record_date), <, endTime)
+    tmpStockRetSquare = sql(select = (code0.reverse() <- sqlCol(`stock_code)<- sqlCol(`record_date)).reverse(),from = tmp,groupFlag = 0,groupBy = sqlCol(`stock_code),having = whereConditions).eval()
+    tmpStockRetSquare = select * from tmpStockRetSquare where record_date between startTime and endTime
+    str1 = "rowMax(" + concat("sum_log_excessret" + string(1..int(windowsReturn\30)) + "m" ,',') + ")"
+    str2 = "rowMin(" + concat("sum_log_excessret" + string(1..int(windowsReturn\30)) + "m" ,',') + ")"
+    code1 = sqlColAlias(parseExpr( str1 + "-" + str2 ),`cmra)
+    tmpCmra = sql(select = sqlCol(`record_date) <- sqlCol(`stock_code) <- code1 ,from = tmpStockRetSquare ).eval()
+    return convertFreq(tmpCmra,from = 'd',to = 'm',startTime = startTime,endTime = endTime)
+}
+
+
+
+
+/* LNCAP
+Log of Market Capitalization
+Input:   
+            startTime  2022.01.03(Default)
+            endTime    2023.01.02(Default) 
+Output:  stock_code 
+            record_date
+            LNCAP factor */
+
+
+def getLncap(startTime = 2022.01.03,endTime = 2023.01.02){
+    tmpStockMetrics = select record_date,month(record_date) as record_month,stock_code,float_market_value  from loadTable("dfs://k_day","k_derivative_day") where record_date >= startTime and record_date < endTime
+    tmpS = select sum(float_market_value) as sum_float_market_value from tmpStockMetrics group by record_month cgroup by stock_code order by stock_code
+    tmpStockMetrics = select record_date,stock_code,sum_float_market_value from lj(tmpStockMetrics,tmpS,`record_month`stock_code)
+    tmpStockMetrics = select record_date,stock_code,log(sum_float_market_value*10000) as Lncap from convertFreq(tmpStockMetrics,from = 'd',to = 'm',startTime = startTime,endTime = endTime)
+    return tmpStockMetrics
+}
+
+
+
+
+/* CXGRO
+Capital Expenditure Growth  
+            startTime  2022.01.03(Default)
+            windows     1825d    (Default)
+            endTime    2023.01.02(Default) 
+Output:  stock_code 
+            record_date
+            CXGRO factor */
+
+
+def getCxgro(startTime = 2022.01.03,endTime = 2023.01.02,windows = 1825){
+    startWindows = temporalAdd(startTime,-windows,'d')
+    windows_year = int(windows\365)
+    tmpStockInfo = select stock_code,comp_id from loadTable("dfs://stock_info","stock_basic_info")
+    tmpCashflow = select report_date as record_date,comp_id,fix_intan_other_asset_dispo_cash from loadTable("dfs://comp_quater","comp_cashflow") where publish_date < endTime and report_date>startWindows and report_date < endTime
+    tmp = select record_date,stock_code,sum(fix_intan_other_asset_dispo_cash) as fix_intan_other_asset_dispo_cash from ej(tmpStockInfo,tmpCashflow,`comp_id,`comp_id) group by record_date,stock_code
+    tmp = select record_date,stock_code,tmsum(record_date,fix_intan_other_asset_dispo_cash,1y) as sum_fix from tmp context by stock_code
+    tmp = convertFreq(tmp,from = 'q',to = 'm',startTime = startWindows ,endTime = endTime)
+    tmp = select record_date,stock_code,int(split(string(record_date),'.')[1]) as mth,sum_fix from tmp
+    tmp = select record_date,stock_code,mth,rank(record_date) as year,sum_fix from tmp  context by mth,stock_code order by mth,stock_code
+    cxgro = select stock_code,record_date,-tmbeta(record_date,sum_fix,year,duration(windows_year+`y))\tmavg(record_date,sum_fix,duration(windows_year+`y)) as cxgro from tmp context by stock_code,mth having record_date >=startTime and record_date<endTime 
+    return cxgro
+}
+
+
+
+
+
+/* GP
+Gross Profitability
+Input:   method  String: 'LYR'(Default),'TTM'
+            startTime  2022.01.03(Default)
+            windows      365d    (Default)
+            endTime    2023.01.02(Default) 
+Output:  stock_code 
+            record_date
+            GP factor */
+
+
+def getGp(method='LYR',startTime = 2022.01.03,endTime = 2023.01.02,windows = 365){
+    startWindows = temporalAdd(startTime,-windows-180,'d')
+    endWindows = temporalAdd(endTime,-windows,'d')
+    tmpStockInfo = select lpad(regexReplace(stock_code,"[^0-9]",""),6,`0) as stock_code,comp_id from loadTable("dfs://stock_info","stock_basic_info")
+    tmpBalance = select temporalAdd(report_date,windows,'d') as report_date,comp_id,total_assets from loadTable("dfs://comp_quater","comp_balance_sheet") where report_date >= startWindows and report_date < endWindows and publish_date < endTime 
+    tmpBalance = convertFreq(tmpBalance,startTime=startTime,endTime=endTime)
+    tmpIncome = select comp_id,temporalAdd(report_date,windows,'d') as record_date,operating_cost from loadTable("dfs://comp_quater","comp_report_income") where report_date >= startWindows and report_date < endWindows and publish_date < endTime context by comp_id order by record_date
+    
+    tmpIncome = select comp_id,record_date,tmsum(record_date,operating_cost,1y) as operating_cost_ttm from tmpIncome context by comp_id
+
+    tmpIncome = convertFreq(tmpIncome,startTime=startTime,endTime=endTime)
+    tmpAC = select record_date,comp_id,total_assets,operating_cost_ttm from ej(tmpBalance,tmpIncome,`comp_id,`comp_id) 
+
+    if(method == 'TTM'){
+        tmpTtm = select stock_code,record_date,oper_income_ttm from loadTable("dfs://k_day","k_derivative_day") where record_date >= startTime and record_date < endTime
+        tmpTtm =  convertFreq(tmpTtm,from = 'd',to = 'm' , startTime =startTime,endTime = endTime)
+        tmp = select record_date,stock_code,sum(total_assets) as total_assets,sum(operating_cost_ttm) as operating_cost_ttm from ej(tmpStockInfo,tmpAC,`comp_id,`comp_id) group by record_date,stock_code order by stock_code
+        gpTtm = select record_date,stock_code,(oper_income_ttm-operating_cost_ttm)\total_assets as Gp_ttm from ej(tmp, tmpTtm ,`record_date`stock_code,`record_date`stock_code)
+        return gpTtm
+        
+    }
+    else if(method == 'LYR'){
+        tmpLyr = select stock_code,record_date,oper_income_lyr from loadTable("dfs://k_day","k_derivative_day")
+        where record_date >= startTime and record_date < endTime
+        tmpLyr =  convertFreq(tmpLyr,from = 'd',to = 'm' , startTime =startTime,endTime = endTime)
+        
+        tmp = select record_date,stock_code,sum(total_assets) as total_assets,sum(operating_cost_ttm) as operating_cost_ttm from ej(tmpStockInfo,tmpAC,`comp_id,`comp_id) group by record_date,stock_code order by stock_code
+        gpLyr = select record_date,stock_code,(oper_income_lyr-operating_cost_ttm)\total_assets as Gp_lyr from ej(tmp,tmpLyr,`record_date`stock_code,`record_date`stock_code)
+        return gpLyr
+    }
+    else {print('no such method')}
+}
+
+
+
+
+
+/* GPM
+Gross Profit Margin
+Input:   method  String: 'LYR'(Default),'TTM'
+            startTime  2022.01.03(Default)
+            windows       365d   (Default)
+            endTime    2023.01.02(Default) 
+Output:  stock_code 
+            record_date
+            GPM factor */
+
+
+def getGpm(method='LYR',startTime = 2022.01.03,endTime = 2023.01.02,windows = 365){
+    startWindows = temporalAdd(startTime,-windows-31,'d')
+    endWindows = temporalAdd(endTime,-windows,'d')
+    tmpStockInfo = select lpad(regexReplace(stock_code,"[^0-9]",""),6,`0) as stock_code,comp_id from loadTable("dfs://stock_info","stock_basic_info")
+    tmpIncome = select comp_id,temporalAdd(report_date,windows,'d') as record_date,operating_cost from loadTable("dfs://comp_quater","comp_report_income") where report_date >= startWindows and report_date < endWindows and publish_date < endTime context by comp_id order by record_date
+    tmpIncome = select comp_id,record_date,tmsum(record_date,operating_cost,1y) as operating_cost_ttm from tmpIncome context by comp_id
+    tmpIncome = convertFreq(tmpIncome,startTime=startTime,endTime=endTime)
+    if(method == 'TTM'){
+        tmpTtm = select stock_code,record_date,oper_income_ttm from loadTable("dfs://k_day","k_derivative_day") where record_date >= startTime and record_date < endTime
+        tmpTtm =  convertFreq(tmpTtm,from = 'd',to = 'm' , startTime =startTime,endTime = endTime)
+        tmp = select record_date,stock_code,sum(operating_cost_ttm) as operating_cost_ttm from ej(tmpStockInfo,tmpIncome,`comp_id,`comp_id) group by record_date,stock_code order by stock_code
+        gpmTtm = select record_date,stock_code,(oper_income_ttm-operating_cost_ttm)\oper_income_ttm as gpm_ttm from ej(tmp, tmpTtm ,`record_date`stock_code,`record_date`stock_code)
+        return gpmTtm
+    }
+    else if(method == 'LYR'){
+        tmpLyr = select stock_code,record_date,oper_income_lyr from loadTable("dfs://k_day","k_derivative_day") where record_date >= startTime and record_date < endTime
+        tmpLyr =  convertFreq(tmpLyr,from = 'd',to = 'm' , startTime =startTime,endTime = endTime)
+        tmp = select record_date,stock_code,sum(operating_cost_ttm) as operating_cost_ttm from ej(tmpStockInfo,tmpIncome,`comp_id,`comp_id) group by record_date,stock_code order by stock_code
+        gpmLyr = select record_date,stock_code,(oper_income_lyr-operating_cost_ttm)\oper_income_lyr as gpm_lyr from ej(tmp,tmpLyr,`record_date`stock_code,`record_date`stock_code)
+        return gpmLyr
+    }
+    else {print('no such method')}
+}
+
+
+
+
+
+/* EM
+Enterprise Multiple (EBIT to EV)
+Input:   startTime  2022.01.03(Default)
+            windows       365d    (Default)
+            endTime    2023.01.02(Default) 
+Output:  report_date  stock_code  comp_id  
+            EM factor */
+
+
+def getEm(startTime = 2022.01.03,endTime = 2023.01.02,windows = 365){
+    startWindows = temporalAdd(startTime,-windows-31,'d')
+    endWindows = temporalAdd(endTime,-windows,'d')
+    tmpBalance = select report_date,comp_id,total_liability,total_non_current_liability,total_current_liability,cash_equi_valents from loadTable("dfs://comp_quater","comp_balance_sheet") where publish_date < endTime and report_date >temporalAdd(startTime,-6,'M') and report_date < endTime
+    tmpStockInfo = select stock_code,comp_id from loadTable("dfs://stock_info","stock_basic_info")
+    tmpStockMetrics = select record_date,stock_code,total_market_value from loadTable("dfs://k_day","k_derivative_day") where record_date >= startTime and record_date < endTime
+    tmpStockMetrics = convertFreq(tmpStockMetrics,from = 'd',to = 'm',startTime =startTime,endTime =endTime)
+    tmpFinMetrics = select temporalAdd(report_date,windows,'d') as report_date ,comp_id,ebit from loadTable("dfs://comp_quater","comp_report_financial_metrics") where publish_date < endTime and report_date >startWindows and report_date < endWindows order by report_date
+    tmpFinMetrics = select comp_id,report_date,tmsum(report_date,ebit,1y) as ebit_ttm from tmpFinMetrics context by comp_id
+    tmp = select record_date,comp_id,total_liability,total_non_current_liability,total_current_liability,cash_equi_valents,ebit_ttm from ej(convertFreq(tmpBalance,startTime =startTime,endTime =endTime),convertFreq(tmpFinMetrics,startTime =startTime,endTime =endTime),`comp_id`record_date,`comp_id`record_date)
+    tmp1 = select record_date,stock_code,sum(total_liability) as total_liability,sum(total_non_current_liability) as total_non_current_liability,sum(total_current_liability) as total_current_liability,sum(cash_equi_valents) as cash_equi_valents,sum(ebit_ttm) as ebit_ttm from ej(tmpStockInfo,tmp,`comp_id,`comp_id) group by record_date,stock_code order by stock_code
+    return select record_date,stock_code,(total_market_value*10000+total_liability-total_non_current_liability-total_current_liability-cash_equi_valents)\ebit_ttm as em from ej(tmp1,tmpStockMetrics,`stock_code`record_date) 
+}
+
+// ----------------------------------------------------------------------------------------------------------------------
+/* 2.计算行业因子-getIndustryXXX,例如getIndustryFactor()
+ */
+
+
+/* 按照中信或申万分类标准获得行业因子，如若SW_2014和SW_2021分类一样则沿用
+getIndustry
+Get Industry factors
+Input :
+         startTime  2022.01.03(Default)
+         method     SW_2021   (Default)、CITIC
+         endTime    2023.01.02(Default) 
+Output:  
+         return Industry factor 
+         
+Example:
+        getIndustry(startTime = 2022.01.01,endTime = 2023.01.02,method = 'SW_2021')         
+*/ 
+
+
+def getIndustry(startTime = 2022.01.01,endTime = 2023.01.02,method = 'SW_2021'){
+    // STEP1, 获取月末交易日   
+    tmpdates = table(getMarketCalendar("CFFEX",startTime,endTime) as record_date)
+    tmpdates = select last(record_date) as record_date from tmpdates group by month(record_date)
+    date = select distinct record_date from tmpdates order by record_date
+    // STEP2, 获取code
+    if(method == 'SW_2021'){
+        tmpIndustryCode = select stock_code,int(left(industry_code,2)) as industry_code,start_date,end_date from loadTable("dfs://industry_info","stock_industry") where industry_by = method
+    }else if(method == 'CITIC'){
+        tmpIndustryCode = select stock_code,left(industry_code,4) as industry_code,start_date,end_date from loadTable("dfs://industry_info","stock_industry") where industry_by = method
+    }
+    sc =select distinct stock_code from tmpIndustryCode 
+    // STEP3, 生成行情数据
+    tmp = select * from cj(sc,date) order by stock_code
+    tmpnew = select * from lj(tmp, tmpIndustryCode,`stock_code,`stock_code) where record_date > start_date,record_date < end_date
+    tmplast = select last(record_date) as record_date,last(industry_code) from tmpnew group by stock_code 
+    tmpnew = select tmpnew.record_date,tmpNew.stock_code,last_industry_code as industry_code from lj(tmpnew,tmplast,`stock_code)
+    // STEP4, 根据industrycode将行情数据拉成宽表
+    tmpnew  = oneHot(tmpnew,`industry_code)
+    h = columnNames(tmpnew)[columnNames(tmpnew) like "industry_%"]
+    // 对同一个stock的不同industry加总
+    tmpnew  = sql(select=(reverse(sqlColAlias(each(makeCall{sum,},sqlCol(h)),h) <- sqlCol(`stock_code) <- sqlCol(`record_date))),from= tmpnew,groupBy = [sqlCol(`stock_code),sqlCol(`record_date)]).eval()
+    // 涉及到字符串拼接，性能较差
+    // tmpnew  = sql(select=(reverse(sqlColAlias(parseExpr("sum("+h+")"), h) <- sqlCol(`stock_code) <- sqlCol(`record_date))),from= tmpnew,groupBy = [sqlCol(`stock_code),sqlCol(`record_date)]).eval()
+    return tmpnew
+}
+
+
+
+
+/* getIndustryWeighted
+Obtain industry factor weights and the stock_code with the largest market share.
+Input:
+         startTime  2022.01.03(Default)
+         method     SW_2021   (Default)、CITIC
+         endTime    2023.01.02(Default)
+Output:
+         table with weights of industry factors and the stock_code with the largest market share.
+
+Example:
+        getIndusrtyWeighted(startTime = 2022.01.03,endTime = 2023.01.02,method = 'SW_2021') */
+
+def getIndustryWeighted(startTime = 2022.01.03,endTime = 2023.01.02,method = 'SW_2021'){
+    code = exec distinct stock_code from loadTable("dfs://k_day","k_day") where record_date >startTime, record_date<endTime
+    tmpdates = table(getMarketCalendar("CFFEX",startTime,endTime) as record_date)
+    tmpdates = select last(record_date) as record_date from tmpdates group by month(record_date)
+    date = exec distinct record_date from tmpdates order by record_date
+
+    // 市场数据
+    market_value = select record_date,stock_code,total_market_value from loadTable("dfs://k_day","k_derivative_day") where record_date in date and stock_code in code context by record_date
+    // 行业数据
+    if(method == 'SW_2021'){
+        tmpIndustryCode = select stock_code,"industry_weights_"+ left(industry_code,2) as industry_code,start_date,end_date from loadTable("dfs://industry_info","stock_industry") where industry_by = method
+    }else if(method == 'CITIC'){
+        tmpIndustryCode = select stock_code,"industry_weights_"+ left(industry_code,4) as industry_code,start_date,end_date from loadTable("dfs://industry_info","stock_industry") where industry_by = method
+    }
+    // 关联上述数据
+    tmpNew = select * from lj(market_value,tmpIndustryCode,`stock_code) where record_date > start_date,record_date < end_date order by stock_code
+    tmplast = select last(record_date) as record_date,last(industry_code) from tmpNew group by stock_code 
+    // 计算每个行业占总行业的权重，并找出在指定行业中占比最大的个股，参考Barra
+    tmpNew = select tmpNew.record_date,tmpNew.stock_code,total_market_value,last_industry_code as industry_code from lj(tmpNew,tmplast,`stock_code)
+    tmp0 = select record_date,industry_code,stock_code,total_market_value,sum(total_market_value) as sum_tv_byIndustry, max(total_market_value) as max_tv from tmpNew context by record_date,industry_code 
+    tmp1 = select record_date,industry_code,stock_code,total_market_value,sum_tv_byIndustry,sum(total_market_value) as sum_tv, iif(max_tv==total_market_value,stock_code,NULL)  as max_stock_code from tmp0 context by record_date
+    weighted = select record_date,industry_code,sum_tv_byIndustry\sum_tv as weights,max_stock_code from tmp1 where max_stock_code != NULL order by record_date,industry_code
+    return weighted 
+}
+
+
+
+/* getIndustryFactor
+Obtain wighted industry factors
+Input:
+         startTime  2022.01.03(Default)
+         method     SW_2021   (Default)、CITIC
+         endTime    2023.01.02(Default)
+         industry_weighted   true      (Default)
+Output:
+         table with weights of industry factors and the stock_code with the largest market share.
+         
+Example:
+        getIndustryFactor(startTime = 2022.01.03,endTime = 2023.01.02,method = 'SW_2021', industry_weighted = true)
+ */
+ 
+
+
+def getIndustryFactor(startTime = 2022.01.03,endTime = 2023.01.02,method = 'SW_2021', industry_weighted = true){
+    industryCode = getIndustry(startTime = startTime,endTime = endTime,method = method)
+    if(!industry_weighted){
+        return industryCode
+    }
+    industryWeighted = select weights from  getIndustryWeighted(startTime = startTime,endTime = endTime,method = method) pivot by record_date,industry_code
+    hname1 = sort(columnNames(industryCode)[columnNames(industryCode) like "industry_%"])
+    hname2 = sort(columnNames(industryWeighted)[1:])
+    // 获取行业因子和行业权重
+    code0 = parseExpr(hname1 + "*" + hname2)
+    if(method == 'SW_2021'){
+        factorName = regexReplace(hname1,"[^0-9]+","weighted_industry_factor_")
+    }else if(method == 'CITIC'){
+        factorName = regexReplace(hname1,"industry_code_","weighted_industry_factor_")
+    }
+    wgFactor = select * from lj(industryCode,industryWeighted,`record_date)
+    code1 =  reverse(sqlColAlias(code0,factorName) <- sqlCol(`record_date) <- sqlCol(`stock_code))
+    // 返回所有行业因子
+    return sql(select = (code1),from = wgFactor).eval()
+}
+

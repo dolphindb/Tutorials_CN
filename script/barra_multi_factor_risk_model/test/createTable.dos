@@ -1,0 +1,518 @@
+// 建库建表
+getHomeDir()
+
+login("admin","123456");
+clearAllCache();
+go;
+
+
+//----------------------------------------------------------------------------------------------------------------------
+
+// stock_basic_info       
+def barraCreateInfoDb(dfsPath){
+	if(existsDatabase(dfsPath)){
+		return 
+	}
+	dbHandle = database(dfsPath, HASH, [STRING,10],engine='TSDB')
+	return dbHandle
+}
+
+def stockInfoCreateTable(dfsPath,tableName){
+	//表已存在
+	if (existsTable(dfsPath,tableName)){
+		/*
+		dbTick=database(dfsPath)
+		dbTick.dropTable(tableName)
+		*/
+		return
+	}
+	schemaTableTick = table(
+    array(SYMBOL, 0) as comp_id,
+	array(SYMBOL, 0) as stock_code
+    )
+	dbTick=database(dfsPath)
+	tick=createPartitionedTable(dbHandle=dbTick, table=schemaTableTick, tableName=tableName, partitionColumns=`stock_code, sortColumns=`stock_code, keepDuplicates=ALL)
+}
+
+dbPath="dfs://stock_info"
+tableName="stock_basic_info"
+barraCreateInfoDb(dbPath)
+stockInfoCreateTable(dbPath,tableName)
+
+
+//----------------------------------------------------------------------------------------------------------------------
+
+// comp_balance_sheet
+
+def barraCreateDb(dfsPath){
+	if(existsDatabase(dfsPath)){
+		return 
+	}
+	dbTime = database('', VALUE, 2020.01.01..2023.01.05);
+	dbSymbol = database('', HASH, [SYMBOL, 20])
+	dbHandle = database(dfsPath, COMPO, [dbTime, dbSymbol],engine='TSDB')
+	return dbHandle
+}
+def compBalanceSheetCreateTable(dfsPath,tableName){
+	//表已存在
+	if (existsTable(dfsPath,tableName)){
+		/*
+		dbTick=database(dfsPath)
+		dbTick.dropTable(tableName)
+		*/
+		return
+	}
+	schemaTableTick = table(
+    array(SYMBOL, 0) as comp_id,
+	array(DATE, 0) as report_date,
+    array(DATE, 0) as publish_date,
+	array(DOUBLE, 0) as total_liability,
+	array(DOUBLE, 0) as total_non_current_liability,
+	array(DOUBLE, 0) as total_current_liability,
+    array(DOUBLE, 0) as cash_equi_valents,
+    array(DOUBLE, 0) as total_assets,
+    array(DOUBLE, 0) as total_share_holder_equity)
+	dbTick=database(dfsPath)
+	tick=createPartitionedTable(dbHandle=dbTick, table=schemaTableTick, tableName=tableName, partitionColumns=`report_date`comp_id, sortColumns=`comp_id`report_date, keepDuplicates=ALL)
+}
+dbPath="dfs://comp_quater"
+tableName="comp_balance_sheet"
+barraCreateDb(dbPath)
+compBalanceSheetCreateTable(dbPath,tableName)
+
+//----------------------------------------------------------------------------------------------------------------------
+
+
+// comp_report_financial_metrics
+
+def compMetricCreateTable(dfsPath,tableName){
+	//表已存在
+	if (existsTable(dfsPath,tableName)){
+		/*
+		dbTick=database(dfsPath)
+		dbTick.dropTable(tableName)
+		*/
+		return
+	}
+	schemaTableTick = table(
+    array(SYMBOL, 0) as comp_id,
+	array(DATE, 0) as report_date,
+    array(DATE, 0) as publish_date,
+	array(DOUBLE, 0) as ebit
+	)
+	dbTick=database(dfsPath)
+	tick=createPartitionedTable(dbHandle=dbTick, table=schemaTableTick, tableName=tableName, partitionColumns=`report_date`comp_id, sortColumns=`comp_id`report_date, keepDuplicates=ALL)
+}
+dbPath="dfs://comp_quater"
+tableName="comp_report_financial_metrics"
+compMetricCreateTable(dbPath,tableName)
+
+
+//----------------------------------------------------------------------------------------------------------------------
+
+// comp_fixed_asset        
+
+def compFixAssetCreateTable(dfsPath,tableName){
+	//表已存在
+	if (existsTable(dfsPath,tableName)){
+		/*
+		dbTick=database(dfsPath)
+		dbTick.dropTable(tableName)
+		*/
+		return
+	}
+	schemaTableTick = table(
+    array(SYMBOL, 0) as comp_id,
+	array(DATE, 0) as report_date,
+    array(DATE, 0) as publish_date,
+	array(DOUBLE, 0) as ending_accu_depreciation,
+	array(DOUBLE, 0) as opening_accu_depreciation)
+	dbTick=database(dfsPath)
+	tick=createPartitionedTable(dbHandle=dbTick, table=schemaTableTick, tableName=tableName, partitionColumns=`report_date`comp_id, sortColumns=`comp_id`report_date, keepDuplicates=ALL)
+}
+
+dbPath="dfs://comp_quater"
+tableName="comp_fixed_asset"
+compFixAssetCreateTable(dbPath,tableName)
+
+//----------------------------------------------------------------------------------------------------------------------
+
+// comp_intangible_asset         
+
+def compIntangibleAssetCreateTable(dfsPath,tableName){
+	//表已存在
+	if (existsTable(dfsPath,tableName)){
+		/*
+		dbTick=database(dfsPath)
+		dbTick.dropTable(tableName)
+		*/
+		return
+	}
+	schemaTableTick = table(
+    array(SYMBOL, 0) as comp_id,
+	array(DATE, 0) as report_date,
+    array(DATE, 0) as publish_date,
+	array(DOUBLE, 0) as current_increase
+    )
+	dbTick=database(dfsPath)
+	tick=createPartitionedTable(dbHandle=dbTick, table=schemaTableTick, tableName=tableName, partitionColumns=`report_date`comp_id, sortColumns=`comp_id`report_date, keepDuplicates=ALL)
+}
+
+dbPath="dfs://comp_quater"
+tableName="comp_intangible_asset"
+compIntangibleAssetCreateTable(dbPath,tableName)
+
+//----------------------------------------------------------------------------------------------------------------------
+// comp_cashflow
+
+
+def compCashflowCreateTable(dfsPath,tableName){
+	//表已存在
+	if (existsTable(dfsPath,tableName)){
+		/*
+		dbTick=database(dfsPath)
+		dbTick.dropTable(tableName)
+		*/
+		return
+	}
+	schemaTableTick = table(
+    array(SYMBOL, 0) as comp_id,
+	array(DATE, 0) as report_date,
+    array(DATE, 0) as publish_date,
+	array(DOUBLE, 0) as fix_intan_other_asset_dispo_cash
+    )
+	dbTick=database(dfsPath)
+	tick=createPartitionedTable(dbHandle=dbTick, table=schemaTableTick, tableName=tableName, partitionColumns=`report_date`comp_id, sortColumns=`comp_id`report_date, keepDuplicates=ALL)
+}
+
+dbPath="dfs://comp_quater"
+tableName="comp_cashflow"
+compCashflowCreateTable(dbPath,tableName)
+
+//----------------------------------------------------------------------------------------------------------------------
+// comp_report_income
+
+def compIncomeCreateTable(dfsPath,tableName){
+	//表已存在
+	if (existsTable(dfsPath,tableName)){
+		/*
+		dbTick=database(dfsPath)
+		dbTick.dropTable(tableName)
+		*/
+		return
+	}
+	schemaTableTick = table(
+    array(SYMBOL, 0) as comp_id,
+	array(DATE, 0) as report_date,
+    array(DATE, 0) as publish_date,
+	array(DOUBLE, 0) as operating_cost
+    )
+	dbTick=database(dfsPath)
+	tick=createPartitionedTable(dbHandle=dbTick, table=schemaTableTick, tableName=tableName, partitionColumns=`report_date`comp_id, sortColumns=`comp_id`report_date, keepDuplicates=ALL)
+}
+
+dbPath="dfs://comp_quater"
+tableName="comp_report_income"
+compIncomeCreateTable(dbPath,tableName)
+
+
+
+//----------------------------------------------------------------------------------------------------------------------
+
+// a_stock_derivative_metrics_daily
+
+
+def kddayCreateTable(dfsPath,tableName){
+	//表已存在
+	if (existsTable(dfsPath,tableName)){
+		/*
+		dbTick=database(dfsPath)
+		dbTick.dropTable(tableName)
+		*/
+		return
+	}
+	schemaTableTick = table(
+    array(SYMBOL, 0) as stock_code,
+	array(DATE, 0) as record_date,
+	array(DOUBLE, 0) as net_profit_parent_company_ttm,
+	array(DOUBLE, 0) as net_profit_parent_company_lyr,
+	array(DOUBLE, 0) as net_cash_flows_oper_act_ttm,
+    array(DOUBLE, 0) as net_cash_flows_oper_act_lyr,
+    array(DOUBLE, 0) as net_increase_cash_cash_equ_ttm,
+    array(DOUBLE, 0) as net_increase_cash_cash_equ_lyr,
+    array(DOUBLE, 0) as oper_income_ttm,
+    array(DOUBLE, 0) as oper_income_lyr,
+    array(DOUBLE, 0) as total_market_value,
+    array(DOUBLE, 0) as total_share,
+    array(DOUBLE, 0) as float_share,
+    array(DOUBLE, 0) as turnover_rate,
+    array(DOUBLE, 0) as float_market_value,
+    array(DOUBLE, 0) as price_close,
+    array(DOUBLE, 0) as price_div_dps)
+	dbTick=database(dfsPath)
+	tick=createPartitionedTable(dbHandle=dbTick, table=schemaTableTick, tableName=tableName, partitionColumns=`record_date`stock_code, sortColumns=`stock_code`record_date, keepDuplicates=ALL)
+}
+dbPath="dfs://k_day"
+tableName="k_derivative_day"
+barraCreateDb(dbPath)
+kddayCreateTable(dbPath,tableName)
+
+//----------------------------------------------------------------------------------------------------------------------
+// a_stock_price_daily
+
+def kdayCreateTable(dfsPath,tableName){
+	//表已存在
+	if (existsTable(dfsPath,tableName)){
+		/*
+		dbTick=database(dfsPath)
+		dbTick.dropTable(tableName)
+		*/
+		return
+	}
+	schemaTableTick = table(
+	array(SYMBOL, 0) as stock_code,
+	array(DATE, 0) as record_date,
+	array(DOUBLE, 0) as turnover_total,
+	array(DOUBLE, 0) as return_day,
+	array(DOUBLE, 0) as price_open,
+	array(DOUBLE, 0) as price_close
+    )
+	dbTick=database(dfsPath)
+	tick=createPartitionedTable(dbHandle=dbTick, table=schemaTableTick, tableName=tableName, partitionColumns=`record_date`stock_code, sortColumns=`stock_code`record_date, keepDuplicates=ALL)
+}
+dbPath="dfs://k_day"
+tableName="k_day"
+barraCreateDb(dbPath)
+kdayCreateTable(dbPath,tableName)
+
+
+
+//----------------------------------------------------------------------------------------------------------------------
+// index_price_daily
+
+
+def kindexddayCreateTable(dfsPath,tableName){
+	//表已存在
+	if (existsTable(dfsPath,tableName)){
+		/*
+		dbTick=database(dfsPath)
+		dbTick.dropTable(tableName)
+		*/
+		return
+	}
+	schemaTableTick = table(
+	array(SYMBOL, 0) as index_code,
+	array(DATE, 0) as record_date,
+	array(DOUBLE, 0) as price_open,
+	array(DOUBLE, 0) as price_close)
+	dbTick=database(dfsPath)
+	tick=createPartitionedTable(dbHandle=dbTick, table=schemaTableTick, tableName=tableName, partitionColumns=`record_date`index_code, sortColumns=`index_code`record_date, keepDuplicates=ALL)
+}
+dbPath="dfs://k_day"
+tableName="k_index_day"
+barraCreateDb(dbPath)
+kindexddayCreateTable(dbPath,tableName)
+
+
+//----------------------------------------------------------------------------------------------------------------------
+// stock_industry
+
+def industryCreateTable(dfsPath,tableName){
+	//表已存在
+	if (existsTable(dfsPath,tableName)){
+		/*
+		dbTick=database(dfsPath)
+		dbTick.dropTable(tableName)
+		*/
+		return
+	}
+	schemaTableTick = table(
+    array(SYMBOL, 0) as stock_code,
+    array(SYMBOL, 0) as industry_code,
+    array(DATE,0) as start_date,
+    array(DATE,0) as end_date,
+    array(SYMBOL,0) as industry_by,
+    array(INT,0) as is_current
+    )
+	dbTick=database(dfsPath)
+	tick=createPartitionedTable(dbHandle=dbTick, table=schemaTableTick, tableName=tableName, partitionColumns=`stock_code, sortColumns=`stock_code, keepDuplicates=ALL)
+}
+
+
+dbPath="dfs://industry_info"
+tableName="stock_industry"
+barraCreateInfoDb(dbPath)
+industryCreateTable(dbPath,tableName)
+
+
+//----------------------------------------------------------------------------------------------------------------------
+// index_member_weight
+
+
+
+def indexWeightCreateTable(dfsPath,tableName){
+	//表已存在
+	if (existsTable(dfsPath,tableName)){
+		/*
+		dbTick=database(dfsPath)
+		dbTick.dropTable(tableName)
+		*/
+		return
+	}
+	schemaTableTick = table(
+    array(SYMBOL, 0) as index_code,
+	array(SYMBOL, 0) as stock_code,
+	array(DATE, 0) as record_date,
+	array(DOUBLE, 0) as i_weight
+    )
+	dbTick=database(dfsPath)
+	tick=createPartitionedTable(dbHandle=dbTick, table=schemaTableTick, tableName=tableName, partitionColumns=`stock_code, sortColumns=`stock_code, keepDuplicates=ALL)
+}
+
+dbPath="dfs://index_weight"
+tableName="index_member_weight"
+barraCreateInfoDb(dbPath)
+indexWeightCreateTable(dbPath,tableName)
+
+
+
+// 模拟数据
+
+//----------------------------------------------------------------------------------------------------------------------
+
+// comp_balance_sheet
+
+// 指数
+indexs  = table(lpad(string(1..3000),6,`0) as index_code)
+// 个股
+codes = table(lpad(string(1..4100),6,`0) as stock_code)
+// 公司
+comps = table(rand('ddb' + string(1..40000),4100) as comp_id)
+comps_id = comps.comp_id 
+// 交易日
+tradingDay = getMarketCalendar("CFFEX",2018.01.01, 2023.01.01)
+// 季度交易日
+quarter = distinct(businessQuarterEnd(tradingDay))
+dates = table(quarter as report_date)
+// 申万、中信行业
+swIndustry = table(lpad(string(take(1..32,4100)),2,`0) + lpad(string(rand(4000,4100)),4,`0) as industry_code)
+ciIndustry = table(string(take(take('a'..'z',26),4100)) + lpad(string(take(100,4100)),3,`0) as industry_code)
+comps_dates = cj(comps,dates)
+rdates = table(tradingDay as record_date)
+codes_dates = cj(codes,rdates)
+indexs_dates = cj(indexs,rdates)
+sizes = (shape comps_dates)[0]
+sizesStock = (shape codes_dates)[0]
+sizesIndex = (shape indexs_dates)[0]
+
+comp_balance_sheet = table(comps_dates,comps_dates.report_date + rand(30,sizes) as publish_date, rand(10000.0,sizes) as total_liability,rand(100000.0,sizes) as total_non_current_liability,rand(100000.0,sizes) as total_current_liability,rand(100.0,sizes) as cash_equi_valents,rand(100.0,sizes) as total_assets,rand(10000.0,sizes) as total_share_holder_equity)
+pb = loadTable("dfs://comp_quater","comp_balance_sheet")
+pb.append!(comp_balance_sheet)
+
+
+//----------------------------------------------------------------------------------------------------------------------
+
+// stock_basic_info       
+
+pb = loadTable("dfs://stock_info","stock_basic_info")
+pb.append!(table(comps,codes))
+
+//----------------------------------------------------------------------------------------------------------------------
+
+// stock_industry       
+
+pb = loadTable("dfs://industry_info","stock_industry")
+a_stock_industry_sw = table(codes,swIndustry,take(2021.07.30,4100) as start_date,take(9999.01.01,4100) as end_date,take('SW_2021',4100) as industry_by,take(1,4100) as is_current)
+pb.append!(a_stock_industry_sw)
+
+a_stock_industry_ci = table(codes,ciIndustry,take(2021.07.30,4100) as start_date,take(9999.01.01,4100) as end_date,take('CITIC',4100) as industry_by,take(1,4100) as is_current)
+pb.append!(a_stock_industry_ci)
+
+
+
+
+//----------------------------------------------------------------------------------------------------------------------
+
+// comp_fixed_asset        
+
+comp_fixed_asset  = table(comps_dates,comps_dates.report_date + rand(30,sizes) as publish_date, rand(10000.0,sizes) as ending_accu_depreciation,rand(100000.0,sizes) as opening_accu_depreciation)
+pb = loadTable("dfs://comp_quater","comp_fixed_asset")
+pb.append!(comp_fixed_asset)
+
+
+//----------------------------------------------------------------------------------------------------------------------
+
+// comp_report_financial_metrics       
+
+comp_report_financial_metrics    = table(comps_dates,comps_dates.report_date + rand(30,sizes) as publish_date, rand(10000.0,sizes) as ebit)
+pb = loadTable("dfs://comp_quater","comp_report_financial_metrics")
+pb.append!(comp_report_financial_metrics )
+
+//----------------------------------------------------------------------------------------------------------------------
+
+// comp_intangible_asset         
+
+comp_intangible_asset = table(comps_dates,comps_dates.report_date + rand(30,sizes) as publish_date, rand(10000.0,sizes) as current_increase)
+pb = loadTable("dfs://comp_quater","comp_intangible_asset")
+pb.append!(comp_intangible_asset)
+
+
+//----------------------------------------------------------------------------------------------------------------------
+// comp_cashflow
+
+comp_cashflow = table(comps_dates,comps_dates.report_date + rand(30,sizes) as publish_date, rand(1000.0,sizes) as fix_intan_other_asset_dispo_cash)
+pb = loadTable("dfs://comp_quater","comp_cashflow")
+pb.append!(comp_cashflow)
+
+
+
+
+//----------------------------------------------------------------------------------------------------------------------
+// comp_report_income
+
+comp_report_income = table(comps_dates,comps_dates.report_date + rand(30,sizes) as publish_date, rand(1000.0,sizes) as operating_cost)
+pb = loadTable("dfs://comp_quater","comp_report_income")
+pb.append!(comp_report_income)
+
+//----------------------------------------------------------------------------------------------------------------------
+
+// a_stock_derivative_metrics_daily
+
+a_stock_derivative_metrics_daily = table(codes_dates,rand(10000.0,sizesStock) as net_profit_parent_company_ttm,rand(10000.0,sizesStock) as net_profit_parent_company_lyr,rand(10000.0,sizesStock) as net_cash_flows_oper_act_ttm,rand(10000.0,sizesStock) as net_cash_flows_oper_act_lyr,rand(10000.0,sizesStock) as net_increase_cash_cash_equ_ttm,rand(10000.0,sizesStock) as net_increase_cash_cash_equ_lyr,rand(100.0,sizesStock) as oper_income_ttm,rand(100.0,sizesStock) as oper_income_lyr,rand(100000.0,sizesStock) as total_market_value,rand(10000.0,sizesStock) as total_share,rand(1000.0,sizesStock) as float_share,rand(1.0,sizesStock) as turnover_rate,rand(100000.0,sizesStock) as float_market_value,rand(100.0,sizesStock) as price_close,rand(10.0,sizesStock) as price_div_dps)
+
+pb = loadTable("dfs://k_day","k_derivative_day")
+pb.append!(a_stock_derivative_metrics_daily)
+
+
+//----------------------------------------------------------------------------------------------------------------------
+// a_stock_price_daily
+
+
+pb = loadTable("dfs://k_day","k_day")
+pb.append!(table(codes_dates,rand(10000.0,sizesStock) as turnover_total,rand(1.0,sizesStock) as return_day,rand(100.0,sizesStock) as price_open,rand(100.0,sizesStock) as price_close))
+
+
+//---------------------------------------------------------------------------------------------------------------------
+// index_price_daily
+
+
+
+pb = loadTable("dfs://k_day","k_index_day")
+pb.append!(table(indexs_dates,rand(100.0,sizesIndex) as price_open,rand(100.0,sizesIndex) as price_close))
+
+
+
+//----------------------------------------------------------------------------------------------------------------------
+// index_member_weight
+
+
+pb = loadTable("dfs://index_weight","index_member_weight")
+
+for(i in (distinct(businessMonthBegin(tradingDay)) <- distinct(businessMonthEnd(tradingDay)))){
+    w = rand(1.0,300)
+    w = w\sum(w)
+    pb.append!(table(take('000300',300) as index_code,rand(codes.stock_code,300) as stock_code,take(i,300) as record_date,w as i_weight))
+}
+
+
+

@@ -1,0 +1,110 @@
+use barra::barraFactorsCal
+use barra::barraFactorsMerge
+/* Barra因子合成全流程*/
+
+/* 1.因子有效性检验
+ */
+// 时间可以变化
+st = 2022.01.03 
+et = 2023.01.02
+normlizing = true
+scaling = true
+decap = true
+industry_method = 'CITIC'
+industry_weighted = true
+Factors = getAllFactors(st= st,et = et, normlizing = normlizing,scaling = scaling,decap = decap,industry_method = industry_method,industry_weighted = industry_weighted)
+
+// 对原始因子宽表的缺失值进行处理
+fTable = getRegTable(factorsTable = true,tbName = Factors,st= st,et = et, normlizing = normlizing ,scaling = scaling ,decap = decap,industry_method = industry_method,industry_weighted = industry_weighted)
+
+// 因子有效性检验
+// 获取单风格因子有效性、一致性、稳定性检验
+factorsValid = getFactorsValidation(factorsTable = true,tbName = Factors,st = st,et = et , normlizing = normlizing,scaling = scaling,decap = decap,industry_method = industry_method,industry_weighted = industry_weighted)
+factorsValid
+
+update factorsValid set tstat = abs(tstat)
+
+// 计算fsc
+tmp = select record_date,valueType.regexReplace("_stat","") as valueType,fsc from factorsValid 
+tmppivot = select fsc from tmp pivot by record_date,valueType
+tbfsc = sql(select = sqlCol(tmppivot.columnNames()[11:20]),from = tmppivot).eval()
+plot(tbfsc,tmppivot.record_date,extras={multiYAxes: false},title = "因子fsc 月频时序图")
+
+// 计算ic
+tmp1 = select record_date,valueType.regexReplace("_stat","") as valueType,abs(ic) as ic from factorsValid 
+tmppivot1 = select ic from tmp1 pivot by record_date,valueType
+tbic = sql(select = sqlCol(tmppivot1.columnNames()[2:10]),from = tmppivot1).eval()
+
+baseline = take(0.03,(shape tbic)[0])
+plot(table(tbic,baseline),tmppivot1.record_date,extras={multiYAxes: false},title = "因子ic 月频时序图")
+
+// 计算tstat
+tmp2 = select record_date,valueType.regexReplace("_stat","") as valueType,tstat from factorsValid 
+tmppivot2 = select tstat from tmp2 pivot by record_date,valueType
+tbstat = sql(select = sqlCol(tmppivot2.columnNames()[11:20]),from = tmppivot2).eval()
+
+baseline_neg = take(-0.03,(shape tbstat)[0])
+baseline_pos = take(0.03,(shape tbstat)[0])
+plot(table(tbstat,baseline_neg,baseline_pos),tmppivot2.record_date,extras={multiYAxes: false},title = "因子t_stat 月频时序图")
+
+
+/* 2.合成因子
+ */
+
+// 合成一级、二级因子 
+//  firstFactors中一级因子和二级因子名称任起；firstFactors中二级因子的名称需要与secondFactors中的二级因子的名称一一对应；secondFactors中的三级因子需要与输入的因子表factorsTable 字段名对应（支持大小写匹配）
+//  一级因子和二级因子的json，可根据检验结果修改关系,若有需求，可自行添加其他因子
+firstFactors = {
+        "Quality":["Earnings_Quality","Earnings_Variability","Investment_Quality","Leverage","Profitability"],
+        "Value":["Btop","Earning_Yield","Long_Term_Reversal"],
+        "Growth":"Growth",
+        "Liquidity":"Liquidity",
+        "Volatility":["Beta","Residual_Volatility"],
+        "Size":["Size","Mid_Cap"],
+        "Momentum":"Momentum",
+        "Dividend_Yield":"Dividend_Yield"
+}   
+    
+// 二级因子和三级因子的json，可根据检验结果修改关系，三级因子一般需要选择ttm和lyr种类的因子
+// 三级因子字典表
+/* ['abs','acf_ttm','acf_lyr','vsal_ttm','vsal_lyr','vern_ttm','vern_lyr','vflo_ttm','vflo_lyr','cetop_ttm','cetop_lyr','etop_ttm','etop_lyr','egro_ttm','egro_lyr','sgro_ttm','sgro_lyr','agro','igro','mlev','dtoa','blev','stom','stoq','stoa','atvr','ltrstr','lthalpha','midcap','rstr','halpha','ato_ttm','ato_lyr','roa_ttm','roa_lyr','btop','dtop','hbeta','hsigma','dastd','cmra','lncap','cxgro','gp_ttm','gp_lyr','gpm_ttm','gpm_lyr','em'] */
+secondFactors = {
+    "Earnings_Quality":["abs","acf_ttm"],
+    "Earnings_Variability":["vsal_ttm","vern_ttm","vflo_ttm"],
+    "Investment_Quality":["agro","igro","cxgro"],
+    "Leverage":["mlev","dtoa","blev"],
+    "Profitability":["ato_ttm","gp_ttm","gpm_ttm","roa_ttm"],
+    "Btop":"btop",
+    "Earning_Yield":["cetop_ttm","etop_ttm","em"],
+    "Long_Term_Reversal":["ltrstr","lthalpha"],
+    "Growth":["egro_ttm","sgro_ttm"],
+    "Liquidity":["stom","stoq","stoa","atvr"],
+    "Beta":"hbeta",
+    "Residual_Volatility":["hsigma","dastd","cmra"],
+    "Size":"lncap",
+    "Mid_Cap":"midcap",
+    "Momentum":["rstr","halpha"],
+    "Dividend_Yield":"dtop"
+}
+
+// 针对原始因子表填补缺失值
+fTable = getRegTable(factorsTable = true,tbName = Factors,st= st,et = et, normlizing = normlizing ,scaling = scaling ,decap = decap,industry_method = industry_method,industry_weighted = industry_weighted)
+// select count(*) from fTable
+
+// 原始因子有效性检验(factor_return、tstat、R2、aR2、stR2、fsc、IC)
+factorsValid = getFactorsValidation(factorsTable = true,tbName = Factors,st = st,et = et , normlizing = normlizing,scaling = scaling,decap = decap,industry_method = industry_method,industry_weighted = industry_weighted)
+
+// select avg(R2)  from factorsValid group by valueType
+// select avg(aR2)  from factorsValid group by valueType
+// select avg(abs(tstat))  from factorsValid group by valueType
+
+// 得到最终的一级、二级、因子（目前支持等权法、信息比率法、信息系数信息比率法）
+facTable1 = getFSLevelFactor(fTable,factorsValid,firstFactors,secondFactors,false, "equal",level = "F")
+facTable1 = getFSLevelFactor(fTable,factorsValid,firstFactors,secondFactors,false, "ir",level = "F")
+facTable1 = getFSLevelFactor(fTable,factorsValid,firstFactors,secondFactors,false, "ic_ir",level = "F") // The input matrix is singular. 矩阵满秩
+facTable2 = getFSLevelFactor(fTable,factorsValid,firstFactors,secondFactors,true, "equal",level = "S")
+facTable2 = getFSLevelFactor(fTable,factorsValid,firstFactors,secondFactors,true, "ir",level = "S")
+facTable2 = getFSLevelFactor(fTable,factorsValid,firstFactors,secondFactors,true, "ic_ir",level = "S") // The input matrix is singular. 矩阵满秩
+
+// facTable1.columnNames()
+// select * from facTable1 limit 100

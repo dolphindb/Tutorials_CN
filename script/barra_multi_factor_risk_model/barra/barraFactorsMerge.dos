@@ -1,0 +1,569 @@
+module barra::barraFactorsMerge
+use barra::barraFactorsCal
+/* 因子合成模块
+ * 1.风格因子预处理：winsorized()、standardized()
+ * 2.合并风格因子、行业因子、行情因子（国家因子），得到AllFactors宽表：getAllFactors()
+ * 3.所有因子缺失值预处理：getRegTable()
+ * 4.单因子模型检验：getFactorsValidation()
+ *    4.1 单因子t检验
+ *    4.2 IC
+ *    4.3 FSC
+ * 5.因子合成:getFSLevelFactor()
+ */
+
+// ----------------------------------------------------------------------------------------------------------------------
+
+/* 1.风格因子预处理：winsorized、standardized
+ */
+
+
+/* winsorized
+Winsorize the factor table, the factor table must have three columns,record_date,stock_code and the original factor,the original factor must be the third column
+MAD(参考median absolute deviation方法)
+Input :
+         tbName   原始因子表，需要包含三列record_date,stock_code and the original factor
+Output:  
+         factor table after winsorized 
+Example:
+         winsorized((getAbs())
+                  
+*/
+
+
+def winsorized(tbName=NULL){
+    tmp  = tbName
+    codeName = sqlCol(tmp.columnNames()[2])
+    // STEP1,计算MAD
+    code1 = sqlColAlias(parseExpr("median("+tmp.columnNames()[2] + ")"),`median + tmp.columnNames()[2])
+    code2 = sqlColAlias(parseExpr("mad("+tmp.columnNames()[2] + ",true)"),`mad + tmp.columnNames()[2])
+    code3 = sqlColAlias(expr(parseExpr("mad("+tmp.columnNames()[2] + ")"),*,1.4826),`sigma) 
+    tmp = sql(select = (sqlCol(`stock_code),sqlCol(`record_date),codeName,code1,code2,code3),from = tmp,groupby = sqlCol(`record_date),groupFlag = 0).eval()
+   
+    // STEP2,筛选异常值,将超过<median-3sigma,>median+3sigma的异常值更新
+    codeUpc = parseExpr(tmp.columnNames()[3] + " + 3*sigma ")
+    codeUpl = parseExpr(tmp.columnNames()[3] + " - 3*sigma ")
+    sqlUpdate(tmp,sqlColAlias(codeUpc,tmp.columnNames()[2]) ,where = expr(sqlCol(tmp.columnNames()[2]),>,codeUpc)).eval()
+    sqlUpdate(tmp,sqlColAlias(codeUpl,tmp.columnNames()[2]) ,where = expr(sqlCol(tmp.columnNames()[2]),<,codeUpl)).eval()
+    tmp = sql(select = (sqlCol(`stock_code),sqlCol(`record_date),sqlCol(tmp.columnNames()[2])),from = tmp ).eval()
+    return tmp
+}
+
+
+/* standardized
+Standardize and Market-neutralize the factor table, the factor table must have three columns,record_date,stock_code and the original factor,the original factor must be the third column
+依据市值标准化因子，参考BarraCNLT6
+Input :
+         tbName      原始因子表，需要包含三列 record_date,stock_code and the original factor
+         adjusted    是否采用市值中性化 Market-neutralize or not
+Output:  
+         factor table after standardized
+Example:
+         standardized(getAbs())      
+ */
+
+
+def standardized(tbName=NULL,adjusted = false){
+    tmp = tbName    
+    // [2]因子列  [3] 均值列  
+    codeName = sqlColAlias(sqlCol(tmp.columnNames()[2]))
+    if(adjusted){
+        // 市值加权标准化
+        market_value = select record_date,stock_code,sqrt(total_market_value) from loadTable("dfs://k_day","k_derivative_day") where record_date in (exec record_date from tmp) and stock_code in (exec stock_code from tmp) map
+        newTmp = ej(tmp,market_value,`record_date`stock_code)
+        code1 = sqlColAlias(makeUnifiedCall(wavg,[sqlCol(newTmp.columnNames()[2]),sqlCol(newTmp.columnNames()[3])]),`mean + newTmp.columnNames()[2])
+    }else{
+        newTmp = tmp
+        code1 = sqlColAlias(makeUnifiedCall(avg,sqlCol(newTmp.columnNames()[2])),`mean + newTmp.columnNames()[2])
+    }
+    code2 = sqlColAlias(makeUnifiedCall(std,sqlCol(newTmp.columnNames()[2])),`std + newTmp.columnNames()[2])
+    newTmp = sql(select = (sqlCol(`stock_code),sqlCol(`record_date),codeName,code1,code2),from = newTmp,groupBy = sqlCol(`record_date),groupFlag = 0,orderBy = sqlCol(`stock_code)).eval()
+    code3 = unifiedExpr((codeName,sqlCol(newTmp.columnNames()[3])),-)
+    code4 = sqlColAlias(binaryExpr(code3,sqlCol(newTmp.columnNames()[4]),\),newTmp.columnNames()[2])
+    
+    return sql(select = (sqlCol(`stock_code),sqlCol(`record_date),code4),from  = newTmp,orderBy = sqlCol(`stock_code)).eval()
+}
+
+
+
+
+/* singleFac
+获取单个因子
+Input:  
+         startTime         2022.01.03(Default)
+         endTime           2023.01.02(Default)
+         factor            factor名
+Output:  
+         factor table */
+
+
+def singleFac(st,et,factor){
+    fname = 'get' + split(factor,'_')[0][0].upper()+split(factor,'_')[0][1:].lower()
+    if(split(factor,'_')[1].lower()=='ttm'){
+        fac = makeUnifiedCall(funcByName("barra::barraFactorsCal::"+fname), ('TTM',st,et)).eval()
+    }else if(split(factor,'_')[1].lower()=='lyr'){
+        fac = makeUnifiedCall(funcByName("barra::barraFactorsCal::"+fname), ('LYR',st,et)).eval()
+    }else{
+        fac = makeUnifiedCall(funcByName("barra::barraFactorsCal::"+fname), (st,et)).eval()
+    }
+    return fac
+}
+
+
+// ----------------------------------------------------------------------------------------------------------------------
+/* 2.合并风格因子、行业因子、行情因子（国家因子），得到AllFactors宽表：getAllFactors 
+ */
+
+/* getAllFactors
+获取所有因子
+Input:   normlizing           true   (Default)   标准化
+         scaling              true   (Default)   去极值
+         decap                true   (Default)   市值中性化
+         industry_weighted    true   (Default)
+         industry_method     'CITIC' (Default)、'SW_2021'
+         startTime         2022.01.03(Default)
+         endTime           2023.01.02(Default)
+Output:  
+         factor table */
+
+
+def getAllFactors(st=2022.01.03,et =2023.01.02, normlizing = true,scaling = true,decap = true,industry_method = 'CITIC', industry_weighted = true){
+    // 
+    factors = ['abs','acf_ttm','acf_lyr','vsal_ttm','vsal_lyr','vern_ttm','vern_lyr','vflo_ttm','vflo_lyr','cetop_ttm','cetop_lyr','etop_ttm','etop_lyr','egro_ttm','egro_lyr','sgro_ttm','sgro_lyr','agro','igro','mlev','dtoa','blev','stom','stoq','stoa','atvr','ltrstr','lthalpha','midcap','rstr','halpha','ato_ttm','ato_lyr','roa_ttm','roa_lyr','btop','dtop','hbeta','hsigma','dastd','cmra','lncap','cxgro','gp_ttm','gp_lyr','gpm_ttm','gpm_lyr','em'].sort!()
+    partialSingleFac = partial(singleFac,st,et)
+    out = peach(partialSingleFac,factors)
+    
+    for (i in 0..(factors.size()-1)){
+        fac = out[i]
+        if(scaling){
+            fac = winsorized(fac)
+        }
+        if(normlizing&&decap){
+            fac = standardized(fac,adjusted = true)
+        }else if(normlizing&&decap==false){
+            fac = standardized(fac,adjusted = false)
+        }
+        code = makeUnifiedCall(unpivot,[fac,`stock_code`record_date,fac.columnNames()[2]])
+        if(i==0){
+            factor_table = code.eval()
+        }else{
+            factor_table.append!(code.eval())
+        }
+    }
+
+    industryFactors = getIndustryFactor(startTime = st,endTime = et,method = industry_method, industry_weighted = industry_weighted)
+    // 将窄表拉成宽表
+    tmp = industryFactors.unpivot(`stock_code`record_date,industryFactors.columnNames()[2:])
+    factor_table.append!(tmp)
+    new = select value from factor_table  pivot by stock_code,record_date,valueType
+    factors.append!(industryFactors.columnNames()[2:])
+    // 对库表排序
+    reorderColumns!(new,(factors.reverse() <- `record_date <- `stock_code).reverse())
+
+    return new
+}   
+
+// ----------------------------------------------------------------------------------------------------------------------
+
+/* 3.所有因子缺失值预处理：getRegTable()
+ */
+
+
+/* getRegTable
+ 获取用于回归的经过处理的回归因子表、包含个股收益率、因子暴露、行业因子、行业变量、回归权重
+Input:   
+        factorsTable         false  (Default)          是否使用提供的初始因子表
+        tbName               NULL   (Default)          初始因子表，当且仅当factorsTable为true时，需要已经是从getAllFactors函数标准化过、去极值过、市值中性化过、行业因子加权重过的全因子表(或者筛选过股票后的部分个股因子表)，并且若提供因子表，该函数相应参数normlizing、scaling 、decap、 weighted 的 false和true对结果没有影响，即tmpReg = getRegTable(factorsTable = true,tbName = Factors,st= st,et = et)
+        normlizing           true   (Default)          标准化
+        scaling              true   (Default)          去极值
+        decap                true   (Default)          回归市值中性化
+        industry_weighted    true   (Default)          行业因子加权重
+        industry_method     'CITIC' (Default)、'SW_2021'
+        st                2022.01.03(Default)
+        et                2023.01.02(Default)
+Output:  
+        regression Regression factorTable        
+ */
+ 
+def getRegTable(factorsTable = false,tbName = NULL,st=2022.01.03,et =2023.01.02, normlizing = true,scaling = true,decap = false,industry_method = 'CITIC',industry_weighted = true){
+    // step1 获取处理后的所有因子
+    if(!factorsTable){
+        Factors = getAllFactors(st=st,et =et, normlizing = normlizing,scaling = scaling,decap = decap ,industry_method = 'CITIC',industry_weighted= industry_weighted)
+    }else{
+        Factors = tbName
+    }   
+    
+    // step2 获取行情数据float_market_value->weights、return_day，并与因子数据合并
+    mv = select record_date,stock_code,float_market_value as weights from loadTable("dfs://k_day","k_derivative_day") where record_date >= st and record_date < et
+    ret = select last(record_date) as record_date,stock_code, (last(price_close)-first(price_open))\first(price_open) as return_day from loadTable("dfs://k_day","k_day") where record_date >= st and record_date < et group by month(record_date),stock_code
+    alter table ret drop month_record_date
+    tmpReg = select * from lj(lj(Factors,ret,`stock_code`record_date),mv,`stock_code`record_date) 
+    code = select distinct stock_code from tmpReg
+    dates = select distinct record_date from tmpReg
+    tmp = lj(cj(code,dates),tmpReg,`stock_code`record_date)
+    
+    // step3 过滤缺失值较多的stock(先合成窄表筛选stock)
+    tmp_up = makeUnifiedCall(unpivot,[tmp,`stock_code`record_date,tmp.columnNames()[2:]]).eval()   
+    nnullRatio = select stock_code,count(value)\size(value) as ratio from tmp_up group by stock_code 
+    code = exec stock_code from nnullRatio where ratio>0.5
+    // tmpReg是Factors宽表
+    tmpReg = select * from tmp where stock_code in code 
+    
+    // step4 使用当天的行业均值填充
+    cname = tmpReg.columnNames()
+    codeFill = sqlColAlias(parseExpr(cname[2:] + ".bfill()"), cname[2:])
+    tmpReg = sql(select =  (codeFill.reverse() <- sqlCol(`stock_code) <- sqlCol(`record_date) ).reverse(),from = tmpReg,groupBy= sqlCol(`stock_code),groupFlag =0,orderBy =sqlCol(`stock_code)).eval()
+    
+    // 风格因子
+    styleFac = cname[at(cname=='Abs'||cname=='abs')[0]:(first(at(cname like '%industry%')))]    
+    // 所有因子计算avg
+    facAvg = cname[at(cname=='Abs'||cname=='abs')[0]:(first(at(cname like '%return_day%')))]
+    codeAvg =sqlColAlias(parseExpr(avg + "("+  facAvg + ")"),facAvg+"_avg")
+    avgFac = sql(select = (codeAvg.reverse() <- sqlCol(`record_date)).reverse(),from = tmpReg,groupBy = sqlCol(`record_date)).eval()
+    // 缺失风格的因子使用当天的均值填充
+    for (factor in styleFac){
+        if(factor == 'Abs') continue
+        tmpCode = parseExpr( factor +"_avg as " +factor)
+        condition = parseExpr(factor + "== NULL" )
+        sqlUpdate(table = tmpReg,updates = tmpCode,from = <lj(tmpReg,avgFac,`record_date)>,where = condition).eval()
+    }
+    
+    // 防止存在因子缺失
+    update tmpReg set lthalpha = lthalpha.nullFill(0)
+    update tmpReg set ltrstr = ltrstr.nullFill(0)
+    
+    // alter table tmpReg drop industry_code
+    cname = tmpReg.columnNames()
+    industryFac = cname[cname like "%industry%"]
+    update tmpReg set Abs = Abs.ffill!() context by stock_code
+    tmpReg = select * from tmpReg order by stock_code
+    return tmpReg
+}
+
+// ----------------------------------------------------------------------------------------------------------------------
+/* 4.单因子模型检验：getFactorsValidation()
+    * 4.1 单因子t检验
+    * 4.2 IC
+    * 4.3 FSC
+ */
+
+/* getOneFactorValidate
+获取moving wls单因子回归结果统计量的聚合函数
+Input:   y          因变量
+         x          自变量
+         w          权重
+Output:  
+         wls stat  "beta","tstat","R2","AdjustedR2", "Residual" */
+
+// y = [1,2,3,10]         
+// x= [[1,2,3,4],[2,4,5,6]]
+// w = [0.2,0.3,0.2,0.3]
+
+// 此处需要优化！！
+defg getOneFactorValidate(y,x,w){
+    tmp = wls(y,x,w,1,2)
+    // beta1
+    tmp1 = select * from tmp.Coefficient[1:2]
+    // R2/AdjustedR2
+    tmp2 = select * from tmp.RegressionStat where item = "R2" or item = "AdjustedR2"
+    alter table tmp1 add R2 DOUBLE;
+    alter table tmp1 add AdjustedR2 DOUBLE;
+    update tmp1 set R2 =tmp2[0]["statistics"]
+    update tmp1 set AdjustedR2 =tmp2[1]["statistics"]
+    // return blob(concat(tmp1[0][["factor","beta","tstat","R2","AdjustedR2"]] join tmp.Residual,','))
+    return concat(blob(concat(tmp1[0][["factor","beta","tstat","R2","AdjustedR2"]],",")+","),concat(tmp.Residual,","))
+}
+
+
+
+
+
+/*  单风格因子检验函数 
+Input:   
+        factor   因子名
+        tmpReg   全因子表
+Output:  
+        单因子模型检验结果  
+      
+peach(styleValidate{,tmpReg},styleFac)
+*/
+
+def styleValidate(factor,tmpReg){
+    cname = tmpReg.columnNames()
+    industryFac = cname[cname like "%industry%"]
+    indepen = concat(factor join industryFac,',')
+    code = parseExpr("getOneFactorValidate"+"(return_day,["+  indepen + "],weights)")
+    // 单风格因子模型检验
+    factorState = sql(select=(sqlCol(`record_date),sqlColAlias(code,factor + '_stat')),from = tmpReg,groupBy = sqlCol(`record_date)).eval()
+    return makeUnifiedCall(unpivot,[factorState,`record_date,factor + '_stat']).eval()
+}
+
+/*  单行业因子检验函数 
+Input:   
+        factor   因子名
+        tmpReg   全因子表
+Output:  
+        单因子模型检验结果  
+      
+peach(industryValidate{,tmpReg},industryFac)
+*/
+
+def industryValidate(factor,tmpReg){
+    cname = tmpReg.columnNames()
+    styleFac = cname[at(cname=='Abs'||cname=='abs')[0]:(first(at(cname like '%industry%')))]
+    indepen = concat(factor join styleFac,',')
+    code = parseExpr("getOneFactorValidate"+"(return_day,["+  indepen + "],weights)")
+    // 单行业因子模型检验
+    factorState = sql(select=(sqlCol(`record_date),sqlColAlias(code,factor + '_stat')),from = tmpReg,groupBy = sqlCol(`record_date)).eval()
+    return makeUnifiedCall(unpivot,[factorState,`record_date,factor + '_stat']).eval()
+}
+
+
+/* getFactorsValidation
+获取所有因子检验效果，单因子模型检验
+Input:   
+         factorsTable         false  (Default)   是否使用提供的因子表
+         tbName               NULL   (Default)   回归因子表，当且仅当factorsTable为true时，需要已经是从getRegTable函数标准化过、去极值过、市值中性化过、(行业因子加权重过)的全因子表(或者筛选过股票后的部分个股因子表)，并且若提供因子表，该函数相应参数normlizing、scaling 、decap、 weighted 的 false和true对结果没有影响，即tmpValidation = getFactorsValidation(factorsTable = true,tbName = Factors,st= st,et = et)
+         normlizing           true   (Default)   标准化
+         scaling              true   (Default)   去极值
+         decap                true   (Default)   市值中性化
+         industry_weighted    true   (Default)   行业因子加权重
+         industry_method     'CITIC' (Default)、'SW_2021'
+         st                   2022.01.03(Default)
+         et                   2023.01.02(Default)
+Output:  
+         factor test table  factor_return、tstat、R2、aR2、stR2、fsc、IC
+         */
+
+def getFactorsValidation(factorsTable = false,tbName = NULL,st=2022.01.03,et =2023.01.02, normlizing = true,scaling = true,decap = true,industry_method = 'CITIC',industry_weighted = true){
+    // STEP1 获取数据预处理后的所有因子数据
+    if(!factorsTable){
+        tmpReg = getRegTable(factorsTable = factorsTable,tbName = tbName,st= st,et = et, normlizing = normlizing ,scaling = scaling ,decap = decap,industry_method = industry_method,industry_weighted = industry_weighted)
+    }else{
+        tmpReg = getRegTable(factorsTable = true,tbName = tbName,st= st,et = et, normlizing = normlizing ,scaling = scaling ,decap = decap,industry_method = industry_method,industry_weighted = industry_weighted)
+    }
+    
+    cname = tmpReg.columnNames()
+    industryFac = cname[cname like "%industry%"]
+    styleFac = cname[at(cname=='Abs'||cname=='abs')[0]:(first(at(cname like '%industry%')))]
+
+    // 计算IC（T期因子暴露与T+1期因子收益的相关系数）
+    codeic = sqlColAlias(parseExpr("spearmanr(" + styleFac + ",move(return_day,1))"),styleFac+"_stat")
+    ic = sql(select = codeic,from = tmpReg,groupBy = sqlCol(`record_date)).eval()
+    ic = ic.unpivot(`record_date,ic.columnNames()[1:])
+    alter table ic rename value to IC
+
+
+    // 多线程单因子检验，开始回归
+    styleOut = peach(styleValidate{,tmpReg},styleFac)
+    indOut = peach(industryValidate{,tmpReg},industryFac)    
+    // distinct因子数*ditinct交易日期数
+    factorStateUp = styleOut.unionAll(false).append!(indOut.unionAll(false))
+
+    // 分割统计检验值
+    update factorStateUp set factor_return = double(split(factorStateUp.value,",")[1])
+    update factorStateUp set tstat = double(split(factorStateUp.value,",")[2])
+    update factorStateUp set R2 = double(split(factorStateUp.value,",")[3])
+    update factorStateUp set aR2 = double(split(factorStateUp.value,",")[4]) //adjustedR2
+
+    // 计算fsc(加权) T期因子暴露与T+1期因子暴露的相关系数 spearman(weights * x,weights * xt+1)
+    s0 = "weights*" + styleFac 
+    s1 = s0.append!("weights*move(" + styleFac + ",1)")
+    sf0 = styleFac
+    sf1 = sf0.append!("move_"+sf0)
+    code0 = sqlColAlias(parseExpr(s1),sf1)
+    tmp = sql(select = (code0.reverse() <- sqlCol(`record_date)).reverse(),from = tmpReg,groupBy=sqlCol(`stock_code),groupFlag=0).eval()
+    code1 = sqlColAlias(parseExpr("spearmanr(" + styleFac + "," + "move_"+ styleFac + ")"),styleFac+"_stat")
+    fsc = sql(select = (code1.reverse() <- sqlCol(`record_date)).reverse(),from = tmp,groupBy = sqlCol(`record_date)).eval()
+    tmpfsc = makeUnifiedCall(unpivot,[fsc,`record_date,styleFac+"_stat"]).eval()
+    tmpfsc.nullFill!(1.00)
+    alter table tmpfsc rename value to fsc
+    factorStateUp = lj(factorStateUp,tmpfsc,`record_date`valueType)
+
+    // 回归残差；特异性风险矩阵
+    tmpCom = select record_date,stock_code,pow(return_day,2) as return2,weights from tmpReg order by record_date
+    // dates = (exec distinct(record_date) from factorStateUp)
+    // dateNum = nunique(dates) 
+    dateNum = exec nunique(record_date) from factorStateUp
+    codeNum = exec nunique(stock_code) from tmpCom 
+
+    // 针对dateNum个date做截面回归，一共industryFac.size()+styleFac.size()个因子,每个截面包含4100个code样本，
+    // 排序：record_date\valueType
+    // 不同时间及因子dateNum*(industryFac.size()+styleFac.size()) 个向量，每个向量为样本数codeNum，因此计算出的残差矩阵shape为(样本数codeNum,不同时间及因子dateNum*(industryFac.size()+styleFac.size()))
+    residuals = pow(matrix(double(split(factorStateUp.value,",")[5:])),2)
+    // 纵向顺序为按code排序，横向排序为先按因子排序，每个因子内部按照时间排序
+    // 拆分成codeNum*dateNum,facNum (4100*12,74)
+    residuals = residuals.reshape(((shape residuals)[0]*dateNum):((shape residuals)[1]\dateNum))
+    cname = tmpReg.columnNames()
+    residuals.rename!(cname[at(cname=='Abs'||cname=='abs')[0]:(last(at(cname like "%industry%"))+1)]+"_residual2")
+    tmpCal = ej(tmpCom,table(tmpReg.record_date,tmpReg.stock_code,residuals),`record_date`stock_code)
+    factorStateUp = lj(factorStateUp,ic,`record_date`valueType)
+    alter table factorStateUp drop value
+    return factorStateUp
+}
+
+// ----------------------------------------------------------------------------------------------------------------------
+/* 5.因子合成:getFSLevelFactor()
+ */
+
+/* getFSLevelFactor
+根据等权法、历史信息比率（IR）、信息系数比率（IC_IR）方法合成一级、二级因子
+Input:   
+         factorsTable         NULL  (Default)                                        (必须)原始因子表                              (getRegTable函数返回的全因子表）
+         factorsValid         NULL  (Default)                                        (当method为"ir"或"ic_ir",必须)单因子收益表     (getFactorsValidation接口返回的单因子收益和检验表)
+        
+         firstFactors         NULL                                                    一级因子二级因子关系json
+         secondFactors        NULL                                                    二级因子三级因子关系json
+         normlizing           true                                                    是否对合成的因子标准化
+         method               "equal"等权、 "ir"历史收益率、"ic_ir"信息系数比率           合成因子方法
+         level                "S"、"F"                                                合成二级(S)一级(F)风格因子 一般是一级因子
+
+
+Output:  
+         factorsTable        返回按指定关系合成的(可直接用于回归模型的)风格大类因子和行业因子
+        
+Example:
+// firstFactors中一级因子和二级因子名称任起；firstFactors中二级因子的名称需要与secondFactors中的二级因子的名称一一对应；secondFactors中的三级因子需要与输入的因子表factorsTable 字段名对应（支持大小写匹配）
+// 一级因子和二级因子的json，可任意修改关系
+firstFactors = {
+"Quality":["Earnings_Quality","Earnings_Variability","Investment_Quality","Leverage","Profitability"],
+"Value":["Btop","Earning_Yield","Long_Term_Reversal"],
+"Growth":"Growth",
+"Liquidity":"Liquidity",
+"Volatility":["Beta","Residual_Volatility"],
+"Size":["Size","Mid_Cap"],
+"Momentum":"Momentum",
+"Dividend_Yield":"Dividend_Yield"
+}
+
+// 二级因子和三级因子的json，可任意修改关系，三级因子一般需要选择ttm和lyr种类的因子
+secondFactors = {
+"Earnings_Quality":["abs","acf_ttm"],
+"Earnings_Variability":["vsal_ttm","vern_ttm","vflo_ttm"],
+"Investment_Quality":["agro","igro","cxgro"],
+"Leverage":["mlev","dtoa","blev"],
+"Profitability":["ato_ttm","gp_ttm","gpm_ttm","roa_ttm"],
+"Btop":"btop",
+"Earning_Yield":["cetop_ttm","etop_ttm","em"],
+"Long_Term_Reversal":["ltrstr","lthalpha"],
+"Growth":["egro_ttm","sgro_ttm"],
+"Liquidity":["stom","stoq","stoa","atvr"],
+"Beta":"hbeta",
+"Residual_Volatility":["hsigma","dastd","cmra"],
+"Size":"lncap",
+"Mid_Cap":"midcap",
+"Momentum":["rstr","halpha"],
+"Dividend_Yield":"dtop"
+}
+
+st = 2022.01.03 
+et = 2023.01.02
+normlizing = true
+scaling = true
+decap = true
+industry_method = 'CITIC'
+industry_weighted = true
+Factors3 = getAllFactors(st= st,et = et, normlizing = normlizing,scaling = scaling,decap = decap,industry_method = industry_method,industry_weighted = industry_weighted)
+fTable = getRegTable(factorsTable = true,tbName = Factors3,st= st,et = et, normlizing = normlizing ,scaling = scaling ,decap = decap,industry_method = industry_method,industry_weighted = industry_weighted)
+factorsValid = getFactorsValidation(factorsTable = true,tbName = Factors3,st= st,et = et, normlizing = true,scaling = true,decap = true,industry_method = industry_method,industry_weighted = industry_weighted)
+// 上述最后两行可简写
+fTable = getRegTable(factorsTable = true,tbName = Factors3)
+factorsValid = getFactorsValidation(factorsTable = true,tbName = Factors3)
+// 得到最终的一级、二级、因子
+getFSLevelFactor(fTable,factorsValid,firstFactors,secondFactors,false , "ir",level = "F")
+getFSLevelFactor(fTable,factorsValid,firstFactors,secondFactors,false , "ir",level = "S")
+*/
+
+
+def getFSLevelFactor(factorsTable = NULL,factorsValid = NULL,firstFactors = NULL,secondFactors =NULL,normlizing = true,method = "equal",level = "S"){
+    ds = select record_date,stock_code from factorsTable
+    ds1 = select record_date,stock_code from factorsTable
+    factorsTableNew = factorsTable
+    factorsTableNew.rename!(lower(factorsTable.columnNames()))
+    cname = factorsTableNew.columnNames()
+    industryFac = cname[cname like "%industry%"]
+    styleFac = cname[at(cname=='Abs'||cname=='abs')[0]:(first(at(cname like '%industry%')))]
+    indFact = sql(select = (sqlCol(industryFac)),from = factorsTableNew).eval()
+    // 计算权重
+    tmp = select mean(factor_return)\std(factor_return) as weights from factorsValid group by valueType
+    factorsValids = select lower(regexReplace(valueType,"_stat","")) as valueType ,factor_return from  factorsValid
+    // 标准化
+    weight = select mean(factor_return)\std(factor_return) as Weight from factorsValids group by valueType 
+    
+    // 计算信息矩阵
+    ic = select IC from (select record_date,regexReplace(valueType,"_stat","") as factor,IC from factorsValid where ! (valueType like "weighted_%")) pivot by record_date,factor
+    // ic = select IC from (select record_date,regexReplace(valueType,"_stat","") as factor,IC from factorsValid where valueType in styleFac + "_stat") pivot by record_date,factor
+    V = matrix(sql(select = sqlCol(ic.columnNames()[1:]),from = ic).eval()).covarMatrix()
+    V.rename!(styleFac)
+    // 合成二级因子
+    for(sf in secondFactors.keys()){// sf = secondFactors.keys()[1]
+        n = secondFactors[sf].size()
+        if(n>1){
+            // 获取权重
+            // 等权法（equal），对相应的三级因子等权合成二级、一级因子。例如对ABS、ACF_TTM这两个因子各赋1/2的权重合成Earnings Quality因子。
+            if(method == "equal"){
+                weights = 1\n
+            // 历史收益率加权方法(ir)，根据在单因子模型检验获得中的三级因子收益率标准化后得到加权系数加权得到二级因子。 ???               
+            }else if (method == "ir"){
+                // 这里很奇怪，为什么要valueType in secondFactors[sf]
+                weights = transpose(matrix(sql(select = sqlCol(`Weight),from = weight,where = <valueType in secondFactors[sf]>).eval()))
+                weights = weights\sum(transpose(weights))
+                weights = array(ANY,n).fill!(0..(n-1),weights)
+            // 信息系数比率法(ic_ir)，由因子检验获得的IC值对因子进行合成。                
+            }else if (method == "ic_ir"){
+                // 输入的V可能满秩，不存在inverse
+                weightIC = table(transpose(inverse(V)**mean(matrix(sql(select = sqlCol(ic.columnNames()[1:]),from = ic).eval()))))
+                weightIC.rename!(styleFac)
+                weights = matrix(sql(select = sqlCol(secondFactors[sf]),from = weightIC).eval())
+                weights = weights\sum(transpose(weights))
+                weights = array(ANY,n).fill!(0..(n-1),weights)
+            }
+            code = sqlColAlias(unifiedExpr(binaryExpr(sqlCol(secondFactors[sf]),weights,*),take(add,n-1)),sf)
+            tmp = sql(select = code ,from =  factorsTableNew ).eval()
+            if(normlizing){
+                tmp = sql(select = sqlCol(sf),from = standardized(table(factorsTable.record_date,factorsTable.stock_code,tmp),false)).eval()
+            }
+            ds = table(ds,tmp)
+        }else{
+            tmp = sql(select = sqlColAlias(sqlCol(secondFactors[sf]),sf),from =  factorsTableNew).eval()
+            ds = table(ds,tmp)
+        }
+    }
+    // 合成二级因子
+    if(level == "S"){return table(ds,indFact,factorsTableNew.return_day,factorsTableNew.weights)}
+    secStyleFac = ds.columnNames()[2:]
+    secFactorsTable = table(ds,factorsTableNew.return_day)
+
+    // 计算二级因子的IC矩阵
+    codeic = sqlColAlias(parseExpr("spearmanr(" + secStyleFac + ",move(return_day,-1))"),secStyleFac+"_stat")
+    ic = sql(select = codeic,from = secFactorsTable,groupBy = sqlCol(`record_date)).eval()
+    
+    secV = matrix(sql(select = sqlCol(ic.columnNames()[1:]),from = ic).eval()).covarMatrix()
+    secV.rename!(secStyleFac)
+    secweightIC = table(transpose(secV**mean(secV)))
+    secweightIC.rename!(secStyleFac)
+    // 合成一级因子
+    for(sf in firstFactors.keys()){
+        n = firstFactors[sf].size()
+        if(n>1){
+            // 此处为什么ir也是1\n
+            if(method == "equal"||method == "ir"){
+                weights = 1\n
+            }
+            else if (method == "ic_ir"){
+                weights = matrix(sql(select = sqlCol(firstFactors[sf]),from = secweightIC).eval())
+                weights = weights\sum(transpose(weights))
+                weights = array(ANY,n).fill!(0..(n-1),weights)
+            }
+            code = sqlColAlias(unifiedExpr(binaryExpr(sqlCol(firstFactors[sf]),weights,*),take(add,n-1)),sf)
+            tmp = sql(select = code ,from =  ds ).eval()
+            if(normlizing){
+                tmp = sql(select = sqlCol(sf),from = standardized(table(factorsTable.record_date,factorsTable.stock_code,tmp),false)).eval()
+            }
+            ds1 = table(ds1,tmp)
+        }else{
+            tmp = sql(select = sqlColAlias(sqlCol(firstFactors[sf]),sf),from =  ds).eval()
+            ds1 = table(ds1,tmp)
+        }
+    }
+    return table(ds1,indFact,factorsTableNew.return_day,factorsTableNew.weights)
+}
