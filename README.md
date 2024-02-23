@@ -194,6 +194,7 @@
     - [DolphinDB机器学习在金融行业的应用：实时实际波动率预测](machine_learning_volatility.md)
     - [DolphinDB流计算在金融行业的应用：实时计算分钟资金流](streaming_capital_flow_order_by_order.md)
     - [基于DolphinDB的因子计算最佳实践](best_practice_for_factor_calculation.md)
+    - [基于 DolphinDB 的 Barra 多因子风险模型实践](barra_multi_factor_risk_model_0.md)
     - [SQL优化案例：深度不平衡、买卖压力指标、波动率计算](sql_performance_optimization_wap_di_rv.md)
     - [SQL优化案例：外汇掉期估值计算](FxSwapValuation.md)
     - [DolphinDB流计算在金融行业的应用：实时计算日累计逐单资金流](streaming_capital_flow_daily.md)
