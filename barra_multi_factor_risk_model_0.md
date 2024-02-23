@@ -1814,40 +1814,40 @@ plot(tmpIndexBias.wavg_bias_stat,tmpIndexBias.record_date,extras={multiYAxes: fa
 
 ###### **因子对应数据源表**
 
- [因子对应表.xlsx](barra\因子对应表.xlsx) 
+ [因子对应表.xlsx](./scripts/barra_multi_factor_risk_model/因子对应表.xlsx) 
 
 
 ###### **建库建表和模拟数据**
 
-[createTable.dos](barra\test\createTable.dos) 
+[createTable.dos](./scripts/barra_multi_factor_risk_model/test/createTable.dos) 
 
 
 ###### 因子计算模块 barraFactorsCal
 
-[barraFactorsCal.dos](barra\barra\barraFactorsCal.dos) 
+[barraFactorsCal.dos](./scripts/barra_multi_factor_risk_model/barra/barraFactorsCal.dos) 
 
 
 ###### 因子合成模块 barraFactorsMerge
 
- [barraFactorsMerge.dos](barra\barra\barraFactorsMerge.dos) 
+ [barraFactorsMerge.dos](./scripts/barra_multi_factor_risk_model/barra/barraFactorsMerge.dos) 
 
 
 ###### 多因子模型模块 barraFactorsModel
 
- [barraFactorsModel.dos](barra\barra\barraFactorsModel.dos) 
+ [barraFactorsModel.dos](./scripts/barra_multi_factor_risk_model/barra/barraFactorsModel.dos) 
 
 **建库建表测试脚本**
 
-[createTable.dos](barra\test\createTable.dos) 
+[createTable.dos](./scripts/barra_multi_factor_risk_model/test/createTable.dos) 
 
 **因子计算测试脚本**
 
-[factorsCalTest.dos](barra\test\factorsCalTest.dos) 
+[factorsCalTest.dos](./scripts/barra_multi_factor_risk_model/test/factorsCalTest.dos) 
 
 **因子合成测试脚本**
 
- [factorsMergeTest.dos](barra\test\factorsMergeTest.dos) 
+ [factorsMergeTest.dos](./scripts/barra_multi_factor_risk_model/test/factorsMergeTest.dos) 
 
 **多因子模型测试脚本**
 
- [factorsModelTest.dos](barra\test\factorsModelTest.dos) 
+ [factorsModelTest.dos](./scripts/barra_multi_factor_risk_model/test/factorsModelTest.dos) 
