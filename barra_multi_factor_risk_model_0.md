@@ -810,7 +810,7 @@ Output:
 
 因此当观测发现 ![img](./images/barra_multi_factor_risk_model/bn.svg) 接近 1 时，则可以初步推断模型的预测值是比较准确的。
 
-1. Q 统计量（Q_statistic）：基于偏差统计量中计算的 ![img](./images/barra_multi_factor_risk_model/bnt.svg)，该统计量惩罚了欠拟合或者过拟合的情况，Q 统计量的计算方法为：
+4. Q 统计量（Q_statistic）：基于偏差统计量中计算的 ![img](./images/barra_multi_factor_risk_model/bnt.svg)，该统计量惩罚了欠拟合或者过拟合的情况，Q 统计量的计算方法为：
    令 ![img](./images/barra_multi_factor_risk_model/3.1-6.svg) ， ![img](./images/barra_multi_factor_risk_model/3.1-7.svg)。
 
 ### 3.2 风险调整
