@@ -225,6 +225,7 @@
     - [模拟撮合引擎应用教程](matching_engine_simulator.md)
     - [DolphinDB与任务调度器DolphinScheduler的集成](dolphinscheduler_integration.md)
     - [基于 DolphinDB 存储金融数据的分区方案最佳实践](best_practices_for_partitioned_storage.md)
+    - [DolphinDB INSIGHT 行情插件最佳实践指南](insight_plugin.md)
   - 物联网：
     - [DolphinDB在工业物联网的应用](iot_demo.md)
     - [物联网时序数据查询案例](iot_query_case.md)
