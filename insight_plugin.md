@@ -62,7 +62,7 @@ loadPlugin("./plugins/insight/PluginInsight.txt")
 
 `loadPlugin` 函数正常返回则插件加载成功，以 VS Code 为例，首次加载成功后返回的部分信息如下，返回值是 INSIGHT 插件提供的所有函数，至此插件安装与加载已全部完成：
 
-<img src="./images/insight_plugin/01.png" width = "700">
+<img src="./images/insight_plugin/01.png">
 
 此外，需要注意，如果重复执行 `loadPlugin` 加载插件，会抛出模块已经被使用的错误提示，因为节点启动后，只允许加载一次 INSIGHT 插件，即可在任意会话中调用该插件提供的函数。错误提示如下：
 
@@ -223,11 +223,11 @@ insight::getStatus(tcpClient)
 
 返回结果如下，本例在 16:26 (见 startTime 字段) 提交了 INSIGHT 订阅，订阅了逐笔成交和逐笔委托（见 startTime 不为空的 topicType 字段），订阅的是沪深两市的股票数据（见 market 字段）。但是由于已经是盘后了，所以实际上并没有逐笔数据发送过来，因此 firstMsgTime 为空，firstMsgTime 表示收到第一条数据的系统时刻。
 
-<img src="./images/insight_plugin/03.png" width = "700">
+<img src="./images/insight_plugin/03.png">
 
 当在盘中启动时，可以看到 firstMsgTime 与 lastMsgTime 均不为空，lastMsgTime 表示收到最后一条数据的系统时刻。
 
-<img src="./images/insight_plugin/04.png" width = "700">
+<img src="./images/insight_plugin/04.png">
 
 ## 4 节点启动时自动订阅 INSIGHT 实时行情数据入库
 
