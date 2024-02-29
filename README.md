@@ -93,6 +93,7 @@
   - [线程简介](thread_intro.md)
   - [从一次SQL查询的全过程看DolphinDB 的线程模型](thread_model_SQL.md)
   - [DolphinDB 集群运维监控教程](cluster_monitor.md)
+  - [用户级别的资源跟踪详解](user_level_resource_tracking.md)
   
 - 连接器
 
