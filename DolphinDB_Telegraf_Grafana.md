@@ -1,24 +1,23 @@
 # DolphinDB 通过 Telegraf + Grafana 实现设备指标的采集监控和展示
 
-基于原始数据采集的可视化监控是企业确保设备正常运行和安全生产的重要措施。本文详细介绍了如何从DolphinDB 出发，借助 Telegraf 对设备进行原始数据采集，并通过 Grafana 实现数据的可视化，从而实现设备指标的实时监控。
+基于原始数据采集的可视化监控是企业确保设备正常运行和安全生产的重要措施。本文详细介绍了如何从 DolphinDB 出发，借助 Telegraf 对设备进行原始数据采集，并通过 Grafana 实现数据的可视化，从而实现设备指标的实时监控。
 
-- [DolphinDB 通过 Telegraf + Grafana 实现设备指标的采集监控和展示](#dolphindb-通过-telegraf--grafana-实现设备指标的采集监控和展示)
-	- [1. 概览](#1-概览)
-	- [2. 安装](#2-安装)
-		- [2.1 安装 Telegraf](#21-安装-telegraf)
-		- [2.2 安装 Grafana](#22-安装-grafana)
-		- [2.3 安装 DolphinDB](#23-安装-dolphindb)
-	- [3. Telegraf 采集数据到 DolphinDB](#3-telegraf-采集数据到-dolphindb)
-		- [3.1 下载/自行编译 telegraf-dolphindb-outputs 插件](#31-下载自行编译-telegraf-dolphindb-outputs-插件)
-		- [3.2 DolphinDB 环境准备](#32-dolphindb-环境准备)
-		- [3.3 配置文件准备](#33-配置文件准备)
-		- [3.4 配置说明](#34-配置说明)
-		- [3.5 启动 Telegraf](#35-启动-telegraf)
-		- [3.6 查询指标](#36-查询指标)
-	- [4. Grafana 可视化 DolphinDB 数据](#4-grafana-可视化-dolphindb-数据)
-		- [4.1 配置 Grafana](#41-配置-grafana)
-	- [5. 运维实例：用 Telegraf+DolphinDB+Grafana 监控预警 CPU 使用率](#5-运维实例用-telegrafdolphindbgrafana-监控预警-cpu-使用率)
-	- [6. 附件](#6-附件)
+- [1. 概览](#1-概览)
+- [2. 安装](#2-安装)
+	- [2.1 安装 Telegraf](#21-安装-telegraf)
+	- [2.2 安装 Grafana](#22-安装-grafana)
+	- [2.3 安装 DolphinDB](#23-安装-dolphindb)
+- [3. Telegraf 采集数据到 DolphinDB](#3-telegraf-采集数据到-dolphindb)
+	- [3.1 下载/自行编译 telegraf-dolphindb-outputs 插件](#31-下载自行编译-telegraf-dolphindb-outputs-插件)
+	- [3.2 DolphinDB 环境准备](#32-dolphindb-环境准备)
+	- [3.3 配置文件准备](#33-配置文件准备)
+	- [3.4 配置说明](#34-配置说明)
+	- [3.5 启动 Telegraf](#35-启动-telegraf)
+	- [3.6 查询指标](#36-查询指标)
+- [4. Grafana 可视化 DolphinDB 数据](#4-grafana-可视化-dolphindb-数据)
+	- [4.1 配置 Grafana](#41-配置-grafana)
+- [5. 运维实例：用 Telegraf+DolphinDB+Grafana 监控预警 CPU 使用率](#5-运维实例用-telegrafdolphindbgrafana-监控预警-cpu-使用率)
+- [6. 附件](#6-附件)
 
 
 
@@ -30,7 +29,7 @@ DolphinDB 是由浙江智臾科技有限公司研发的一款高性能分布式�
 
 Grafana 是由 Grafana Labs 公司开源的一个系统监测工具。
 
-将三者结合，可以快速搭建一套集指标采集、指标存储/实时处理、指标处理结果展示功能于一体的系统。本文详细介绍如何在 Linux 环境中部署 Telegraf 实时采集设备指标数据 ，并使用 DolphinDB 作为输出存储，最终将输出到 DolphinDB 的指标数据在 Grafana 图表中进行展示，完成搭建一整套设备指标实时监控系统，在文章最后提供了一个实际实现案例。
+将三者结合，可以快速搭建一套集指标采集、指标存储/实时处理、指标处理结果展示功能于一体的系统。本文详细介绍如何在 Linux 环境中部署 Telegraf 实时采集设备指标数据，并使用 DolphinDB 作为输出存储，最终将输出到 DolphinDB 的指标数据在 Grafana 图表中进行展示，完成搭建一整套设备指标实时监控系统，在文章最后提供了一个实际实现案例。
 
 <img src="./images/DolphinDB_Telegraf_Grafana/1_1.png" width=70%>
 
@@ -38,11 +37,11 @@ Grafana 是由 Grafana Labs 公司开源的一个系统监测工具。
 
 ## 2. 安装
 
-安装 Telegraf 、Grafana 和 DolphinDB。
+安装 Telegraf、Grafana 和 DolphinDB。
 
 ### 2.1 安装 Telegraf
 
-本文这里使用的 Telegraf 版本为1.24.4。
+本文这里使用的 Telegraf 版本为 1.24.4。
 
 **2.1.1 下载并安装**
 
@@ -53,11 +52,11 @@ wget https://dl.influxdata.com/telegraf/releases/telegraf_-_1.24.4_linux_amd64.t
 tar xf telegraf-1.24.4_linux_amd64.tar.gz
 ```
 
-详细请参考[Telegraf官方指南](https://docs.influxdata.com/telegraf/v1.24/install/?t=RedHat+%26amp%3B+CentOS)。
+详细请参考[Telegraf 官方指南](https://docs.influxdata.com/telegraf/v1.24/install/?t=RedHat+%26amp%3B+CentOS)。
 
 ### 2.2 安装 Grafana
 
-本文这里使用的 Grafana 版本为9.3.2。
+本文这里使用的 Grafana 版本为 9.3.2。
 
 **2.2.1 下载并安装**
 
@@ -79,7 +78,7 @@ systemctl start grafana-server
 systemctl enable grafana-server
 ```
 
-2. 防火墙开放 Grafana 端口号，Grafana 服务默认端口3000。
+2. 防火墙开放 Grafana 端口号，Grafana 服务默认端口 3000。
 
 
 
@@ -100,11 +99,11 @@ http://localhost:3000/
 
 ### 2.3 安装 DolphinDB
 
-本文这里使用社区版单机单节点 server，版本为2.00.7。建议使用2.00.x 版本。
+本文这里使用社区版单机单节点 server，版本为 2.00.7。建议使用 2.00.x 版本。
 
 **2.3.1 下载并安装**
 
-1. 从 DolphinDB 官网下载版本为2.00.7的社区版 DolphinDB。
+1. 从 DolphinDB 官网下载版本为 2.00.7 的社区版 DolphinDB。
 2. 将下载的压缩包放到 Linux 服务器的指定路径下，并解压完成安装。
 
 详细请参考 [DolphinDB 安装使用指南](https://gitee.com/dolphindb/Tutorials_CN/blob/master/dolphindb_user_guide.md)。
@@ -119,7 +118,7 @@ http://localhost:3000/
 chmod +x dolphindb   
 ```
 
-2. 防火墙开放8848端口号（dolphindb 服务默认端口）。
+2. 防火墙开放 8848 端口号（dolphindb 服务默认端口）。
 
 
 
@@ -180,7 +179,7 @@ Output 接口主要实现了 Connect、Write、Close 三个方法，具体功能
   - 将数据写入输出端；
 - Close 方法负责关闭连接并登出。
 
-DolphinDB 基于 Telegraf 的 Output 插件将 Telegraf 采集并处理过的数据写入 DolphinDB 中。该插件作为 Telegraf 的子进程在后台常驻运行，Telegraf 将采集并处理好的数据进行序列化并通过 stdin 传入该插件，并通过该插件的 stderr 监听插件日志及处理结果。这里实施将以 Telegraf 内置的 ‘disk’ 和 'system‘ 作为输入源，并将相关数据写入到 DolphinDB 。
+DolphinDB 基于 Telegraf 的 Output 插件将 Telegraf 采集并处理过的数据写入 DolphinDB 中。该插件作为 Telegraf 的子进程在后台常驻运行，Telegraf 将采集并处理好的数据进行序列化并通过 stdin 传入该插件，并通过该插件的 stderr 监听插件日志及处理结果。这里实施将以 Telegraf 内置的‘disk’和 'system‘作为输入源，并将相关数据写入到 DolphinDB。
 
 附件已提供 DolphinDB 实现好的 telegraf-dolphindb-outputs 插件，直接下载即可，或也可自行编译实现该插件。
 
@@ -188,7 +187,7 @@ DolphinDB 基于 Telegraf 的 Output 插件将 Telegraf 采集并处理过的数
 
 **3.1.1 下载插件**
 
-1.下载附件 telegraf-dolphindb-outputs, 放到自行指定路径下，得到插件文件 telegraf-dolphindb-outputs 。
+1.下载附件 telegraf-dolphindb-outputs, 放到自行指定路径下，得到插件文件 telegraf-dolphindb-outputs。
 
 2. 将插件文件 telegraf-dolphindb-outputs 授予可执行权限并移动至 $PATH 路径。
 
@@ -204,7 +203,7 @@ source /etc/profile
 1. 下载附件 telegraf.zip，放到自行指定路径下，得到编译源码。
 2. 安装编译环境
 
-编译环境为 go 环境，本文使用的 go 环境版本为1.19.4。
+编译环境为 go 环境，本文使用的 go 环境版本为 1.19.4。
 
 ①从 [go 官网](https://go.dev/doc/install)下载 go 安装包。
 
@@ -249,7 +248,7 @@ source /etc/profile
 go build -mod mod -o telegraf-dolphindb-outputs cmd/telegraf-outputs/telegraf-outputs.go
 ```
 
-若执行脚本出错，显示错误： dial tcp 172.217.27.145:443: i/o timeout，请在 /etc/profile 中设置 GOPROXY 环境变量（改一下代理）, 之后启用 go module，用下面的命令：
+若执行脚本出错，显示错误：dial tcp 172.217.27.145:443: i/o timeout，请在 /etc/profile 中设置 GOPROXY 环境变量（改一下代理）, 之后启用 go module，用下面的命令：
 
 
 
@@ -271,9 +270,9 @@ source /etc/profile
 
 ### 3.2 DolphinDB 环境准备
 
-在启动 Telegraf 前，需在 DolphinDB 中建立相应的库表环境：分布式表 disk 和 system，用于接受并存储Telegraf 采集到的 disk 和 system 数据。下面提供两种建立库表环境的方式。两种方式执行后，均可在 DolphinDB 中生成 path 为 "dfs://telegraf" 的数据库，且该数据库中有如下两张分布式表：
+在启动 Telegraf 前，需在 DolphinDB 中建立相应的库表环境：分布式表 disk 和 system，用于接受并存储 Telegraf 采集到的 disk 和 system 数据。下面提供两种建立库表环境的方式。两种方式执行后，均可在 DolphinDB 中生成 path 为 "dfs://telegraf" 的数据库，且该数据库中有如下两张分布式表：
 
-- 表disk
+- 表 disk
 
 | name         | typeString |
 | :----------- | :--------- |
@@ -284,7 +283,7 @@ source /etc/profile
 | free         | LONG       |
 | used_percent | DOUBLE     |
 
-- 表system
+- 表 system
 
 | name          | typeString |
 | :------------ | :--------- |
@@ -386,7 +385,7 @@ debug = true
 
 ```
 
-2. 创建 DolphinDB Output System 配置文件：/dolphindb/dolphindb-output-system.conf，配置文件路径与 TelegrafConfig 中的 command 使用路径一致。dolphindb-output-system.conf 与 dolphindb-output-disk.conf 内容一致，只需修改 table_name 为 “system” 和 metric_name 为 “system” ，如下：
+2. 创建 DolphinDB Output System 配置文件：/dolphindb/dolphindb-output-system.conf，配置文件路径与 TelegrafConfig 中的 command 使用路径一致。dolphindb-output-system.conf 与 dolphindb-output-disk.conf 内容一致，只需修改 table_name 为“system”和 metric_name 为“system” ，如下：
 
 
 
@@ -411,11 +410,11 @@ metric_name = "system"
 | password        | 用于访问 DolphinDB 的密码。                                   |
 | database        | 用于存储 metrics 的数据库。说明：database 不是必要参数，可以注释掉。如果注释掉，则直接将指标数据导入到已存在的 dolphindb 流表当中，流表名为下方的参数 table_name。 |
 | table_name      | 用于存储 metrics 的表名。                                      |
-| batch_size      | 表示批处理的消息的数量。如果该参数值为1，表示客户端写入数据后就立即发送给服务器；如果该参数大于1，表示数据量达到 BatchSize 时，客户端才会将数据发送给服务器。 |
+| batch_size      | 表示批处理的消息的数量。如果该参数值为 1，表示客户端写入数据后就立即发送给服务器；如果该参数大于 1，表示数据量达到 BatchSize 时，客户端才会将数据发送给服务器。 |
 | throttle        | 单位为毫秒。若客户端有数据写入，但数据量不足 BatchSize，则等待 Throttle 的时间再发送数据。 |
 | metric_name     | 指标名称，一般与输入插件名称相同，表示该输入插件的指标会被存储到 DolphinDB。 |
-| goroutine_count | 表示创建的工作协程数量，如果值为1，表示单协程。对于维度表，其值必须为1。|
-| partition_col   | 分区列，默认为空，仅在 GoroutineCount 大于1时起效。对于分区表，必须指定为分区字段名； 如果是流表，必须指定为表的字段名；对于维度表，该参数不起效。|
+| goroutine_count | 表示创建的工作协程数量，如果值为 1，表示单协程。对于维度表，其值必须为 1。|
+| partition_col   | 分区列，默认为空，仅在 GoroutineCount 大于 1 时起效。对于分区表，必须指定为分区字段名；如果是流表，必须指定为表的字段名；对于维度表，该参数不起效。|
 | debug           | 是否为 debug 模式，默认为 false。在 debug 模式下，将会打印出具体配置信息和 metric_name 指定指标的具体名称、值和类型等。 |
 
 ### 3.5 启动 Telegraf
@@ -448,7 +447,7 @@ ps -ef | grep telegraf
 
 ### 3.6 查询指标
 
-1. 连接并登录DolphinDB，可以打开localhost:8848，在线登录查看。
+1. 连接并登录 DolphinDB，可以打开 localhost:8848，在线登录查看。
 
 
 
@@ -490,7 +489,7 @@ select top 100 * from system order by timestamp desc
 http://localhost:3000/
 ```
 
-2. 登陆账号，系统初始用户名密码为 admin/admin 。
+2. 登陆账号，系统初始用户名密码为 admin/admin。
 
 
 
@@ -499,7 +498,7 @@ username = admin
 password = admin
 ```
 
-3. 依次点击 “Settings” >> “Data Sources“ >> “Add data source“，在搜索栏中搜索 DolphinDB ，点击并设置其配置项如下(用户名为 admin , 密码为 123456)，点击 Save&test 测试连接。
+3. 依次点击“Settings” >> “Data Sources“ >> “Add data source“，在搜索栏中搜索 DolphinDB，点击并设置其配置项如下 (用户名为 admin , 密码为 123456)，点击 Save&test 测试连接。
 
 <img src="./images/DolphinDB_Telegraf_Grafana/4_1.png" width=70%>
 
@@ -507,7 +506,7 @@ password = admin
 
 <img src="./images/DolphinDB_Telegraf_Grafana/4_2.png" width=70%>
 
-5. 在 Grafana 底部的代码输入栏中输入下方代码（按时间段分组，查询各时间段磁盘总量、使用量、可用量、使用百分比，4个指标数据的平均情况）。
+5. 在 Grafana 底部的代码输入栏中输入下方代码（按时间段分组，查询各时间段磁盘总量、使用量、可用量、使用百分比，4 个指标数据的平均情况）。
 
 
 
@@ -516,11 +515,11 @@ dfs_disk = loadTable("dfs://telegraf","disk")
 select timestamp,avg(total),avg(used),avg(free),avg(used_percent) from dfs_disk group by timestamp 
 ```
 
-点击右边 Panel options ，设置 Panel Title 为 disk。
+点击右边 Panel options，设置 Panel Title 为 disk。
 
-点击 Save ，设置 Dashboard name 和 Folder（仪表盘名和目录）。
+点击 Save，设置 Dashboard name 和 Folder（仪表盘名和目录）。
 
-6. 点击 Panel 内部 Zoom to data，在 Grafana 中可视化 DolphinDB 中的数据，展示了磁盘的4个指标的平均情况：
+6. 点击 Panel 内部 Zoom to data，在 Grafana 中可视化 DolphinDB 中的数据，展示了磁盘的 4 个指标的平均情况：
 
 磁盘总量：avg_total；磁盘使用量：avg_used；磁盘可用量：avg_free；磁盘使用百分比：avg_used_percent
 
@@ -532,9 +531,9 @@ select timestamp,avg(total),avg(used),avg(free),avg(used_percent) from dfs_disk 
 
 ## 5. 运维实例：用 Telegraf+DolphinDB+Grafana 监控预警 CPU 使用率
 
-上文介绍了 disk 和 system 两个指标的数据采集、存储与监控方法。这章提供了一个利用 DolphinDB 流计算统计 CPU 使用率进行预警监控的实际运维案例。主要步骤大致可以分为3步：首先，在 Telegraf 的配置文件中添加 CPU 使用率这一监控指标，并编写输出到 DolphinDB 流表的输出配置文件；之后在 DolphinDB 中创建存储 CPU 使用率数据的流表，并编写预警脚本；最后，在 Grafana 中查询预警数据，完成监控预警的可视化。具体操作请按下列步骤执行：
+上文介绍了 disk 和 system 两个指标的数据采集、存储与监控方法。这章提供了一个利用 DolphinDB 流计算统计 CPU 使用率进行预警监控的实际运维案例。主要步骤大致可以分为 3 步：首先，在 Telegraf 的配置文件中添加 CPU 使用率这一监控指标，并编写输出到 DolphinDB 流表的输出配置文件；之后在 DolphinDB 中创建存储 CPU 使用率数据的流表，并编写预警脚本；最后，在 Grafana 中查询预警数据，完成监控预警的可视化。具体操作请按下列步骤执行：
 
-1. 修改 Telegraf 的配置文件 TelegrafConfig。在 INPUT PLUGINS 中添加 CPU 监控  [[inputs.cpu]]，在OUTPUT PLUGINS 中添加对应 [[outputs.execd]] 输出。
+1. 修改 Telegraf 的配置文件 TelegrafConfig。在 INPUT PLUGINS 中添加 CPU 监控  [[inputs.cpu]]，在 OUTPUT PLUGINS 中添加对应 [[outputs.execd]] 输出。
 
 <img src="./images/DolphinDB_Telegraf_Grafana/5_1.png" width=70%>
 
@@ -588,7 +587,7 @@ persistenceDir<DolphinDBDir>/persistence
 persistenceOffsetDir=<DolphinDBDir>/streamlog
 ```
 
-4. 连接登录 DolphinDB ，在 DolphinDB 中创建存储 CPU 指标数据的流表 cpu_stream。
+4. 连接登录 DolphinDB，在 DolphinDB 中创建存储 CPU 指标数据的流表 cpu_stream。
 
 
 
@@ -606,7 +605,7 @@ cpuColtypes =[TIMESTAMP,STRING,DOUBLE]
 enableTableShareAndPersistence(table = streamTable(1000:0,cpuColnames,cpuColtypes), tableName=`cpu_stream, cacheSize = 5000000)  
 ```
 
-5. 在 DolphinDB 中订阅流表 cpu_stream 中的数据，一方面将流表中的数据导入到分布式表 dfs_cpu 中进行持久化存储，另一方面对流表中的数据进行流计算，预警统计 CPU 使用率大于80%的指标数据，并将统计的数据存入流表 cpu_warning_result 中。
+5. 在 DolphinDB 中订阅流表 cpu_stream 中的数据，一方面将流表中的数据导入到分布式表 dfs_cpu 中进行持久化存储，另一方面对流表中的数据进行流计算，预警统计 CPU 使用率大于 80% 的指标数据，并将统计的数据存入流表 cpu_warning_result 中。
 
 
 
@@ -637,7 +636,7 @@ subscribeTable(tableName="cpu_stream", actionName="cpu_warning", offset=0, handl
 telegraf --config $TelegrafConfig
 ```
 
-7. 查看 cpu_stream 中最近的100条 CPU 指标数据，查看 dfs_cpu 中最近的100条 CPU 指标数据，查看 cpu_warning_result 中最近的100条 预警数据 。
+7. 查看 cpu_stream 中最近的 100 条 CPU 指标数据，查看 dfs_cpu 中最近的 100 条 CPU 指标数据，查看 cpu_warning_result 中最近的 100 条 预警数据。
 
 
 
@@ -649,13 +648,13 @@ select top 100 * from dfs_cpu order by timestamp desc
 select top 100 * from cpu_warning_result order by timestamp desc
 ```
 
-8. 登录 Grafana 监控 CPU 利用率大于80%的预警数据。连接上 DolphinDB 数据源并创建面板 Panel 后，直接可视化 cpu_warning_result 中的数据即可（这里只监控了单核 cpu0 的预警数据）。
+8. 登录 Grafana 监控 CPU 利用率大于 80% 的预警数据。连接上 DolphinDB 数据源并创建面板 Panel 后，直接可视化 cpu_warning_result 中的数据即可（这里只监控了单核 cpu0 的预警数据）。
 
 <img src="./images/DolphinDB_Telegraf_Grafana/5_3.png" width=80%>
 
 ## 6. 附件
 
-1. telegraf-dolphindb-outputs插件：[telegraf-dolphindb-outputs](plugin/DolphinDB_Telegraf_Grafana/telegraf-dolphindb-outputs)
+1. telegraf-dolphindb-outputs 插件：[telegraf-dolphindb-outputs](plugin/DolphinDB_Telegraf_Grafana/telegraf-dolphindb-outputs)
 
 2. 编译源码：[telegraf.zip](script/DolphinDB_Telegraf_Grafana/telegraf.zip)
 

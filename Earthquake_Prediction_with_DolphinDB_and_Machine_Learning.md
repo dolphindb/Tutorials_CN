@@ -1,10 +1,11 @@
 # 使用 DolphinDB 和机器学习对地震波形数据进行预测
+
 - [1. 地震波形数据预测业务场景说明](#1-地震波形数据预测业务场景说明)
 - [2. 波形数据异常检测相关算法介绍](#2-波形数据异常检测相关算法介绍)
 	- [2.1 模板匹配算法](#21-模板匹配算法)
 	- [2.2 线性趋势去除算法](#22-线性趋势去除算法)
 	- [2.3 sosBandpass 算法](#23-sosbandpass-算法)
-- [3. DolphinDB解决方案](#3-dolphindb解决方案)
+- [3. DolphinDB 解决方案](#3-dolphindb-解决方案)
 - [4. 环境准备](#4-环境准备)
 	- [4.1 加载插件](#41-加载插件)
 	- [4.2 流数据表环境清理](#42-流数据表环境清理)
@@ -89,14 +90,14 @@ sosBandpass 是一种数字信号处理算法，用于对地震数据进行带�
 
 <img src="./images/Earthquake_Prediction_with_DolphinDB_and_Machine_Learning/2_8.png" width=25%>
 
-其中，b~i,0~ ，b~i,1~，b~i,2~，a~i,1~， a~i,2~ 是第 i 个二阶 IIR 滤波器的系数。
+其中，b~i,0~ ，b~i,1~，b~i,2~，a~i,1~，a~i,2~ 是第 i 个二阶 IIR 滤波器的系数。
 
-## 3. DolphinDB解决方案
+## 3. DolphinDB 解决方案
 
 <img src="./images/Earthquake_Prediction_with_DolphinDB_and_Machine_Learning/3_1.png" width=55%>
 
 - 实时流接入：流数据表是 DolphinDB 设计专门用于应对实时流数据存储与计算的内存表。具备吞吐量大，低延迟的优点，支持持久化，支持高可用。
-- 流数据发布、订阅与消费：DolphinDB 流数据模块采用“发布-订阅-消费”的模式。流数据首先注入流数据表中，通过流数据表来发布数据，数据节点或者第三方的应用可以通过 DolphinDB 脚本或 API 来订阅及消费流数据。
+- 流数据发布、订阅与消费：DolphinDB 流数据模块采用“发布 - 订阅 - 消费”的模式。流数据首先注入流数据表中，通过流数据表来发布数据，数据节点或者第三方的应用可以通过 DolphinDB 脚本或 API 来订阅及消费流数据。
 - FilterPicker 插件：FilterPicker 是一种自动地震信号检测工具，可以从大量地震数据中自动检测和识别地震信号。它主要应用于地震预警、地震监测、地震研究等领域。DolphinDB 开发了对应的 FilterPicker 插件，根据该插件，可在 DolphinDB 内调用模板匹配算法，实现对地震波数据的处理，输出其中的突峭点。
 - RTSeis 插件：RTSeis 是一个基于 Python 的实时地震数据处理包，包括地震数据的读取、处理、滤波、台阵响应的移除和地震事件检测等。DolphinDB 开发了对应的 RTSeis 插件，根据该插件，可以对波形数据进行 sosBandPass 滤波处理。
 - TensorFlow 插件：用户可以使用 TensorFlow 框架将训练好的模型导出成 .pb 文件，在 DolphinDB 中通过 TensorFlow 插件调用该模型进行预测。
@@ -194,7 +195,7 @@ loadTable( "dfs://seis01","tagInfo").append!(t);
 
 ### 5.1 波形实时数据模拟
 
-实际生产环境中每个通道每10毫秒采集一次数据，每个台站有三个通道。以下代码模拟了三个台站的波形实时数据：
+实际生产环境中每个通道每 10 毫秒采集一次数据，每个台站有三个通道。以下代码模拟了三个台站的波形实时数据：
 
 ```
 /*
@@ -294,11 +295,11 @@ step1：调用 `tf::load(modelFileName, inputName, outputName, [shape])` 函数�
 - *modelFileName*：模型路径。如果是 keras 生成的 h5 格式的模型文件，可用 [Keras to TensorFlow](https://github.com/amir-abdi/keras_to_tensorflow) 将 h5 格式的模型文件转成 TensorFlow 的 pb 文件后再进行加载。
 - *inputName*：模型中输入节点名称，如果不知道，可用[附录](#插件及脚本文件)的 *printTensorName.py* 文件进行打印，输出的第一个即为输入节点名称。
 - *outputName*：模型中输出节点名称，如果不知道，可用[附录](#插件及脚本文件)的 *printTensorName.py* 文件进行打印，输出的最后一个即为输出节点名称。
-- *shape*：N 维 (N>=3) 数组的 shape，当 N>=3 时才需要提供，类型为 int 类型的 vector，如[3, 5, 8]表示 *shape* 为3×5×8。如果提供了 *shape*，后面用于预测的 data 请使用 `flatten(x)` 函数转成的一维向量。
+- *shape*：N 维 (N>=3) 数组的 shape，当 N>=3 时才需要提供，类型为 int 类型的 vector，如[3, 5, 8]表示 *shape* 为 3×5×8。如果提供了 *shape*，后面用于预测的 data 请使用 `flatten(x)` 函数转成的一维向量。
 
 step2：提取突峭点前后两秒内三分量数据
 
-step3：剔除趋势成分(本文将趋势视为线性的，采用最小二乘法估计线性函数的参数)
+step3：剔除趋势成分 (本文将趋势视为线性的，采用最小二乘法估计线性函数的参数)
 
 step4：调用 `rtseis::sosBandPass(x, nTaps, f_min, f_max, windowType, fsamp, ripple)` 函数对三通道数据进行 sosBandPass 变换。其中，各个参数含义如下所示：
 
@@ -306,11 +307,11 @@ step4：调用 `rtseis::sosBandPass(x, nTaps, f_min, f_max, windowType, fsamp, r
 - *nTaps*：筛选器参数
 - *f_min*：最低频率
 - *f_max*：最高频率
-- *windowType*：窗口类型，0-3分别代表 BUTTERWORTH，BESSEL，CHEBYSHEV1，CHEBYSHEV2
+- *windowType*：窗口类型，0-3 分别代表 BUTTERWORTH，BESSEL，CHEBYSHEV1，CHEBYSHEV2
 - *fsamp*：采样频率
-- *ripple*：windowType 为2或3时的波纹大小
+- *ripple*：windowType 为 2 或 3 时的波纹大小
 
-step5：先对滤波数据进行归一化处理，然后调用 `tf::predict(model, data)` 函数进行预测，当预测概率 prob_P 或者 prob_s 的概率大于0.9时，认为该段信号很可能是地震波 P 波或者 S 波信号，然后输出对应的 filterpicker 的突峭点。其中，`tf::predict(model, data)` 各参数含义如下所示：
+step5：先对滤波数据进行归一化处理，然后调用 `tf::predict(model, data)` 函数进行预测，当预测概率 prob_P 或者 prob_s 的概率大于 0.9 时，认为该段信号很可能是地震波 P 波或者 S 波信号，然后输出对应的 filterpicker 的突峭点。其中，`tf::predict(model, data)` 各参数含义如下所示：
 
 - *model*：tensorflow 的 model，为 `tf::load()` 函数的返回值
 - *data*：需要预测的数据，仅支持同种数据类型的 matrix、vector、table 或者 dictionary。如果在 `tf::load()` 时提供了 *shape* 参数，则 *data* 必须为使用 `flatten(x)` 函数转成的一维向量。

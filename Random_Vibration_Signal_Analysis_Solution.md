@@ -1,48 +1,31 @@
 # 随机振动信号分析解决方案
 
-- [随机振动信号分析解决方案](#随机振动信号分析解决方案)
-  - [1. 应用场景](#1-应用场景)
-    - [1.1 行业背景](#11-行业背景)
-    - [1.2 真实场景](#12-真实场景)
-      - [1.2.1 设备状态评定标准的选择及预警、报警限的设定](#121-设备状态评定标准的选择及预警报警限的设定)
-      - [1.2.2 设备状态发展趋势](#122-设备状态发展趋势)
-      - [1.2.3 振动级值预测](#123-振动级值预测)
-    - [1.3 DolphinDB优势](#13-dolphindb优势)
-      - [1.3.1 流数据引擎](#131-流数据引擎)
-      - [1.3.2 经典SCADA与信息化的融合](#132-经典scada与信息化的融合)
-      - [1.3.3 计算引擎](#133-计算引擎)
-      - [1.3.4 轻量级部署](#134-轻量级部署)
-  - [2. 概念介绍](#2-概念介绍)
-    - [2.1 能量与功率](#21-能量与功率)
-    - [2.2 能量谱密度和功率谱密度](#22-能量谱密度和功率谱密度)
-      - [2.2.1 能量谱](#221-能量谱)
-      - [2.2.2 功率谱](#222-功率谱)
-    - [2.3 功率谱密度的估计方法](#23-功率谱密度的估计方法)
-      - [2.3.1 周期图法](#231-周期图法)
-      - [2.3.2 窗函数优化周期图法](#232-窗函数优化周期图法)
-  - [3. 解决方案](#3-解决方案)
-    - [3.1 场景描述](#31-场景描述)
-    - [3.2 架构图及说明](#32-架构图及说明)
-  - [4. 实现步骤](#4-实现步骤)
-    - [4.1 实时数据模拟](#41-实时数据模拟)
-    - [4.2 功率谱密度计算函数（pwelch）实现](#42-功率谱密度计算函数pwelch实现)
-    - [4.3 均方根计算函数（rms）实现](#43-均方根计算函数rms实现)
-    - [4.4 流数据发布-订阅-消费](#44-流数据发布-订阅-消费)
-      - [4.4.1 流表的定义](#441-流表的定义)
-      - [4.4.2 流数据消费-引擎定义](#442-流数据消费-引擎定义)
-      - [4.4.3 数据的订阅](#443-数据的订阅)
-    - [4.5 Grafana 连接展示](#45-grafana-连接展示)
-      - [4.5.1 查看功率谱密度](#451-查看功率谱密度)
-      - [4.5.2 查看功率谱密度均方根](#452-查看功率谱密度均方根)
-    - [4.6 报警分析](#46-报警分析)
-  - [总结](#总结)
-    - [注释](#注释)
-    - [参考文献](#参考文献)
+- [1. 应用场景](#1-应用场景)
+  - [1.1 行业背景](#11-行业背景)
+  - [1.2 真实场景](#12-真实场景)
+  - [1.3 DolphinDB 优势](#13-dolphindb-优势)
+- [2. 概念介绍](#2-概念介绍)
+  - [2.1 能量与功率](#21-能量与功率)
+  - [2.2 能量谱密度和功率谱密度](#22-能量谱密度和功率谱密度)
+  - [2.3 功率谱密度的估计方法](#23-功率谱密度的估计方法)
+- [3. 解决方案](#3-解决方案)
+  - [3.1 场景描述](#31-场景描述)
+  - [3.2 架构图及说明](#32-架构图及说明)
+- [4. 实现步骤](#4-实现步骤)
+  - [4.1 实时数据模拟](#41-实时数据模拟)
+  - [4.2 功率谱密度计算函数（pwelch）实现](#42-功率谱密度计算函数pwelch实现)
+  - [4.3 均方根计算函数（rms）实现](#43-均方根计算函数rms实现)
+  - [4.4 流数据发布 - 订阅 - 消费](#44-流数据发布---订阅---消费)
+  - [4.5 Grafana 连接展示](#45-grafana-连接展示)
+  - [4.6 报警分析](#46-报警分析)
+- [总结](#总结)
+  - [注释](#注释)
+  - [参考文献](#参考文献)
 
 
 ## 1. 应用场景
 
-随机振动[注1]会发生在工业物联网的各个场景中，包括产线机组设备的运行、运输设备的移动、试验仪器的运行等等。通过分析采集到的振动信号可以预估设备的疲劳年限、及时知晓设备已发生的异常以及预测未来仪器可能发生的异常等等。本篇教程会提供给有该方面需求的客户一个完整的解决方案，帮助用户使用DolphinDB 对振动信号进行分析。
+随机振动[注 1]会发生在工业物联网的各个场景中，包括产线机组设备的运行、运输设备的移动、试验仪器的运行等等。通过分析采集到的振动信号可以预估设备的疲劳年限、及时知晓设备已发生的异常以及预测未来仪器可能发生的异常等等。本篇教程会提供给有该方面需求的客户一个完整的解决方案，帮助用户使用 DolphinDB 对振动信号进行分析。
 
 ### 1.1 行业背景
 
@@ -65,11 +48,11 @@
 
 ![振动烈度判据的标准①](./images/Random_Vibration_Signal_Analysis_Solution/ch1_2_1_001.png)
 
-通常先根据机器的功率来查表，场景中每个机组的功率大概在2250kw，所以可以得到轴承处的振动烈度界限：4.5mm/s~11.2mm/s。另外还可将振动信号进行时频转换，实践表明，可以将频谱分析中获得的各个频率分量的振动级值变化作为评价的对象。这里的振动级值是振动速度级值，在其他场景中也可以是加速度级值和功率级值。如下图：
+通常先根据机器的功率来查表，场景中每个机组的功率大概在 2250kw，所以可以得到轴承处的振动烈度界限：4.5mm/s~11.2mm/s。另外还可将振动信号进行时频转换，实践表明，可以将频谱分析中获得的各个频率分量的振动级值变化作为评价的对象。这里的振动级值是振动速度级值，在其他场景中也可以是加速度级值和功率级值。如下图：
 
 ![频率分量振动级值判据①](./images/Random_Vibration_Signal_Analysis_Solution/ch1_2_1_002.png)
 
-针对振动烈度范围，可以对机组状态振动烈度预警限以及振动烈度报警限进行选取。本场景采用振动烈度界限为限值指标，即预警限制设定为4.5mm/s；报警限值设定为11.2mm/s。针对振动级值变化判据，同样可以得出振动级值报警限与预警限。有了这些，就可对机组进行检测管理。
+针对振动烈度范围，可以对机组状态振动烈度预警限以及振动烈度报警限进行选取。本场景采用振动烈度界限为限值指标，即预警限制设定为 4.5mm/s；报警限值设定为 11.2mm/s。针对振动级值变化判据，同样可以得出振动级值报警限与预警限。有了这些，就可对机组进行检测管理。
 
 #### 1.2.2 设备状态发展趋势
 
@@ -88,43 +71,43 @@
 
 #### 1.2.3 振动级值预测
 
-在大型旋转机组趋势预测中所采用的基本方法是：以机组的机械动态特性为主要研究对象，通过传感器实时检测反映机组机械动态特性参数（振动级值，包括振动烈度与振动分量级值），并在线对机械动态特性进行历史、现状以及随后发展的对比和分析，找出机械系统机械动态特性发展的“级值-时间”趋势，揭示机组整体以及机组主要部件运行状态的发展模式，预测振动级值和故障发生日期，实现对机组工作状态趋势的预测。
+在大型旋转机组趋势预测中所采用的基本方法是：以机组的机械动态特性为主要研究对象，通过传感器实时检测反映机组机械动态特性参数（振动级值，包括振动烈度与振动分量级值），并在线对机械动态特性进行历史、现状以及随后发展的对比和分析，找出机械系统机械动态特性发展的“级值 - 时间”趋势，揭示机组整体以及机组主要部件运行状态的发展模式，预测振动级值和故障发生日期，实现对机组工作状态趋势的预测。
 
-振动级值趋势预测可以通过如图所示的“级值-时间趋势图”来描述：
+振动级值趋势预测可以通过如图所示的“级值 - 时间趋势图”来描述：
 
-![级值-时间趋势图①](./images/Random_Vibration_Signal_Analysis_Solution/ch1_2_3_001.png)
+![级值 - 时间趋势图①](./images/Random_Vibration_Signal_Analysis_Solution/ch1_2_3_001.png)
 
-根据振动级值的变化，一个或多个频率分量在若干个周期测量后的级值增加，找出故障发展的“级值-时间”推测趋势。选择合适的曲线拟合方法，将结果曲线外推，从而揭示什么时间状态将达到危险的极限，这样可以安排适当的日期来对机组进行维护。而曲线拟合的方法有很多种，包括时序模型预测、灰色预测、人工智能预测、遗传算法预测等等。
+根据振动级值的变化，一个或多个频率分量在若干个周期测量后的级值增加，找出故障发展的“级值 - 时间”推测趋势。选择合适的曲线拟合方法，将结果曲线外推，从而揭示什么时间状态将达到危险的极限，这样可以安排适当的日期来对机组进行维护。而曲线拟合的方法有很多种，包括时序模型预测、灰色预测、人工智能预测、遗传算法预测等等。
 
-### 1.3 DolphinDB优势
+### 1.3 DolphinDB 优势
 
 DolphinDB 是由浙江智臾科技有限公司研发的一款高性能分布式时序数据库，集成了功能强大的编程语言和高容量高速度的流数据分析系统，为海量结构化数据的快速存储、检索、分析及计算提供一站式解决方案，适用于工业物联网领域。其主要优点包括：
 
 #### 1.3.1 流数据引擎
 
-DolphinDB 的流式计算框架具备高性能实时流数据[注2]处理能力，支持毫秒甚至微秒级别数据计算，非常适合用于随机振动信号的处理和分析。
+DolphinDB 的流式计算框架具备高性能实时流数据[注 2]处理能力，支持毫秒甚至微秒级别数据计算，非常适合用于随机振动信号的处理和分析。
 
-#### 1.3.2 经典SCADA与信息化的融合
+#### 1.3.2 经典 SCADA 与信息化的融合
 
-DolphinDB 能实现传统 SCADA 的功能。并在此基础上融合企业已有的 DCS、MES、ERP 等工业级信息化系统。支持Kafka等消息中间件、MySQL等关系数据库、Grafana 等商业BI 组件。
+DolphinDB 能实现传统 SCADA 的功能。并在此基础上融合企业已有的 DCS、MES、ERP 等工业级信息化系统。支持 Kafka 等消息中间件、MySQL 等关系数据库、Grafana 等商业 BI 组件。
 
 内置脚本编程语言，用户可以使用 SQL 语句进行数据处理和查询，也可以通过类 Python 语法的脚本语言实现复杂功能。支持通过自定义算法开发分析模型，支持调用机器学习模型实现预测。
 
 #### 1.3.3 计算引擎
 
-DolphinDB 内置1400+函数，具备强大的分布式聚合计算能力。可以实现函数化编程、时间序列运算、矩阵运算、统计分析、机器学习、字符串处理、文件处理等功能。
+DolphinDB 内置 1400+ 函数，具备强大的分布式聚合计算能力。可以实现函数化编程、时间序列运算、矩阵运算、统计分析、机器学习、字符串处理、文件处理等功能。
 
 提供的 signal 插件可用于专业领域的信号分析与处理，在数据库内实现傅里叶变换、小波变换、功率谱密度估计等复杂功能。
 
 #### 1.3.4 轻量级部署
 
-DolphinDB 使用 C++开发，兼容性好，支持Winodws、Linux、麒麟鲲鹏等操作系统，适配 X86、ARM、MIPS（龙芯）等。单机部署时安装文件仅70M大小，方便搭建高可用、可扩展集群。并且支持 Docker 和 K8S 一键部署，支持端边云架构，支持云边一体的数据实时同步。可作为 IaaS 底层支撑。
+DolphinDB 使用 C++ 开发，兼容性好，支持 Winodws、Linux、麒麟鲲鹏等操作系统，适配 X86、ARM、MIPS（龙芯）等。单机部署时安装文件仅 70M 大小，方便搭建高可用、可扩展集群。并且支持 Docker 和 K8S 一键部署，支持端边云架构，支持云边一体的数据实时同步。可作为 IaaS 底层支撑。
 
 ## 2. 概念介绍
 
 ### 2.1 能量与功率
 
-能量和功率常常用于描述一个物体运动的程度。从宏观的角度看，能量与功率成正相关。从微观的角度看，能量是功率在一定时间范围内的定积分。假设功率是P(t)（这里的功率是瞬时功率，所以是关于时间t的函数），那么某种能量就可以用下式表达：
+能量和功率常常用于描述一个物体运动的程度。从宏观的角度看，能量与功率成正相关。从微观的角度看，能量是功率在一定时间范围内的定积分。假设功率是 P(t)（这里的功率是瞬时功率，所以是关于时间 t 的函数），那么某种能量就可以用下式表达：
 
 ![img](./images/Random_Vibration_Signal_Analysis_Solution/ch2_1_001.svg)  
 
@@ -138,13 +121,13 @@ DolphinDB 使用 C++开发，兼容性好，支持Winodws、Linux、麒麟鲲鹏
 
 有了上述基础，我们将能量和平均功率的表达式中的瞬时功率函数用具体的函数代入即可得到各种种信号的能量、平均功率的表达式。
 
-在实际的通信系统中，信号都具有有限的发射功率、有限的持续时间，因而具有有限的能量E，因而可称为能量信号。但是，若信号的持续时间非常长，例如广播信号，则可以近似认为它具有无限长的持续时间。此时，认为定义的信号平均功率是一个有限的正值，但是其能量近似等于无穷大。我们把这种信号称为功率信号。根据以上信息判断，能量信号的能量表达式是有极限的，P也是有极限的，但是功率信号的能量表达式极限不存在。
+在实际的通信系统中，信号都具有有限的发射功率、有限的持续时间，因而具有有限的能量 E，因而可称为能量信号。但是，若信号的持续时间非常长，例如广播信号，则可以近似认为它具有无限长的持续时间。此时，认为定义的信号平均功率是一个有限的正值，但是其能量近似等于无穷大。我们把这种信号称为功率信号。根据以上信息判断，能量信号的能量表达式是有极限的，P 也是有极限的，但是功率信号的能量表达式极限不存在。
 
 接下来介绍信号的分类：
 
 - 周期信号：持续时间有限为能量信号，持续时间无限则为功率信号
 - 非周期信号
-  - 持续时间有限，时间趋向边界时瞬时功率函数值趋向0，此种信号为能量信号
+  - 持续时间有限，时间趋向边界时瞬时功率函数值趋向 0，此种信号为能量信号
   - 持续时间无限，但幅度有限的信号，可称为功率信号
   - 持续时间无限，幅度也无限，则既不是功率信号也不是能量信号
 
@@ -152,7 +135,7 @@ DolphinDB 使用 C++开发，兼容性好，支持Winodws、Linux、麒麟鲲鹏
 
 #### 2.2.1 能量谱
 
-如果信号是能量信号，通过傅里叶变换，就很容易分离不同频域分量所对应的能量，频率 ![img](./images/Random_Vibration_Signal_Analysis_Solution/ch2_2_1_f.svg)对应的能量为![img](./images/Random_Vibration_Signal_Analysis_Solution/ch2_2_1_001.svg)，对 ![img](./images/Random_Vibration_Signal_Analysis_Solution/ch2_2_1_f.svg) 积分就能得到信号的总能量，由此，![img](./images/Random_Vibration_Signal_Analysis_Solution/ch2_2_1_002.svg)就定义为能量谱密度(有时把![img](./images/Random_Vibration_Signal_Analysis_Solution/ch2_2_1_f.svg)转换为![img](./images/Random_Vibration_Signal_Analysis_Solution/ch2_2_1_w.svg)也可以，此时能量谱密度为![img](./images/Random_Vibration_Signal_Analysis_Solution/ch2_2_1_003.svg))。
+如果信号是能量信号，通过傅里叶变换，就很容易分离不同频域分量所对应的能量，频率 ![img](./images/Random_Vibration_Signal_Analysis_Solution/ch2_2_1_f.svg)对应的能量为![img](./images/Random_Vibration_Signal_Analysis_Solution/ch2_2_1_001.svg)，对 ![img](./images/Random_Vibration_Signal_Analysis_Solution/ch2_2_1_f.svg) 积分就能得到信号的总能量，由此，![img](./images/Random_Vibration_Signal_Analysis_Solution/ch2_2_1_002.svg)就定义为能量谱密度 (有时把![img](./images/Random_Vibration_Signal_Analysis_Solution/ch2_2_1_f.svg)转换为![img](./images/Random_Vibration_Signal_Analysis_Solution/ch2_2_1_w.svg)也可以，此时能量谱密度为![img](./images/Random_Vibration_Signal_Analysis_Solution/ch2_2_1_003.svg))。
 
 根据著名的巴塞法尔定律，能量在时域和频域是守恒的，故可以得出下面的式子：
 
@@ -161,21 +144,21 @@ DolphinDB 使用 C++开发，兼容性好，支持Winodws、Linux、麒麟鲲鹏
 
 #### 2.2.2 功率谱
 
-由于功率信号具有无穷大的能量，所以按照能量E的公式，这个积分是不存在的。但是我们可以把这个信号截断成小块。例如，把信号 ![img](./images/Random_Vibration_Signal_Analysis_Solution/ch2_2_2_st.svg) 截断成一个截短信号![img](./images/Random_Vibration_Signal_Analysis_Solution/ch2_2_2_stt.svg), -T/2<t<T/2 。这样![img](./images/Random_Vibration_Signal_Analysis_Solution/ch2_2_2_stt.svg)就是一个能量信号了，此时根据上一小节能量谱的推算过程，利用傅里叶变换可以求出其能量谱密度![img](./images/Random_Vibration_Signal_Analysis_Solution/ch2_2_2_001.svg)。
+由于功率信号具有无穷大的能量，所以按照能量 E 的公式，这个积分是不存在的。但是我们可以把这个信号截断成小块。例如，把信号 ![img](./images/Random_Vibration_Signal_Analysis_Solution/ch2_2_2_st.svg) 截断成一个截短信号![img](./images/Random_Vibration_Signal_Analysis_Solution/ch2_2_2_stt.svg), -T/2<t<T/2。这样![img](./images/Random_Vibration_Signal_Analysis_Solution/ch2_2_2_stt.svg)就是一个能量信号了，此时根据上一小节能量谱的推算过程，利用傅里叶变换可以求出其能量谱密度![img](./images/Random_Vibration_Signal_Analysis_Solution/ch2_2_2_001.svg)。
 
 接下来得出信号![img](./images/Random_Vibration_Signal_Analysis_Solution/ch2_2_2_st.svg)的能量和平均功率表达式，其中![img](./images/Random_Vibration_Signal_Analysis_Solution/ch2_2_2_002.svg) ：
 
 ![img](./images/Random_Vibration_Signal_Analysis_Solution/ch2_2_2_003.svg)  
 
-当T在增加的时候，能量也是在增加的。假设极限![img](./images/Random_Vibration_Signal_Analysis_Solution/ch2_2_2_004.svg) 存在，定义它为![img](./images/Random_Vibration_Signal_Analysis_Solution/ch2_2_2_005.svg)的功率谱密度函数，记作 ![img](./images/Random_Vibration_Signal_Analysis_Solution/ch2_2_2_pw.svg)的功率谱为：
+当 T 在增加的时候，能量也是在增加的。假设极限![img](./images/Random_Vibration_Signal_Analysis_Solution/ch2_2_2_004.svg) 存在，定义它为![img](./images/Random_Vibration_Signal_Analysis_Solution/ch2_2_2_005.svg)的功率谱密度函数，记作 ![img](./images/Random_Vibration_Signal_Analysis_Solution/ch2_2_2_pw.svg)的功率谱为：
 
 ![img](./images/Random_Vibration_Signal_Analysis_Solution/ch2_2_2_006.svg)  
 
 ### 2.3 功率谱密度的估计方法
 
-上述内容均为理论推导，当我们遇到随机振动信号时，大多数情况仍然只能估计PSD谱，估计的方法有很多，接下来简单介绍功率密度谱的几种估计方法。
+上述内容均为理论推导，当我们遇到随机振动信号时，大多数情况仍然只能估计 PSD 谱，估计的方法有很多，接下来简单介绍功率密度谱的几种估计方法。
 
-功率密度谱估计的主要方法有经典谱估计以及现代谱估计，经典谱估计是将采集数据外的未知数据假设为零；现代谱估计是通过观测数据估计参数模型再按照求参数模型输出功率的方法估计功率谱，应用最广的是AR参数模型。本篇文章使用经典谱估计进行振动信号的分析。
+功率密度谱估计的主要方法有经典谱估计以及现代谱估计，经典谱估计是将采集数据外的未知数据假设为零；现代谱估计是通过观测数据估计参数模型再按照求参数模型输出功率的方法估计功率谱，应用最广的是 AR 参数模型。本篇文章使用经典谱估计进行振动信号的分析。
 
 经典功率谱估计的方法有两种：周期图法和自相关法。本小节主要介绍周期图法以及加窗后的周期图法。
 
@@ -183,7 +166,7 @@ DolphinDB 使用 C++开发，兼容性好，支持Winodws、Linux、麒麟鲲鹏
 
 #### 2.3.1 周期图法
 
-周期图法又名为直接法。该方法是把随机信号 ![img](./images/Random_Vibration_Signal_Analysis_Solution/ch2_3_1_xn.svg) 的 N点观察数据![img](./images/Random_Vibration_Signal_Analysis_Solution/ch2_3_1_xnn.svg) 视为 一能量有限信号，直接取 ![img](./images/Random_Vibration_Signal_Analysis_Solution/ch2_3_1_xnn.svg)   的傅里叶变换，得![img](./images/Random_Vibration_Signal_Analysis_Solution/ch2_3_1_xnw.svg)，然后再取其幅值的平方，并除以 $N$ ，作为对![img](./images/Random_Vibration_Signal_Analysis_Solution/ch2_3_1_xn.svg)真实的功率谱 ![img](./images/Random_Vibration_Signal_Analysis_Solution/ch2_3_1_001.svg) 的估计：
+周期图法又名为直接法。该方法是把随机信号 ![img](./images/Random_Vibration_Signal_Analysis_Solution/ch2_3_1_xn.svg) 的 N 点观察数据![img](./images/Random_Vibration_Signal_Analysis_Solution/ch2_3_1_xnn.svg) 视为 一能量有限信号，直接取 ![img](./images/Random_Vibration_Signal_Analysis_Solution/ch2_3_1_xnn.svg)   的傅里叶变换，得![img](./images/Random_Vibration_Signal_Analysis_Solution/ch2_3_1_xnw.svg)，然后再取其幅值的平方，并除以 $N$ ，作为对![img](./images/Random_Vibration_Signal_Analysis_Solution/ch2_3_1_xn.svg)真实的功率谱 ![img](./images/Random_Vibration_Signal_Analysis_Solution/ch2_3_1_001.svg) 的估计：
 
 ![img](./images/Random_Vibration_Signal_Analysis_Solution/ch2_3_1_002.svg)  
 
@@ -191,7 +174,7 @@ DolphinDB 使用 C++开发，兼容性好，支持Winodws、Linux、麒麟鲲鹏
 
 #### 2.3.2 窗函数优化周期图法
 
-窗函数优化的思想是把一长度为 $N$ 的数据 ![img](./images/Random_Vibration_Signal_Analysis_Solution/ch2_3_1_xnn.svg)分成 L 段，每段的长度为M，分别求每一段的功率谱，然后加以平均，以达到所希望的目的。首先对分段的数据施加矩形窗，则第 $i$ 段的数据变为：
+窗函数优化的思想是把一长度为 $N$ 的数据 ![img](./images/Random_Vibration_Signal_Analysis_Solution/ch2_3_1_xnn.svg)分成 L 段，每段的长度为 M，分别求每一段的功率谱，然后加以平均，以达到所希望的目的。首先对分段的数据施加矩形窗，则第 $i$ 段的数据变为：
 
 ![img](./images/Random_Vibration_Signal_Analysis_Solution/ch2_3_2_001.svg)  
 
@@ -199,11 +182,11 @@ DolphinDB 使用 C++开发，兼容性好，支持Winodws、Linux、麒麟鲲鹏
 
 ![img](./images/Random_Vibration_Signal_Analysis_Solution/ch2_3_2_002.svg)  
 
-这种方法又称平均周期图法（Bartlett法），本文后续提到的 welch 方法是对平均周期图法的改进。主要改进在两个方面：一是在对 ![img](./images/Random_Vibration_Signal_Analysis_Solution/ch2_3_1_xnn.svg)分段时，允许每段数据存在部分的交叠；二是每一段的数据窗口可以不是矩形窗口。这样可以改善由于矩形窗所造成的分辨率较差的影响。 然后按照 Bartlett 法求每一段的功率谱，并对结果进行归一化，从而得到进一步修正的周期图，即：
+这种方法又称平均周期图法（Bartlett 法），本文后续提到的 welch 方法是对平均周期图法的改进。主要改进在两个方面：一是在对 ![img](./images/Random_Vibration_Signal_Analysis_Solution/ch2_3_1_xnn.svg)分段时，允许每段数据存在部分的交叠；二是每一段的数据窗口可以不是矩形窗口。这样可以改善由于矩形窗所造成的分辨率较差的影响。然后按照 Bartlett 法求每一段的功率谱，并对结果进行归一化，从而得到进一步修正的周期图，即：
 
 ![img](./images/Random_Vibration_Signal_Analysis_Solution/ch2_3_2_003.svg)  
 
-其中U为归一化因子，![img](./images/Random_Vibration_Signal_Analysis_Solution/ch2_3_2_d2n.svg) 是数据窗口。
+其中 U 为归一化因子，![img](./images/Random_Vibration_Signal_Analysis_Solution/ch2_3_2_d2n.svg) 是数据窗口。
 
 因为 Welch 算法各段允许交叠，从而增大了段数 $L$，这样可以更好地改善方差特性。但是数据的交叠又减小了每一段的不相关性，使方差的减小不会达到理论计算的程度。另外，选择合适的窗函数可以减小频谱的泄漏，改善分辨率。
 
@@ -213,9 +196,9 @@ DolphinDB 使用 C++开发，兼容性好，支持Winodws、Linux、麒麟鲲鹏
 
 ### 3.1 场景描述
 
-假定有16台振动传感器，每台设备每毫秒采集一条监测记录，包含时间戳、设备号和指标三个字段，每秒共写入1.6万条数据，并采用单值模型[注3]存储。有以下需求：
+假定有 16 台振动传感器，每台设备每毫秒采集一条监测记录，包含时间戳、设备号和指标三个字段，每秒共写入 1.6 万条数据，并采用单值模型[注 3]存储。有以下需求：
 
-- 实时计算：每2分钟对过去2分钟的功率谱密度进行计算。
+- 实时计算：每 2 分钟对过去 2 分钟的功率谱密度进行计算。
 - 报警分析：对写入数据库的实时数据进行报警分析，如果有满足报警规则的数据则把相应的设备信息和实时数据以及触发报警规则写入到报警表中。
 - 聚合查询：查询每台振动传感器过去任意时间段的谱密度。
 
@@ -231,18 +214,18 @@ DolphinDB 使用 C++开发，兼容性好，支持Winodws、Linux、麒麟鲲鹏
 
 - 振动信号模拟：DolphinDB 支持 API、JDBC、ODBC、消息中间件的方式写入数据。本案例将通过脚本模拟采集过程，通过后台 job 任务持续不断的生成模拟数据。
 - 实时写入：流数据表是一种 DolphinDB 设计的专门用来应对实时流数据存储与计算的内存表。具备吞吐量大，低延迟的优点，支持持久化，支持高可用。参考：[流数据高可用的教程](https://gitee.com/dolphindb/Tutorials_CN/blob/master/haStreamingTutorial.md) 。
-- 流数据发布-订阅-消费：DolphinDB 流数据模块采用发布-订阅-消费的模式。流数据首先注入流数据表中，通过流数据表来发布数据，数据节点或者第三方的应用可以通过 DolphinDB 脚本或API来订阅及消费流数据。
+- 流数据发布 - 订阅 - 消费：DolphinDB 流数据模块采用发布 - 订阅 - 消费的模式。流数据首先注入流数据表中，通过流数据表来发布数据，数据节点或者第三方的应用可以通过 DolphinDB 脚本或 API 来订阅及消费流数据。
 - 时间序列聚合引擎/异常检测引擎：：在实时数据流计算场景下，计算要求高效和即时，DolphinDB 精心研发了适合流计算场景的引擎，系统内部采用了增量计算，优化了实时计算的性能。对于时间序列聚合引擎，使用者只需通过简单的参数配置即可实现复杂的增量计算、窗口计算、聚合分析等功能。对于异常检测引擎，使用者也只需通过简单的参数配置即可实现复杂的规则设计、窗口检测。
-- 实时功率谱密度 psd 展示：在数据采集、实时计算的同时，用户调用 DolphinDB 的 Grafana 插件连接 Grafana，在web 端展示实时数据以及实时计算结果。
+- 实时功率谱密度 psd 展示：在数据采集、实时计算的同时，用户调用 DolphinDB 的 Grafana 插件连接 Grafana，在 web 端展示实时数据以及实时计算结果。
 - 实时 rms 计算分析：rms 计算模块包含上述的 psd 谱计算，得到 psd 谱后对其进行必要的指标计算，包括加速度均方根（rmsAcc），速度均方根（rmsVel），位移均方根（rmsDis）。
 
 ## 4. 实现步骤
 
-本节将介绍振动信号分析解决方案的核心操作、核心功能、关键函数以及 DolphinDB 的相关功能。完整的脚本代码总共200行，开发和研究人员可在部署 DolphinDB Server（2.00.8 及以上版本）及相关插件后运行脚本，点击此处[下载完整脚本](./script/Random_Vibration_Signal_Analysis_Solution/demo.dos)。
+本节将介绍振动信号分析解决方案的核心操作、核心功能、关键函数以及 DolphinDB 的相关功能。完整的脚本代码总共 200 行，开发和研究人员可在部署 DolphinDB Server（2.00.8 及以上版本）及相关插件后运行脚本，点击此处[下载完整脚本](./script/Random_Vibration_Signal_Analysis_Solution/demo.dos)。
 
 ### 4.1 实时数据模拟
 
-用户可使用下述代码模拟生成单台设备上的16个振动传感器数据，体验一站式解决方案。
+用户可使用下述代码模拟生成单台设备上的 16 个振动传感器数据，体验一站式解决方案。
 
 ```
 def fakedata(t){
@@ -266,7 +249,7 @@ getRecentJobs(1)
 
 ### 4.2 功率谱密度计算函数（pwelch）实现
 
-本篇文章中使用 DolphinDB 脚本实现的 pwelch 函数采纳了 matlab 中 pwelch 函数的部分功能。pwelch（matlab 版本）是一种修正的周期图法功率谱密度估计，它将信号分段加窗求其功率谱密度，然后做平均处理，在前面的小节里已有过介绍。pwelch（ DolphinDB 版本）输入从左到右分别为信号向量 data 、窗函数window、分段重叠的样本数 noverlap 、fft 的点数 nfft、绘制功率谱曲线的抽样频率 fs 。输出为加速度功率谱密度以及对应的频率。下表为 fft 点数、输入向量以及最后输出的频率范围的关系：
+本篇文章中使用 DolphinDB 脚本实现的 pwelch 函数采纳了 matlab 中 pwelch 函数的部分功能。pwelch（matlab 版本）是一种修正的周期图法功率谱密度估计，它将信号分段加窗求其功率谱密度，然后做平均处理，在前面的小节里已有过介绍。pwelch（DolphinDB 版本）输入从左到右分别为信号向量 data、窗函数 window、分段重叠的样本数 noverlap、fft 的点数 nfft、绘制功率谱曲线的抽样频率 fs。输出为加速度功率谱密度以及对应的频率。下表为 fft 点数、输入向量以及最后输出的频率范围的关系：
 
 ![输出频率范围的选择](./images/Random_Vibration_Signal_Analysis_Solution/ch4_2_0_001.png)
 
@@ -316,7 +299,7 @@ Hamming（Hann）窗函数公式如下：
 
 ![img](./images/Random_Vibration_Signal_Analysis_Solution/ch_4_2_0_002.svg)
 
-当 a0=0.53836 ，称作 Hamming 窗；当 a0=0.5 则叫作 Hann 窗。一般来说为了减少运算量，可把公式精简为如下，其中 L 为 fft 点数：
+当 a0=0.53836，称作 Hamming 窗；当 a0=0.5 则叫作 Hann 窗。一般来说为了减少运算量，可把公式精简为如下，其中 L 为 fft 点数：
 
 ![img](./images/Random_Vibration_Signal_Analysis_Solution/ch4_2_0_003.svg)  
 
@@ -330,9 +313,9 @@ def hamming(N){
 
 ### 4.3 均方根计算函数（rms）实现
 
-RMS值，也称为有效值，是信号的均方根值，用于表征信号中的能量有效值。
+RMS 值，也称为有效值，是信号的均方根值，用于表征信号中的能量有效值。
 
-具体实现代码如下:
+具体实现代码如下：
 
 ```
 defg rms(nose,N,sensitivity,gain,window, noverlap, nfft, fs,bandwidthL,bandwidthH){
@@ -357,19 +340,19 @@ defg rms(nose,N,sensitivity,gain,window, noverlap, nfft, fs,bandwidthL,bandwidth
 }
 ```
 
-注意，这里将函数定义成聚合函数defg，目的在于将函数作为时序聚合引擎的计算规则。
+注意，这里将函数定义成聚合函数 defg，目的在于将函数作为时序聚合引擎的计算规则。
 
-### 4.4 流数据发布-订阅-消费
+### 4.4 流数据发布 - 订阅 - 消费
 
-介绍完主要实现的两个函数模块后，接下来将描述本案例中流数据的流向。因为流表在流数据处理上的优势，本案例使用了三张流表——表 signal、表 srms、表 warn。表 signal 用于存储实时采集到的振动信号，表srms 用于存储实时计算得到的均方根值，表 warn 用于存储实时产生的报警信息。
+介绍完主要实现的两个函数模块后，接下来将描述本案例中流数据的流向。因为流表在流数据处理上的优势，本案例使用了三张流表——表 signal、表 srms、表 warn。表 signal 用于存储实时采集到的振动信号，表 srms 用于存储实时计算得到的均方根值，表 warn 用于存储实时产生的报警信息。
 
-流数据先从第三方设备传输到 signal 表，表 signal 又被时序聚合引擎订阅，计算结果输出到流表 srms，最后再把 srms 表中的数据落盘[注4]到数据库 rmsDB 中。另外流入 srms 又被异常检测引擎订阅，计算结果输出到 warn 表中，最后落盘到 warnDB 中。
+流数据先从第三方设备传输到 signal 表，表 signal 又被时序聚合引擎订阅，计算结果输出到流表 srms，最后再把 srms 表中的数据落盘[注 4]到数据库 rmsDB 中。另外流入 srms 又被异常检测引擎订阅，计算结果输出到 warn 表中，最后落盘到 warnDB 中。
 
-![流数据发布-订阅-消费模型](./images/Random_Vibration_Signal_Analysis_Solution/ch4_4_0_001.png)
+![流数据发布 - 订阅 - 消费模型](./images/Random_Vibration_Signal_Analysis_Solution/ch4_4_0_001.png)
 
 #### 4.4.1 流表的定义
 
-以下代码先定义流表 signal 并持久化，再定义流表 srms、warn。enableTableShareAndPersistence 函数将流表持久化【注5】并共享到当前节点的所有会话中。使用者也可不将其持久化，写法在注释中提供。
+以下代码先定义流表 signal 并持久化，再定义流表 srms、warn。enableTableShareAndPersistence 函数将流表持久化【注 5】并共享到当前节点的所有会话中。使用者也可不将其持久化，写法在注释中提供。
 
 ```
 t =  streamTable(100:0, `timestamp`source`signalnose,[TIMESTAMP,SYMBOL,DOUBLE])
@@ -379,7 +362,7 @@ share streamTable(100:0, `datetime`source`rmsAcc`rmsVel`rmsDis,[TIMESTAMP,SYMBOL
 share streamTable(100:0, `datetime`source`type`metric,[TIMESTAMP,SYMBOL,INT,STRING]) as warn
 ```
 
-#### 4.4.2 流数据消费-引擎定义
+#### 4.4.2 流数据消费 - 引擎定义
 
 时序聚合引擎定义：
 
@@ -387,13 +370,13 @@ share streamTable(100:0, `datetime`source`type`metric,[TIMESTAMP,SYMBOL,INT,STRI
 - 引擎输出：流表 srms
 - 计算规则：聚合函数 rms
 
-时序序列聚合引擎按定义的规则对窗口进行聚合计算。规则一般按元代码的形式进行定义。本案例将 rms 函数作为一个聚合函数，计算过去2分钟内振动信号的均方根值，并返回 rmsAcc、rmsVel、rmsDis。下面代码即是元代码形式的规则。更多元编程相关内容请参考 [元编程 — DolphinDB 2.0 文档](https://www.dolphindb.cn/cn/help/Objects/Metaprogramming.html?highlight=metacode) 。
+时序序列聚合引擎按定义的规则对窗口进行聚合计算。规则一般按元代码的形式进行定义。本案例将 rms 函数作为一个聚合函数，计算过去 2 分钟内振动信号的均方根值，并返回 rmsAcc、rmsVel、rmsDis。下面代码即是元代码形式的规则。更多元编程相关内容请参考 [元编程 — DolphinDB 2.0 文档](https://www.dolphindb.cn/cn/help/Objects/Metaprogramming.html?highlight=metacode) 。
 
 ```
 metrics=<[rms(signalnose,N,sensitivity,gain,window, noverlap, nfft, fs,bandwidthL,bandwidthH) as `rmsAcc`rmsVel`rmsDis]>
 ```
 
-接着再定义时序聚合引擎 tsAggr1，窗口大小为2分钟，步长为2分钟，对不同设备进行分组计算。
+接着再定义时序聚合引擎 tsAggr1，窗口大小为 2 分钟，步长为 2 分钟，对不同设备进行分组计算。
 
 ```
 tsAggr1 = createTimeSeriesAggregator(name="tsAggr1",  windowSize=2*60*1000, step=2*60*1000, metrics=metrics, dummyTable=signal, outputTable=srms, timeColumn=`timestamp, keyColumn=`source)
@@ -405,13 +388,13 @@ tsAggr1 = createTimeSeriesAggregator(name="tsAggr1",  windowSize=2*60*1000, ste
 - 引擎输出：流表 warn
 - 检测规则：rmsAcc > 0.055, rmsVel >0.32, rmsDis > 34.5
 
-异常检测引擎与时序序列聚合引擎的使用方式基本相同，但需给出检测规则。下面是引擎tsAggr2的定义。
+异常检测引擎与时序序列聚合引擎的使用方式基本相同，但需给出检测规则。下面是引擎 tsAggr2 的定义。
 
 ```
 tsAggr2 = createAnomalyDetectionEngine(name="tsAggr2", metrics=<[rmsAcc > 0.055, rmsVel >0.32, rmsDis > 34.5]>, dummyTable=srms, outputTable=warn, timeColumn=`datetime, keyColumn=`source, windowSize=2*60*1000, step=2*60*1000)
 ```
 
-更多时序序列数据聚合引擎和异常检测引擎相关内容请参考：[DolphinDB教程：流数据时序引擎](https://gitee.com/dolphindb/Tutorials_CN/blob/master/stream_aggregator.md) ，[流数据引擎 — DolphinDB 2.0 文档](https://www.dolphindb.cn/cn/help/FunctionsandCommands/SeriesOfFunctions/streamingEngine.html) 
+更多时序序列数据聚合引擎和异常检测引擎相关内容请参考：[DolphinDB 教程：流数据时序引擎](https://gitee.com/dolphindb/Tutorials_CN/blob/master/stream_aggregator.md) ，[流数据引擎 — DolphinDB 2.0 文档](https://www.dolphindb.cn/cn/help/FunctionsandCommands/SeriesOfFunctions/streamingEngine.html) 
 
 #### 4.4.3 数据的订阅
 
@@ -434,7 +417,7 @@ def saveSrmsToDFS(mutable dfsRMS, msg){
 subscribeTable(tableName="srms", actionName="act_saveDfs1", offset=-1, handler=saveSrmsToDFS{pt_rms}, msgAsTable=true, batchSize=10000, throttle=1);
 ```
 
-tsAggr2 订阅 srms 表，订阅后实时数据会不断输送到异常检测引擎 tsAggr2 中，引擎再将计算结果输出到表warn中。
+tsAggr2 订阅 srms 表，订阅后实时数据会不断输送到异常检测引擎 tsAggr2 中，引擎再将计算结果输出到表 warn 中。
 
 ```
 subscribeTable(tableName="srms", actionName="act_tsAggr2", offset=0, handler=append!{tsAggr2}, msgAsTable=true);
@@ -467,7 +450,7 @@ DolphinDB 开发了 Grafana 数据源插件 (dolphindb-datasource)，让用户�
 
 #### 4.5.1 查看功率谱密度
 
-在调用 Grafana 查看功率谱密度前需要将功率密度谱写入共享表 psd 中。下面的代码展示单独调用 pwelch 函数，计算传感器1的功率谱密度并将其存入共享表 psd 中。这样就方便后续 Grafana 调用。
+在调用 Grafana 查看功率谱密度前需要将功率密度谱写入共享表 psd 中。下面的代码展示单独调用 pwelch 函数，计算传感器 1 的功率谱密度并将其存入共享表 psd 中。这样就方便后续 Grafana 调用。
 
 ```
 data = select * from signal where source = `channel1  and timestamp >= 2023.01.29 03:54:21.652 and timestamp <= 2023.01.29 03:56:21.652	//通道1的振动信号数据
@@ -484,9 +467,9 @@ share table(res_[1] as f, res_[0] as psdvalue) as psd
 select f, psdvalue from psd and f >= 0 and f <= 512
 ```
 
-该句代码用于查看传感器1的加速度功率谱密度，前面已经说明本文中 pwelch 函数获得的频率范围为0~512HZ，在查询时可调整 f 的范围来进行查看. 加速度功率谱密度的单位为 $(m^2/s^4)/HZ$ ，或者为 $m^2/s^3$ 。
+该句代码用于查看传感器 1 的加速度功率谱密度，前面已经说明本文中 pwelch 函数获得的频率范围为 0~512HZ，在查询时可调整 f 的范围来进行查看。加速度功率谱密度的单位为 $(m^2/s^4)/HZ$ ，或者为 $m^2/s^3$ 。
 
-![传感器1的功率谱密度](./images/Random_Vibration_Signal_Analysis_Solution/ch4_5_1_001.png)
+![传感器 1 的功率谱密度](./images/Random_Vibration_Signal_Analysis_Solution/ch4_5_1_001.png)
 
 #### 4.5.2 查看功率谱密度均方根
 
@@ -498,11 +481,11 @@ select datetime, rmsAcc, rmsVel, rmsDis from srms where source == "channel1"
 
 在 Grafana 中国设置三个纵坐标，分别代表 rmsAcc, rmsVel, rmsDis，设置方法如下：
 
-![设置3个纵坐标](./images/Random_Vibration_Signal_Analysis_Solution/ch4_5_2_001.png)
+![设置 3 个纵坐标](./images/Random_Vibration_Signal_Analysis_Solution/ch4_5_2_001.png)
 
-该句代码用于查看传感器1在2023.01.29 03:54:21.652~2023.01.29 04:04:21.652这10分钟内的加速度均方根、速度均方根、位移均方根：
+该句代码用于查看传感器 1 在 2023.01.29 03:54:21.652~2023.01.29 04:04:21.652 这 10 分钟内的加速度均方根、速度均方根、位移均方根：
 
-![传感器1的 rms 图](./images/Random_Vibration_Signal_Analysis_Solution/ch4_5_2_002.png)
+![传感器 1 的 rms 图](./images/Random_Vibration_Signal_Analysis_Solution/ch4_5_2_002.png)
 
 ### 4.6 报警分析
 
@@ -512,7 +495,7 @@ select datetime, rmsAcc, rmsVel, rmsDis from srms where source == "channel1"
 
 ![传感器 1 的 rms 值](./images/Random_Vibration_Signal_Analysis_Solution/ch4_6_0_001.png)
 
-再查看 warn 表，返回结果如下，有9条报警数据：
+再查看 warn 表，返回结果如下，有 9 条报警数据：
 
 ![传感器 1 的报警信息](./images/Random_Vibration_Signal_Analysis_Solution/ch4_6_0_002.png)
 
@@ -520,34 +503,34 @@ select datetime, rmsAcc, rmsVel, rmsDis from srms where source == "channel1"
 
 ## 总结
 
-随着工业物联网场景下，设备数量、成本的逐步提升，自动化检测分析技术也需要不断提高。而 DolphinDB不仅拥有极佳的计算性能，还拥有高效的第三方插件，可以帮助使用者解决数据计算分析到结果展示的所有环节。相信使用者在阅读完本篇文章后，会对 DolphinDB 的物联网解决方案有更深刻的了解。
+随着工业物联网场景下，设备数量、成本的逐步提升，自动化检测分析技术也需要不断提高。而 DolphinDB 不仅拥有极佳的计算性能，还拥有高效的第三方插件，可以帮助使用者解决数据计算分析到结果展示的所有环节。相信使用者在阅读完本篇文章后，会对 DolphinDB 的物联网解决方案有更深刻的了解。
 
 
 ### 注释
 
-[注1]随机振动
+[注 1]随机振动
 
 随机振动指那些无法用确定性函数来描述，但又有一定统计规律的振动。例如，车辆行进中的颠簸，阵风作用下结构的响应，喷气噪声引起的舱壁颤动以及海上钻井平台发生的振动，等等。
 
 振动可分为定则（确定性）振动和随机振动两大类。它们的本质差别在于：随机振动一般指的不是单个现象，而是大量现象的集合。这些现象似乎是杂乱的，但从总体上看仍有一定的统计规律。因此，随机振动虽然不能用确定性函数描述，却能用统计特性来描述。在定则振动问题中可以考察系统的输出和输入之间的确定关系；而在随机振动问题中就只能确定输出和输入之间的统计特性关系。
 
 
-[注2]流数据
+[注 2]流数据
 
 流数据是指业务系统产生的持续增长的动态数据。实时流数据处理是指将业务系统产生的持续增长的动态数据进行实时的收集、清洗、统计、入库，并对结果进行实时的展示。
 
 
-[注3]单值模型 
+[注 3]单值模型 
 
 单值模型表示一条监测记录只对应一个指标的数据。多值模型一条监测记录可以对应多个指标的数据。
 
 
-[注4]数据落盘
+[注 4]数据落盘
 
 表示将储存在内存中的数据写入分布式数据库中。
 
 
-[注5]持久化
+[注 5]持久化
 
 将内存中的数据保存到硬盘中，使得数据在设备或程序重启后不会丢失，可继续使用。默认情况下，流数据表将数据保存在内存中，可通过配置将流数据表持久化。基于以下三点考量，可将流数据持久化到磁盘。
 
@@ -563,4 +546,4 @@ select datetime, rmsAcc, rmsVel, rmsDis from srms where source == "channel1"
 
 ③《风电功率预测技术与实力分析》
 
-④《MATLAB 2020信号处理从入门到精通》
+④《MATLAB 2020 信号处理从入门到精通》
