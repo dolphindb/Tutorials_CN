@@ -33,7 +33,6 @@
   - [数据导入教程](import_data.md)
   - [数据备份恢复教程(1.30.20/2.00.8及以后版本)](backup-restore-new.md)
   - [数据备份恢复教程(1.30.20/2.00.8以前版本)](restore-backup.md)
-  - [动态增加字段和计算指标](add_column.md)
   - [内存表数据加载与操作](partitioned_in_memory_table.md)
   - [文本数据加载教程](import_csv.md)
   - [集群间数据库同步](data_synchronization_between_clusters.md)
@@ -227,6 +226,8 @@
     - [基于 DolphinDB 存储金融数据的分区方案最佳实践](best_practices_for_partitioned_storage.md)
     - [DolphinDB INSIGHT 行情插件最佳实践指南](insight_plugin.md)
   - 物联网：
+    - [物联网应用范例](iot_examples.md)
+    - [实时检测传感器状态变化](DolphinDB_streaming_application_in_IOT.md)
     - [DolphinDB在工业物联网的应用](iot_demo.md)
     - [物联网时序数据查询案例](iot_query_case.md)
     - [DolphinDB流计算引擎实现传感器数据异常检测](iot_anomaly_detection.md)
@@ -240,7 +241,10 @@
     - [使用 DolphinDB 和机器学习对地震波形数据进行预测](Earthquake_Prediction_with_DolphinDB_and_Machine_Learning.md)
     - [PIP 降采样算法文章](PIP_in_DolphinDB.md)
     - [使用 Node-RED 构建 DolphinDB 低代码平台](node_red_tutorial_iot.md)
+    - [动态增加字段和计算指标](add_column.md)
     - [DolphinDB基于Glibc升级的性能优化实战案例](performance_optimization_based_on_glibc.md)
+    - [工业试验平台高频数据的存储和处理分析](high_freq_data_storage_and_analysis.md)
+    - [助力工业物联网实现智能运维](Iot_intelligent_O&M.md)
 
 - 入门和测试
 
