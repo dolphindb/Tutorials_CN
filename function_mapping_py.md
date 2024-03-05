@@ -1,22 +1,27 @@
-# Python 函数到 DolphinDB 函数的映射 <!-- omit in toc -->
+# Python 到 DolphinDB 的函数映射
 
-> 注意：本篇仅介绍 Python 部分模块到 DolphinDB 函数库的不完全映射。如发现错误或需要补充相关内容，可以在下方评论或联系我们！联系方式可参考 [ DolphinDB技术支持攻略](https://gitee.com/dolphindb/Tutorials_CN/blob/master/dolphindb_support.md)。
+本篇介绍 Python 部分模块到 DolphinDB 函数库的不完全映射。
 
-DolphinDB 函数选取自 2.00 版本 [用户手册](https://www.dolphindb.cn/cn/help/index.html)。
+下文涉及的 python 模块如下：
 
-本文涉及的 python 模块如下：
+- python built-in function
+- numpy
+- pandas
+- scipy
+- statsmodels
+- sklearn
+- TA-lib
 
-<!-- vscode-markdown-toc -->
-* [python built-in function](#pythonbuilt-infunction)
-* [numpy](#numpy)
-* [pandas](#pandas)
-* [scipy](#scipy)
-* [statsmodels](#statsmodels)
-* [sklearn](#sklearn)
-* [TA-lib](#TA-lib)
+- [Python 到 DolphinDB 的函数映射](#python-到-dolphindb-的函数映射)
+  - [1.  python built-in function](#1--python-built-in-function)
+  - [2.  numpy](#2--numpy)
+  - [3.  pandas](#3--pandas)
+  - [4.  scipy](#4--scipy)
+  - [5.  statsmodels](#5--statsmodels)
+  - [6.  sklearn](#6--sklearn)
+  - [7.  TA-lib](#7--ta-lib)
 
-
-##  1. <a name='pythonbuilt-infunction'></a>python built-in function 
+## 1.  python built-in function 
 
 | Python 函数 | DolphinDB 函数 |
 | ----------- | -------------- |
@@ -47,7 +52,7 @@ DolphinDB 函数选取自 2.00 版本 [用户手册](https://www.dolphindb.cn/cn
 
 
 
-##  2. <a name='numpy'></a>numpy
+## 2.  numpy
 
 | numpy 函数                                               | DolphinDB 函数              |
 | -------------------------------------------------------- | --------------------------- |
@@ -85,11 +90,11 @@ DolphinDB 函数选取自 2.00 版本 [用户手册](https://www.dolphindb.cn/cn
 | nump.random.normal                                       | norm                        |
 | nump.clip                                                | winsorize                   |
 
-##  3. <a name='pandas'></a>pandas
+## 3.  pandas
 
 | pandas 函数                                                  | DolphinDB 函数          |
 | ------------------------------------------------------------ | ----------------------- |
-| df[column]                                                   | at                      |
+| df\[column]                                                   | at                      |
 | pandas.Series.loc / pandas.DataFrame.loc                     | loc                     |
 | pandas.Series.iat / pandas.DataFrame.iat                     | cell                    |
 | pandas.Series.iloc / pandas.DataFrame.iloc                   | cells                   |
@@ -189,12 +194,12 @@ DolphinDB 函数选取自 2.00 版本 [用户手册](https://www.dolphindb.cn/cn
 
 
 
-##  4. <a name='scipy'></a>scipy
+## 4.  scipy
 
 | scipy 函数                                               | DolphinDB 函数              |
 | -------------------------------------------------------- | --------------------------- |
 | scipy.stats.percentileofscore                            | percentileRank              |
-| scipy.stats.spearmanr(X, Y)[0]                           | spearmanr(X, Y)             |
+| scipy.stats.spearmanr(X, Y)\[0]                           | spearmanr(X, Y)             |
 | scipy.spatial.distance.euclidean                         | euclidean                   |
 | scipy.stats.beta.cdf(X, a, b)                            | cdfBeta(a, b, X)            |
 | scipy.stats.binom.cdf(X, trials, p)                      | cdfBinomial(trials, p, X)   |
@@ -235,7 +240,7 @@ DolphinDB 函数选取自 2.00 版本 [用户手册](https://www.dolphindb.cn/cn
 
 
 
-##  5. <a name='statsmodels'></a>statsmodels
+## 5.  statsmodels
 
 | statsmodels 函数                       | DolphinDB 函数 |
 | -------------------------------------- | -------------- |
@@ -247,7 +252,7 @@ DolphinDB 函数选取自 2.00 版本 [用户手册](https://www.dolphindb.cn/cn
 | statsmodels.regression.linear_model.OLS                 | olsolsEx               |
 | statsmodels.regression.linear_model.WLS                 | wls                    |
 
-##  6. <a name='sklearn'></a>sklearn
+## 6.  sklearn
 
 | sklearn 函数                                            | DolphinDB 函数         |
 | ------------------------------------------------------- | ---------------------- |
@@ -270,7 +275,7 @@ DolphinDB 函数选取自 2.00 版本 [用户手册](https://www.dolphindb.cn/cn
 
 
 
-##  7. <a name='TA-lib'></a>TA-lib
+## 7.  TA-lib
 
 | TA-lib 函数                                       | DolphinDB 函数  |
 | ------------------------------------------------- | --------------- |
@@ -286,6 +291,4 @@ DolphinDB 函数选取自 2.00 版本 [用户手册](https://www.dolphindb.cn/cn
 | talib.LINEARREG_SLOPE / talib.LINEARREG_INTERCEPT | linearTimeTrend |
 | talib.TRANGE                                      | trueRange       |
 
-以上仅列出 DolphinDB 的内置的 TA-lib 函数。
-
-更多 TA-lib 指标函数请参考 DolphinDB 的 [ta 模块](../../../DolphinDBModules/tree/master/ta)。
+以上仅列出 DolphinDB 的内置的 TA-lib 函数。有关 TA-lib 指标函数的更多详细信息，参考 [DolphinDB 的 ta-lib 模块](../modules/ta/ta.md)。

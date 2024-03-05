@@ -1,4 +1,4 @@
-# DolphinDB窗口计算综述
+# DolphinDB 教程：窗口计算
 
 在时序处理中经常需要使用窗口计算。DolphinDB 提供了强大的窗口计算函数，既可以处理数据表(使用 SQL 语句)，又可处理矩阵，在流式计算中亦可使用。第2-4章分别对这三种情况进行详细解释。
 
@@ -8,33 +8,42 @@ DolphinDB 的窗口函数在使用上十分灵活，可嵌套多个内置或自�
 
 DolphinDB 1.30.15，2.00.3及以上版本支持本篇所有代码。此外,1.30.7，2.00.0以上版本支持绝大部分代码，细节部分会在小节内部详细说明。
 
-- [1. 窗口的概念及分类](#1-窗口的概念及分类)
-  - [1.1 滚动窗口](#11-滚动窗口)
-  - [1.2 滑动窗口](#12-滑动窗口)
-  - [1.3 累计窗口](#13-累计窗口)
-  - [1.4 会话窗口](#14-会话窗口)
-- [2. 对数据表使用窗口计算（使用 SQL 语句）](#2-对数据表使用窗口计算使用-sql-语句)
-  - [2.1 滚动窗口](#21-滚动窗口)
-  - [2.2 滑动窗口](#22-滑动窗口)
-  - [2.3 累计窗口](#23-累计窗口)
-  - [2.4 segment 窗口](#24-segment-窗口)
-  - [2.5 窗口连接计算](#25-窗口连接计算)
-- [3.对矩阵使用窗口计算](#3对矩阵使用窗口计算)
-  - [3.1 矩阵的滑动窗口计算](#31-矩阵的滑动窗口计算)
-  - [3.2 矩阵的累计窗口计算](#32-矩阵的累计窗口计算)
-- [4.流式数据的窗口计算](#4流式数据的窗口计算)
-  - [4.1 滚动窗口在流计算中的应用](#41-滚动窗口在流计算中的应用)
-  - [4.2 滑动、累计窗口在流计算中的应用](#42-滑动累计窗口在流计算中的应用)
-  - [4.3 会话窗口引擎](#43-会话窗口引擎)
-- [5.窗口计算的空值处理规则](#5窗口计算的空值处理规则)
-  - [5.1 moving，m 系列函数，tm 系列函数以及 cum 系列函数的空值处理](#51-movingm-系列函数tm-系列函数以及-cum-系列函数的空值处理)
-  - [5.2 `rolling` 的空值处理](#52-rolling-的空值处理)
-- [6. 常用指标的计算复杂度](#6-常用指标的计算复杂度)
-- [7. 涉及到窗口计算的函数](#7-涉及到窗口计算的函数)
-- [8. 总结](#8-总结)
-
-
-
+- [DolphinDB 教程：窗口计算](#dolphindb-教程窗口计算)
+  - [1. 窗口的概念及分类](#1-窗口的概念及分类)
+    - [1.1. 滚动窗口](#11-滚动窗口)
+    - [1.2. 滑动窗口](#12-滑动窗口)
+    - [1.3. 累计窗口](#13-累计窗口)
+    - [1.4. 会话窗口](#14-会话窗口)
+      - [1.4.1. segment 窗口](#141-segment-窗口)
+  - [2. 对数据表使用窗口计算（使用 SQL 语句）](#2-对数据表使用窗口计算使用-sql-语句)
+    - [2.1. 滚动窗口](#21-滚动窗口)
+      - [2.1.1. 时间维度的滚动窗口](#211-时间维度的滚动窗口)
+      - [2.1.2. 记录数维度的滚动窗口](#212-记录数维度的滚动窗口)
+    - [2.2. 滑动窗口](#22-滑动窗口)
+      - [2.2.1. 步长为1行，窗口长度为 n 行](#221-步长为1行窗口长度为-n-行)
+      - [2.2.2. 步长为1行，窗口为指定时间长度](#222-步长为1行窗口为指定时间长度)
+      - [2.2.3. 步长为 n 行，窗口为 m 行](#223-步长为-n-行窗口为-m-行)
+      - [2.2.4. 步长为指定时间长度，窗口为 n 个步长时间](#224-步长为指定时间长度窗口为-n-个步长时间)
+    - [2.3. 累计窗口](#23-累计窗口)
+      - [2.3.1. 步长为1行](#231-步长为1行)
+      - [2.3.2. 步长为指定时间长度](#232-步长为指定时间长度)
+    - [2.4. segment 窗口](#24-segment-窗口)
+    - [2.5. 窗口连接计算](#25-窗口连接计算)
+  - [3. 对矩阵使用窗口计算](#3-对矩阵使用窗口计算)
+    - [3.1. 矩阵的滑动窗口计算](#31-矩阵的滑动窗口计算)
+      - [3.1.1. 步长为1行，窗口为n行](#311-步长为1行窗口为n行)
+      - [3.1.2. 步长为1行，窗口为指定时间](#312-步长为1行窗口为指定时间)
+    - [3.2. 矩阵的累计窗口计算](#32-矩阵的累计窗口计算)
+  - [4. 流式数据的窗口计算](#4-流式数据的窗口计算)
+    - [4.1. 滚动窗口在流计算中的应用](#41-滚动窗口在流计算中的应用)
+    - [4.2. 滑动、累计窗口在流计算中的应用](#42-滑动累计窗口在流计算中的应用)
+    - [4.3. 会话窗口引擎](#43-会话窗口引擎)
+  - [5. 窗口计算的空值处理规则](#5-窗口计算的空值处理规则)
+    - [5.1. moving，m 系列函数，tm 系列函数以及 cum 系列函数的空值处理](#51-movingm-系列函数tm-系列函数以及-cum-系列函数的空值处理)
+    - [5.2. `rolling` 的空值处理](#52-rolling-的空值处理)
+  - [6. 常用指标的计算复杂度](#6-常用指标的计算复杂度)
+  - [7. 涉及到窗口计算的函数](#7-涉及到窗口计算的函数)
+  - [8. 总结](#8-总结)
 
 ## 1. 窗口的概念及分类
 
@@ -42,7 +51,7 @@ DolphinDB 内有五种窗口，分别是：滚动窗口、滑动窗口、累计�
 
 在 DolphinDB 中，窗口的度量标准有两种：数据记录数和时间。
 
-### 1.1 滚动窗口
+### 1.1. 滚动窗口
 
 滚动窗口长度固定，且相邻两个窗口没有重复的元素。
 
@@ -52,15 +61,15 @@ DolphinDB 内有五种窗口，分别是：滚动窗口、滑动窗口、累计�
 
 图1-1-1 指定窗口长度为3行记录，横坐标以时间为单位。从图上可以看出，按每三行记录划分为了一个窗口，窗口之间的元素没有重叠。  
 
-<img src="./images/Window_Calculations_in_DolphinDB/1_1_1.png" width=40%>
+<img src="images/Window_Calculations_in_DolphinDB/1_1_1.png" width=40%>
 
 * **以时间划分窗口**
 
-图1-1-2 指定窗口大小为3个时间单位，横坐标以时间为单位。从图上可以看出，按每三个时间单位划分一个窗口，窗口之间的元素没有重叠 ，且窗口内的记录数是不固定的。
+下图指定窗口大小为3个时间单位，横坐标以时间为单位。从图上可以看出，按每三个时间单位划分一个窗口，窗口之间的元素没有重叠 ，且窗口内的记录数是不固定的。
 
-<img src="./images/Window_Calculations_in_DolphinDB/1_1_2.png" width=40%>
+<img src="images/Window_Calculations_in_DolphinDB/1_1_2.png" width=40%>
 
-### 1.2 滑动窗口
+### 1.2. 滑动窗口
 
 滑动窗口，即指定长度的窗口根据步长进行滑动。与滚动窗口不同，滑动窗口相邻两个窗口可能包括重复的元素。滑动窗口的窗口长度与步长既可为记录数，亦可为时间长度。
 
@@ -70,24 +79,24 @@ DolphinDB 内有五种窗口，分别是：滚动窗口、滑动窗口、累计�
 
 图1-2-1 指定窗口大小为6行记录，窗口每次向后滑动1行记录。
 
-<img src="./images/Window_Calculations_in_DolphinDB/1_2_1.png" width=42%>
+<img src="images/Window_Calculations_in_DolphinDB/1_2_1.png" width=42%>
 
 * **以时间划分窗口**
   * **步长为1行**
   
   图1-2-2 指定窗口大小为3个时间单位，窗口以右边界为基准进行前向计算，窗口每次向后滑动1行记录。
   
-  <img src="./images/Window_Calculations_in_DolphinDB/1_2_2.png" width=42%>
+  <img src="images/Window_Calculations_in_DolphinDB/1_2_2.png" width=42%>
   
   * **步长为指定时间长度**  
 
 
   图1-2-3 指定窗口大小为4个时间单位，每次向后滑动2个时间单位。
 
-  <img src="./images/Window_Calculations_in_DolphinDB/1_2_3.png" width=45%>
+  <img src="images/Window_Calculations_in_DolphinDB/1_2_3.png" width=45%>
 
 
-### 1.3 累计窗口
+### 1.3. 累计窗口
 
 累计窗口，即窗口的起始边界固定，结束边界不断右移，因此窗口长度不断增加。
 累计窗口根据度量标准的不同可以分为2种：
@@ -96,33 +105,33 @@ DolphinDB 内有五种窗口，分别是：滚动窗口、滑动窗口、累计�
 
 图1-3-1 窗口右边界每次右移1行，窗口大小累计增加。
 
-<img src="./images/Window_Calculations_in_DolphinDB/1_3_1.png" width=40%>
+<img src="images/Window_Calculations_in_DolphinDB/1_3_1.png" width=40%>
 
 * **步长为指定时间长度**
 
 图1-3-2 窗口右边界每次右移2个时间单位，窗口大小累计增加。
 
-<img src="./images/Window_Calculations_in_DolphinDB/1_3_2.png" width=42%>
+<img src="images/Window_Calculations_in_DolphinDB/1_3_2.png" width=42%>
 
-### 1.4 会话窗口
+### 1.4. 会话窗口
 
 会话窗口之间的切分，是依据某段时长的空白：若某条数据之后指定时间长度内无数据进入，则该条数据为一个窗口的终点，之后第一条新数据为下一个窗口的起点。会话窗口的窗口长度可变。
 
-<img src="./images/Window_Calculations_in_DolphinDB/1_4.png" width=42%>
+<img src="images/Window_Calculations_in_DolphinDB/1_4.png" width=42%>
 
-#### 1.5 segment 窗口
+#### 1.4.1. segment 窗口
 
 segment 窗口根据连续的相同元素切分窗口。其窗口长度可变。
 
-<img src="./images/Window_Calculations_in_DolphinDB/1_5.png" width=57%>
+<img src="images/Window_Calculations_in_DolphinDB/1_5.png" width=57%>
 
 ## 2. 对数据表使用窗口计算（使用 SQL 语句）
 
 本章将介绍 DolphinDB 在 SQL 中的窗口计算：滚动窗口、滑动窗口、累计窗口，segment 窗口，以及窗口连接。
 
-### 2.1 滚动窗口
+### 2.1. 滚动窗口
 
-#### 2.1.1 时间维度的滚动窗口
+#### 2.1.1. 时间维度的滚动窗口
 
 在SQL中，可使用 `interval`, `bar`, `dailyAlignedBar` 等函数配合 `group by` 语句实现滚动窗口的聚合计算。
 
@@ -218,7 +227,7 @@ bar_time            contract price
 2021.01.01T01:00:10 CLF1     57    
 ```
 
-#### 2.1.2 记录数维度的滚动窗口
+#### 2.1.2. 记录数维度的滚动窗口
 
 除了时间维度可以做滚动窗口计算之外，记录数维度也可以做滚动窗口计算。在股票市场临近收盘的时候，往往一分钟之内的交易量、笔数是非常大的，做策略时如果单从时间维度去触发可能会导致偏差。因此分析师有时会想要从每100笔交易而非每一分钟的角度去做策略，这个时候就可以用 `rolling` 函数实现。
 
@@ -255,17 +264,17 @@ last_time               sym vol_100_sum
 2021.01.05T03:00:00.000	CL	25,150
 ```
 
-### 2.2 滑动窗口
+### 2.2. 滑动窗口
 
 使用滑动窗口处理表数据有以下四种情况：
 
-#### 2.2.1 步长为1行，窗口长度为 n 行
+#### 2.2.1. 步长为1行，窗口长度为 n 行
 
 此类情况可使用 m 系列函数，`moving `函数，或者 `rolling` 函数。
 
-从1.30.16/2.00.4版本开始，亦可使用 [`window`](https://www.dolphindb.cn/cn/help/Functionalprogramming/TemplateFunctions/window.html) 函数。`window` 函数与 `moving` 函数类似，均为高阶函数，不同的是，`window` 函数更为灵活，不同于 `moving` 函数的窗口右边界是固定的， `window` 函数的左右边界均可自由设定。
+从1.30.16/2.00.4版本开始，亦可使用 [`window`](../funcs/ho_funcs/window.dita) 函数。`window` 函数与 `moving` 函数类似，均为高阶函数，不同的是，`window` 函数更为灵活，不同于 `moving` 函数的窗口右边界是固定的， `window` 函数的左右边界均可自由设定。
 
-下面以[`msum`](https://www.dolphindb.cn/cn/help/130/FunctionsandCommands/FunctionReferences/m/msum.html)为例，滑动计算窗口长度为5行的vol值之和。
+下面以[`msum`](../funcs/m/msum.dita)为例，滑动计算窗口长度为5行的vol值之和。
 
 ```
 t=table(2021.11.01T10:00:00 + 0 1 2 5 6 9 10 17 18 30 as time, 1..10 as vol)
@@ -284,7 +293,7 @@ time                vol msum_vol
 ...
 ```
 
-DolphinDB SQL可以通过 `context by` 对各个不同的 symbol 在组内进行窗口计算。`context by` 是DolphinDB 独有的功能，是对标准 SQL 语句的拓展，具体其他用法参照：[`context by`](https://www.dolphindb.cn/cn/help/SQLStatements/contextBy.html)
+DolphinDB SQL可以通过 `context by` 对各个不同的 symbol 在组内进行窗口计算。`context by` 是DolphinDB 独有的功能，是对标准 SQL 语句的拓展，具体其他用法参照：[`context by`](../progr/sql/contextBy.dita)
 
 ```
 t=table(2021.11.01T10:00:00 + 0 1 2 5 6 9 10 17 18 30 join 0 1 2 5 6 9 10 17 18 30 as time, 1..20 as vol, take(`A,10) join take(`B,10) as sym)
@@ -315,7 +324,7 @@ m 系列函数是经过优化的窗口函数，如果想要使用自定义函数
 t = table(take(`IBM, 100) as code, 2020.01.01 + 1..100 as date, rand(100,100) + 20 as volume, rand(10,100) + 100.0 as close)
 
 //1.30.15及以上版本可以用一行代码实现
-//moving 支持用户使用自定义匿名聚合函数(https://www.dolphindb.cn/cn/help/130/Functionalprogramming/AnonymousFunction.html)
+//moving 支持用户使用自定义匿名聚合函数
 select code, date, moving(defg(vol, close){return close[isort(vol, false).subarray(0:min(5,close.size()))].avg()}, (volume, close), 20) from t context by code 
 
 //其他版本可以用自定义命名聚合函数实现：
@@ -357,11 +366,11 @@ input = select trade_date,ts_code,amount*1000/(vol*100 + 1) as vwap,vol,open fro
 timer alpha98DDBSql = alpha98SQL(input)
 ```
 
-#### 2.2.2 步长为1行，窗口为指定时间长度
+#### 2.2.2. 步长为1行，窗口为指定时间长度
 
 此类情况可使用 tm 系列或者 tmoving 系列函数。
 
-从1.30.16/2.00.4版本开始，亦可使用 [`twindow`](https://www.dolphindb.cn/cn/help/Functionalprogramming/TemplateFunctions/twindow.html) 函数。`twindow` 函数与 `tmoving` 函数类似，均为高阶函数，不同的是，`twindow` 函数更为灵活，不同于 `tmoving` 函数的窗口右边界是固定的， `twindow` 函数的左右边界均可自由设定。
+从1.30.16/2.00.4版本开始，亦可使用 [`twindow`](../funcs/ho_funcs/twindow.dita) 函数。`twindow` 函数与 `tmoving` 函数类似，均为高阶函数，不同的是，`twindow` 函数更为灵活，不同于 `tmoving` 函数的窗口右边界是固定的， `twindow` 函数的左右边界均可自由设定。
 
 下面以```tmsum```为例，计算滑动窗口长度为5秒的 vol 值之和。
 
@@ -385,11 +394,11 @@ time                vol tmsum_time
 2021.11.01T10:00:30 10  10  
 ```
 
-实际场景中，计算历史分位的时候也会广泛运用到这类情况的窗口计算，具体在[3.1.1](#311-步长为1行窗口为n行)介绍。
+实际场景中，计算历史分位的时候也会广泛运用到这类情况的窗口计算，具体在[步长为1行窗口为n行](#步长为1行窗口为n行)这一小节介绍。
 
-#### 2.2.3  步长为 n 行，窗口为 m 行
+#### 2.2.3. 步长为 n 行，窗口为 m 行
 
-此类情况可使用高阶函数 [`rolling`](https://www.dolphindb.cn/cn/help/Functionalprogramming/TemplateFunctions/rolling.html?highlight=rolling)。
+此类情况可使用高阶函数 [`rolling`](../funcs/ho_funcs/rolling.dita)。
 
 下面的例子计算步长为3行，窗口长度为6行的 vol 值之和。与 `interval` 函数不同的是，`rolling` 不会对缺失值进行插值，如果窗口内的元素个数不足窗口大小，该窗口不会被输出。 该例子中，数据一共是10条，在前两个窗口计算完之后，第三个窗口因为只有4条数据，所以不输出第三个窗口的结果。
 
@@ -405,7 +414,7 @@ last_time           sum_vol
 2021.11.01T10:00:20 39
 ```
 
-#### 2.2.4 步长为指定时间长度，窗口为 n 个步长时间
+#### 2.2.4. 步长为指定时间长度，窗口为 n 个步长时间
 
 此类情况可使用 `interval` 函数配合 `group by` 语句。下面的例子以5秒为窗口步长，10秒为窗口长度，计算 vol 值之和。
 
@@ -429,11 +438,11 @@ interval_time       sum_vol
 
 2.1.1.1中 interval 的场景可以看作是窗口长度与步长相等的特殊的滑动窗口，而本节则是窗口长度为 n 倍步长时间的滑动窗口。
 
-### 2.3 累计窗口
+### 2.3. 累计窗口
 
 累计窗口有两种情况：一种是步长是1行，另一种是步长为指定时间长度。
 
-#### 2.3.1 步长为1行
+#### 2.3.1. 步长为1行
 
 步长为1行的累计窗口计算在 SQL 中通常直接用 `cum` 系列函数。下面是累计求和 `cumsum` 的例子：
 
@@ -479,7 +488,7 @@ time                vol sym cumsum_vol
 2021.11.01T10:00:30 20  B   155       
 ```
 
-#### 2.3.2 步长为指定时间长度
+#### 2.3.2. 步长为指定时间长度
 
 要在SQL中实现步长为指定时间长度的累计窗口计算，可以使用 `bar` 函数搭配 `cgroup by` 来实现。
 
@@ -496,7 +505,7 @@ time                sum_vol
 2021.11.01T10:00:10 55  
 ```
 
-### 2.4 segment 窗口
+### 2.4. segment 窗口
 
 以上所有例子中，窗口大小均固定。在 DolphinDB 中亦可将连续的相同元素作为一个窗口，用 `segment `来实现。实际场景中，`segment` 经常用于逐笔数据中。
 
@@ -526,13 +535,13 @@ vol order_type cumsum_vol
 0.2 2          0.2  
 ```
 
-### 2.5 窗口连接计算
+### 2.5. 窗口连接计算
 
 在 DolphinDB 中，除了常规的窗口计算之外，还支持窗口连接计算。即在表连接的同时，进行窗口计算。可以通过  `wj` 和 `pwj` 函数来实现 。
 
 `window join` 基于左表每条记录的时间戳，确定一个时间窗口，并计算对应时间窗口内右表的数据。左表每滑动一条记录，都会与右表窗口计算的结果连接。因为窗口的左右边界均可以指定，也可以为负数，所以也可以看作非常灵活的滑动窗口。
 
-详细用法参见用户手册 [`window join`](https://www.dolphindb.cn/cn/help/SQLStatements/TableJoiners/windowjoin.html?highlight=window)。
+详细用法参见用户手册 [`window join`](../progr/sql/windowjoin.dita)。
 
 ```
 //data
@@ -607,13 +616,13 @@ sym time     bid   offer volume avg_bid
 ```
 
 
-## 3.对矩阵使用窗口计算
+## 3. 对矩阵使用窗口计算
 
 表的窗口计算在前一章节已经描述，所以在这一章节中着重讨论矩阵的计算。
 
-### 3.1 矩阵的滑动窗口计算
+### 3.1. 矩阵的滑动窗口计算
 
-滑动窗口 m 系列函数以及 `window` 函数可以用于处理矩阵，在矩阵每列内进行计算，返回一个与输入矩阵维度相同的矩阵。如果滑动维度为时间，则要先使用 [`setIndexedMatrix!`](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/s/setIndexedMatrix!.html?highlight=setindex) 函数将矩阵的行与列标签设为索引。这里需要注意的是，行与列标签均须严格递增。
+滑动窗口 m 系列函数以及 `window` 函数可以用于处理矩阵，在矩阵每列内进行计算，返回一个与输入矩阵维度相同的矩阵。如果滑动维度为时间，则要先使用 [`setIndexedMatrix!`](../funcs/s/setIndexedMatrix_.dita) 函数将矩阵的行与列标签设为索引。这里需要注意的是，行与列标签均须严格递增。
 
 首先我们新建一个矩阵，并将其设为 IndexedMatrix：
 
@@ -623,7 +632,7 @@ m.rename!(2020.01.01..2020.01.04 join 2020.01.06,`A`B)
 m.setIndexedMatrix!();
 ```
 
-#### 3.1.1 步长为1行，窗口为n行
+#### 3.1.1. 步长为1行，窗口为n行
 
 m 系列函数的参数可以是一个正整数（记录数维度）或一个 duration（时间维度）。通过设定不同的参数，可以指定理想的滑动窗口类型。
 
@@ -675,7 +684,7 @@ input = prepareDataForDDBPanel()
 alpha98DDBPanel = alpha98Panel(input.vwap, input.open, input.vol)
 ```
 
-#### 3.1.2 步长为1行，窗口为指定时间
+#### 3.1.2. 步长为1行，窗口为指定时间
 
 以```msum```滑动求和为例。以下例子是对一个矩阵内部，每一列根据左边的时间列进行窗口大小为3天的滑动求和计算。
 
@@ -711,7 +720,7 @@ mrank(m, true, 10y, percent=true)
 2020.01.06|1 0.4
 ```
 
-### 3.2 矩阵的累计窗口计算
+### 3.2. 矩阵的累计窗口计算
 
 在矩阵中，累计函数 `cum` 系列也可以直接使用。以 `cumsum` 为例：
 
@@ -731,11 +740,11 @@ cumsum(m)
 
 结果为在矩阵的每一列，计算累计和。
 
-## 4.流式数据的窗口计算
+## 4. 流式数据的窗口计算
 
 在 DolphindDB 中，设计了许多内置的流计算引擎。有些支持聚合计算，有些则支持滑动窗口或者累计窗口计算，也有针对于流数据的会话窗口引擎，可以满足不同的场景需求。下面根据不同窗口以及引擎分别介绍。
 
-### 4.1 滚动窗口在流计算中的应用
+### 4.1. 滚动窗口在流计算中的应用
 
 实际场景中，滚动窗口计算在流数据中的应用最为广泛，比如5分钟 k 线，1分钟累计交易量等。滚动窗口在流计算中的应用通过各种时间序列引擎实现。
 
@@ -782,7 +791,7 @@ undef("trades",SHARED)
 ```
 
 
-### 4.2 滑动、累计窗口在流计算中的应用
+### 4.2. 滑动、累计窗口在流计算中的应用
 
 另一个常用的引擎是响应式状态引擎 `createReactiveStateEngine`。在这个引擎中，我们可以使用经过优化的状态函数，其中包括累计窗口函数（cum 系列函数）和滑动窗口函数（m 系列函数以及 tm 系列函数）。
 
@@ -833,7 +842,7 @@ undef("trades",SHARED)
 ```
 
 
-### 4.3 会话窗口引擎
+### 4.3. 会话窗口引擎
 
 `createSessionWindowEngine` 可以根据间隔时间（session gap）切分不同的窗口，即当一个窗口在session gap 时间内没有接收到新数据时，窗口会关闭。所以这个引擎中的window size会根据流入数据的情况发生变化。
 
@@ -902,11 +911,11 @@ dropAggregator(`engine_sw)
 undef("trades",SHARED)
 ```
 
-## 5.窗口计算的空值处理规则
+## 5. 窗口计算的空值处理规则
 
 在 DolphinDB 中，各个窗口函数的空值处理略有不同，本节将阐述各个系列函数空值处理的规则：
 
-### 5.1 moving，m 系列函数，tm 系列函数以及 cum 系列函数的空值处理
+### 5.1. moving，m 系列函数，tm 系列函数以及 cum 系列函数的空值处理
 
 在 `mrank`，`tmrank` 以及 `cumrank` 函数中，可以指定 NULL 值是否参与计算。其他窗口函数与聚合函数保持一致，计算时忽略 NULL 值。
 
@@ -942,7 +951,7 @@ msum(m,3)
 12 18
 ```
 
-### 5.2 `rolling` 的空值处理
+### 5.2. `rolling` 的空值处理
 
 与 `moving`函数不同的是，`rolling` 函数不输出前 (*window* - 1) 个元素的 NULL 值结果。可以通过下面的例子来感受：
 
@@ -1051,9 +1060,8 @@ Time elapsed: 3.501ms
 | mse        | mmse            |                              |              |                              |                   |                              |
 |            |                 |                              |              |                              | cumPositiveStreak |                              |
 
-其他涉及窗口的函数：
-> deltas, ratios, interval, bar, dailyAlignedBar, coevent, createReactiveStateEngine,
-> createDailyTimeSeriesEngine, createReactiveStateEngine, createSessionWindowEngine
+其他涉及窗口的函数：  
+deltas, ratios, interval, bar, dailyAlignedBar, coevent, createReactiveStateEngine, createDailyTimeSeriesEngine, createReactiveStateEngine, createSessionWindowEngine
 
 ## 8. 总结
 

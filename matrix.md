@@ -1,16 +1,46 @@
-# DolphinDB教程：矩阵运算
+# DolphinDB 教程：矩阵运算
 
 在处理面板数据时，矩阵运算相对于表运算而言，速度更快，效率更高。DolphinDB 针对矩阵运算场景为用户提供了丰富且便捷的内置函数，其中部分矩阵运算采用 OpenBlas 和 Lapack 进行优化，与 Matlab 的性能在一个数量级。 本教程将重点介绍 DolphinDB 矩阵的特点及矩阵运算的相关方法。
 
 本教程将讲述以下有关矩阵内容：
 
-
+- [DolphinDB 教程：矩阵运算](#dolphindb-教程矩阵运算)
+	- [1. 矩阵的存储](#1-矩阵的存储)
+	- [2. 矩阵的基础操作](#2-矩阵的基础操作)
+		- [2.1. 矩阵的创建](#21-矩阵的创建)
+		- [2.2. 访问矩阵](#22-访问矩阵)
+			- [2.2.1. 根据行列索引访问矩阵](#221-根据行列索引访问矩阵)
+			- [2.2.2. 根据标签访问矩阵](#222-根据标签访问矩阵)
+		- [2.3. 修改矩阵](#23-修改矩阵)
+			- [2.3.1. 追加数据](#231-追加数据)
+			- [2.3.2. 修改数据](#232-修改数据)
+		- [2.4. 按列对矩阵进行过滤](#24-按列对矩阵进行过滤)
+		- [2.5. 矩阵的拼接](#25-矩阵的拼接)
+		- [2.6. 矩阵的连接和对齐](#26-矩阵的连接和对齐)
+		- [2.7. 矩阵空值处理](#27-矩阵空值处理)
+			- [2.7.1. 填充空值](#271-填充空值)
+			- [2.7.2. 去除空行/列](#272-去除空行列)
+	- [3. 矩阵的运算](#3-矩阵的运算)
+		- [3.1. 矩阵基本运算](#31-矩阵基本运算)
+		- [3.2. 矩阵相乘，求逆，转置，求矩阵行列式](#32-矩阵相乘求逆转置求矩阵行列式)
+		- [3.3. 按行计算和按列计算](#33-按行计算和按列计算)
+	- [4. 矩阵分解与求解线性方程](#4-矩阵分解与求解线性方程)
+		- [4.1. lu 分解](#41-lu-分解)
+		- [4.2. qr 分解](#42-qr-分解)
+		- [4.3. svd 分解](#43-svd-分解)
+		- [4.4. cholesky 分解](#44-cholesky-分解)
+		- [4.5. schur 分解](#45-schur-分解)
+		- [4.6. 求解线性方程组](#46-求解线性方程组)
+	- [5. 矩阵高级运算](#5-矩阵高级运算)
+		- [5.1. 计算矩阵特征值和特征向量](#51-计算矩阵特征值和特征向量)
+		- [5.2. PCA 计算](#52-pca-计算)
+	- [6. JIT 的支持](#6-jit-的支持)
 
 ## 1. 矩阵的存储
 
 DolphinDB 中的矩阵采用列优先（column major）的形式。因此创建矩阵时，数据在内存中按列存储。系统会将输入的向量数据从左向右以列为单位填充为矩阵中的元素。注意：矩阵中行和列的下标都是从0开始的。
 
-例：用[1, 2, 3], [4, 5, 6]两个向量创建矩阵得到的矩阵维度为 3\*2，而不是 2\*3。
+例：用\[1, 2, 3], \[4, 5, 6]两个向量创建矩阵得到的矩阵维度为 3\*2，而不是 2\*3。
 
 ```
 >matrix(1 2 3, 4 5 6);
@@ -23,7 +53,7 @@ DolphinDB 中的矩阵采用列优先（column major）的形式。因此创建�
 
 由于 DolphinDB 的矩阵是列优先的，读取或构建矩阵时，**列操作比行操作要更为高效。**
 
-给定一个长度为1000的向量 v，构建一个900*100的矩阵。其第 i 行是 v[i:i+100]。比较下列两种做法：
+给定一个长度为1000的向量 v，构建一个900*100的矩阵。其第 i 行是 v\[i:i+100]。比较下列两种做法：
 
 ```
 def alongRows(v, mutable m){
@@ -51,17 +81,17 @@ timer(10){alongColumns(v, m)}
 
 ## 2. 矩阵的基础操作
 
-### 2.1 矩阵的创建
+### 2.1. 矩阵的创建
 
 DolphinDB 的矩阵有三种类型，分别为普通矩阵（matrix）、索引序列（indexed series）和索引矩阵（indexed matrix）。
 
-* 普通矩阵：调用函数 [matrix](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/m/matrix.html?highlight=matrix) 创建一个指定数据类型和维度的普通矩阵。函数 matrix 也可根据已有的数据包括向量、矩阵、表、元组及这些数据结构的组合创建一个矩阵。
+* 普通矩阵：调用函数 `matrix` 创建一个指定数据类型和维度的普通矩阵。函数 matrix 也可根据已有的数据包括向量、矩阵、表、元组及这些数据结构的组合创建一个矩阵。
 
-* 索引序列：索引序列带行索引标签的单列矩阵，可以通过函数 [indexedSeries](https://www.dolphindb.cn/cn/help/200/FunctionsandCommands/FunctionReferences/i/indexedSeries.html) 进行创建，或者通过一个单列的矩阵调用 [setIndexedSeries](https://www.dolphindb.cn/cn/help/200/FunctionsandCommands/FunctionReferences/s/setIndexedSeries%21.html) 函数进行转换。
+* 索引序列：索引序列带行索引标签的单列矩阵，可以通过函数 `indexedSeries` 进行创建，或者通过一个单列的矩阵调用 `setIndexedSeries` 函数进行转换。
 
-* 索引矩阵：索引矩阵为带行/列索引标签的矩阵。只能通过普通矩阵调用函数 [setIndexedMatrix](https://www.dolphindb.cn/cn/help/200/FunctionsandCommands/FunctionReferences/s/setIndexedMatrix%21.html) 生成。
+* 索引矩阵：索引矩阵为带行/列索引标签的矩阵。只能通过普通矩阵调用函数 `setIndexedMatrix` 生成。
 
-除直接生成矩阵外，通过运算符 [cast($)](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/c/cast.html) 可以把一个向量重组为一个矩阵。
+除直接生成矩阵外，通过运算符 `cast($)` 可以把一个向量重组为一个矩阵。
 
 ```
 >m=1..10$5:2;
@@ -74,7 +104,7 @@ DolphinDB 的矩阵有三种类型，分别为普通矩阵（matrix）、索引�
 4  9
 5  10
 ```
-函数 [reshape](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/r/reshape.html) 可以实现矩阵与向量之间的互相转换。
+函数 `reshape` 可以实现矩阵与向量之间的互相转换。
 ```
 >m=(1..6).reshape(3:2);                
 >m;
@@ -89,7 +119,7 @@ DolphinDB 的矩阵有三种类型，分别为普通矩阵（matrix）、索引�
 [1,2,3,4,5,6]
 ```
 
-reshape 实现的功能相当于 [cast($)](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/c/cast.html) 和 [flatten](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/f/flatten.html) 的组合。函数  flatten 可把一个矩阵转换为一个向量。
+reshape 实现的功能相当于 `cast($)` 和 `flatten` 的组合。函数  `flatten` 可把一个矩阵转换为一个向量。
 
 ```
 >x = flatten m;
@@ -107,7 +137,7 @@ reshape 实现的功能相当于 [cast($)](https://www.dolphindb.cn/cn/help/Func
 
 * 单位矩阵
 
-	使用函数 [eye(n)](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/e/eye.html) 创建维度为 n 的单位矩阵。
+	使用函数 `eye(n)` 创建维度为 n 的单位矩阵。
 	```
 	>eye(3);
 	#0 #1 #2
@@ -119,7 +149,7 @@ reshape 实现的功能相当于 [cast($)](https://www.dolphindb.cn/cn/help/Func
 
 * 对角矩阵
 
-	函数 [diag(X)](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/d/diag.html?highlight=diag)：如果 X 是一个向量，返回一个对角矩阵，X 为主对角线上的元素；如果 X 是一个方阵，返回一个由主对角线元素组成的向量。
+	函数 `diag(X)`：如果 X 是一个向量，返回一个对角矩阵，X 为主对角线上的元素；如果 X 是一个方阵，返回一个由主对角线元素组成的向量。
 	```
 	>m=diag(1..5);
 	>m;
@@ -130,7 +160,7 @@ reshape 实现的功能相当于 [cast($)](https://www.dolphindb.cn/cn/help/Func
 	0  0  3  0  0
 	0  0  0  4  0
 	0  0  0  0  5
-	
+
 	>diag(m);
 	[1,2,3,4,5]
 	```
@@ -168,7 +198,7 @@ col1 col2 col3
 
 此外，通过 SQL 语句也可以生成矩阵：
 
-[exec](https://www.dolphindb.cn/cn/help/SQLStatements/exec.html) + [pivot by](https://www.dolphindb.cn/cn/help/SQLStatements/pivotBy.html)： SQL 语句中，可以通过 exec 语句搭配 pivot by 子句，将表数据转换成一个矩阵形式的面板数据。更多使用场景可以参考[面板数据处理教程](https://gitee.com/dolphindb/Tutorials_CN/blob/master/panel_data.md)。
+`exec` + `pivot by`： SQL 语句中，可以通过 exec 语句搭配 pivot by 子句，将表数据转换成一个矩阵形式的面板数据。更多使用场景可以参考[面板数据处理教程](./panel_data.md)。
 
 ```
 >sym = `C`MS`MS`MS`IBM`IBM`C`C`C$SYMBOL                                
@@ -191,11 +221,11 @@ FAST DOUBLE MATRIX
 
 除了使用 pivot by 子句外，还可以使用以下函数生成面板数据：
 
-* [pivot](https://www.dolphindb.cn/cn/help/Functionalprogramming/TemplateFunctions/pivot.html)：在二维维度上重组数据，其功能与 pivot by 等同。
+* `pivot`：在二维维度上重组数据，其功能与 pivot by 等同。
 
-* [panel](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/p/panel.html)：指定一个或多个指标列，生成一个或多个矩阵。
+* `panel`：指定一个或多个指标列，生成一个或多个矩阵。
 
-使用函数 [cross](https://www.dolphindb.cn/cn/help/Functionalprogramming/TemplateFunctions/cross.html) 将指定函数应用于 X 和 Y 中元素的两两组合，其中 X, Y 可以是数据对向量或矩阵。
+使用函数 `cross` 将指定函数应用于 X 和 Y 中元素的两两组合，其中 X, Y 可以是数据对向量或矩阵。
 
 例：假设 X，Y 是向量，X 有 m 个元素，矩阵 Y 有 n 个元素，则 cross 函数将返回一个 m×n 矩阵。
 
@@ -209,9 +239,9 @@ FAST DOUBLE MATRIX
 2|8 32 128
 ```
 
-### 2.2 访问矩阵
+### 2.2. 访问矩阵
 
-矩阵的维度可以通过函数 [shape](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/s/shape.html) 获得。单独获取行数和列数，可通过调用 [rows](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/r/rows.html) 和 [cols](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/c/cols.html) 函数实现。
+矩阵的维度可以通过函数 `shape` 获得。单独获取行数和列数，可通过调用 `rows` 和 `cols` 函数实现。
 ```
 >m=1..10$2:5;
 >shape(m);                        
@@ -223,7 +253,7 @@ FAST DOUBLE MATRIX
 ```
 DolphinDB 提供了多样化的矩阵元素访问方式。
 
-#### 2.2.1 根据行列索引访问矩阵
+#### 2.2.1. 根据行列索引访问矩阵
 
 定义一个普通矩阵：
 
@@ -231,7 +261,7 @@ DolphinDB 提供了多样化的矩阵元素访问方式。
 m = 1..100$10:10;
 ```
 
-（1）获取单个单元格的值：[slice](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/s/slice.html), [cell](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/c/cell.html)
+（1）获取单个单元格的值：`slice`, `cell`
 
 ```
 >m.slice(1,1) // 等同于 m[1,1]
@@ -241,7 +271,7 @@ m = 1..100$10:10;
 12
 ```
 
-（2）获取多个单元格的值：[slice](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/s/slice.html), [cells](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/c/cells.html)
+（2）获取多个单元格的值：`slice`, `cell`
 
 ```
 >m.slice([0,1],[1,2,3]) // 等同于 m[[0,1],[1,2,3]]
@@ -259,7 +289,7 @@ cells 与 slice 的区别在于：
 
 * cells 返回一个向量；slice 是对矩阵进行切片，返回一个矩阵（可调用 flatten 转换为向量）。
 
-（3）获取某列/某几列的值：[slice](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/s/slice.html), [col](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/c/col.html), [loc](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/l/loc.html)
+（3）获取某列/某几列的值：`slice`, `col`, `loc`
 
 ```
 >m.slice(0) // 等同于 m[0] 或 m[, 0]
@@ -337,7 +367,7 @@ col1	col2	col3
 10	30	70
 ```
 
-（4）获取某行/某几行的值：[slice](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/s/slice.html), [row](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/r/row.html), [loc](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/l/loc.html)
+（4）获取某行/某几行的值：`slice`, `row`, `loc`
 
 ```
 >m.slice(1,).flatten() // 等同于 m[index, ].flatten()
@@ -367,7 +397,7 @@ col1	col2	col3	col4	col5	col6	col7	col8	col9	col10
 1	11	21	31	41	51	61	71	81	91
 3	13	23	33	43	53	63	73	83	93
 ```
-（5）获取指定位置的矩阵切片：[slice](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/s/slice.html), [loc](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/l/loc.html)
+（5）获取指定位置的矩阵切片：`slice`, `loc`
 ```
 >m.slice(1:3,0:4) // s[1:3,0:4]
 col1	col2	col3	col4
@@ -387,9 +417,9 @@ col1	col2	col3
 1	11	21
 3	13	23
 ```
-#### 2.2.2 根据标签访问矩阵
+#### 2.2.2. 根据标签访问矩阵
 
-通过 [rename!](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/r/rename!.html) 函数为矩阵打上标签。
+通过 `rename!` 函数为矩阵打上标签。
 
 ```
 >m = 1..25$5:5;
@@ -424,11 +454,11 @@ label	2022.01.02	2022.01.03
 3	3	8
 ```
 
-### 2.3 修改矩阵
+### 2.3. 修改矩阵
 
-#### 2.3.1 追加数据
+#### 2.3.1. 追加数据
 
-通过 [append!](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/a/append!.html) 函数追加向量到矩阵，该向量的长度必须是矩阵行数的倍数。
+通过 `append!` 函数追加向量到矩阵，该向量的长度必须是矩阵行数的倍数。
 
 ```
 >m=1..6$2:3;          
@@ -456,21 +486,21 @@ label	2022.01.02	2022.01.03
 >append!(m, 3 4 5);
 The size of the vector to append must be divisible by the number of rows of the matrix.
 ```
-#### 2.3.2 修改数据
+#### 2.3.2. 修改数据
 
 访问矩阵固定位置的元素并通过赋值修改对应元素的值。
 
-* 修改列：使用 m[index] = X 修改某列；使用 m[start:end] = X 修改多列。
+* 修改列：使用 m\[index] = X 修改某列；使用 m\[start:end] = X 修改多列。
 
-* 修改行：使用 m[index,] = X 修改某行；使用 m[start:end,] = X 修改多行。 
+* 修改行：使用 m\[index,] = X 修改某行；使用 m\[start:end,] = X 修改多行。 
 
-* 修改矩阵窗口：使用 m[r1:r2, c1:c2] = X 来修改矩阵窗口。
+* 修改矩阵窗口：使用 m\[r1:r2, c1:c2] = X 来修改矩阵窗口。
 
 其中，X 是一个标量或者向量。
 
-### 2.4 按列对矩阵进行过滤
+### 2.4. 按列对矩阵进行过滤
 
-[mask](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/m/mask.html) 函数会过滤满足条件表达式的结果，并保留不满足条件的结果，不改变矩阵的维度。at 保留满足条件的结果，其行为和 mask 相反。
+`mask` 函数会过滤满足条件表达式的结果，并保留不满足条件的结果，不改变矩阵的维度。at 保留满足条件的结果，其行为和 mask 相反。
 
 ```
 >mask(m, m%2!=0); 
@@ -502,7 +532,7 @@ col1	col2	col3	col4	col5	col6	col7	col8	col9	col10
 9	19	29	39	49	59	69	79	89	99
 ```
 
-使用 [lambda](https://www.dolphindb.cn/cn/help/Functionalprogramming/LambdaExpression.html) 表达式对矩阵的每一个列进行过滤。注意，按列对矩阵进行过滤时，lambda 表达式只能接受一个参数，并且返回的结果必须是 BOOL 类型的标量。
+使用 lambda 表达式对矩阵的每一个列进行过滤。注意，按列对矩阵进行过滤时，lambda 表达式只能接受一个参数，并且返回的结果必须是 BOOL 类型的标量。
 ```
 >m=matrix(0 2 3 4,0 0 0 0,4 7 8 2);
 
@@ -526,7 +556,7 @@ col1	col2	col3	col4	col5	col6	col7	col8	col9	col10
 9  2
 ```
 
-通过 [iif](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/i/iif.html) 函数修改矩阵中满足条件的元素。
+通过 `iif` 函数修改矩阵中满足条件的元素。
 
 ```
 >m1=1..6$3:2
@@ -546,9 +576,9 @@ col1	col2	col3
 4	0	2
 ```
 
-### 2.5 矩阵的拼接
+### 2.5. 矩阵的拼接
 
-通过函数 [concatMatrix](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/c/concatMatrix.html) 将多个矩阵进行水平/垂直的拼接：
+通过函数 `concatMatrix` 将多个矩阵进行水平/垂直的拼接：
 
 ```
 >m1 = matrix(4 0 5, 2 1 8);
@@ -571,9 +601,9 @@ col1	col2	col3	col4
 6	1	0	3
 2	9	(4)	4
 ```
-### 2.6 矩阵的连接和对齐
+### 2.6. 矩阵的连接和对齐
 
-矩阵的连接和表类似，可以根据行标签进行 'inner join', 'outer join', 'left join', 'right join', 与'asof join' 等连接操作，合并两个矩阵。通过函数 [merge](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/m/merge.html) 实现。
+矩阵的连接和表类似，可以根据行标签进行 'inner join', 'outer join', 'left join', 'right join', 与'asof join' 等连接操作，合并两个矩阵。通过函数 `merge` 实现。
 
 ```
 >m1 = matrix([1.2, 7.8, 4.6, 5.1, 9.5], [0.15, 1.26, 0.45, 1.02, 0.33]).rename!([2012.01.01, 2015.02.01, 2015.03.01, 2015.04.01, 2015.05.01], `x1`x2).setIndexedMatrix!()
@@ -614,7 +644,7 @@ label	x1	x2	y1	y2
 2015.05.01	9.5	0.33	3	0.35
 2015.05.02			    4	0.48
 ```
-连接操作除了用于合并矩阵外，还可用于矩阵标签和数据的对齐。通过函数 [align](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/a/align.html) 实现。
+连接操作除了用于合并矩阵外，还可用于矩阵标签和数据的对齐。通过函数 `align` 实现。
 
 align 支持按行对齐，按列对齐或者同时按行列进行矩阵对齐，详情请参考用户手册的说明。
 
@@ -637,11 +667,11 @@ align 支持按行对齐，按列对齐或者同时按行列进行矩阵对齐�
 3	4		5
 4	5		6
 ```
-### 2.7 矩阵空值处理
+### 2.7. 矩阵空值处理
 
-#### 2.7.1 填充空值
+#### 2.7.1. 填充空值
 
-矩阵的二元计算（非聚合运算）中，若包含空值，返回的结果也为 NULL。参考：[NULL 值运算](https://www.dolphindb.cn/cn/help/200/DataManipulation/NullValueManipulation/NullValueOperations/index.html)。
+矩阵的二元计算（非聚合运算）中，若包含空值，返回的结果也为 NULL。参考手册第 6 章：NULL 值的操作。
 
 ```
 >m1 = 3 -2 1 NULL -5 6$2:3
@@ -661,21 +691,21 @@ col1	col2	col3
 ```
 可以看到，包含空值的单元格计算结果也为空，这可能与预期的结果不符。某些场景下，用户希望空值不影响计算结果，或者以某个特定的值去填充空值。
 
-常规的空值填充方法有（详见 [填充空值](https://www.dolphindb.cn/cn/help/200/DataManipulation/NullValueManipulation/ReplaceNullValues.html)）：
+常规的空值填充方法有：
 
-* [bfill](https://www.dolphindb.cn/cn/help/200/FunctionsandCommands/FunctionReferences/b/bfill.html) 和 [bfill!](https://www.dolphindb.cn/cn/help/200/FunctionsandCommands/FunctionReferences/b/bfill!.html) ：使用 NULL 后的非NULL元素填充 NULL 值。
+* `bfill` 和 `bfill!`：使用 NULL 后的非NULL元素填充 NULL 值。
 
-* [ffill](https://www.dolphindb.cn/cn/help/200/FunctionsandCommands/FunctionReferences/f/ffill.html) 和 [ffill!](https://www.dolphindb.cn/cn/help/200/FunctionsandCommands/FunctionReferences/f/ffill!.html) ：使用 NULL 前的非NULL元素填充 NULL 值。
+* `ffill` 和 `ffill!`：使用 NULL 前的非NULL元素填充 NULL 值。
 
-* [lfill](https://www.dolphindb.cn/cn/help/200/FunctionsandCommands/FunctionReferences/l/lfill.html) 和 [lfill!](https://www.dolphindb.cn/cn/help/200/FunctionsandCommands/FunctionReferences/l/lfill%21.html) ：线性填充非 NULL 元素之间的 NULL 值。
+* `lfill` 和 `lfill!`：线性填充非 NULL 元素之间的 NULL 值。
 
-* [fill!](https://www.dolphindb.cn/cn/help/200/FunctionsandCommands/FunctionReferences/f/fill!.html)，[nullFill](https://www.dolphindb.cn/cn/help/200/FunctionsandCommands/FunctionReferences/n/nullFill.html) 和 [nullFill!](https://www.dolphindb.cn/cn/help/200/FunctionsandCommands/FunctionReferences/n/nullFill%21.html) ：用指定值填充 NULL 值。
+* `fill!`，`nullFill` 和 `nullFill!`：用指定值填充 NULL 值。
 
-上述方法都需要对参与计算的矩阵单独填充。对于矩阵间的二元计算，可以通过 [withNullFill](https://www.dolphindb.cn/cn/help/200/Functionalprogramming/TemplateFunctions/withNullFill.html) 函数同时实现填充和计算。
+上述方法都需要对参与计算的矩阵单独填充。对于矩阵间的二元计算，可以通过 `withNullFill` 函数同时实现填充和计算。
 
-#### 2.7.2 去除空行/列
+#### 2.7.2. 去除空行/列
 
-若想删除矩阵中全为空值或空值较多的行/列，可以通过 [dropna](https://www.dolphindb.cn/cn/help/200/FunctionsandCommands/FunctionReferences/d/dropna.html) 实现。
+若想删除矩阵中全为空值或空值较多的行/列，可以通过 `dropna` 实现。
 
 下例使用 dropna 删除 mask 过滤后全为空的行。
 
@@ -692,7 +722,7 @@ col1	col2	col3	col4	col5	col6	col7	col8	col9	col10
 
 ## 3. 矩阵的运算
 
-### 3.1 矩阵基本运算
+### 3.1. 矩阵基本运算
 
 DolphinDB 中矩阵的每一列都可以视为一个向量，所以大部分向量函数和聚合函数都适用于矩阵，计算结果等价于对矩阵每列进行计算后结果的拼接。例如：
 ```
@@ -811,7 +841,7 @@ Incompatible vector size
 ```
 DolphinDB 中部分矩阵运算，如相乘、求逆、求行列式、矩阵分解等采用了 OpenBlas 和 Lapack 进行优化，与 Matlab 的性能在一个数量级。
 
-### 3.2 矩阵相乘，求逆，转置，求矩阵行列式
+### 3.2. 矩阵相乘，求逆，转置，求矩阵行列式
 
 矩阵相乘：
 
@@ -922,11 +952,11 @@ det(X):计算矩阵的行列式，在计算中，NULL 值用 0 代替。
 >det x;
 0
 ```
-### 3.3 按行计算和按列计算 
+### 3.3. 按行计算和按列计算 
 
-3.1 节简单介绍了函数在矩阵上应用时的计算规则，可以看出对矩阵直接应用向量函数和聚合函数，都是按列进行计算的。此外，DolphinDB 提供了部分[按行计算的函数](https://www.dolphindb.cn/cn/help/200/FunctionsandCommands/SeriesOfFunctions/rowFunctions.html)和对应的高阶函数 [byRow](https://www.dolphindb.cn/cn/help/200/Functionalprogramming/TemplateFunctions/byRow.html)。
+“矩阵基本运算”一节简单介绍了函数在矩阵上应用时的计算规则，可以看出对矩阵直接应用向量函数和聚合函数，都是按列进行计算的。此外，DolphinDB 手册提供了部分按行计算的函数和对应的高阶函数`byRow`。
 
-部分函数不支持矩阵的列计算，此时可以采用高阶函数 [each](https://www.dolphindb.cn/cn/help/200/Functionalprogramming/TemplateFunctions/each.html) 实现：
+部分函数不支持矩阵的列计算，此时可以采用高阶函数 `each` 实现：
 
 ```
 //两个矩阵按列进行矩阵相乘运算
@@ -952,9 +982,9 @@ det(X):计算矩阵的行列式，在计算中，NULL 值用 0 代替。
 
 DolphinDB 实现了以下矩阵分解函数：
 
-### 4.1 lu 分解
+### 4.1. lu 分解
 
-[lu](https://www.dolphindb.cn/cn/help/200/FunctionsandCommands/FunctionReferences/l/lu.html)：对矩阵进行 lu分 解，X = P\*\*L\*\*U，其中P为置换矩阵，L 为下三角矩阵，U 为上三角矩阵。如果 permute=true，返回 PL=P**L 和 U。
+`lu`：对矩阵进行 lu分 解，X = P\*\*L\*\*U，其中P为置换矩阵，L 为下三角矩阵，U 为上三角矩阵。如果 permute=true，返回 PL=P**L 和 U。
 ```
 >m=matrix([2 5 7 5, 5 2 5 4, 8 2 6 4, 7 8 6 8]);
 >m;
@@ -1049,9 +1079,9 @@ DolphinDB 实现了以下矩阵分解函数：
 0  3  5.6       4.6     
 0  0  -0.133333 3.533333
 ```
-### 4.2 qr 分解
+### 4.2. qr 分解
 
-[qr](https://www.dolphindb.cn/cn/help/200/FunctionsandCommands/FunctionReferences/q/qr.html)：X 为一个 m\*n 的矩阵，对 X 进行 qr 分解，X=Q**R，Q 为正交矩阵，R 为上三角矩阵。mode 的选项有：'full', 'r', 'economic', 'raw'。
+`qr`：X 为一个 m\*n 的矩阵，对 X 进行 qr 分解，X=Q**R，Q 为正交矩阵，R 为上三角矩阵。mode 的选项有：'full', 'r', 'economic', 'raw'。
 
 mode 为'full'：返回完整的 qr 分解结果，即 Q 为 m\*m 的矩阵，R 为 m\*n 的矩阵。
 
@@ -1105,7 +1135,7 @@ mode 为'full'：返回完整的 qr 分解结果，即 Q 为 m\*m 的矩阵，R 
 ```
 
 对于 m>n 的矩阵，mode 为 full 时 R 矩阵的下面的 m−n 行全为 0，X=Q\*\*R 可以进一步分解为:
-X = Q\*\*([R1,0]<sup>T</sup>) = [Q1,Q2]\*\*([R1,0]<sup>T</sup>) = Q1**R1。
+X = Q\*\*(\[R1,0]<sup>T</sup>) = \[Q1,Q2]\*\*(\[R1,0]<sup>T</sup>) = Q1**R1。
 
 mode 取 'economic': m>n，即返回 Q1 和 R1，Q1 为 m\*n 的矩阵，R 为 n\*n 的矩阵；m<=n 时，返回结果和 mode 取 'full' 时一致。
 ```
@@ -1222,7 +1252,7 @@ mode 取 'raw': 返回矩阵 h、数组 tau 和矩阵 R。qr 分解的计算通�
 0         0         -0.086146 2.282872  
 ```
 
-pivoting 取 true：计算秩显 qr 分解，计算 A\*\*P=Q\*\*R，P 是置换矩阵，R 矩阵满足对角线上的元素不递减。qr(X,pivoting=true,[mode='full']) 返回矩阵 Q，R 和 piv 数组，piv 为 P 矩阵的置换规则。
+pivoting 取 true：计算秩显 qr 分解，计算 A\*\*P=Q\*\*R，P 是置换矩阵，R 矩阵满足对角线上的元素不递减。qr(X,pivoting=true,\[mode='full']) 返回矩阵 Q，R 和 piv 数组，piv 为 P 矩阵的置换规则。
 ```
 >m=matrix([2 5 5, 5 5 4, 8 6 4, 7 6 8]);
 >m;
@@ -1256,9 +1286,9 @@ pivoting 取 true：计算秩显 qr 分解，计算 A\*\*P=Q\*\*R，P 是置换�
 6  5  6  5 
 4  5  8  4 
 ```
-### 4.3 svd 分解
+### 4.3. svd 分解
 
-函数 [svd](https://www.dolphindb.cn/cn/help/200/FunctionsandCommands/FunctionReferences/s/svd.html) 计算矩阵 svd 分解：X = U ** Σ ** V<sup>T</sup>，X 为 m\*n 的矩阵，输出 U, s(diag(Σ)), Vt(V.transpose())；U 和 V 均为单位正交阵，U 为左奇异矩阵，V 为右奇异矩阵。Σ 仅在主对角线上有值，s 为矩阵的奇异值。
+函数 `svd` 计算矩阵 svd 分解：X = U ** Σ ** V<sup>T</sup>，X 为 m\*n 的矩阵，输出 U, s(diag(Σ)), Vt(V.transpose())；U 和 V 均为单位正交阵，U 为左奇异矩阵，V 为右奇异矩阵。Σ 仅在主对角线上有值，s 为矩阵的奇异值。
 
 s 是长度为 k 的一维矩阵；fullfullMatrice 为 true 时，U 和 Vh 的维度分别为(m, m) 与 (n, n)；fullfullMatrice 为 false 时，U 和 Vh 的维度分别为(m, k), (k, n), k = min(m, n)。
 computeUV 为 false 时，只返回 s。
@@ -1310,9 +1340,9 @@ computeUV 为 false 时，只返回 s。
 [19.202978,3.644527,1.721349]
 ```
 
-### 4.4 cholesky 分解
+### 4.4. cholesky 分解
 
-cholesky(X, [lower=true]): 对矩阵进行 Cholesky 分解 X = L ** L<sup>T</sup>, X 是一个对称正定矩阵; lower 是一个布尔值，表示是否使用输入矩阵的下三角来计算分解。默认值为 true，表示使用下三角计算。如果 lower 为 false，表示使用上三角计算。
+cholesky(X, \[lower=true]): 对矩阵进行 Cholesky 分解 X = L ** L<sup>T</sup>, X 是一个对称正定矩阵; lower 是一个布尔值，表示是否使用输入矩阵的下三角来计算分解。默认值为 true，表示使用下三角计算。如果 lower 为 false，表示使用上三角计算。
 ```
 >m=[1, 0, 1, 0, 2, 0, 1, 0, 3]$3:3;
 >m;
@@ -1345,9 +1375,9 @@ cholesky(X, [lower=true]): 对矩阵进行 Cholesky 分解 X = L ** L<sup>T</sup
 0  0        1.414214
 ```
 
-### 4.5 schur 分解
+### 4.5. schur 分解
 
-[schur](https://www.dolphindb.cn/cn/help/200/FunctionsandCommands/FunctionReferences/s/schur.html): 对矩阵进行 schur 分解，X = U ** T ** U<sup>H</sup>；U 为幺正矩阵 (U<sup>-1</sup> = U<sup>T</sup>)，T 为上三角矩阵，T 的对角元素是 A 的所有特征值；sort 根据指定的特征值顺序对分解得到的矩阵进行重新排序，默认为 NULL，目前支持的有 'lhp': 左半平面 (e < 0.0)；'rhp': 右半平面 (e > 0.0)；'iuc': 单位圆盘的内部 (abs(e) < 1)；'ouc': 单位圆盘的外部 (abs(e) >= 1)。
+`schur`: 对矩阵进行 schur 分解，X = U ** T ** U<sup>H</sup>；U 为幺正矩阵 (U<sup>-1</sup> = U<sup>T</sup>)，T 为上三角矩阵，T 的对角元素是 A 的所有特征值；sort 根据指定的特征值顺序对分解得到的矩阵进行重新排序，默认为 NULL，目前支持的有 'lhp': 左半平面 (e < 0.0)；'rhp': 右半平面 (e > 0.0)；'iuc': 单位圆盘的内部 (abs(e) < 1)；'ouc': 单位圆盘的外部 (abs(e) >= 1)。
 
 ```
 >m=matrix([2 5 7 5, 5 2 5 4, 8 2 6 4, 7 8 6 8]);
@@ -1457,7 +1487,7 @@ cholesky(X, [lower=true]): 对矩阵进行 Cholesky 分解 X = L ** L<sup>T</sup
 3
 ```
 
-### 4.6 求解线性方程组
+### 4.6. 求解线性方程组
 
 solve(a,y): 求解线性方程组 a*x=y
 ```
@@ -1485,7 +1515,7 @@ solve(a,y): 求解线性方程组 a*x=y
 
 ## 5. 矩阵高级运算
 
-### 5.1 计算矩阵特征值和特征向量
+### 5.1. 计算矩阵特征值和特征向量
 
 函数 `eig(X)` 计算矩阵的特征值和特征向量。返回一个字典，包含两个键：values（特征值）与 vectors（特征向量）。
 ```
@@ -1510,9 +1540,9 @@ solve(a,y): 求解线性方程组 a*x=y
 0.553396 0.40595   0.507665  -0.520802
 0.535757 0.121868  0.15985   0.820098 
 ```
-### 5.2 PCA 计算
+### 5.2. PCA 计算
 
-[pca](https://www.dolphindb.cn/cn/help/200/FunctionsandCommands/FunctionReferences/p/pca.html): 对数据源中指定列中的数据求主成分分析。
+`pca`: 对数据源中指定列中的数据求主成分分析。
 
 返回的结果是一个字典，包含以下键：
 - explainedVarianceRatio: 对应一个长度为k的向量，包含前k个主成分分别解释的方差权重。
@@ -1537,7 +1567,7 @@ singularValues->[6.110802,0.866243]
 
 ## 6. JIT 的支持
 
-从 1.20 版本开始，DolphinDB database 的 JIT 增加了对矩阵运算的支持。支持矩阵作为函数参数和返回值，支持矩阵的四则运算，函数 [det](https://www.dolphindb.cn/cn/help/200/FunctionsandCommands/FunctionReferences/d/det.html) 与 [flatten](https://www.dolphindb.cn/cn/help/200/FunctionsandCommands/FunctionReferences/f/flatten.html)，以及矩阵的转置、点乘等运算。
+从 1.20 版本开始，DolphinDB database 的 JIT 增加了对矩阵运算的支持。支持矩阵作为函数参数和返回值，支持矩阵的四则运算，函数 `det` 与 `flatten`，以及矩阵的转置、点乘等运算。
 ```
 //定义对角矩阵，jit计算比非jit快了10倍左右
 @jit

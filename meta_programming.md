@@ -1,6 +1,22 @@
-# DolphinDB教程：元编程
+# DolphinDB 教程：元编程
 
 元编程是指使用程序代码来生成可以动态运行的程序代码。元编程的目的一般是延迟执行代码或动态创建代码。
+
+- [DolphinDB 教程：元编程](#dolphindb-教程元编程)
+	- [1. 如何在DolphinDB中使用元编程](#1-如何在dolphindb中使用元编程)
+	- [2. DolphinDB元编程应用](#2-dolphindb元编程应用)
+		- [2.1. 更新内存表](#21-更新内存表)
+			- [2.1.1. 更新数据](#211-更新数据)
+			- [2.1.2. 新增一个列](#212-新增一个列)
+			- [2.1.3. 删除数据](#213-删除数据)
+			- [2.1.4. 动态生成过滤条件并更新数据](#214-动态生成过滤条件并更新数据)
+		- [2.2. 在内置函数中使用元编程](#22-在内置函数中使用元编程)
+			- [2.2.1. 窗口连接](#221-窗口连接)
+			- [2.2.2. 流计算引擎](#222-流计算引擎)
+		- [2.3. 定制报表](#23-定制报表)
+		- [2.4. 物联网应用中动态生成计算指标](#24-物联网应用中动态生成计算指标)
+		- [2.5. 执行一组查询，合并查询结果](#25-执行一组查询合并查询结果)
+	- [3. 小结](#3-小结)
 
 ## 1. 如何在DolphinDB中使用元编程
 
@@ -19,9 +35,9 @@ eval(a);
 //eval函数用于执行元代码
 ```
 
-（2）使用函数来创建各种表达式。常用的元编程函数包括`expr`, `parseExpr`, `partial`, `sqlCol`, `sqlColAlias`, `sql`, `eval`, `makeCall`。下面介绍这几个函数的用法。
+（2）使用函数来创建各种表达式。常用的元编程函数包括`expr`, `parseExpr`, `binaryExpr`, `unifiedExpr`, `partial`, `sqlCol`, `sqlColAlias`, `sql`, `eval`, `makeCall`, `makeUnifiedCall`。下面介绍这几个函数的用法。
 
-- [`expr`](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/e/expr.html)函数根据输入的对象、运算符或其他元代码生成元代码。例如：
+- `expr`函数根据输入的对象、运算符或其他元代码生成元代码。例如：
 
 ```
 a=6
@@ -30,7 +46,7 @@ expr(a,+,1);
 < 6 + 1 >
 ```
 
-- [`parseExpr`](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/p/parseExpr.html)函数把字符串转换为元代码。例如：
+- `parseExpr`函数把字符串转换为元代码。例如：
 
 ```
 t=table(1 2 3 4 as id, 5 6 7 8 as value, `IBM`MSFT`IBM`GOOG as name)
@@ -42,7 +58,29 @@ id value name
 3  7     IBM
 ```
 
-- [`partial`](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/p/partial.html)函数固定一个函数的部分参数，产生一个参数较少的函数。例如：
+- `binaryExpr`生成一个二元运算的元代码。例如：
+
+```
+binaryExpr(1, 1, +).eval()
+2
+
+binaryExpr(1 2.2 3, 1 2 3, *).eval()
+[1 4.4 9]
+
+binaryExpr(`id`st`nm, `fff, +).eval()
+["idfff","stfff","nmfff"]
+```
+
+* `unifiedExpr`生成一个多元运算表达式的元代码。例如：
+
+```
+t=table(1..3 as price1, 4..6 as price2, 5..7 as price3)
+a=sqlColAlias(unifiedExpr((sqlCol("price1"), sqlCol("price2"), sqlCol("price3")), take(add, 2)))
+sql(select=(sqlCol(`price1),sqlCol(`price2),sqlCol(`price3),a), from=t)
+< select price1,price2,price3,price1 + price2 + price3 as price1_add from tc0ccbd6a00000000 >
+```
+
+- `partial`函数固定一个函数的部分参数，产生一个参数较少的函数。例如：
 
 ```
 partial(add,1)(2);
@@ -54,7 +92,7 @@ g(3);
 8
 ```
 
-- [`sqlCol`](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/s/sqlCol.html), [`sqlColAlias`](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/s/sqlColAlias.html)和[`sql`](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/s/sql.html)函数用于动态生成SQL表达式。`sqlCol`函数将列名转换为可带有计算内容的表达式，`sqlColAlias`常用于生成计算列的元代码，`sql`函数可以动态地生成SQL语句。
+- `sqlCol`, `sqlColAlias`和`sql`函数用于动态生成SQL表达式。`sqlCol`函数将列名转换为可带有计算内容的表达式，`sqlColAlias`常用于生成计算列的元代码，`sql`函数可以动态地生成SQL语句。
 
 ```
 symbol = take(`GE,6) join take(`MSFT,6) join take(`F,6)
@@ -101,7 +139,7 @@ sql(select=sqlCol("*"), from=t1, groupBy=sqlCol(`symbol), groupFlag=0, limit=1);
 < select top 1 * from t1 context by symbol >
 ```
 
-- [`eval`](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/e/eval.html)函数执行元代码。例如：
+- `eval`函数执行元代码。例如：
 
 ```
 a = <1 + 2 * 3>
@@ -120,7 +158,7 @@ MSFT 2017.01.04 4925
 //这里使用的t1是上一个例子中的t1
 ```
 
-- [`makeCall`](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/m/makeCall.html)函数根据指定的函数与参数生成元代码。
+- `makeCall`函数和`makeUnifiedCall`根据指定的函数与参数生成元代码。
 
 例如，查询表t1时，把date列输出为字符串，并以类似于03/01/2017的形式显示：
 ```
@@ -128,9 +166,14 @@ sql([sqlColAlias(makeCall(temporalFormat,sqlCol(`date),"dd/MM/yyyy"),"date"),sql
 < select temporalFormat(date, "dd/MM/yyyy") as date,sym,PRC,vol from t1 >
 ```
 
+```
+makeUnifiedCall(matrix, (1 2 3, 4 5 6));
+< matrix([1,2,3], [4,5,6]) >
+```
+
 ## 2. DolphinDB元编程应用
 
-### 2.1 更新内存表
+### 2.1. 更新内存表
 
 内存表的更新、删除等操作不仅可以通过SQL语句完成，也可以通过元编程完成。
 
@@ -145,7 +188,7 @@ qty=rand(10000,n)
 trades=table(sym,date,price,qty)
 ```
 
-#### 2.1.1 更新数据
+#### 2.1.1. 更新数据
 
 例如，更新IBM的交易量：
 
@@ -154,7 +197,7 @@ trades[`qty,<sym=`IBM>]=<qty+100>
 //等价于 update trades set qty=qty+100 where sym=`IBM
 ```
 
-#### 2.1.2 新增一个列
+#### 2.1.2. 新增一个列
 
 例如，添加一个新的列volume，用于保存交易量：
 
@@ -163,7 +206,7 @@ trades[`volume]=<price*qty>
 //等价于 update trades set volume=price*qty
 ```
 
-#### 2.1.3 删除数据
+#### 2.1.3. 删除数据
 
 例如，删除qty为0的数据：
 
@@ -172,7 +215,7 @@ trades.erase!(<qty=0>)
 //等价于 delete from trades where qty=0
 ```
 
-#### 2.1.4 动态生成过滤条件并更新数据
+#### 2.1.4. 动态生成过滤条件并更新数据
 
 本例使用了以下数据表：
 
@@ -214,11 +257,11 @@ for(i in 1..10){
 }
 ```
 
-### 2.2 在内置函数中使用元编程
+### 2.2. 在内置函数中使用元编程
 
 DolphinDB的一些内置函数的参数中需要使用元编程。
 
-#### 2.2.1 窗口连接
+#### 2.2.1. 窗口连接
 
 在窗口连接（window join）中，需要为右表的窗口数据集指定一个或多个聚合函数以及这些函数运行时需要的参数。由于问题的描述和执行在两个不同的阶段，必须使用元编程以实现延后执行。
 
@@ -235,7 +278,7 @@ ibm 10:01:07 105   108     103     105.625
 
 ```
 
-#### 2.2.2 流计算引擎
+#### 2.2.2. 流计算引擎
 
 DolphinDB提供多种流计算引擎。在使用这些流计算引擎时，需要为数据窗口中的数据指定函数或表达式以及所需参数，这些都需要使用元编程。
 
@@ -268,7 +311,7 @@ time                sym sumQty
 2018.10.08T01:03:00 B   9  
 ```
 
-### 2.3 定制报表
+### 2.3. 定制报表
 
 下例定义了一个用于生成报表的自定义函数，用户只需要输入数据表、字段名称以及字段相应的格式字符串，即可按指定格式输出报表。
 
@@ -316,7 +359,7 @@ date       sym price  volume
 select format(date,"MM/dd/yyyy") as date, sym, format(price,"###.00") as price, format(volume,"#,###") as volume from t where date=2020.10.16 and sym=`B
 ```
 
-### 2.4 物联网应用中动态生成计算指标
+### 2.4. 物联网应用中动态生成计算指标
 
 在物联网的实时流计算中，数据源包含tag, timestamp和value三个字段，需要对输入的原始数据进行实时计算。由于每次收到的原始数据的tag数量和种类有可能不同，并且每次计算的指标也可能不同，我们无法将计算指标固定下来。这种情况下可以采用元编程的方法。定义一个配置表，将计算的指标放到该表中，可以后续增加、删除或修改计算指标。每次实时计算时，从配置表中动态地读取需要计算的指标，并把计算的结果输出到另外一个表中。
 
@@ -356,15 +399,15 @@ index3    1
 
 ```
 
-### 2.5 执行一组查询，合并查询结果
+### 2.5. 执行一组查询，合并查询结果
 
 在数据分析中，有时我们需要对同一个数据集执行多个相似的查询。我们可以使用元编程动态生成SQL语句，以简化大量查询语句的编写。
 
 本例使用的数据集结构如下（以第一行为例）：
 
-mt       |vn       |bc |cc  |stt |vt |gn |bk   |sc |vas |pm |dls        |dt         |ts     |val   |vol  
--------- |-------- |-- |--- |--- |-- |-- |---- |-- |--- |-- |---------- |---------- |------ |----- |-----
-52354955 |50982208 |25 |814 |11  |2  |1  |4194 |0  |0   |0  |2020.02.05 |2020.02.05 |153234 |5.374 |18600                  
+| mt       | vn       | bc | cc  | stt | vt | gn | bk   | sc | vas | pm | dls        | dt         | ts     | val   | vol   |
+|----------|----------|----|-----|-----|----|----|------|----|-----|----|------------|------------|--------|-------|-------|
+| 52354955 | 50982208 | 25 | 814 | 11  | 2  | 1  | 4194 | 0  | 0   | 0  | 2020.02.05 | 2020.02.05 | 153234 | 5.374 | 18600 |                
 
 需要对每天的数据都执行一组查询。为了便于理解，这里我们使用了以下4个查询。实际应用中可能会有几千个查询。
 
@@ -428,8 +471,7 @@ bundleQuery(t, dt, dtColName, mt, mtColName, colValues, colNames)
 addFunctionView(bundleQuery)
 ```
 
-## 3.小结
+## 3. 小结
 
 DolphinDB的元编程功能强大，使用简单，能够极大地提高程序开发效率。
-
 

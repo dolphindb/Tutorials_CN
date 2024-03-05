@@ -1,39 +1,38 @@
-# **DolphinDB SQL执行计划教程**
-
-- [**DolphinDB SQL执行计划教程**](#dolphindb-sql执行计划教程)
-  - [1. 如何获取执行计划](#1-如何获取执行计划)
-  - [2. 看懂执行计划](#2-看懂执行计划)
-    - [2.1 执行计划结构概述](#21-执行计划结构概述)
-    - [2.2 from数据源分析](#22-from数据源分析)
-    - [2.3 map分区查询分析](#23-map分区查询分析)
-    - [2.4 merge合并分析](#24-merge合并分析)
-    - [2.5 最后的数据统计](#25-最后的数据统计)
-  - [3 执行计划详解与优化建议](#3-执行计划详解与优化建议)
-    - [3.1 from](#31-from)
-      - [3.1.1 JOIN](#311-join)
-      - [3.1.2 子查询](#312-子查询)
-    - [3.2 where](#32-where)
-    - [3.3 map](#33-map)
-      - [3.3.1 分区剪枝](#331-分区剪枝)
-      - [3.3.2 使用分区字段减少耗时](#332-使用分区字段减少耗时)
-      - [3.3.3 optimize场景优化](#333-optimize场景优化)
-    - [3.4 reduce](#34-reduce)
-    - [3.5 执行计划对于DolphinDB特有功能的解释](#35-执行计划对于dolphindb特有功能的解释)
-  - [4. 附录](#4-附录)
-
+# DolphinDB SQL 执行计划
 
 为了更直观优化数据查询的性能，DolphinDB提供查询SQL执行计划的功能，便于对SQL语句进行调优。
 
->  执行计划指一条SQL语句在DolphinDB数据库中具体的执行方式，如命中的分区数量，各步骤执行耗时等等。
+注：执行计划指一条SQL语句在DolphinDB数据库中具体的执行方式，如命中的分区数量，各步骤执行耗时等等。
 
 `功能发布版本：V1.30.16 / V2.00.4`
 
 
-> 备注：在测试版本中，查看执行计划的同时内部会完整执行该条SQL语句。若对应SQL语句执行耗时较长或者可能命中的分区数较多，可以选择对SQL语句进行拆分，对拆分后各个子句进行检测；或者通过`sqlDS`函数获取命中分区，在对应分区分别检测SQL执行计划（请参考[sqlDS介绍](https://dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/s/sqlDS.html?highlight=sqlds)）。
+注：查看执行计划的同时内部会完整执行该条SQL语句。若对应SQL语句执行耗时较长或者可能命中的分区数较多，可以选择对SQL语句进行拆分，对拆分后各个子句进行检测；或者通过`sqlDS`函数获取命中分区，在对应分区分别检测SQL执行计划（请参考手册的sqlDS介绍。
+
+- [DolphinDB SQL 执行计划](#dolphindb-sql-执行计划)
+  - [1. 如何获取执行计划](#1-如何获取执行计划)
+  - [2. 看懂执行计划](#2-看懂执行计划)
+    - [2.1. 执行计划结构概述](#21-执行计划结构概述)
+    - [2.2. from数据源分析](#22-from数据源分析)
+    - [2.3. map分区查询分析](#23-map分区查询分析)
+    - [2.4. merge合并分析](#24-merge合并分析)
+    - [2.5. 最后的数据统计](#25-最后的数据统计)
+  - [3. 执行计划详解与优化建议](#3-执行计划详解与优化建议)
+    - [3.1. from](#31-from)
+      - [3.1.1. JOIN](#311-join)
+      - [3.1.2. 子查询](#312-子查询)
+    - [3.2. where](#32-where)
+    - [3.3. map](#33-map)
+      - [3.3.1. 分区剪枝](#331-分区剪枝)
+      - [3.3.2. 使用分区字段减少耗时](#332-使用分区字段减少耗时)
+      - [3.3.3. optimize场景优化](#333-optimize场景优化)
+    - [3.4. reduce](#34-reduce)
+    - [3.5. 执行计划对于DolphinDB特有功能的解释](#35-执行计划对于dolphindb特有功能的解释)
+  - [4. 附录](#4-附录)
 
 ## 1. 如何获取执行计划
 
-若要获取SQL语句的执行计划，需要在select或者exec后面增加：`[HINT_EXPLAIN]`，该关键字必须`紧跟`在select或者exec后，然后再增加查询所需字段。
+若要获取SQL语句的执行计划，需要在select或者exec后面增加：`[HINT_EXPLAIN]`，该关键字必须**紧跟**在select或者exec后，然后再增加查询所需字段。
 
 示例如下：
 
@@ -42,7 +41,7 @@
 select [HINT_EXPLAIN] * from pt;
 ```
 
-> 对于UPDATE或者DELETE语句，暂不支持查看执行计划。
+注：对于UPDATE或者DELETE语句，暂不支持查看执行计划。
 
 ## 2. 看懂执行计划
 
@@ -138,15 +137,15 @@ select [HINT_EXPLAIN] * from loadTable("dfs://valuedb",`pt);
 
 ```
 
-### 2.1 执行计划结构概述
+### 2.1. 执行计划结构概述
 
-> "measurement": "microsecond"，表示执行计划中时间开销的单位为微秒。
+注："measurement": "microsecond"，表示执行计划中时间开销的单位为微秒。
 
 一般来说，DolphinDB执行计划的所有内容都会包含在`explain`结构里。但是若SQL中存在多个子查询，在执行计划中，则可能存在多个嵌套的`explain`结构。
 
 案例中的`explain`结构中由四部分组成：`from`、`map`、`merge`以及最后的统计信息`rows`和`cost`。
 
-### 2.2 from数据源分析
+### 2.2. from数据源分析
 
 ```
 "from": {
@@ -157,7 +156,7 @@ select [HINT_EXPLAIN] * from loadTable("dfs://valuedb",`pt);
 `from`结构体种的内容是`cost`，表示获取数据源信息的耗时，单位为μs。在上例中，我们使用`loadTable`函数从数据库中加载valuedb的pt表（的元数据），耗时为13μs。
 
 
-### 2.3 map分区查询分析
+### 2.3. map分区查询分析
 
 DolphinDB数据库使用分布式文件系统，以分区为单位存储数据。当SQL查询涉及到多个分区时，DophinDB会首先尽可能进行分区剪枝，然后将查询语句分发到相关分区进行并行查询，最后将结果进行汇总。`map`结构体说明了将查询任务发送到相关分区的执行情况。
 
@@ -208,7 +207,7 @@ DolphinDB数据库使用分布式文件系统，以分区为单位存储数据�
 
   
 
-### 2.4 merge合并分析
+### 2.4. merge合并分析
 
 在上一步，各分区查询完成后会将结果发送到发起查询任务的数据节点，并由该节点进行数据汇总，`merge`用于说明汇总阶段的相关指标。
 
@@ -240,7 +239,7 @@ DolphinDB数据库使用分布式文件系统，以分区为单位存储数据�
 
 在分析的内容中，`cost`为耗时，`rows`为汇总之后的数据量；`detail`包含的内容与`map`中的`detail`内容类似，区别在于，此处`detail`嵌套的的`most`和`least`指的是返回结果最多与最少的分区，而非耗时最长与最短的分区。
 
-### 2.5 最后的数据统计
+### 2.5. 最后的数据统计
 
 最后的统计指标一般包括`rows`（查询获得的总记录数）与`cost`（查询总耗时，单位为μs）。
 
@@ -248,13 +247,13 @@ DolphinDB数据库使用分布式文件系统，以分区为单位存储数据�
 
 最后统计的查询总耗时可能多于各个阶段的耗时之和，这是因为在各个阶段中间可能会有一些数据格式的转换、数据在网络间的传输等额外的开销，而这些开销不会体现在执行计划中。
 
-## 3 执行计划详解与优化建议
+## 3. 执行计划详解与优化建议
 
-### 3.1 from
+### 3.1. from
 
-数据来源可以是内存表、流表、分布式表、多表连接结果或者嵌套的SQL语句。请注意，嵌套的SQL语句不能添加`[HINT_EXPLAIN]`。
+数据来源可以是内存表、流数据表、分布式表、多表连接结果或者嵌套的SQL语句。请注意，嵌套的SQL语句不能添加`[HINT_EXPLAIN]`。
 
-#### 3.1.1 JOIN
+#### 3.1.1. JOIN
 若查询包含表连接操作，执行计划会显示`JOIN`的相关信息。
 
 ```
@@ -346,13 +345,13 @@ select [HINT_EXPLAIN] times,vals,month from lsj(loadTable("dfs://valuedb",`pt),l
 ```
 
 较第二节中的例子相比，本例的执行计划在`from`部分中增加了 "detail": "materialize for JOIN"。请注意这里`from`中的耗时并不是表连接操作的耗时，而是准备用于连接的2个数据源的时间。表连接将在map阶段执行。
-<!---，因为DolphinDB按分区存储数据，实际的数据连接在分区中执行。**(如果是分布式join，且matching列不是分区列，就会将数据读取到内存再进行join)**  --->
+
 
 根据`map`部分的统计，耗时最长的分区中，`join`耗时1701μs；根据`merge`部分的统计，返回数据量最多的分区中，`join`耗时2535μs。
 
 `map`部分中的`reshuffle`部分显示的耗时，是准备将数据根据连接列连续存放到内存中以进行表连接的耗时，仅是准备过程的耗时，并没有包括将数据取到内存的耗时。若同一数据库下，进行多表连接且连接列是分区字段，则不会包含`reshuffle`部分。（只有2.0版本支持分布式join）
 
-#### 3.1.2 子查询
+#### 3.1.2. 子查询
 
 如果`from`子句的对象是一个SQL语句（嵌套子查询），则会在执行计划中嵌套显示子查询的执行计划。
 
@@ -440,7 +439,7 @@ select [HINT_EXPLAIN] * from (select max(x) as maxx from loadTable("dfs://valued
 }
 ```
 
-### 3.2 where
+### 3.2. where
 
 典型的`where`部分中只有`rows`和`cost`两项。`cost`表示进行条件过滤的耗时，而`rows`表示过滤后获取的数据量。如上例中，`where`条件过滤后只剩9行数据，耗时13μs。
 
@@ -450,9 +449,9 @@ select [HINT_EXPLAIN] * from (select max(x) as maxx from loadTable("dfs://valued
       "cost": 13
     },
 ```
-<!--- DolphinDB不支持在`where`的子查询中查询分布式表，但支持其他的表嵌套在`where`子句中，如内存表。但目前`where`不支持展示子查询的详细执行计划，也不建议在`where`中嵌套使用子查询。--->
+<!-- DolphinDB不支持在`where`的子查询中查询分布式表，但支持其他的表嵌套在`where`子句中，如内存表。但目前`where`不支持展示子查询的详细执行计划，也不建议在`where`中嵌套使用子查询。-->
 
-<!--- `where`并不一定会出现在所有的`explain`中。上例中，先进行子查询，待返回结果后再进行`where`筛选，所以，最外层的`explain`包含了`where`结构的。
+<!-- `where`并不一定会出现在所有的`explain`中。上例中，先进行子查询，待返回结果后再进行`where`筛选，所以，最外层的`explain`包含了`where`结构的。
 
 考虑下面这个例子：
 
@@ -522,15 +521,15 @@ select [HINT_EXPLAIN] * from loadTable("dfs://valuedb1",`pt) where ( (06:30:00<=
   }
 }
 ```
---->
+-->
 
-### 3.3 map
+### 3.3. map
 
 `map`阶段将任务分发给各个节点执行，执行计划展示了涉及的分区数、获取数据的行数、耗时、具体执行的SQL等信息。若SQL语句进行了优化，`map`部分会包含`optimize`部分，或者`map`部分被`optimize`部分取代。
 
-#### 3.3.1 分区剪枝
+#### 3.3.1. 分区剪枝
 
-对于分布式查询，我们可以通过观察`map`的`partitions`来检查SQL涉及的分区数量是否与预期涉及的分区数量一致。如果执行计划中分区的数量与总分区数量一致，表示该SQL语句没有触发分区剪枝，遍历了所有的分区，此时参考用户手册关于[分区剪枝](https://www.dolphindb.cn/cn/help/200/DatabaseandDistributedComputing/DatabaseOperations/Queries.html?highlight=%E5%89%AA%E6%9E%9D)的部分，可以对SQL语句进行优化。
+对于分布式查询，我们可以通过观察`map`的`partitions`来检查SQL涉及的分区数量是否与预期涉及的分区数量一致。如果执行计划中分区的数量与总分区数量一致，表示该SQL语句没有触发分区剪枝，遍历了所有的分区，此时参考用户手册关于分区剪枝的部分，可以对SQL语句进行优化。
 
 建议在SQL查询前，估算一下涉及的分区数量，并与执行计划显示的分区数量进行比对，以此来判断SQL是否做到查询最少的数据。
 
@@ -550,7 +549,7 @@ pt = db.createPartitionedTable(t, `pt, `month)
 pt.append!(t)
 
 // 查询出来有204个分区
-select count(*) from pnodeRun(getAllChunks) where dfsPath like '%valuedb%' and type != 0 group by dfsPath
+select count(*) from pnodeRun(getAllChunks) where dfsPath like '%valuedb/%' and type != 0 group by dfsPath
 
 select [HINT_EXPLAIN] * from pt where 2016.11M <= month<= 2016.12M
 ```
@@ -598,9 +597,9 @@ select [HINT_EXPLAIN] * from pt where month between 2016.11M : 2016.12M
     ......[以下省略]
 ```
 
-#### 3.3.2 使用分区字段减少耗时
+#### 3.3.2. 使用分区字段减少耗时
 
-`在SQL中，建议尽量在where或者groupby等条件中使用分区字段，这可以帮助减少查询的分区数，从而减少查询耗时`。
+在SQL中，建议尽量在where或者groupby等条件中使用分区字段，这可以帮助减少查询的分区数，从而减少查询耗时。
 
 比如在下面的例子中，我的表中存在，datea列和dateb列,两列数据相同，但是dateb列为分区使用的字段。同样是查询某一天的数据，使用datea列筛选的执行计划效果如下：
 ```
@@ -727,14 +726,12 @@ select [HINT_EXPLAIN] * from pt where dateb = 2000.01.01;
 ```
 使用普通列DolphinDB无法进行查询优化，命中了所有的分区，但是使用分区字段就可以。在上面的示例中使用分区字段后直接找到了对应的分区，查询出预期的数据。
 
-`在TSDB引擎中建表时增加了sortColumns选项，该选项可以作为索引快速定位到需要的数据。建议在筛选条件或者组合条件中，尽量使用分区字段和sortColumns字段，可以大大提高查询效率`
+**在TSDB引擎中建表时增加了sortColumns选项，该选项可以作为索引快速定位到需要的数据。建议在筛选条件或者组合条件中，尽量使用分区字段和sortColumns字段，可以大大提高查询效率**
 
-
-
-#### 3.3.3 optimize场景优化
+#### 3.3.3. optimize场景优化
 DolphinDB对于部分经典场景的SQL做了优化，比如对于物联网场景，经常需要查找某些设备最新的数据，DolphinDB在进行优化后，不需要在分发查询任务到每一个分区进行查询，而是采用新的寻径算法找到需要的数据。
 
-在执行计划中，`map`里面会在`optimize`中展示优化的具体内容（该优化在新版本`2.00.4`中发布）。如下例查找指定的2个设备所有指标的最新数据：
+在执行计划中，`map`里面会在`optimize`中展示优化的具体内容（该优化在版本`2.00.4`中发布）。如下例查找指定的2个设备所有指标的最新数据：
 ```
 // 设备/指标/日期 1m 23s 23ms
 login(`admin,`123456);devices = 1..9;metrics = 'a'..'d';days = 2020.09.01+0..1;
@@ -915,7 +912,7 @@ select [HINT_EXPLAIN] symbol from loadTable("dfs://stocks","quotes") group by sy
 }
 ```
 
-### 3.4 reduce
+### 3.4. reduce
 
 并不是所有的SQL查询都会包含`reduce`阶段，通常在需要对合并后的查询结果进行进一步处理，在SQL执行计划中可能会包含`reduce`。如：
 ```
@@ -1037,7 +1034,7 @@ select [HINT_EXPLAIN] last(askPrice1) \ first(askPrice1) - 1
 }
 ```
 
-### 3.5 执行计划对于DolphinDB特有功能的解释
+### 3.5. 执行计划对于DolphinDB特有功能的解释
 
 DolphinDB有一些特有的创新功能，比如：cgroup by 、 context by 、 pivot by 、 interval 等等；通常情况下，执行计划会单独列举出来这些功能的执行耗时，方便进行性能比较，比如：
 ```

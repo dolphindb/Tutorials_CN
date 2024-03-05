@@ -1,23 +1,31 @@
-# DolphinDB教程：启动脚本 
+# DolphinDB教程： 启动脚本 
 
 DolphinDB database从1.0版本开始，提供启动脚本功能。在启动脚本中，用户可以指定每次DolphinDB启动都需要自动执行的任务，譬如初始化流数据，定义共享变量，加载插件脚本等。
 
+- [DolphinDB教程： 启动脚本](#dolphindb教程-启动脚本)
+	- [1.  DolphinDB 启动流程](#1--dolphindb-启动流程)
+	- [2.  执行启动脚本](#2--执行启动脚本)
+	- [3.  常见应用场景](#3--常见应用场景)
+		- [3.1. 例1：定义并共享内存表](#31-例1定义并共享内存表)
+		- [3.2. 例2：定义、加载流数据表并共享、订阅](#32-例2定义加载流数据表并共享订阅)
+		- [3.3. 例3：加载插件](#33-例3加载插件)
+	- [4.  编写启动脚本](#4--编写启动脚本)
 
-## 1. DolphinDB启动流程
+## 1.  DolphinDB 启动流程
 
 DolphinDB系统的启动流程如下图所示：
 
-![image](./images/startup.png?raw=true)
+![image](./images/startup.png)
 
 系统级初始化脚本是必需的，由设置参数init指定，默认脚本是版本发布目录中的dolphindb.dos。系统级初始化脚本中可定义系统级函数。这些函数对所有用户都可见，而且不能被覆盖，相当于DolphinDB内置函数。
 
 执行系统初始化脚本（dolphindb.dos）脚本时，脚本解释器、工作线程等已完成初始化，但系统的网络和分布式文件系统尚未启动、函数视图尚未加载。因此，如果函数视图中使用了插件，加载插件必须在系统初始化脚本（dolphindb.dos）中完成或者在配置项 preloadModules 配置。
 
-> 注意：由于函数视图存储在控制节点，如果在初始化脚本中加载插件，则集群环境下每个节点的初始化脚本中都必须进行加载，因此建议用户使用 preloadModules 配置项进行预加载。
+注意：由于函数视图存储在控制节点，如果在初始化脚本中加载插件，则集群环境下每个节点的初始化脚本中都必须进行加载，因此建议用户使用 preloadModules 配置项进行预加载。
 
 
 除了以下极少数任务以外，在启动脚本中我们可以执行任何其它任务。
-* 定时作业在启动脚本之后运行，所以不能在启动脚本中使用与定时作业相关的任何功能，包括函数[scheduleJob](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/s/scheduleJob.html), [getScheduledJobs](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/g/getScheduledJobs.html) 和 [deleteScheduledJob](https://www.dolphindb.cn/cn/help/FunctionsandCommands/CommandsReferences/d/deleteScheduledJob.html)。
+* 定时作业在启动脚本之后运行，所以不能在启动脚本中使用与定时作业相关的任何功能，包括函数scheduleJob, getScheduledJobs 和 deleteScheduledJob。
 * 若需要定义系统级的函数，要求这些函数对所有用户都可见，而且不能被覆盖，请在初始化脚本dolphindb.dos中定义。
 * 依赖其他节点的任务。因为有可能其他节点尚未启动。
 
@@ -30,7 +38,7 @@ if(getScheduledJobs().jobDesc.find("daily resub") == -1){
 }
 ```
 
-## 2. 执行启动脚本
+## 2.  执行启动脚本
 
 启动脚本的配置参数为startup，参数值为启动脚本文件名，默认脚本为startup.dos。单机模式时在dolphindb.cfg中配置，集群模式时在cluster.cfg中配置。可配置绝对路径或相对路径。若配置了相对路径或者没有指定目录，系统会依次搜索本地节点的home目录、工作目录和可执行文件所在目录。
 
@@ -43,11 +51,11 @@ startup=/home/streamtest/init/server/startup.dos
 
 启动脚本执行过程中若遇到错误，执行会中断，但系统不会退出，而是继续运行。
 
-## 3. 常见应用场景
+## 3.  常见应用场景
 
 系统重启后可能需要的初始化工作主要有：定义并共享内存表，定义、加载并共享流数据表、订阅流数据、加载插件等。
 
-**例子1**：定义并共享内存表
+### 3.1. 例1：定义并共享内存表
 
 下面代码中定义了一张内存表t，并分享为sharedT。在其他会话中可对表sharedT进行增加、更新、删除和查询记录。
 ```
@@ -55,7 +63,7 @@ t=table(1:0,`date`sym`val,[DATE,SYMBOL,INT])
 share(t, `sharedT); 
 ```
 
-**例子2**：定义、加载流数据表并共享、订阅
+### 3.2. 例2：定义、加载流数据表并共享、订阅
 
 流数据表的定义不可在DolphinDB中持久化保存，所以流数据表的初始化工作可在启动脚本中执行。下面代码加载并共享了流数据表st1：
 ```
@@ -69,7 +77,7 @@ tb=loadTable("dfs://db1","tb")
 subscribeTable(,"st1","subst",-1,append!{tb},true)
 ```
 
-注意：在例子1，2的场景下，若在启动脚本中定义了共享内存表或者共享流数据表，且在启动脚本中调用了共享表变量，需要在 share 函数或者 enableTableShareAndPersistence 函数后增加 [go](https://www.dolphindb.cn/cn/help/ProgrammingStatements/go.html) 语句，否则解析会抛出异常。参考下例：
+注意：在例子1，2的场景下，若在启动脚本中定义了共享内存表或者共享流数据表，且在启动脚本中调用了共享表变量，需要在 share 函数或者 enableTableShareAndPersistence 函数后增加 go 语句，否则解析会抛出异常。参考下例：
 
 将流数据表的数据写入一个共享的键值表，在启动脚本中定义如下：
 ```
@@ -93,7 +101,7 @@ subscribeTable(tableName="test_stream", actionName="test1", offset=0, handler=sa
 share opt as optShared
 ```
 
-**例子3**：加载插件
+### 3.3. 例3：加载插件
 
 若定时作业 (scheduled job) 中使用了插件函数，必须在启动脚本中加载插件或者在配置项 preloadModules 配置插件，否则会因反序列化失败导致系统退出。
 下列代码在定时作业中使用了ODBC插件：
@@ -120,12 +128,12 @@ loadPlugin("plugins/odbc/odbc.cfg")
 preloadModules=plugins::odbc
 ```
 
-## 4. 编写启动脚本
+## 4.  编写启动脚本
 
 编写启动脚本时，可以使用 [`module`](./module_tutorial.md) 来声明和使用可重用模块，可以自定义函数，也可以使用分布式的功能。
 
-若需要调试启动脚本，可以在脚本中用 [print](https://www.dolphindb.cn/cn/help/FunctionsandCommands/CommandsReferences/p/print.html) 与 [writeLog](https://www.dolphindb.cn/cn/help/FunctionsandCommands/CommandsReferences/w/writeLog.html) 等函数打印日志。系统会把启动脚本运行情况输出到节点日志。
+若需要调试启动脚本，可以在脚本中用 print 与 writeLog 等函数打印日志。系统会把启动脚本运行情况输出到节点日志。
 
-编写启动脚本时，为了防止出现异常而停止执行后续的脚本，可使用 [try-catch](https://www.dolphindb.cn/cn/help/ProgrammingStatements/tryCatch.html) 语句俘获异常。
+编写启动脚本时，为了防止出现异常而停止执行后续的脚本，可使用 try-catch 语句俘获异常。
 
 编写系统初始化脚本和启动脚本时，可以里用 include 语句进行代码的模块化管理。
