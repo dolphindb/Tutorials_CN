@@ -18,7 +18,7 @@
 
 ## 1. 概述
 
-DolphinDB 从 1.30.6 版本开始支持更新分布式表数据。更新操作支持事务，具备事务 [ACID](https://en.wikipedia.org/wiki/ACID) 的特性，且通过 [MVCC](https://en.wikipedia.org/wiki/Multiversion_concurrency_control) 实现快照隔离级别。DolphinDB 为多模数据库，目前支持两种存储引擎：OLAP 和 TSDB（详见 DolphinDB 数据模型，不同引擎的更新操作的原理和性能不同。本文将分别介绍两种存储引擎的更新操作相关的原理，并通过实验验证和分析相关性能。
+DolphinDB 从 1.30.6 版本开始支持更新分布式表数据。更新操作支持事务，具备事务 [ACID](https://en.wikipedia.org/wiki/ACID) 的特性，且通过 [MVCC](https://en.wikipedia.org/wiki/Multiversion_concurrency_control) 实现快照隔离级别。DolphinDB 为多模数据库，目前支持两种存储引擎：OLAP 和 TSDB。本文将分别介绍两种存储引擎的更新操作相关的原理，并通过实验验证和分析相关性能。
 
 ## 2. 使用方法
 
@@ -51,6 +51,7 @@ DolphinDB 提供 3 种更新分布式表的方法：
     ```python
     sqlUpdate(pt, <2 as vol>, where=<ID = 1>).eval()
     ```
+
     方法 3，下列 upsert! 语句执行后，第一个 ID=1 所在记录的 date 更新为 2022.08.07，vol 更新为 3：
 
     ```python
@@ -196,7 +197,7 @@ DolphinDB TSDB 引擎在建表时另外提供了两个参数：sortColumns 和 k
 
     更新流程图如下：
 
-    <img src="images/dolphindb_update/tsdb_last_update_flowchart.png" width="800" height="500"/><br/>
+    <img src="images/dolphindb_update/tsdb_last_update_flowchart.png" width="800" height="500"/>
 
     1. 向控制节点申请创建事务，控制节点会给涉及的分区加锁，并分配事务 tid，返回分区 chunk ID 等信息；
 
@@ -257,12 +258,12 @@ DolphinDB TSDB 引擎在建表时另外提供了两个参数：sortColumns 和 k
 
 ```python
 def createDatabase(dbName,tableName, ps1, ps2, numMetrics){
-	m = "tag" + string(1..numMetrics)
-	schema = table(1:0,`id`datetime join m, [INT,DATETIME] join take(FLOAT,numMetrics) )
-	db1 = database("",VALUE,ps1)
-	db2 = database("",RANGE,ps2)
-	db = database(dbName,COMPO,[db1,db2],,'TSDB')
-	db.createPartitionedTable(schema,tableName,`datetime`id ,,`id`datetime, keepDuplicates=LAST)
+ m = "tag" + string(1..numMetrics)
+ schema = table(1:0,`id`datetime join m, [INT,DATETIME] join take(FLOAT,numMetrics) )
+ db1 = database("",VALUE,ps1)
+ db2 = database("",RANGE,ps2)
+ db = database(dbName,COMPO,[db1,db2],,'TSDB')
+ db.createPartitionedTable(schema,tableName,`datetime`id ,,`id`datetime, keepDuplicates=LAST)
 }
 ```
 
