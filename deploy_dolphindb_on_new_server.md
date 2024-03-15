@@ -1,23 +1,23 @@
 # 用新服务器从零开始部署 DolphinDB
+
 本文主要介绍在新服务器部署 DolphinDB 时需要注意哪些系统配置，以及如何选择 DolphinDB 部署方式以符合业务需求。合适的系统配置可以提高 DolphinDB 系统的稳定性和可维护性，而合适的部署方式可以提高业务执行的效率。
 
-- [用新服务器从零开始部署 DolphinDB](#用新服务器从零开始部署-dolphindb)
-  - [1. 操作系统配置](#1-操作系统配置)
-    - [1.1 平台要求与推荐](#11-平台要求与推荐)
-    - [1.2 文件系统与 inode 数量](#12-文件系统与-inode-数量)
-    - [1.3 挂载新硬盘](#13-挂载新硬盘)
-    - [1.4 开启 core dump](#14-开启-core-dump)
-    - [1.5 增大文件最大打开数量](#15-增大文件最大打开数量)
-    - [1.6 NTPD](#16-ntpd)
-    - [1.7 防火墙配置](#17-防火墙配置)
-    - [1.8 Swap](#18-swap)
-  - [2. 部署 DolphinDB](#2-部署-dolphindb)
-    - [2.1 单节点、单机集群、多机集群的选择](#21-单节点单机集群多机集群的选择)
-    - [2.2 Docker 和非 Docker 环境运行的选择](#22-docker-和非-docker-环境运行的选择)
-    - [2.3 生产环境配置参数实践](#23-生产环境配置参数实践)
-    - [2.4 部署流程](#24-部署流程)
-    - [2.5 启动流程](#25-启动流程)
-  - [3. 附件](#3-附件)
+- [1. 操作系统配置](#1-操作系统配置)
+  - [1.1 平台要求与推荐](#11-平台要求与推荐)
+  - [1.2 文件系统与 inode 数量](#12-文件系统与-inode-数量)
+  - [1.3 挂载新硬盘](#13-挂载新硬盘)
+  - [1.4 开启 core dump](#14-开启-core-dump)
+  - [1.5 增大文件最大打开数量](#15-增大文件最大打开数量)
+  - [1.6 NTPD](#16-ntpd)
+  - [1.7 防火墙配置](#17-防火墙配置)
+  - [1.8 Swap](#18-swap)
+- [2. 部署 DolphinDB](#2-部署-dolphindb)
+  - [2.1 单节点、单机集群、多机集群的选择](#21-单节点单机集群多机集群的选择)
+  - [2.2 Docker 和非 Docker 环境运行的选择](#22-docker-和非-docker-环境运行的选择)
+  - [2.3 生产环境配置参数实践](#23-生产环境配置参数实践)
+  - [2.4 部署流程](#24-部署流程)
+  - [2.5 启动流程](#25-启动流程)
+- [3. 附件](#3-附件)
 
 ## 1. 操作系统配置
 
@@ -96,7 +96,7 @@ DolphinDB 依赖 gcc 4.8.5 或以上版本。以在 CentOS 7 稳定版上安装�
 
 > 硬盘容量取决于实际业务。
 > 
-> 数据实体存在1块 SSD 或多块 HDD 的读写性能差距取决于实际情况。
+> 数据实体存在 1 块 SSD 或多块 HDD 的读写性能差距取决于实际情况。
 
 ### 1.2 文件系统与 inode 数量
 
@@ -327,7 +327,7 @@ UUID=29ecb452-6454-4288-bda9-23cebcf9c755 /mnt/dev1             xfs     defaults
 
 > 注意：
 > 
-> 为目录预留足以存放若干 core 文件的空间，其中core文件最大约为 maxMemSize 配置项的值；
+> 为目录预留足以存放若干 core 文件的空间，其中 core 文件最大约为 maxMemSize 配置项的值；
 > 
 > 确保 DolphinDB 在该目录具备写权限。
 
@@ -414,7 +414,7 @@ DolphinDB 运行时同时打开的文件数量可能会大于 CentOS 7 的文件
 fs.file-max = 102400
 ```
 
-本文例子中系统级文件最大打开数量为 763964 个，大于 102400个，故不做修改。
+本文例子中系统级文件最大打开数量为 763964 个，大于 102400 个，故不做修改。
 
 4. 重启后查看配置是否生效
 
@@ -432,8 +432,8 @@ fs.file-max = 102400
 
 | 虚拟机名称 | IP           | 子网掩码      | NTPD 配置                           |
 | ---------- | ------------ | ------------- | ----------------------------------- |
-| 虚拟机1    | 192.168.0.30 | 255.255.254.0 | 服务端，与 cn.pool.ntp.org 时间同步 |
-| 虚拟机2    | 192.168.0.31 | 255.255.254.0 | 客户端，与 192.168.0.30 时间同步    |
+| 虚拟机 1    | 192.168.0.30 | 255.255.254.0 | 服务端，与 cn.pool.ntp.org 时间同步 |
+| 虚拟机 2    | 192.168.0.31 | 255.255.254.0 | 客户端，与 192.168.0.30 时间同步    |
 
 配置步骤如下：
 
@@ -444,7 +444,7 @@ fs.file-max = 102400
 # yum install ntp
 ```
 
-2. 在虚拟机1上配置与 [cn.pool.ntp.org](http://cn.pool.ntp.org) 时间同步
+2. 在虚拟机 1 上配置与 [cn.pool.ntp.org](http://cn.pool.ntp.org) 时间同步
 
 ```console
 # vi /etc/ntp.conf
@@ -463,14 +463,14 @@ server 3.cn.pool.ntp.org iburst
 
 其中第 4 行配置 IP 网段在 192.168.0.0 且子网掩码为 255.255.254.0 的本地网络请求本机的 NTP 服务，nomodify 指客户端不能修改服务端的参数配置，notrap 指不提供 trap 远程登录。
 
-3. 在虚拟机1上配置防火墙，添加 ntp 服务
+3. 在虚拟机 1 上配置防火墙，添加 ntp 服务
 
 ```console
 # firewall-cmd --add-service=ntp --permanent
 # firewall-cmd --reload
 ```
 
-4. 在虚拟机2上配置与虚拟机1时间同步
+4. 在虚拟机 2 上配置与虚拟机 1 时间同步
 
 ```console
 # vi /etc/ntp.conf
@@ -494,7 +494,7 @@ server 192.168.0.30 iburst
 
 6. 等待若干秒后，查看 ntpd 运行状况
 
-虚拟机1：
+虚拟机 1：
 
 ```console
 # ntpstat
@@ -503,7 +503,7 @@ synchronised to NTP server (202.112.31.197) at stratum 2
    polling server every 64 s
 ```
 
-虚拟机2：
+虚拟机 2：
 
 ```console
 # ntpstat
@@ -585,7 +585,7 @@ Swap:            0B          0B          0B
 
 单节点指在单机上部署一个 DolphinDB 单机节点，单机集群指在单机上部署多个 DolphinDB 分布式节点。
 
-单节点部署更简单，且在单机配置（CPU核数、内存容量、硬盘个数）不高、计算任务不复杂的情况下，单节点的部署方式减少了节点间的网络传输，在性能方面反而比单机集群更好（但并不明显）。
+单节点部署更简单，且在单机配置（CPU 核数、内存容量、硬盘个数）不高、计算任务不复杂的情况下，单节点的部署方式减少了节点间的网络传输，在性能方面反而比单机集群更好（但并不明显）。
 
 单机集群通常适合密集型计算场景，将计算任务分发到不同的节点（进程）上，可以有效的隔离内存资源竞争，提高计算效率。
 
@@ -605,24 +605,24 @@ Swap:            0B          0B          0B
 
 对于大吞吐量、低计算的任务来说，单机多硬盘集群模式因网络开销小而具有更好的性能。对于小吞吐量、重计算的场景，多机集群的分布式计算优势更明显。
 
-元数据和redo log的存储，相关配置项包括：
+元数据和 redo log 的存储，相关配置项包括：
 
-- [chunkMetaDir](https://dolphindb.cn/cn/help/DatabaseandDistributedComputing/Configuration/MetaData.html?highlight=chunkmetadir): 元数据目录
+- [chunkMetaDir](https://docs.dolphindb.cn/zh/db_distr_comp/cfg/cfg_para_ref.html?hl=chunkmetadir#configparamref__section_ckn_54d_syb): 元数据目录
     
-- [dfsMetaDir](https://dolphindb.cn/cn/help/DatabaseandDistributedComputing/Configuration/MetaData.html?highlight=dfsMetaDir): 该目录保存控制器节点上的分布式文件系统的元数据
+- [dfsMetaDir](https://docs.dolphindb.cn/zh/db_distr_comp/cfg/cfg_para_ref.html#configparamref__section_bkn_54d_syb): 该目录保存控制器节点上的分布式文件系统的元数据
     
-- [redoLogDir](https://dolphindb.cn/cn/help/DatabaseandDistributedComputing/Configuration/Log.html?highlight=redologdir#redo-log): OLAP 存储引擎重做日志（redo log）的目录
+- [redoLogDir](https://docs.dolphindb.cn/zh/db_distr_comp/cfg/cfg_para_ref.html#configparamref__section_tjn_54d_syb): OLAP 存储引擎重做日志（redo log）的目录
     
-- [TSDBRedoLogDir](https://dolphindb.cn/cn/help/DatabaseandDistributedComputing/Configuration/Log.html?highlight=redologdir#redo-log): TSDB 存储引擎重做日志（redo log）的目录
+- [TSDBRedoLogDir](https://docs.dolphindb.cn/zh/db_distr_comp/cfg/cfg_para_ref.html#configparamref__section_tjn_54d_syb): TSDB 存储引擎重做日志（redo log）的目录
     
 
 这些配置项建议指定到 SSD 以提高读写性能。
 
 数据实体的存储，相关配置项包括：
 
-- [volumes](https://dolphindb.cn/cn/help/DatabaseandDistributedComputing/Configuration/Disk.html?highlight=volumes): 数据文件目录。多个目录用 ',' 隔开，例如： /hdd/hdd1/volumes,/hdd/hdd2/volumes,/hdd/hdd3/volumes
+- [volumes](https://docs.dolphindb.cn/zh/db_distr_comp/cfg/cfg_para_ref.html#configparamref__section_qkn_54d_syb): 数据文件目录。多个目录用 ',' 隔开，例如： /hdd/hdd1/volumes,/hdd/hdd2/volumes,/hdd/hdd3/volumes
     
-- [diskIOConcurrencyLevel](https://dolphindb.cn/cn/help/DatabaseandDistributedComputing/Configuration/Disk.html?highlight=diskioconcurrencylevel): 读写磁盘数据的线程数，默认为1，若 volumes 全部配置为 HDD 硬盘，建议 diskIOConcurrencyLevel 设置为同 HDD 硬盘个数相同的值
+- [diskIOConcurrencyLevel](https://docs.dolphindb.cn/zh/db_distr_comp/cfg/cfg_para_ref.html#configparamref__section_qkn_54d_syb): 读写磁盘数据的线程数，默认为 1，若 volumes 全部配置为 HDD 硬盘，建议 diskIOConcurrencyLevel 设置为同 HDD 硬盘个数相同的值
     
 
 ### 2.2 Docker 和非 Docker 环境运行的选择
@@ -636,9 +636,9 @@ Docker 只是轻量化的资源隔离，DolphinDB 部署在 Docker 环境和非 
 
 | 名称     | IP              | 备注                            |
 | -------- | --------------- | ------------------------------- |
-| centos-1 | 175.178.100.3   | 1控制节点，1代理节点，1数据节点 |
-| centos-2 | 119.91.229.229  | 1控制节点，1代理节点，1数据节点 |
-| centos-3 | 175.178.100.213 | 1控制节点，1代理节点，1数据节点 |
+| centos-1 | 175.178.100.3   | 1 控制节点，1 代理节点，1 数据节点 |
+| centos-2 | 119.91.229.229  | 1 控制节点，1 代理节点，1 数据节点 |
+| centos-3 | 175.178.100.213 | 1 控制节点，1 代理节点，1 数据节点 |
 
 3 台机器上 cluster.nodes 与 cluster.cfg 配置文件内容均相同，而 controller.cfg 和 agent.cfg 需要根据机器 IP 和端口号做相应配置。注意下面只列出部分重要配置。
 
@@ -699,7 +699,7 @@ sites=175.178.100.3:8960:agent1:agent,175.178.100.3:8990:controller1:controller,
         <tr>
             <td>cluster.cfg</td>
             <td>chunkCacheEngineMemSize=2<br>TSDBCacheEngineSize=2</td>
-            <td rowspan=2>DolphinDB 目前要求 cache engine 和 redo log 必须搭配使用。若在 cluster.cfg 配置了chunkCacheEngineMemSize 和 TSDBCacheEngineSize（即启动 cache engine）则必须在 controller.cfg 里配置 dataSync=1。</td>
+            <td rowspan=2>DolphinDB 目前要求 cache engine 和 redo log 必须搭配使用。若在 cluster.cfg 配置了 chunkCacheEngineMemSize 和 TSDBCacheEngineSize（即启动 cache engine）则必须在 controller.cfg 里配置 dataSync=1。</td>
         </tr>
         <tr>
             <td>controller.cfg</td>
@@ -710,11 +710,11 @@ sites=175.178.100.3:8960:agent1:agent,175.178.100.3:8990:controller1:controller,
 
 ### 2.4 部署流程
 
-DolphinDB为各种部署方式提供了详细的教程，在决定部署方式和配置后，根据教程部署即可，本文涉及的部署方式教程链接如下：
+DolphinDB 为各种部署方式提供了详细的教程，在决定部署方式和配置后，根据教程部署即可，本文涉及的部署方式教程链接如下：
 
 - [单节点部署](https://gitee.com/dolphindb/Tutorials_CN/blob/master/standalone_server.md)
     
-- [单节点部署(嵌入式ARM版本)](https://gitee.com/dolphindb/Tutorials_CN/blob/master/ARM_standalone_deploy.md)
+- [单节点部署 (嵌入式 ARM 版本)](https://gitee.com/dolphindb/Tutorials_CN/blob/master/ARM_standalone_deploy.md)
     
 - [单服务器集群部署](https://gitee.com/dolphindb/Tutorials_CN/blob/master/single_machine_cluster_deploy.md)
     
@@ -724,9 +724,9 @@ DolphinDB为各种部署方式提供了详细的教程，在决定部署方式�
     
 - [如何扩展集群节点和存储](https://gitee.com/dolphindb/Tutorials_CN/blob/master/scale_out_cluster.md)
     
-- [DolphinDB Docker单机部署方案](https://gitee.com/dolphindb/dolphindb-k8s/blob/master/docker_single_deployment.md)
+- [DolphinDB Docker 单机部署方案](https://gitee.com/dolphindb/dolphindb-k8s/blob/master/docker_single_deployment.md)
     
-- [基于Docker-Compose的DolphinDB多容器集群部署](https://gitee.com/dolphindb/dolphindb-k8s/blob/master/docker-compose_high_cluster.md)
+- [基于 Docker-Compose 的 DolphinDB 多容器集群部署](https://gitee.com/dolphindb/dolphindb-k8s/blob/master/docker-compose_high_cluster.md)
     
 > 注意：在 windows 系统下部署时，部署路径不能包含中文。
 
@@ -758,7 +758,7 @@ $ ./startAgent.sh
 
 #### 2.5.3 启动数据节点 <!-- omit in toc -->
 
-进入任意一个控制节点的 web 集群管理界面，如 [http://175.178.100.3:8990](http://175.178.100.3:8990)，会自动跳转到 leader 节点的集群管理界面。在节点列表选中所有数据节点，点击启动按钮启动即可。web 集群管理界面具体介绍见[《DolphinDB GUI手册》](https://www.dolphindb.cn/cn/gui/index.html?Web.html)。
+进入任意一个控制节点的 web 集群管理界面，如 [http://175.178.100.3:8990](http://175.178.100.3:8990)，会自动跳转到 leader 节点的集群管理界面。在节点列表选中所有数据节点，点击启动按钮启动即可。web 集群管理界面具体介绍见[Web 集群管理器](https://docs.dolphindb.cn/zh/db_distr_comp/db_man/web/intro.html)。
 
 ## 3. 附件
 

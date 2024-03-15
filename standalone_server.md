@@ -31,20 +31,40 @@
 
 ### 第一步：下载
 
-- 官方下载地址：http://www.dolphindb.cn/downloads.html
-- 也可以通过 Shell 指令下载：
+- 官方下载地址：<http://www.dolphindb.cn/downloads.html>
+- 也可以通过 Shell 指令下载。下载方式如下：
 
- ```sh
- wget https://www.dolphindb.cn/downLinux64-Current.php -O dolphindb.zip
- ```
+  ```sh
+  wget https://www.dolphindb.cn/downloads/DolphinDB_Linux64_V${release}.zip -O dolphindb.zip
+  ```
 
-- 执行以下 Shell 指令解压安装包至指定路径(`/path/to/directory`)：
+  其中，`${release}` 代表版本。例如：下载 2.00.11.3 版本的 Linux64 server，使用以下指令：
 
-```sh
-unzip dolphindb.zip -d </path/to/directory>
-```
+  ```sh
+  wget https://www.dolphindb.cn/downloads/DolphinDB_Linux64_V2.00.11.3.zip -O dolphindb.zip
+  ```
 
-> - 安装路径的目录名中不能含有空格字符或中文字符，否则启动数据节点时会失败。
+  如需下载 ABI 或 JIT 版本 server，则需要在版本号后以下划线连接 ABI 或 JIT。例如：下载 2.00.11.3 版本的 Linux64 ABI server, 使用以下指令：
+
+  ```sh
+  wget https://www.dolphindb.cn/downloads/DolphinDB_Linux64_V2.00.11.3_ABI.zip -O dolphindb.zip
+  ```
+
+  下载 2.00.11.3 版本的 Linux64 JIT 版本 server，使用以下指令：
+
+  ```sh
+  wget https://www.dolphindb.cn/downloads/DolphinDB_Linux64_V2.00.11.3_JIT.zip -O dolphindb.zip
+  ```
+
+  以此类推。
+
+- 执行以下 Shell 指令解压安装包至指定路径 (`/path/to/directory`)：
+
+  ```sh
+  unzip dolphindb.zip -d </path/to/directory>
+  ```
+
+  > - 安装路径的目录名中不能含有空格字符或中文字符，否则启动数据节点时会失败。
 
 ### 第二步：更新软件授权许可
 
@@ -54,7 +74,7 @@ unzip dolphindb.zip -d </path/to/directory>
 /DolphinDB/server/dolphindb.lic
 ```
 
-如果用户没有申请企业版试用授权许可，可以直接使用程序包中的社区版试用授权许可。社区试用版指定 DolphinDB 单节点最大可用内存为 8GB，有效期为20年。
+如果用户没有申请企业版试用授权许可，可以直接使用程序包中的社区版试用授权许可。社区试用版指定 DolphinDB 单节点最大可用内存为 8GB，有效期为 20 年。
 
 ### 第三步：启动单节点
 
@@ -72,7 +92,7 @@ chmod +x dolphindb
 ./dolphindb
 ```
 
-系统默认端口号是8848。如果需要指定其它端口（例如8900）可以执行以下 Shell 指令：
+系统默认端口号是 8848。如果需要指定其它端口（例如 8900）可以执行以下 Shell 指令：
 
 ```sh
 ./dolphindb -localSite localhost:8900:local8900
@@ -110,7 +130,7 @@ ps aux|grep dolphindb
 
 ### 第一步：下载
 
-官方下载地址：http://www.dolphindb.cn/downloads.html
+官方下载地址：<http://www.dolphindb.cn/downloads.html>
 
 解压安装包，例如解压到如下目录：
 
@@ -233,7 +253,7 @@ cp -r local8848/storage/CHUNK_METADATA/ backup/CHUNK_METADATA
 
 - 离线升级
 
-下载升级所需版本的安装包，官方下载地址：http://www.dolphindb.cn/downloads.html
+下载升级所需版本的安装包，官方下载地址：<http://www.dolphindb.cn/downloads.html>
 
 将下载好的安装包上传至 */DolphinDB/server/clusterDemo* 目录下，以更新至 2.00.9.1 版本为例：
 
@@ -304,7 +324,7 @@ C:\DolphinDB\DolphinDB\server\local8848\storage\CHUNK_METADATA\
 
 **第三步：升级**
 
-- 下载所需升级版本的安装包，官方下载地址：http://www.dolphindb.cn/downloads.html
+- 下载所需升级版本的安装包，官方下载地址：<http://www.dolphindb.cn/downloads.html>
 - 将新版本 *server* 目录下除 *dolphindb.cfg* 以及 *dolphindb.lic* 外的所有文件覆盖替换旧版文件
 
 **第四步：重新启动单节点**
@@ -347,10 +367,10 @@ updateLicense()
 
 > 注意，在线更新有如下要求：
 >
-> * License 授权的客户名称必须与原来的 License 相同。
-> * 授权的节点个数，内存大小，CPU 核数不能比原来的小。
-> * 更新只在执行该函数的节点生效。因此在集群环境下，需要在所有控制节点、代理节点、计算节点和数据节点上运行该函数。
-> * License 的类型必须是 commercial（付费）类型和 free 类型。
+> - License 授权的客户名称必须与原来的 License 相同。
+> - 授权的节点个数，内存大小，CPU 核数不能比原来的小。
+> - 更新只在执行该函数的节点生效。因此在集群环境下，需要在所有控制节点、代理节点、计算节点和数据节点上运行该函数。
+> - License 的类型必须是 commercial（付费）类型和 free 类型。
 
 - 离线更新
 
@@ -380,7 +400,7 @@ DolphinDB 正常启动后，在浏览器输入正确的访问地址，但 Web �
 
 ### 5.3 Linux 升级失败如何版本回退？
 
-如果升级以后，不能正常开启单节点 DolphinDB ，可按以下方式回退到旧版本。
+如果升级以后，不能正常开启单节点 DolphinDB，可按以下方式回退到旧版本。
 
 **第一步：恢复旧版本元数据文件**
 
@@ -397,7 +417,7 @@ cp -r backup/CHUNK_METADATA/ local8848/storage/CHUNK_METADATA
 
 ### 5.4 Windows 升级失败如何版本回退？
 
-如果升级以后，不能正常开启单节点 DolphinDB ，可按以下方式回退到旧版本。
+如果升级以后，不能正常开启单节点 DolphinDB，可按以下方式回退到旧版本。
 
 **第一步：恢复旧版本元数据文件**
 
@@ -410,13 +430,13 @@ cp -r backup/CHUNK_METADATA/ local8848/storage/CHUNK_METADATA
 
 ### 5.5 在线更新授权文件失败怎么办？
 
-在线更新授权文件需要满足[更新授权许可文件](#第二步更新授权许可文件)中在线更新的要求。如果不满足其中的要求，可以通过离线方式进行更新，或申请[企业版 License](https://www.dolphindb.cn/mx_form/mx_form.php?id=97)。
+在线更新授权文件需要满足[更新授权许可文件](#第二步更新授权许可文件)中在线更新的要求。如果不满足其中的要求，可以通过离线方式进行更新，或申请[企业版 License](https://dolphindb.cn/product#downloads)。
 
 ### 5.6 如何进行配置参数调优？
 
-可以参考 DolphinDB 官方参数配置说明进行配置参数调优：[参数配置](https://www.dolphindb.cn/cn/help/200/DatabaseandDistributedComputing/Configuration/index.html)。
+可以参考 DolphinDB 官方参数配置说明进行配置参数调优：[参数配置](https://docs.dolphindb.cn/zh/db_distr_comp/cfg/para_cfg.html)。
 
-如果遇到性能问题，请添加微信号13306510479（仅用于添加微信）或扫描下面二维码，客服会邀您进群，由DolphinDB的技术支持工程师会解答您的问题。
+如果遇到性能问题，请添加微信号 13306510479（仅用于添加微信）或扫描下面二维码，客服会邀您进群，由 DolphinDB 的技术支持工程师会解答您的问题。
 
 ![singlenode_techsupport_qr](images/deploy_standalone/singlenode_techsupport_qr.png)
 
@@ -424,5 +444,5 @@ cp -r backup/CHUNK_METADATA/ local8848/storage/CHUNK_METADATA
 
 更多详细信息，请参阅 DolphinDB 用户手册：
 
-- [中文版 DolphinDB 用户手册](https://www.dolphindb.cn/cn/help/index.html)
-- [英文版 DolphinDB 用户手册](https://www.dolphindb.com/help/index.html)
+- [中文版 DolphinDB 用户手册](https://docs.dolphindb.cn/zh/index.html)
+- [英文版 DolphinDB 用户手册](https://docs.dolphindb.com/en/index.html)

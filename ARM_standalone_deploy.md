@@ -1,6 +1,6 @@
 # 单节点部署 (嵌入式 ARM 版本)
 
-本教程用于嵌入式 ARM 版本的单节点部署、升级、过期 License 升级，并对常见问题做出解答，便于用户快速上手 DolphinDB 。包含以下主题：
+本教程用于嵌入式 ARM 版本的单节点部署、升级、过期 License 升级，并对常见问题做出解答，便于用户快速上手 DolphinDB。包含以下主题：
 
 - [1. 系统要求](#1-系统要求)
 - [2. 部署 DolphinDB 单节点](#2-部署-dolphindb-单节点)
@@ -41,20 +41,28 @@
 
 ### 第一步：下载
 
-- 官方下载地址：http://www.dolphindb.cn/downloads.html
-- 也可以通过 Shell 指令下载：
+- 官方下载地址：<http://www.dolphindb.cn/downloads.html>
+- 也可以通过 Shell 指令下载。下载方式如下：
 
- ```sh
- wget https://www.dolphindb.cn/downARM64-Current.php -O dolphindb.zip
- ```
+  ```sh
+  wget https://www.dolphindb.cn/downloads/DolphinDB_ARM64_V${release}.zip -O dolphindb.zip
+  ```
+  
+  其中，`${release}` 代表版本。例如：下载 2.00.11.3 版本的 ARM64 server，使用以下指令：
 
-- 执行以下 Shell 指令解压安装包至指定路径(`/path/to/directory`)：
+  ```sh
+  wget https://www.dolphindb.cn/downloads/DolphinDB_ARM64_V2.00.11.3.zip -O dolphindb.zip
+  ```
 
-```sh
-unzip dolphindb.zip -d </path/to/directory>
-```
+  以此类推。
 
-> **注意**：安装路径的目录名中不能含有空格字符或中文字符，否则启动数据节点时会失败。
+- 执行以下 Shell 指令解压安装包至指定路径 (`/path/to/directory`)：
+
+  ```sh
+  unzip dolphindb.zip -d </path/to/directory>
+  ```
+
+  > - 安装路径的目录名中不能含有空格字符或中文字符，否则启动数据节点时会失败。
 
 ### 第二步：更新软件授权许可
 
@@ -64,7 +72,7 @@ unzip dolphindb.zip -d </path/to/directory>
 /DolphinDB/server/dolphindb.lic
 ```
 
-如果用户没有申请企业版试用授权许可，可以直接使用程序包中的社区版试用授权许可。社区试用版指定 DolphinDB 单节点最大可用内存为 8GB，有效期为20年。
+如果用户没有申请企业版试用授权许可，可以直接使用程序包中的社区版试用授权许可。社区试用版指定 DolphinDB 单节点最大可用内存为 8GB，有效期为 20 年。
 
 ### 第三步：启动单节点
 
@@ -80,7 +88,7 @@ chmod +x dolphindb
 vim dolphindb.cfg
 ```
 
-系统默认端口号是8848。如果需要指定其它端口可以通过参数 *localSite* 设置，例如修改端口为8900：
+系统默认端口号是 8848。如果需要指定其它端口可以通过参数 *localSite* 设置，例如修改端口为 8900：
 
 ```sh
 localSite=localhost:8900:local8900
@@ -92,13 +100,13 @@ localSite=localhost:8900:local8900
 maxMemSize=0.8
 ```
 
-使用参数 *regularArrayMemoryLimit* 设置数组的内存限制，以 MB 为单位。该参数必须是2的指数幂，默认值512。建议根据实际内存大小设置，例如修改为 64MB：
+使用参数 *regularArrayMemoryLimit* 设置数组的内存限制，以 MB 为单位。该参数必须是 2 的指数幂，默认值 512。建议根据实际内存大小设置，例如修改为 64MB：
 
 ```sh
 regularArrayMemoryLimit=64
 ```
 
-参数 *maxLogSize* 是指当日志文件达到指定大小时，系统会将日志文件存档，以 MB 为单位。默认值是1024，最小值是100。建议根据实际内存大小设置，例如修改为 100MB：
+参数 *maxLogSize* 是指当日志文件达到指定大小时，系统会将日志文件存档，以 MB 为单位。默认值是 1024，最小值是 100。建议根据实际内存大小设置，例如修改为 100MB：
 
 ```sh
 maxLogSize=100
@@ -132,7 +140,7 @@ ps aux|grep dolphindb
 
 ### 第四步：Web 管理界面检查节点运行状态
 
-在浏览器中输入部署服务器 IP 地址和部署端口号（默认是 8848）即可进入 Web 管理界面，教程中的部署服务器 IP 地址为10.0.0.82，部署端口为8848，所以访问地址为10.0.0.82:8848，打开后的 Web 管理界面如下。以管理员身份（默认账号：admin，默认密码：123456）登录 Web 管理界面后，用户可以检查节点运行状态。
+在浏览器中输入部署服务器 IP 地址和部署端口号（默认是 8848）即可进入 Web 管理界面，教程中的部署服务器 IP 地址为 10.0.0.82，部署端口为 8848，所以访问地址为 10.0.0.82:8848，打开后的 Web 管理界面如下。以管理员身份（默认账号：admin，默认密码：123456）登录 Web 管理界面后，用户可以检查节点运行状态。
 
 ![image](./images/arm_standalone_deploy/chap2_step4_nodestatus.png)
 
@@ -247,7 +255,7 @@ DolphinDB 正常启动后，在浏览器输入正确的访问地址，但是 Web
 
 ### 5.3 Linux 升级失败如何版本回退？
 
-如果升级以后，不能正常开启单节点 DolphinDB ，可按以下方式回退到旧版本。
+如果升级以后，不能正常开启单节点 DolphinDB，可按以下方式回退到旧版本。
 
 **第一步：恢复旧版本元数据文件**
 
@@ -264,13 +272,13 @@ cp -r backup/CHUNK_METADATA/ local8848/storage/CHUNK_METADATA
 
 ### 5.4 在线更新授权文件失败怎么办？
 
-在线更新授权文件需要满足[更新授权许可文件](#第二步更新授权许可文件)中在线更新的要求。如果不满足其中的要求，可以通过离线方式进行更新，或申请[企业版 License](https://www.dolphindb.cn/mx_form/mx_form.php?id=97)。
+在线更新授权文件需要满足[更新授权许可文件](#第二步更新授权许可文件)中在线更新的要求。如果不满足其中的要求，可以通过离线方式进行更新，或申请[企业版 License](https://dolphindb.cn/product#downloads)。
 
 ### 5.5 如何进行配置参数调优？
 
-可以参考 DolphinDB 官方参数配置说明进行配置参数调优：[参数配置](https://www.dolphindb.cn/cn/help/200/DatabaseandDistributedComputing/Configuration/index.html)。
+可以参考 DolphinDB 官方参数配置说明进行配置参数调优：[参数配置](https://docs.dolphindb.cn/zh/db_distr_comp/cfg/para_cfg.html)。
 
-如果遇到性能问题，请添加微信号13306510479（仅用于添加微信）或扫描下面二维码，客服会邀您进群，我们的工程师会解答您的问题。
+如果遇到性能问题，请添加微信号 13306510479（仅用于添加微信）或扫描下面二维码，客服会邀您进群，我们的工程师会解答您的问题。
 
 ![image](./images/arm_standalone_deploy/chap5_q4.png)
 
@@ -278,5 +286,5 @@ cp -r backup/CHUNK_METADATA/ local8848/storage/CHUNK_METADATA
 
 更多详细信息，请参阅 DolphinDB 用户手册：
 
-- [中文版 DolphinDB 用户手册](https://www.dolphindb.cn/cn/help/index.html)
-- [英文版 DolphinDB 用户手册](https://www.dolphindb.com/help/index.html)
+- [中文版 DolphinDB 用户手册](https://docs.dolphindb.cn/zh/index.html)
+- [英文版 DolphinDB 用户手册](https://docs.dolphindb.com/en/index.html)
