@@ -423,7 +423,7 @@ obj = gurobi::getObjective(model)
 
 #### socp 函数求解
 
-使用 socp 函数求解带有换手率约束的投资组合问题时，需将原问题转化为[含有绝对值约束的二阶锥形式](https://dolphindb1.atlassian.net/wiki/spaces/~7120206004d90d81cc4e52ac93dac36e5f102e/pages/851444398/DolphinDB#2.3-绝对值约束的二阶锥形式)再进行求解。
+使用 socp 函数求解带有换手率约束的投资组合问题时，需将原问题转化为含有绝对值约束的二阶锥形式再进行求解。
 
 ```
  
