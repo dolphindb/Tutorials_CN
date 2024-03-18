@@ -622,6 +622,6 @@ socp 作为 DolphinDB 最优化求解系列函数中适用场景最广泛的优�
 
 DolphinDB 与 Python 求解最优化问题以及性能对比的数据与实现脚本。
 
- [data.zip](data\data.zip) 
+ [data.zip](script\mvo\data.zip) 
 
- [script.zip](script\script.zip) 
+ [script.zip](script\mvo\script.zip) 
