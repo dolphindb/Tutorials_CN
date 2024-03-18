@@ -198,6 +198,7 @@
     - [DolphinDB 流计算在金融行业的应用：实时计算日累计逐单资金流](streaming_capital_flow_daily.md)
     - [DolphinDB 历史数据回放功能应用：股票行情回放](stock_market_replay.md)
     - [DolphinDB 搭建行情回放服务的最佳实践](appendices_market_replay_bp.md)
+    - [优化投资组合：DolphinDB 最优化求解系列函数应用指南](MVO.md)
     - [DolphinDB 流计算应用：基金份额参考价值 IOPV 计算](streaming_IOPV.md)
     - [DolphinDB 元编程：开发股票波动率预测模型的 676 个输入特征](metacode_derived_features.md)
     - [从 4.5 小时到 3.5 分钟，如何利用 DolphinDB 高效清洗数据](data_ETL.md)
