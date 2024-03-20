@@ -1,0 +1,286 @@
+
+
+def replayDemo_getReplayDS(dbName,tbName,deviceId,deviceColumn,sampleRate,dateColumn = null,selectColumn = null,timeBegin = null,timeEnd = null,needConvert = false,convertType = null){
+    pt = loadTable(dbName,tbName)
+    schema = pt.schema()
+
+    if(!existsTable(dbName,tbName)){
+        return "库表不存在"
+    }
+
+    if(dateColumn == null){  //当dateColumn为null时，看表的第一列是否为时间类型，如果是时间类型，视为dateColumn
+        firstColType = schema.colDefs[`typeString][0]
+        if(!(firstColType in `MONTH`TIME`MINUTE`SECOND`DATETIME`TIMESTAMP`NANOTIME`NANOTIMESTAMP)){
+            return "必须选择数据日期时间列"
+        }else{
+            datecolumn = schema.colDefs[`name][0]
+        }
+    }else{  //当dateColumn非空时，判断是否为时间类型
+        dateColumnType = schema.colDefs[`typeString][dateColumn == schema.colDefs[`name]]
+        if(!(dateColumnType[0] in `MONTH`TIME`MINUTE`SECOND`DATETIME`TIMESTAMP`NANOTIME`NANOTIMESTAMP)){
+            return "dateColumn 的数据类型必须是MONTH、TIME、MINUTE、SECOND、DATETIME、TIMESTAMP、NANOTIME、NANOTIMESTAMP 中的一种"
+        }else{
+            datecolumn = dateColumn
+        }
+    }
+
+    partitionColumn = schema.partitionColumnName
+
+    if(sum(datecolumn in partitionColumn)==0){  //如果dateColumn不是分区列，不能进行回放
+        return "dateColumn 必须是分区列"
+    }
+
+    sqlTimeMin = "exec min(" + datecolumn + ")" + " from loadTable("+'"' + dbName + '","' +tbName+'")'
+    sqlTimeMax = "exec max(" + datecolumn + ")" + " from loadTable("+'"' + dbName + '","' +tbName+'")'
+
+    timebegin = iif(timeBegin == null,sqlTimeMin.parseExpr().eval()[0],timeBegin)  //获取回放的开始时间
+    timeend = iif(timeEnd == null,sqlTimeMax.parseExpr().eval()[0],timeEnd)  //获取回放的结束时间
+
+    if(selectColumn[0] == null){   //如果筛选列为空，则把除了dateColumn列之外的列设置为筛选列
+        selectcolumn = schema.colDefs[`name]
+        selectcolumn = selectcolumn[!(datecolumn == selectcolumn)]
+    }else{  //如果筛选列非空，需要判断筛选列是否存在表中
+        for(col in selectColumn){
+            if(!(col in schema.colDefs[`name])){
+                return col + " 列在表中不存在"
+            }
+        }
+        selectcolumn = [deviceColumn] join selectColumn
+    }
+
+    if(!(deviceColumn in schema.colDefs[`name])){  //判断设备列是否存在表中
+        return  deviceColumn + "列在表中不存在"
+    }
+
+
+    a = [`DATE,`DATETIME,`TIMESTAMP,`NANOTIMESTAMP]
+    b = [`date,`datetime,`timestamp,`nanotimestamp]
+    tmpDict =dict(a,b)  //用于准备数据转换
+
+    sql = " select "
+
+    if(sampleRate == null){  //当sampleRate为空时，sql语句里没有group by,select语句里包含了dateColumn列
+        if(needConvert){   //数据类型需要转换
+            sql = sql + tmpDict[convertType] + "(" + datecolumn + ") as " + datecolumn + ","
+        }else{  //数据类型不需要转换
+            sql = sql + datecolumn + ","
+        }
+        for(x in selectcolumn){
+            sql = sql + x + ","
+        }
+        sql = sql.substr(0,sql.strlen()-1) + " from loadTable("+'"' + dbName + '","' +tbName+'") where ' + datecolumn + ">=" + timebegin + " and " +
+                datecolumn + "<" + timeend + " and " + deviceColumn
+        if(deviceId.size()==1){
+            sql = sql + "=`" + deviceId
+        }else{
+            sql = sql + " in "
+            for( x in deviceId){
+                sql = sql + "`"+x
+            }
+        }
+    }else{ //sampleRate非空时，需要进行降采样，sql语句里有group by，select 语句里不包含dateColumn
+        if(deviceId.size()==1){  //只取一个设备时，group by 语句里没有 deviceId列
+            for( x in selectcolumn){
+                sql = sql + "last(" +x +") as " + x + ","
+            }
+            sql = sql.substr(0,sql.strlen()-1) + " from loadTable("+'"' + dbName + '","' +tbName+'") where ' + datecolumn + ">=" + timebegin + " and " +
+                    datecolumn + "<" + timeend + " and " + deviceColumn + "=`" + deviceId[0] + " group by bar("
+            // sql = sql + "=`" + deviceId + " group by bar("
+            if(needConvert){  //数据类型需要转换
+                sql = sql + tmpDict[convertType]+"(" + datecolumn +")," + sampleRate + ") as " + datecolumn 
+            }else{  //数据类型不需要转换
+                sql = sql + datecolumn + "," + string(sampleRate) + ") as " + datecolumn
+            }
+        }else{
+            for( x in selectcolumn[1:]){
+                sql = sql + "last(" +x +") as " + x + ","
+            }
+            sql = sql.substr(0,sql.strlen()-1) + " from loadTable("+'"' + dbName + '","' +tbName+'") where ' + datecolumn + ">=" + timebegin + " and " +
+                    datecolumn + "<" + timeend + " and " + deviceColumn + " in "
+            // sql = sql + " in "
+            for(x in deviceId){
+                sql = sql + "`" + x
+            }
+            sql = sql + " group by bar("
+            if(needConvert){  //数据类型需要转换
+                sql = sql + tmpDict[convertType]+"(" + datecolumn +")," + sampleRate + ") as " + datecolumn +"," + deviceColumn 
+            }else{  //数据类型不需要转换
+                sql = sql + datecolumn + "," + string(sampleRate) + ") as " + datecolumn + "," + deviceColumn
+            }
+        }
+        // if(needConvert){  //数据类型需要转换
+        //     sql = sql + tmpDict[convertType]+"(" + datecolumn +")," + sampleRate + ") as " + datecolumn 
+        // }else{  //数据类型不需要转换
+        //     sql = sql + datecolumn + "," + string(sampleRate) + ") as " + datecolumn
+        // }
+    }
+
+    ds = replayDS(sqlObj = sql.parseExpr(),dateColumn = datecolumn)
+    return ds,sql,datecolumn  //返回数据源,sql语句和时间列
+}
+
+
+def replayDemo_ReplaySingle(args){
+    q = args.parseExpr().eval()
+
+    dbName = q[`dbName]
+    tbName = q[`tbName]
+    deviceId = q[`deviceId]
+    deviceColumn = q[`deviceColumn]
+    sampleRate = q[`sampleRate]
+    dateColumn = q[`dateColumn]
+    sampleRate = q[`sampleRate]
+    selectColumn = q[`selectColumn]
+    timeBegin = q[`timeBegin]
+    timeEnd = q[`timeEnd]
+    replayRate = q[`replayRate]
+    replayJobName = q[`jobName]
+
+    //获取回放数据源
+    ds = replayDemo_getReplayDS(dbName,tbName,deviceId,deviceColumn,sampleRate,dateColumn ,selectColumn ,timeBegin ,timeEnd)
+
+    if(ds.size() == 1){
+        return ds  
+    }
+
+    tmp = (ds[1]).parseExpr().eval()[0:5]  //获取回放的样本数据，用于构建回放结果表
+    colName = tmp.schema().colDefs[`name]
+    colType = tmp.schema().colDefs[`typeString]
+
+    persistTable = getStreamingStat().persistWorkers[`tables].split(",").flatten()
+    if(replayJobName in persistTable){
+        dropStreamTable(replayJobName)
+    }
+    enableTableShareAndPersistence(table = streamTable(1000:0,colName,colType),tableName = replayJobName,cacheSize = 1000000)
+
+    if(replayRate == null){ 
+        replayRate = 1
+    }
+
+    submitJob(replayJobName,replayJobName,replay,ds[0],replayJobName,ds[2],,replayRate,false)  //回放数据
+}
+
+def replayDemo_ReplayAsync(args){
+    q = args.parseExpr().eval()
+
+    lt = q[`leftTable]
+    rt = q[`rightTable]
+
+
+    dbNamelt = lt[`dbName]
+    tbNamelt = lt[`tbName]
+    deviceIdlt = lt[`deviceId]
+    deviceColumnlt = lt[`deviceColumn]
+    dateColumnlt = lt[`dateColumn]
+    selectColumnlt = lt[`selectColumn]
+    timeBeginlt = lt[`timeBegin]
+    timeEndlt = lt[`timeEnd]
+
+    dbNamert = rt[`dbName]
+    tbNamert = rt[`tbName]
+    deviceIdrt = rt[`deviceId]
+    deviceColumnrt = rt[`deviceColumn]
+    dateColumnrt = rt[`dateColumn]
+    selectColumnrt = rt[`selectColumn]
+    timeBeginrt = rt[`timeBegin]
+    timeEndrt = rt[`timeEnd]
+
+    sampleRate = q[`sampleRate]  //降采样频率
+    replayRate = q[`replayRate]  //回放速率
+    replayJobName = q[`jobName] 
+    matchColumn = q[`matchColumn] //连接列名
+
+
+    //左右连接的两张表是否需要进行数据类型的转换,如果需要类型转换，那么在数据回放的时候，就需要对数据类型做完转换
+    schemalt = loadTable(dbNamelt,tbNamelt).schema().colDefs 
+    schemart = loadTable(dbNamert,tbNamert).schema().colDefs 
+
+    tsTypelt = (schemalt[`typeString][dateColumnlt == schemalt[`name]])[0]
+    tsTypert = (schemart[`typeString][dateColumnrt == schemart[`name]])[0]
+
+    tsTypeReplaylt = null  
+    tsTypeReplayrt = null
+    if(tsTypelt > tsTypert){  //右表的时间列需要转换数据类型
+        tsTypeReplayrt = tsTypelt
+    } else if (tsTypelt > tsTypert) {  //左表的时间列需要转换数据类型
+        tsTypeReplaylt = tsTypert
+    }
+
+    needConvertlt = iif(tsTypelt >= tsTypert, false,true)
+    needConvertrt = iif(tsTypert >= tsTypelt, false,true)
+
+    dslt = replayDemo_getReplayDS(dbNamelt,tbNamelt,deviceIdlt,deviceColumnlt,sampleRate,dateColumnlt ,selectColumnlt ,timeBeginlt ,timeEndlt,needConvertlt,tsTypeReplaylt)
+    dsrt = replayDemo_getReplayDS(dbNamert,tbNamert,deviceIdrt,deviceColumnrt,sampleRate,dateColumnrt ,selectColumnrt ,timeBeginrt ,timeEndrt,needConvertrt,tsTypeReplayrt)
+
+    if(dslt.size() == 1 || dsrt.size() == 1){
+        return "参数校验出错"
+    }
+
+
+    input_dict = dict(["test1","test2"], [dslt[0], dsrt[0]])
+    asyncInputName = replayJobName +`Async
+    enableTableShareAndPersistence(table = streamTable(1000:0,`Time`type`msg,iif(tsTypelt>= tsTypert,tsTypelt,tsTypert) join `SYMBOL`BLOB ),
+                                        tableName = asyncInputName,cacheSize = 100000)
+
+    tmplt = (dslt[1]).parseExpr().eval()[0:3]
+    tmprt = (dsrt[1]).parseExpr().eval()[0:3]
+
+
+    colNamelt = tmplt.schema().colDefs[`name]
+    colTypelt = tmplt.schema().colDefs[`typeString]
+    colNamert = tmprt.schema().colDefs[`name]
+    colTypert = tmprt.schema().colDefs[`typeString]
+
+
+    tblt = table(100:0, colNamelt,colTypelt)
+    tbrt = table(100:0, colNamert, colTypert)
+
+
+    if(matchColumn.typestr() == "ANY VECTOR"){
+        newMatchColumn = matchColumn[0].flatten()
+    }else{
+        newMatchColumn = matchColumn
+    }
+
+    //定义leftjoin的结果表，结果表的第一列，第二列为时间列，连接列，再加上左表的筛选列和右表的筛选列
+    resultColName = colNamelt[0] join newMatchColumn join colNamelt[2:] join colNamert[2:]
+    resultColType = colTypelt[0] join colTypelt[colNamelt in newMatchColumn] join colTypelt[2:] join colTypert[2:]
+    resultName = replayJobName
+    enableTableShareAndPersistence(table = streamTable(1000:0,resultColName,resultColType),tableName = resultName,cacheSize = 100000)
+
+    filter1=dict(STRING,ANY)
+    filter1['condition']=`test1
+
+    filter2=dict(STRING,ANY)
+    filter2['condition']=`test2
+
+    if(dslt[2] == dsrt[2]){
+        engineTimeColumn = dslt[2]
+        replayDateColumn = dslt[2]
+    }else{
+        engineTimeColumn = dslt[2] join dsrt[2]
+        replayDateColumn = dict(["test1","test2"],[dslt[2],dsrt[2]])
+    }
+
+    ajEngineName = replayJobName+"AsofJoinEngine"
+    metacode = []
+    for(x in colNamelt[2:] join colNamert[2:]){
+        metacode.append!(sqlCol(x))
+    }
+
+    ajEngine=createAsofJoinEngine(name=ajEngineName, leftTable=tblt, rightTable=tbrt, outputTable=objByName(resultName), metrics=metacode, matchingColumn=matchColumn, useSystemTime=false,timeColumn=engineTimeColumn)
+    filter1['handler']=getLeftStream(ajEngine)
+    filter2['handler']=getRightStream(ajEngine)
+    schema=dict(["test1","test2"], [tblt, tbrt])
+
+    replayEngineName = replayJobName+`ReplayEngine
+    sfEngine=streamFilter(name=replayEngineName,dummyTable=objByName(asyncInputName), filter=[filter1,filter2],msgSchema=schema)
+    subscribeTable(tableName=asyncInputName, actionName="demo", offset=0, handler=sfEngine, msgAsTable=true)
+    // replay(inputTables=input_dict,outputTables=objByName(asyncInputName), dateColumn= replayDateColumn )
+    if(replayRate == null){ 
+        replayRate = 1
+    }
+    jobId = replayJobName
+    jobDesc = replayJobName
+    submitJob(jobId,jobDesc,replay,input_dict,objByName(asyncInputName),replayDateColumn,,replayRate,false)  //回放数据
+}

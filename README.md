@@ -246,6 +246,7 @@
     - [DolphinDB 基于 Glibc 升级的性能优化实战案例](performance_optimization_based_on_glibc.md)
     - [工业试验平台高频数据的存储和处理分析](high_freq_data_storage_and_analysis.md)
     - [助力工业物联网实现智能运维](Iot_intelligent_O&M.md)
+    - [DolphinDB 历史数据回放功能应用：物联网设备故障分析](faultAnalysis.md)
 
 - 入门和测试
 
