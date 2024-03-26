@@ -106,7 +106,6 @@
   - [C# API 使用教程](../../../api-csharp/blob/master/README_CN.md)
   - [C++ API 使用教程](../../../api-cplusplus/blob/main/README_CN.md)
   - [C++ API 数据写入使用指南](ddb_cpp_api_connector.md)
-  - [用 VS2017 编译 DolphinDB C++ API 动态库](cpp_api_vs2017_tutorial.md)
   - [C++ API 数据读写指南](c%2B%2Bapi.md)
   - [Go API 使用教程](../../../api-go/blob/master/README.md)
   - [R API 使用教程](../../../api-r/blob/master/README_CN.md)
