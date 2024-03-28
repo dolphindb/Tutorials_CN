@@ -1,0 +1,242 @@
+// 加载插件
+login(`admin, `123456)
+try{loadPlugin("./plugins/xtp/PluginXTP.txt")}catch(ex){print(ex)}
+go
+
+// 清理环境
+def cleanEnvironment() {
+    try {
+        xtpConn = XTP::getHandle("xtpConn")
+        XTP::closeXTPConnection(xtpConn)
+    }
+    catch (ex) {
+        print(ex)
+    }
+    go
+    // 取消订阅
+    try { unsubscribeTable(tableName="actualMarketDataStream", actionName="actualMarketDataAction") } catch(ex) { print(ex) }
+    try { unsubscribeTable(tableName="entrustStream", actionName="entrustAction") } catch(ex) { print(ex) }
+    try { unsubscribeTable(tableName="tradeStream", actionName="tradeAction") } catch(ex) { print(ex) }
+    try { unsubscribeTable(tableName="stateStream", actionName="stateAction") } catch(ex) { print(ex) }
+    try { unsubscribeTable(tableName="orderBookStream", actionName="orderBookAction") } catch(ex) { print(ex) }
+    try { unsubscribeTable(tableName="indexMarketDataStream", actionName="indexMarketDataAction") } catch(ex) { print(ex) }
+    try { unsubscribeTable(tableName="optionMarketDataStream", actionName="optionMarketDataAction") } catch(ex) { print(ex) }
+    try { unsubscribeTable(tableName="bondMarketDataStream", actionName="bondMarketDataAction") } catch(ex) { print(ex) }
+    go
+    // 取消流表
+    try { dropStreamTable(tableName="actualMarketDataStream") } catch(ex) { print(ex) }
+    try { dropStreamTable(tableName="entrustStream") } catch(ex) { print(ex) }
+    try { dropStreamTable(tableName="tradeStream") } catch(ex) { print(ex) }
+    try { dropStreamTable(tableName="stateStream") } catch(ex) { print(ex) }
+    try { dropStreamTable(tableName="orderBookStream") } catch(ex) { print(ex) }
+    try { dropStreamTable(tableName="indexMarketDataStream") } catch(ex) { print(ex) }
+    try { dropStreamTable(tableName="optionMarketDataStream") } catch(ex) { print(ex) }
+    try { dropStreamTable(tableName="bondMarketDataStream") } catch(ex) { print(ex) }
+}
+
+// 创建库表
+def createDbAndPt() {
+    // 现货快照 + 逐笔成交 + 逐笔委托 + 逐笔状态 + 订单簿
+    // 现货快照包含：股票、基金ETF、可转债的快照数据
+    // 创建数据库
+    if (!existsDatabase("dfs://XTP.actual")) {
+        dbVALUE = database(, VALUE, 2023.01.01..2023.01.02)
+        dbHASH = database(, HASH, [SYMBOL, 50])
+        db = database("dfs://XTP.actual", COMPO, [dbVALUE, dbHASH], , `TSDB)
+    }
+    else {
+        db = database("dfs://XTP.actual")
+    }
+    // 获取表结构
+    actualSchema = table(1:0, XTP::getSchema(`actualMarketData)['name'], XTP::getSchema(`actualMarketData)['typeString'])
+    entrustSchema = table(1:0, XTP::getSchema(`entrust)['name'], XTP::getSchema(`entrust)['typeString'])
+    tradeSchema = table(1:0, XTP::getSchema(`trade)['name'], XTP::getSchema(`trade)['typeString'])
+    stateSchema = table(1:0, XTP::getSchema(`state)['name'], XTP::getSchema(`state)['typeString'])
+    orderBookSchema = table(1:0, XTP::getSchema(`orderBook)['name'], XTP::getSchema(`orderBook)['typeString'])
+    // 创建分区表
+    if (existsTable("dfs://XTP.actual", "actualMarketData")) {
+        actualPt = loadTable("dfs://XTP.actual", "actualMarketData")
+    }
+    else {
+        actualPt = db.createPartitionedTable(actualSchema, "actualMarketData", `dataTime`ticker, {dataTime: "delta"}, `ticker`dataTime)
+    }
+    if (existsTable("dfs://XTP.actual", "entrust")) {
+        entrustPt = loadTable("dfs://XTP.actual", "entrust")
+    }
+    else {
+        entrustPt = db.createPartitionedTable(entrustSchema, "entrust", `dataTime`ticker, {seq: "delta", dataTime: "delta", entrustSeq: "delta"}, `ticker`dataTime)
+    }
+    if (existsTable("dfs://XTP.actual", "trade")) {
+        tradePt = loadTable("dfs://XTP.actual", "trade")
+    }
+    else {
+        tradePt = db.createPartitionedTable(tradeSchema, "trade", `dataTime`ticker, {seq: "delta", dataTime: "delta", tradeSeq: "delta"}, `ticker`dataTime)
+    }
+    if (existsTable("dfs://XTP.actual", "state")) {
+        statePt = loadTable("dfs://XTP.actual", "state")
+    }
+    else {
+        statePt = db.createPartitionedTable(stateSchema, "state", `dataTime`ticker, {seq: "delta", dataTime: "delta"}, `ticker`dataTime)
+    }
+    if (existsTable("dfs://XTP.actual", "orderBook")) {
+        orderBookPt = loadTable("dfs://XTP.actual", "orderBook")
+    }
+    else {
+        orderBookPt = db.createPartitionedTable(orderBookSchema, "orderBook", `dataTime`ticker, {dataTime: "delta"}, `ticker`dataTime)
+    }
+
+    // 指数快照
+    if (!existsDatabase("dfs://XTP.index")) {
+        dbVALUE = database(, VALUE, 2023.01.01..2023.01.02)
+        dbHASH = database(, HASH, [SYMBOL, 5])
+        db = database("dfs://XTP.index", COMPO, [dbVALUE, dbHASH], , `TSDB)
+    }
+    else {
+        db = database("dfs://XTP.index")
+    }
+    indexSchema = table(1:0, XTP::getSchema(`indexMarketData)['name'], XTP::getSchema(`indexMarketData)['typeString'])
+    if (existsTable("dfs://XTP.index", "indexMarketData")) {
+        indexPt = loadTable("dfs://XTP.index", "indexMarketData")
+    }
+    else {
+        indexPt = db.createPartitionedTable(indexSchema, "indexMarketData", `dataTime`ticker, {dataTime: "delta"}, `ticker`dataTime)
+    }
+
+    // 期权快照
+    if (!existsDatabase("dfs://XTP.option")) {
+        dbVALUE = database(, VALUE, 2023.01.01..2023.01.02)
+        dbHASH = database(, HASH, [SYMBOL, 5])
+        db = database("dfs://XTP.option", COMPO, [dbVALUE, dbHASH], , `TSDB)
+    }
+    else {
+        db = database("dfs://XTP.option")
+    }
+    optionSchema = table(1:0, XTP::getSchema(`optionMarketData)['name'], XTP::getSchema(`optionMarketData)['typeString'])
+    if (existsTable("dfs://XTP.option", "optionMarketData")) {
+        optionPt = loadTable("dfs://XTP.option", "optionMarketData")
+    }
+    else {
+        optionPt = db.createPartitionedTable(optionSchema, "optionMarketData", `dataTime`ticker, {dataTime: "delta"}, `ticker`dataTime)
+    }
+
+    // 债券快照
+    if (!existsDatabase("dfs://XTP.bond")) {
+        dbVALUE = database(, VALUE, 2023.01.01..2023.01.02)
+        dbHASH = database(, HASH, [SYMBOL, 20])
+        db = database("dfs://XTP.bond", COMPO, [dbVALUE, dbHASH], , `TSDB)
+    }
+    else {
+        db = database("dfs://XTP.bond")
+    }
+    bondSchema = table(1:0, XTP::getSchema(`bondMarketData)['name'], XTP::getSchema(`bondMarketData)['typeString'])
+    if (existsTable("dfs://XTP.bond", "bondMarketData")) {
+        bondPt = loadTable("dfs://XTP.bond", "bondMarketData")
+    }
+    else {
+        bondPt = db.createPartitionedTable(bondSchema, "bondMarketData", `dataTime`ticker, {dataTime: "delta"}, `ticker`dataTime)
+    }
+}
+
+def createStreamTableAndSubscribe() {
+    // 现货快照 + 逐笔成交 + 逐笔委托 + 逐笔状态 + 订单簿
+    // 获取表结构
+    actualSchema = streamTable(1:0, XTP::getSchema(`actualMarketData)['name'], XTP::getSchema(`actualMarketData)['typeString'])
+    entrustSchema = streamTable(1:0, XTP::getSchema(`entrust)['name'], XTP::getSchema(`entrust)['typeString'])
+    tradeSchema = streamTable(1:0, XTP::getSchema(`trade)['name'], XTP::getSchema(`trade)['typeString'])
+    stateSchema = streamTable(1:0, XTP::getSchema(`state)['name'], XTP::getSchema(`state)['typeString'])
+    orderBookSchema = streamTable(1:0, XTP::getSchema(`orderBook)['name'], XTP::getSchema(`orderBook)['typeString'])
+    // 建立持久化流表
+    enableTableShareAndPersistence(table=actualSchema, tableName=`actualMarketDataStream, cacheSize=100000, preCache=1000)
+    enableTableShareAndPersistence(table=entrustSchema, tableName=`entrustStream, cacheSize=100000, preCache=1000)
+    enableTableShareAndPersistence(table=tradeSchema, tableName=`tradeStream, cacheSize=100000, preCache=1000)
+    enableTableShareAndPersistence(table=stateSchema, tableName=`stateStream, cacheSize=100000, preCache=1000)
+    enableTableShareAndPersistence(table=orderBookSchema, tableName=`orderBookStream, cacheSize=100000, preCache=1000)
+    go
+    // 定义入库函数
+    actualHandler = append!{loadTable("dfs://XTP.actual", "actualMarketData"), }
+    entrustHandler = append!{loadTable("dfs://XTP.actual", "entrust"), }
+    tradeHandler = append!{loadTable("dfs://XTP.actual", "trade"), }
+    stateHandler = append!{loadTable("dfs://XTP.actual", "state"), }
+    orderBookHandler = append!{loadTable("dfs://XTP.actual", "orderBook"), }
+    // 订阅
+    subscribeTable(tableName=`actualMarketDataStream, actionName=`actualMarketDataAction, offset=0, handler=actualHandler, msgAsTable=true, batchSize=1000, throttle=0.1)
+    subscribeTable(tableName=`entrustStream, actionName=`entrustAction, offset=0, handler=entrustHandler, msgAsTable=true, batchSize=1000, throttle=0.1)
+    subscribeTable(tableName=`tradeStream, actionName=`tradeAction, offset=0, handler=tradeHandler, msgAsTable=true, batchSize=1000, throttle=0.1)
+    subscribeTable(tableName=`stateStream, actionName=`stateAction, offset=0, handler=stateHandler, msgAsTable=true, batchSize=1000, throttle=0.1)
+    subscribeTable(tableName=`orderBookStream, actionName=`orderBookAction, offset=0, handler=orderBookHandler, msgAsTable=true, batchSize=1000, throttle=0.1)
+    
+    // 指数快照
+    indexSchema = streamTable(1:0, XTP::getSchema(`indexMarketData)['name'], XTP::getSchema(`indexMarketData)['typeString'])
+    enableTableShareAndPersistence(table=indexSchema, tableName=`indexMarketDataStream, cacheSize=100000, preCache=1000)
+    go
+    indexHandler = append!{loadTable("dfs://XTP.index", "indexMarketData"), }
+    subscribeTable(tableName=`indexMarketDataStream, actionName=`indexMarketDataAction, offset=0, handler=indexHandler, msgAsTable=true, batchSize=1000, throttle=0.1)
+    
+    // 期权快照
+    optionSchema = streamTable(1:0, XTP::getSchema(`optionMarketData)['name'], XTP::getSchema(`optionMarketData)['typeString'])
+    enableTableShareAndPersistence(table=optionSchema, tableName=`optionMarketDataStream, cacheSize=100000, preCache=1000)
+    go
+    optionHandler = append!{loadTable("dfs://XTP.option", "optionMarketData"), }
+    subscribeTable(tableName=`optionMarketDataStream, actionName=`optionMarketDataAction, offset=0, handler=optionHandler, msgAsTable=true, batchSize=1000, throttle=0.1)
+    
+    // 债券快照
+    bondSchema = streamTable(1:0, XTP::getSchema(`bondMarketData)['name'], XTP::getSchema(`bondMarketData)['typeString'])
+    enableTableShareAndPersistence(table=bondSchema, tableName=`bondMarketDataStream, cacheSize=100000, preCache=1000)
+    go
+    bondHandler = append!{loadTable("dfs://XTP.bond", "bondMarketData"), }
+    subscribeTable(tableName=`bondMarketDataStream, actionName=`bondMarketDataAction, offset=0, handler=bondHandler, msgAsTable=true, batchSize=1000, throttle=0.1)
+}
+
+def connectToXTP(xtpConfig) {
+    try { XTP::setGlobalConfig(1, "./plugins/xtp/", 3) } catch(ex) { print(ex) }
+    go
+    // 创建连接
+    xtpConn = XTP::createXTPConnection("xtpConn")
+    // 登录XTP！
+    XTP::login(xtpConn, xtpConfig)
+    return xtpConn
+}
+
+def subscribeXTP(xtpConn, indexMarketDataStream, optionMarketDataStream, actualMarketDataStream, bondMarketDataStream, entrustStream, tradeStream, stateStream, orderBookStream) {
+    // 接入快照行情
+    tableDict = dict(STRING, ANY);
+    tableDict["indexTable"] = indexMarketDataStream
+    tableDict["optionTable"] = optionMarketDataStream
+    tableDict["actualTable"] = actualMarketDataStream
+    tableDict["bondTable"] = bondMarketDataStream
+    go
+    XTP::subscribe(xtpConn, 1, 4, , tableDict)  // 1 for 快照, 4 for 全市场，第四个参数不填，表示接入所有标的
+    // 接入逐笔行情
+    tableDict = dict(STRING, ANY);
+    tableDict["entrustTable"] = entrustStream
+    tableDict["tradeTable"] = tradeStream
+    tableDict["statusTable"] = stateStream
+    go
+    XTP::subscribe(xtpConn, 2, 4, , tableDict)  // 2 for 逐笔，4 for 沪深两市，第三个参数不填，表示接入所有股票
+    // 接入订单簿
+    tableDict = dict(STRING, ANY);
+    tableDict["orderBookTable"] = orderBookStream
+    go
+    XTP::subscribe(xtpConn, 3, 4, , tableDict)  // 3 for 订单簿，4 for 沪深两市，第三个参数不填，表示接入所有股票
+}
+
+// XTP 账户信息配置
+xtpConfig = dict(STRING, ANY);
+xtpConfig["ip"] = "111.111.111.111";
+xtpConfig["port"] = 1111;
+xtpConfig["user"] = "11111111111";
+xtpConfig["password"] = "11111111111";  // 没有密码的情况下，请与user输入相同内容
+xtpConfig["protocalType"] = 1;    //1 是 TCP 2 是 UDP, 测试环境只有TCP
+xtpConfig["heartBeatInterval"] = 60;
+go
+
+cleanEnvironment()
+createDbAndPt()
+createStreamTableAndSubscribe()
+xtpConn = connectToXTP(xtpConfig)
+go  // 分段执行
+subscribeXTP(xtpConn, indexMarketDataStream, optionMarketDataStream, actualMarketDataStream, bondMarketDataStream, entrustStream, tradeStream, stateStream, orderBookStream)
+writeLog("Subsribe to XTP market data successfully!")
+
+xtpConn = XTP::getHandle("xtpConn")
+XTP::getStatus(xtpConn)
