@@ -93,6 +93,7 @@
   - [从一次 SQL 查询的全过程看 DolphinDB 的线程模型](thread_model_SQL.md)
   - [DolphinDB 集群运维监控教程](cluster_monitor.md)
   - [用户级别的资源跟踪详解](user_level_resource_tracking.md)
+  - [OOM 应对指南](handling_oom.md)
   
 - 连接器
 
