@@ -211,7 +211,7 @@ select top 1000 * from xx
 
 ### 4.1 优化服务器以及数据库配置
 
-- **打开操作系统对进程的资源限制：**Linux 对于每个进程有限制最大内存机制。为提高性能，可以根据设备资源情况，对 DolphinDB 内存限制合理规划。
+- **打开操作系统对进程的资源限制**：Linux 对于每个进程有限制最大内存机制。为提高性能，可以根据设备资源情况，对 DolphinDB 内存限制合理规划。
 - **合理配置 maxMemSize** ：
   - 如果 DolphinDB 许可证限制内存大于等于服务器 80%-90% 的内存，则 maxMemSize 为服务器内存 80%-90% 之间
   - 如果 DolphinDB 许可证限制内存小于服务器 80%-90% 的内存，则 maxMemSize 为 DolphinDB 许可证限制内存大小
@@ -234,7 +234,7 @@ select top 1000 * from xx
 
 ### 4.5 分批次写入数据
 
-- **避免大事务写入：**数据写入时，当数据量较大时，批量数据如 10G 左右进行 [append！](https://docs.dolphindb.cn/zh/funcs/a/append!.html?hl=append)或者 [tableInsert](https://docs.dolphindb.cn/zh/funcs/t/tableInsert.html?hl=tableinsert) 会导致大事务的写入内存长时间占用内存，导致内存无法释放。
+- **避免大事务写入**：数据写入时，当数据量较大时，批量数据如 10G 左右进行 [append！](https://docs.dolphindb.cn/zh/funcs/a/append!.html?hl=append)或者 [tableInsert](https://docs.dolphindb.cn/zh/funcs/t/tableInsert.html?hl=tableinsert) 会导致大事务的写入内存长时间占用内存，导致内存无法释放。
   - 可以使用 [loadTextEx](https://docs.dolphindb.cn/zh/funcs/l/loadTextEx.html?hl=loadtextex) 接口代替原先 [loadText ](https://docs.dolphindb.cn/zh/funcs/l/loadText.html?hl=loadtext)+ [append！](https://docs.dolphindb.cn/zh/funcs/a/append!.html?hl=append)的方式写入数据
   - API 端提供 tableAppender 接口自动切分大数据分批次写入
 
