@@ -6,10 +6,10 @@
   - [2.2 Controller 和 Datanode 版本一致性校验](#22-controller-和-datanode-版本一致性校验)
 - [3.分区状态不一致场景](#3分区状态不一致场景)
 - [4. 分区状态不一致修复方法与案例](#4-分区状态不一致修复方法与案例)
-  - [4.1 利用函数 forceCorrectVersionByReplica 修复版本错乱问题](#41-利用函数-forcecorrectversionbyreplica-修复版本错乱问题)
+  - [4.1 利用函数 `forceCorrectVersionByReplica` 修复版本错乱问题](#41-利用函数-forcecorrectversionbyreplica-修复版本错乱问题)
   - [4.2 利用函数 `imtUpdateChunkVersionOnDataNode` 和 `updateChunkVersionOnMaster` 直接编辑 chunk 的元数据版本信息](#42-利用函数-imtupdatechunkversionondatanode-和-updatechunkversiononmaster-直接编辑-chunk-的元数据版本信息)
-  - [4.3 利用函数 restoreControllerMetaFromChunkNode 恢复 Controller 上的元数据](#43-利用函数-restorecontrollermetafromchunknode-恢复-controller-上的元数据)
-  - [4.4 利用函数 dropPartition 强制删除元数据](#44-利用函数-droppartition-强制删除元数据)
+  - [4.3 利用函数 `restoreControllerMetaFromChunkNode` 恢复 Controller 上的元数据](#43-利用函数-restorecontrollermetafromchunknode-恢复-controller-上的元数据)
+  - [4.4 利用函数 `dropPartition` 强制删除元数据](#44-利用函数-droppartition-强制删除元数据)
 - [5. 总结](#5-总结)
 
 
@@ -168,7 +168,7 @@ Controller 和 Datanode 启动后，正常情况下，所有 chunk 都处于终�
 
 注意：在确认数据本身正确，只是版本或者元数据不正确的话，利用下列函数来强制修改 datanode 元数据。
 
-### 4.1 利用函数 forceCorrectVersionByReplica 修复版本错乱问题
+### 4.1 利用函数 `forceCorrectVersionByReplica` 修复版本错乱问题
 
 如下场景：
 
@@ -261,7 +261,7 @@ updateChunkVersionOnMaster("deb91fa2-f05a-3096-5941-b80feda42562",270)
 
 注意；这两个函数并不修改除版本号外的其他信息。与 forceCorrectVersionByReplica 函数区别是，forceCorrectVersionByReplica 是强制 Controller 版本和 datanode 版本一致，适合于 Datanode 上 chunk 版本高于 master 版本。如果 Datanode 上 chunk 版本低于 master 版本，尽量选择高版本信息，可以使用本小节两个函数，将 chunk 信息修改为指定版本。
 
-### 4.3 利用函数 restoreControllerMetaFromChunkNode 恢复 Controller 上的元数据
+### 4.3 利用函数 `restoreControllerMetaFromChunkNode` 恢复 Controller 上的元数据
 
 如下场景：
 
@@ -269,7 +269,7 @@ updateChunkVersionOnMaster("deb91fa2-f05a-3096-5941-b80feda42562",270)
 select * from rpc(getControllerAlias(), getClusterChunksStatus)
 ```
 
-执行上述语句时查询到控制节点的元数据为 0.且加载 dfs 分布式表报如图错误，可以使用 restoreControllerMetaFromChunkNode 函数
+执行上述语句时查询到控制节点的元数据为 0.且加载 dfs 分布式表报如图错误，可以使用 `restoreControllerMetaFromChunkNode` 函数
 
 ![](./images/repair_chunk_status/repair_chunk_status4.3-1.png)
 
@@ -305,7 +305,7 @@ restoreControllerMetaFromDatanode() 函数，chunk 信息未加载完毕前执�
 
 8.执行完函数后，重启整个集群，就可以正常查询原有数据了。
 
-### 4.4 利用函数 dropPartition 强制删除元数据
+### 4.4 利用函数 `dropPartition` 强制删除元数据
 
 如果确实要删除某个 chunk，但如果 chunk 的版本不一致，或者处在 recovering 状态，那么正常的删除会删除失败。这个函数第四个参数，可以指定是否强制删除，不考虑版本一致性的问题。这种情况下，可以使用该函数，并且将第四个参数设置为 true。
 
@@ -329,4 +329,4 @@ dropPartition(database("dfs:/"+dbName),t,,true)
 - 网络异常：当协调者向参与者发送 commit 请求之后，发生了网络异常，这将导致只有部分参与者收到了 commit 请求。这部分参与者接到 commit 请求之后就会执行 commit 操作，但是其他未接到 commit 请求的参与者则无法执行事务提交，于是整个分布式系统便出现了数据不一致的问题。
 - 服务器宕机：协调者在发出 commit 消息之后宕机，而唯一接收到这条消息的参与者同时也宕机了。那么即使协调者通过选举协议产生了新的协调者，这条事务的状态也是不确定的，没人知道事务是否被已经提交。
 
-建议使用过程中避免 sever 在写入数据时，重启机器等操作。
+建议使用过程中避免 server 在写入数据时，重启机器等操作。
