@@ -67,6 +67,7 @@
   - [DolphinDB SQL 案例教程](DolphinDB_SQL_Case_Tutorial.md)
   - [DolphinDB SQL 执行计划教程](DolphinDB_Explain.md)
   - [DolphinDB SQL 标准化](Standard_SQL_in_DolphinDB.md)
+  - [基于宏变量的元编程](macro_var_based_metaprogramming.md)
   
 - 流计算
 
