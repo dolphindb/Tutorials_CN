@@ -481,7 +481,7 @@ engine = createOrderBookSnapshotEngine(name="demo", exchange="XSHE", orderbookDe
 - 创建引擎时指定了 *userDefinedMetrics* 参数，它是一个一元函数，函数的入参是 *outputColMap* 参数指定的引擎内置指标组成的表，用户可以操作该表实现自定义指标。本节中我们用引擎提供的两笔订单簿快照之间的逐笔成交明细和撤单明细，计算了这个窗口内的挂单时长和撤单量等指标。
 - 注意，当指定 *userDefinedMetrics*  参数后，引擎的输出表结构不再和 *outputColMap*  参数的内容一一对应，而是仅包含两部分内容：一部分是 `genOutputColumnsForOBSnapshotEngine` 函数对应的 *basic* 和 *depth* 指标；另一部分是用户自定义指标。
 
-接着，用历史数据注入订单簿引擎。引擎在实时流计算和历史批计算的调用差别请参考 [3.1 小节](#31-合成-1-秒频率订单簿)，本节不再赘述。
+接着，用历史数据注入订单簿引擎。
 
 ```
 t = select * from loadText("./orderTrans.csv") order by ApplSeqNum
