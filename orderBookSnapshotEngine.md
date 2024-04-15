@@ -20,7 +20,7 @@
 在业务上，订单簿引擎支持以下功能：
 
 - 支持多个交易所的多种证券类型，比如深交所股票
-- 支持任意档位和任意频率的订单簿
+- 支持任意深度和任意频率的订单簿
 - 支持成交明细、委托明细、撤单明细等丰富的衍生指标
 - 支持用户自定义指标
 
@@ -60,6 +60,7 @@
     - [7.3 输出结果中的 abnormal 字段为 true 是什么原因呢](#73-输出结果中的-abnormal-字段为-true-是什么原因呢)
     - [7.4 输入数据是不是必须包含 BSFlag 字段？如果 BSFlag 为 N（未知），应该怎么处理](#74-输入数据是不是必须包含-bsflag-字段如果-bsflag-为-n未知应该怎么处理)
     - [7.5 输入数据后，引擎一直没有输出或者输出的结果很少，是什么原因造成的](#75-输入数据后引擎一直没有输出或者输出的结果很少是什么原因造成的)
+  - [8. 总结](#8-总结)
 
 ## 1. 订单簿引擎（Orderbook Snapshot Engine）工作原理
 
@@ -322,7 +323,7 @@ engine = createOrderBookSnapshotEngine(name="demo", exchange="XSHE", orderbookDe
 - *exchange* 指定证券类型，决定了引擎使用的交易规则。“XSHE”表示深交所股票。
 - *orderbookDepth* 指定订单簿深度。
 - *intervalInMilli* 为输出的时间间隔，单位为毫秒，决定了输出的快照频率。
-- *date* 日期，输出结果中的 timestamp 时间列的日期由本参数决定。
+- *date* 日期，输出结果中的 timestamp 时间列的日期由此参数决定。
 - *startTime* 开始输出的时间戳。
 - *prevClose* 昨收价，通过当日逐笔并不能计算出昨收价，所以需要以静态数据的形式传入。本例传入了模拟的昨收价，实际使用中可以从数据库表中获得。
 - *dummyTable* 为输入表表结构。
@@ -478,7 +479,7 @@ try{dropStreamEngine(`demo)} catch(ex){}
 engine = createOrderBookSnapshotEngine(name="demo", exchange="XSHE", orderbookDepth=depth, intervalInMilli=1000, date=2022.01.10, startTime=09:30:00.000,  prevClose=prevClose, dummyTable=dummyOrderTrans, inputColMap=inputColMap, outputTable=outTable, outputColMap=outputColMap, orderBookAsArray=orderBookAsArray, userDefinedMetrics=userDefinedFunc)
 ```
 
-- 创建引擎时指定了 *userDefinedMetrics* 参数，它是一个一元函数，函数的入参是 *outputColMap* 参数指定的引擎内置指标组成的表，用户可以操作该表实现自定义指标。本节中我们用引擎提供的两笔订单簿快照之间的逐笔成交明细和撤单明细，计算了这个窗口内的挂单时长和撤单量等指标。
+- 创建引擎时指定了 *userDefinedMetrics* 参数，它是一个一元函数，用于自定义指标的计算逻辑。该函数的入参必须是一张表，这张表的每一行是一个标的的快照，快照的每一列是 *outputColMap* 参数指定的引擎内置指标。用户可以操作这些引擎内置的指标实现自定义指标。本节中我们用引擎提供的两笔订单簿快照之间的逐笔成交明细和撤单明细，计算了这个窗口内的挂单时长和撤单量等指标。
 - 注意，当指定 *userDefinedMetrics*  参数后，引擎的输出表结构不再和 *outputColMap*  参数的内容一一对应，而是仅包含两部分内容：一部分是 `genOutputColumnsForOBSnapshotEngine` 函数对应的 *basic* 和 *depth* 指标；另一部分是用户自定义指标。
 
 接着，用历史数据注入订单簿引擎。
@@ -509,7 +510,7 @@ getStreamEngine("demo").append!(t)
 
 **测试环境**：
 
-DolphinDB：2.00.12 
+DolphinDB：2.00.12 2024.04.02
 
 物理服务器：
 
@@ -523,14 +524,16 @@ DolphinDB：2.00.12
 
 **测试结果**：
 
-| **证券类型** | **标的数量** | **订单簿频率** | **订单簿深度** | **并行度** | **单条订单簿快照响应耗时** |
+| **证券类型** | **标的数量** | **订单簿频率** | **订单簿深度** | **并行度** | **响应耗时** |
 | -------- | -------- | --------- | --------- | ------- | --------------- |
 | 深交所股票    | 2755 支   | 1 秒       | 10        | 4       | 0.67 毫秒         |
 | 深交所股票    | 2755 支   | 10 毫秒     | 10        | 4       | 0.84 毫秒         |
 
+注：响应耗时不仅包含引擎内部的计算耗时，也包含逐笔数据发布并写入计算引擎的耗时。在实盘中，通过 UpdateTime2 - UpdateTime1 可以计算出每一条快照的响应耗时，其中 UpdateTime2 是由引擎记录的完成计算的时刻，UpdateTime1 是系统接收到逐笔数据的时刻（ ReceiveTime 字段），每条快照的 UpdateTime1 取触发该条快照输出的那一条逐笔数据的接收时刻。
+
 **测试环境**：
 
-DolphinDB：2.00.12
+DolphinDB：2.00.12 2024.04.02
 
 物理服务器：
 
@@ -722,5 +725,7 @@ orderBook engine abnormal snapshot.symbol: ... ,ask price ... ,bids price: ... ,
 ```
 expected seq num: ...,  unordered buffer size: ..., the last seq num get: ...
 ```
+
+## 8. 总结
 
 本文首先介绍了 DolphinDB 订单簿引擎的工作原理，包括其支持的各类证券和交易规则。接着，文章深入解释了引擎的核心功能，并通过历史与实时数据的应用实例，突显其在不同情境下的适用性。文末提供了订单簿数据正确性的验证方法和针对常见问题的分析，助用户快速理解订单簿引擎的运作机制，轻松掌握订单簿引擎的使用方法。
