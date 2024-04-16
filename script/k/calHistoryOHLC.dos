@@ -1,0 +1,189 @@
+/**
+File name: calHistoryOHLC.dos
+Application: script to calculate OHLC based on Tong-Lian data.
+Author: Xinhai Tang
+Company: DolphinDB Inc.
+DolphinDB server version: 2.00.11.2 2024.02.03
+Storage engine: TSDB and OLAP
+Last modification time: 2024.04.15
+DevEnv: support3-single16coreJIT
+*/
+
+/* *
+*  @ Brief
+*  An aggregate function for the highest price of OHLC.
+*  @ param
+*  DeltasHighPrice is the difference between the highest prices of two snapshots.
+*  HighPrice is the highest price of the current snapshot.
+*  LastPrice is the latest price of the current snapshot.
+*  @ Return
+*  A vector of the highest price.
+*  @ Example
+*  select high(DeltasHighPrice, HighPrice, LastPrice) from tb group by SecurityID, TradeDate, minute(TradeTime)
+*/
+defg high(DeltasHighPrice, HighPrice, LastPrice){
+	if(sum(DeltasHighPrice)>0.000001){
+		return max(HighPrice)
+	}
+	else{
+		return max(LastPrice)
+	}
+}
+
+/* *
+*  @ Brief
+*  An aggregate function for the lowest price of OHLC.
+*  @ param
+*  DeltasLowPrice is the difference between the lowest prices of two snapshots.
+*  LowPrice is the lowest price of the current snapshot.
+*  LastPrice is the latest price of the current snapshot.
+*  @ Return
+*  A vector of the lowest price.
+*  @ Example
+*  select low(DeltasLowPrice, LowPrice, LastPrice) from tb group by SecurityID, TradeDate, minute(TradeTime)
+*/
+defg low(DeltasLowPrice, LowPrice, LastPrice){
+	sumDeltas = sum(DeltasLowPrice)
+	if(sumDeltas<-0.000001 and sumDeltas!=NULL){
+		return min(iif(LowPrice==0.0, NULL, LowPrice))
+	}
+	else{
+		return min(LastPrice)
+	}
+}
+
+/* *
+*  @ Brief
+*  A map function for calculating OHLC of some stocks which is in a day.
+*  @ param
+*  snapshotTB is a data table for some stocks which is in the same day.
+*  @ Return
+*  A table of OHLC.
+*  @ Example
+snapshotTB = select * from loadTable("dfs://snapshotDB", "snapshotTB") where TradeTime.date()=2023.02.01, partition(SecurityID, 1)
+result = calOHLCBaseOnSnapshotMapFuc(snapshotTB)
+*/
+def calOHLCBaseOnSnapshotMapFuc(snapshotTB){
+	/**@test param
+	snapshotTB =	select	TradeTime, SecurityID, OpenPrice,
+				PreCloPrice, HighPrice, LowPrice,
+				LastPrice, PreCloseIOPV, IOPV,
+				TotalVolumeTrade, TotalValueTrade, NumTrades,
+				UpLimitPx, DownLimitPx
+			from loadTable("dfs://snapshotDB", "snapshotTB")
+			where TradeTime.date()=2023.02.01, SecurityID in `888888
+	*/
+	//Processing the original snapshot market table for calculating OHLC
+	tempTB1 =	select	TradeTime.date() as TradeDate,
+				iif(TradeTime.time()<=09:30:00.000, 09:30:00.000, TradeTime.time()) as TradeTime,
+				SecurityID,
+				OpenPrice,
+				PreCloPrice,
+				HighPrice,
+				LowPrice,
+				LastPrice,
+				PreCloseIOPV,
+				IOPV,
+				UpLimitPx,
+				DownLimitPx,
+				iif(deltas(HighPrice)>0.000001, 1, 0) as DeltasHighPrice,
+				iif(abs(deltas(LowPrice))>0.000001, -1, 0) as DeltasLowPrice,
+				iif(deltas(TotalVolumeTrade)==NULL, TotalVolumeTrade, deltas(TotalVolumeTrade)) as DeltasVolume,
+				iif(deltas(TotalValueTrade)==NULL, TotalValueTrade, deltas(TotalValueTrade)) as DeltasTurnover,
+				iif(deltas(NumTrades)==NULL, NumTrades, deltas(NumTrades)) as DeltasTradesCount
+			from snapshotTB
+			where TradeTime.time()>=09:25:00.000
+			context by SecurityID
+	//Aggregate Calculating: temporary 1-minute OHLC table
+	tempTB2 =	select	firstNot(LastPrice, 0.0) as OpenPrice,
+				high(DeltasHighPrice, HighPrice, LastPrice) as HighPrice,
+				low(DeltasLowPrice, LowPrice, LastPrice) as LowPrice,
+				last(LastPrice) as ClosePrice,
+				sum(DeltasVolume) as Volume,
+				sum(DeltasTurnover) as Turnover,
+				sum(DeltasTradesCount) as TradesCount,
+				last(PreCloPrice) as PreClosePrice,
+				last(PreCloseIOPV) as PreCloseIOPV,
+				last(IOPV) as IOPV,
+				last(UpLimitPx) as UpLimitPx,
+				last(DownLimitPx) as DownLimitPx,
+				lastNot(LastPrice, 0.0)\firstNot(LastPrice, 0.0)-1 as FirstBarChangeRate	
+		from tempTB1
+		group by SecurityID, TradeDate, interval(X=TradeTime, duration=60s, label='left', fill=0) as TradeTime
+	//240 bars per day
+	codes = select distinct(SecurityID) as SecurityID from tempTB2 order by SecurityID
+	allTime = table((take(0..120, 121)*60*1000+09:30:00.000).join(take(0..117, 118)*60*1000+13:00:00.000).join(15:00:00.000) as TradeTime)
+	tempTB3 = cj(codes, allTime)
+	//Processing missing data calculation window, excluding opening
+	result = select	SecurityID,
+			concatDateTime(TradeDate, TradeTime) as TradeTime,
+			iif(OpenPrice==0.0 and PreClosePrice==0.0, cumlastNot(ClosePrice, 0.0), OpenPrice) as OpenPrice,
+			iif(HighPrice==0.0 and PreClosePrice==0.0, cumlastNot(ClosePrice, 0.0), HighPrice) as HighPrice,
+			iif(LowPrice==0.0 and PreClosePrice==0.0, cumlastNot(ClosePrice, 0.0), LowPrice) as LowPrice,
+			iif(ClosePrice==0.0 and PreClosePrice==0.0, cumlastNot(ClosePrice, 0.0), ClosePrice) as ClosePrice,
+			Volume,
+			Turnover,
+			TradesCount,
+			iif(PreClosePrice==0.0, cumlastNot(PreClosePrice, 0.0), PreClosePrice) as PreClosePrice,
+			iif(PreCloseIOPV==0.0 and PreClosePrice==0.0, cumlastNot(PreCloseIOPV, 0.0), PreCloseIOPV).nullFill(0.0) as PreCloseIOPV,
+			iif(IOPV==0.0 and PreCloseIOPV==0.0, cumlastNot(IOPV, 0.0), IOPV).nullFill(0.0) as IOPV,
+			iif(UpLimitPx==0.0, cumlastNot(UpLimitPx, 0.0), UpLimitPx).nullFill(0.0) as UpLimitPx,
+			iif(DownLimitPx==0.0, cumlastNot(DownLimitPx, 0.0), DownLimitPx).nullFill(0.0) as DownLimitPx,
+			iif(	time(TradeTime)==09:30:00.000,
+				iif(FirstBarChangeRate!=NULL, FirstBarChangeRate, 0.0),
+				iif(ratios(ClosePrice)!=NULL and ClosePrice!=0.0, ratios(ClosePrice)-1, 0.0)) as ChangeRate
+		from lj(tempTB3, tempTB2, `TradeTime`SecurityID)
+		context by SecurityID
+	return result
+}
+
+/* *
+*  @ Brief
+*  A function for calculating OHLC of all stocks which is in one day.
+*  @ param
+*  calDate is the calculation date.
+*  dbName is the name of database.
+*  tbName is the name of table.
+*  @ Return
+*  A table of OHLC.
+*  @ Example
+*  oneDayResult = calOHLCBaseOnSnapshot(2023.02.01, "dfs://l2TLDB", "snapshot")
+*/
+def calOHLCBaseOnSnapshot(calStartDate, calEndDate, dbName, tbName){
+	/**@test param
+	calDate = 2023.02.01
+	dbName = "dfs://l2TLDB"
+	tbName = "snapshot"
+	 */
+	//Generate data source: If SQL only contains the required columns for calculation, it can improve calculation efficiency
+	dataSource = sqlDS(<	select	TradeTime, SecurityID, OpenPrice,
+					PreCloPrice, HighPrice, LowPrice,
+					LastPrice, PreCloseIOPV, IOPV,
+					TotalVolumeTrade, TotalValueTrade, NumTrades,
+					UpLimitPx, DownLimitPx
+				from loadTable(dbName, tbName)
+				where TradeTime.date()>=calStartDate, TradeTime.date()<=calEndDate>)
+	result = mr(ds=dataSource, mapFunc=calOHLCBaseOnSnapshotMapFuc, finalFunc=unionAll{,false}, parallel=true)
+	return result
+}
+
+//test case1
+calStartDate = 2023.02.01
+calEndDate = 2023.02.01
+dbName = "dfs://snapshotDB"
+tbName = "snapshotTB"
+timer oneDayResult = calOHLCBaseOnSnapshot(calStartDate, calEndDate, dbName, tbName)
+
+//test case2
+calStartDate = 2023.02.01
+calEndDate = 2023.02.14
+dbName = "dfs://snapshotDB"
+tbName = "snapshotTB"
+timer oneDayResult = calOHLCBaseOnSnapshot(calStartDate, calEndDate, dbName, tbName)
+
+//test case3
+calStartDate = 2023.02.01
+calEndDate = 2023.02.28
+dbName = "dfs://snapshotDB"
+tbName = "snapshotTB"
+timer oneDayResult = calOHLCBaseOnSnapshot(calStartDate, calEndDate, dbName, tbName)
