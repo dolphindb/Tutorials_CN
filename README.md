@@ -187,7 +187,7 @@
   - [DolphinDB中有关时间信息的最佳实践指南](timezone.md)
   - 金融：
     - [在 DolphinDB 中计算 K 线](OHLC.md)
-    - [基于快照行情的股票和基金 K 线合成](k.md)
+    - [基于快照行情的股票和基金 K 线合成](K.md)
     - [实时计算高频因子](hf_factor_streaming.md) 
     - [DolphinDB 教程：面板数据的处理](panel_data.md)
     - [金融高频因子的流批统一计算：DolphinDB 响应式状态引擎](reactive_state_engine.md)
