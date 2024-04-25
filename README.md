@@ -250,6 +250,7 @@
     - [工业试验平台高频数据的存储和处理分析](high_freq_data_storage_and_analysis.md)
     - [助力工业物联网实现智能运维](Iot_intelligent_O&M.md)
     - [DolphinDB 历史数据回放功能应用：物联网设备故障分析](faultAnalysis.md)
+    - [云边协同：DolphinDB 构建一体化振动监控与故障诊断解决方案](Virbration_Monitor_Fault_Diagnose.md)
 
 - 入门和测试
 
