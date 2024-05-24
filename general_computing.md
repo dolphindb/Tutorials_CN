@@ -205,9 +205,7 @@ sampleVar = mr(ds, varMap, +, varFinal)
 和数据源缓存相关的函数有：
 
 - `cacheDS!`：指示系统缓存数据源
-- `clearcacheDS!`：指示系统在下次执行数据源之后清除缓存
 - `cacheDSNow`：立即执行并缓存数据源，并返回缓存行的总数
-- `clearCacheDSNow`：立即清除数据源和缓存
 
 ### 3.6. 数据源转换
 
