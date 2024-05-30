@@ -1,6 +1,6 @@
 ## DolphinDB 教程
 
-> 注意：自 2.00.12/3.00.0 版本起（2024/4/1），该项目不再维护。用户可移步至 [DolphinDB 文档中心-教程](https://docs.dolphindb.cn/zh/tutorials/about_tutorials.html)。
+> **注意：自 2.00.12/3.00.0 版本起（2024/4/1），该项目不再维护。用户可移步至 [DolphinDB 文档中心-教程](https://docs.dolphindb.cn/zh/tutorials/about_tutorials.html)。**
 
 - 安装和部署
 
