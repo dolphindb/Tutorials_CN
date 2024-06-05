@@ -2,18 +2,19 @@
 
 工业物联网领域，能否对从传感器采集到的包括湿度、温度、压力、液位、流速等多方面的海量数据进行快速的实时处理，对各种工业智能制造应用至关重要。DolphinDB 提供了流数据表 (stream table) 和流计算引擎用于实时数据处理，助力智能制造。 [DolphinDB 流计算引擎实现传感器数据异常检测](https://gitee.com/dolphindb/Tutorials_CN/blob/master/iot_anomaly_detection.md)一文介绍了怎么用内置的异常检测引擎 (Anomaly Detection Engine) 和自定义计算引擎实现异常检测的需求。目前 DolphinDB 内置了更多的计算引擎，本文将介绍如何用响应式状态引擎和会话窗口引擎实现传感器状态变化的实时监测。
 
-- [1. 应用需求](#1-应用需求)
-- [2. 实验环境准备](#2-实验环境准备)
-- [3. 设计思路](#3-设计思路)
-- [4. 实现步骤](#4-实现步骤)
-	- [4.1 定义输入输出流数据表](#41-定义输入输出流数据表)
-	- [4.2 创建响应式状态引擎实现传感器状态变化实时监测](#42-创建响应式状态引擎实现传感器状态变化实时监测)
-	- [4.3 创建会话窗口引擎实现传感器丢失数据实时报警](#43-创建会话窗口引擎实现传感器丢失数据实时报警)
-	- [4.4 订阅流数据](#44-订阅流数据)
-	- [4.5 从 MQTT 服务器接收数据](#45-从-mqtt-服务器接收数据)
-- [5. 模拟写入与验证](#5-模拟写入与验证)
-- [6. 总结](#6-总结)
-- [附录](#附录)
+- [DolphinDB 流计算在物联网的应用：实时检测传感器状态变化](#dolphindb-流计算在物联网的应用实时检测传感器状态变化)
+	- [1. 应用需求](#1-应用需求)
+	- [2. 实验环境准备](#2-实验环境准备)
+	- [3. 设计思路](#3-设计思路)
+	- [4. 实现步骤](#4-实现步骤)
+		- [4.1 定义输入输出流数据表](#41-定义输入输出流数据表)
+		- [4.2 创建响应式状态引擎实现传感器状态变化实时监测](#42-创建响应式状态引擎实现传感器状态变化实时监测)
+		- [4.3 创建会话窗口引擎实现传感器丢失数据实时报警](#43-创建会话窗口引擎实现传感器丢失数据实时报警)
+		- [4.4 订阅流数据](#44-订阅流数据)
+		- [4.5 从 MQTT 服务器接收数据](#45-从-mqtt-服务器接收数据)
+	- [5. 模拟写入与验证](#5-模拟写入与验证)
+	- [6. 总结](#6-总结)
+	- [附录](#附录)
 
 ## 1. 应用需求
 
@@ -88,8 +89,8 @@ enableTableShareAndPersistence(table=stream01,tableName=`inputSt,asynWrite=false
 其次，定义响应式状态引擎的输出表。引擎的输出表可以是内存表或分布式表。本文定义如下所示流数据表 outputSt1 为满足第一个需求的跟踪状态变化的输出表，并参考 DolphinDB 用户手册中 [createReactiveStateEngine](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/c/createReactiveStateEngine.html) 各参数的设置说明完成对输出表的定义。根据 keyColumn(分组列) 的设置，输出表的前几列必须和 keyColumn 设置的列及其顺序保持一致，后面是计算结果列。本例的 keyColumn 为 tag，计算结果列为 ts 和 value，与输入表一致。建表代码如下：
 
 ```
-stream01=streamTable(100000:0,`tag`ts`value,[SYMBOL,TIMESTAMP, INT])
-enableTableShareAndPersistence(table=stream01,tableName=`inputSt,asynWrite=false,compress=true, cacheSize=100000)
+out1 =streamTable(10000:0,`tag`ts`value,[SYMBOL,TIMESTAMP, INT])
+enableTableShareAndPersistence(table=out1,tableName=`outputSt1,asynWrite=false,compress=true, cacheSize=100000)
 ```
 
 最后，定义用于告警信息输出的流数据表 outputSt2，以满足第二个场景需求。参考 DolphinDB 用户手册中 [createSessionWindowEngine](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/c/createSessionWindowEngine.html) 各参数的设置说明完成对输出表的定义。它的第一列必须是时间类型，其时间为各个窗口的起始时刻或者结束时刻。如果 keyColumn (分组列) 参数不为空，则其后几列和 _keyColumn_ 设置的列及其顺序保持一致。最后为计算结果列，可为多列，在本例中，仅记录丢失数据前最后一条记录的标签测量值。建表代码如下：
