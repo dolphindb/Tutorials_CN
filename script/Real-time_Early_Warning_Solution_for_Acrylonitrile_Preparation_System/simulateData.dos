@@ -1,0 +1,22 @@
+def simulateData(n){
+    cnt = 0
+    do{
+        //数据模拟均使用随机数
+        id = [1,2]
+        ts = [now(),now()]
+        temp1 = randNormal(438,1,2)
+        temp2 = randNormal(438,1,2)
+        airPropyleneRatio=randNormal(10,0.5,2)
+        oxygenRatio = randNormal(1.2,0.4,2)
+        ammoniaPropyleneRatio=randNormal(1.25,0.06,2)
+        propyleneAmount = randNormal(10,1,2)
+        catalystAmount = propyleneAmount\randNormal(0.075,0.003,2)
+        objByName("orignData").append!(table(id,ts,temp1,temp2,airPropyleneRatio,oxygenRatio,ammoniaPropyleneRatio,propyleneAmount,catalystAmount))
+        cnt+=1
+        sleep(10)
+    }while(cnt<n) 
+}
+
+//模拟数据
+//模拟100条数据
+simulateData(100)

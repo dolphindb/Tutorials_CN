@@ -1,0 +1,81 @@
+//模拟规则信息
+devId = stretch([1,2],7)
+param = `temp1`temp2`tempDif`airPropyleneRatio`oxygenRatio`ammoniaPropyleneRatio`WHSV
+ruleId = 0..3 <- 0..2
+lowLimit = [435,435,0,8.8,0.5,1.10,0.07]
+highLimit= [440,440,2,11.0,2.0,1.35,0.08]
+calFunc = [NULL,NULL,"abs(temp2-temp1)",NULL,NULL,NULL,'propyleneAmount\\catalystAmount']
+exceptionHandling=["点位1温度超出正常范围,调整U形管数量","点位2温度超出正常范围,调整U形管数量","温度分布不均,调整U形管分布","空烯比异常,调整空气、丙烯进料比","尾氧含量异常,调整空气、丙烯进料比","氨烯比异常,调整氨气、丙烯进料比","重时空速异常,调整催化剂用量或丙烯进料量"]
+
+//创建配置表
+configTable = table(devId,ruleId,param,lowLimit,highLimit,calFunc,exceptionHandling)
+
+configTable.schema()
+
+
+keys = [1,2,NULL]
+rules = []
+for(key in keys){
+    if(key!=NULL){//key=1
+        ruleTable = select * from configTable where devId=key
+        tmp = []
+        for(rule in ruleTable){
+            paramTmp = iif(rule.calFunc!=NULL,rule.calFunc,rule.param)
+            ruleTmp = parseExpr(rule.lowLimit +"<"+ paramTmp+"<"+rule.highLimit)
+            tmp.append!(ruleTmp)
+        }
+        rules.append!(tmp)
+    }
+}
+//添加一个默认规则条件
+rules.append!([<temp1<0>])
+
+//生成规则集
+ruleSets = dict(keys,rules)
+
+//创建规则引擎
+colNames = `devId`ts`temp1`temp2`airPropyleneRatio`oxygenRatio`ammoniaPropyleneRatio`propyleneAmount`catalystAmount
+colTypes = [INT,TIMESTAMP,FLOAT,FLOAT,FLOAT,FLOAT,FLOAT,FLOAT,FLOAT]
+share streamTable(10000:0,colNames,colTypes) as orignData
+share streamTable(10000:0,colNames <- `rule,colTypes <- [INT]) as result
+share streamTable(10000:0,colNames <- `exceptionHandling,colTypes <- [STRING]) as warningTable
+
+//回调处理异常结果
+//
+def exceptionHandling(result,warningTableName,configTable){
+    if(result.rule != NULL){
+        tmp = select devId,ts,temp1,temp2,airPropyleneRatio,oxygenRatio,ammoniaPropyleneRatio,propyleneAmount,catalystAmount, exceptionHandling 
+        from result left join configTable on result.devId = configTable.devId and result.rule=configTable.ruleId
+        objByName(warningTableName).append!(tmp)
+    }
+}
+//无回调
+// createRuleEngine(name="rule1",ruleSets=ruleSets,dummyTable=orignData,outputColumns=colNames,outputTable=result,policy="shortcut",ruleSetColumn="devId") 
+//回调
+createRuleEngine(name="rule1",ruleSets=ruleSets,dummyTable=orignData,outputColumns=colNames,outputTable=result,policy="shortcut",ruleSetColumn="devId",
+callback=exceptionHandling{,"warningTable",configTable}) 
+subscribeTable(tableName="orignData",actionName="dataToRule",offset=0,handler=append!{getStreamEngine("rule1")},msgAsTable=true,batchSize=1000,throttle=1)    
+
+select * from result    
+
+//订阅检测结果对异常进行处理
+def resultWarning(msg,warningTableName,configTable){
+    tmp = select devId,ts,temp1,temp2,airPropyleneRatio,oxygenRatio,ammoniaPropyleneRatio,propyleneAmount,catalystAmount, exceptionHandling 
+    from msg left join configTable on msg.devId = configTable.devId and msg.rule=configTable.ruleId 
+    tmp = select * from tmp where exceptionHandling!=NULL
+    objByName(warningTableName).append!(tmp)
+
+}
+
+subscribeTable(tableName="result",actionName="resultWarning",offset=0,handler=resultWarning{,"warningTable",configTable},msgAsTable=true,batchSize=1000,throttle=1)   
+
+
+select * from warningTable order by ts,devId
+
+//清理环境
+// unsubscribeTable(tableName="orignData",actionName="dataToRule")
+// unsubscribeTable(tableName="result",actionName="resultWarning")
+// dropStreamEngine(`rule1)
+// dropStreamTable(`orignData)
+// dropStreamTable(`result) 
+// dropStreamTable(`warningTable) 
