@@ -523,7 +523,7 @@ ConstantSP handler(Heap *heap, vector<ConstantSP> &args) {
 
     vector<ConstantSP> msgToAppend;
     for (int i = 0; i < indices->size(); i++) {
-        int index = indices->get(i);
+        int index = indices->getIndex(i)
         msgToAppend.push_back(msg->get(index));
     }
 
@@ -577,9 +577,9 @@ select * from t1
 
 假定本例中的数据储存在 [平面文件数据库](https://en.wikipedia.org/wiki/Flat-file_database)，以二进制格式按行存储，数据从文件头部直接开始存储。每行有四列，分别为 id（按有符号 64 位长整型格式存储，8 字节），symbol（按 C 字符串格式以 ASCII 码编码存储，8 字节），date（按 BCD 码格式存储，8 字节），value（按 IEEE 754 标准的双精度浮点数格式存储，8 字节），每行共 32 字节。以下是一行的例子：
 
-id   |  symbol  |  date  |  value
------|----------|--------|--------
-5    | IBM      |20190313| 10.1
+| id   | symbol | date     | value |
+| ---- | ------ | -------- | ----- |
+| 5    | IBM    | 20190313 | 10.1  |
 
 这一行的十六进制表示为：
 
@@ -664,22 +664,22 @@ return Util::createTable(colNames, cols);
 
 `loadMyData` 函数将数据加载到内存，当数据文件非常庞大时，工作机的内存很容易成为瓶颈。所以设计 `loadMyDataEx` 函数解决这个问题。它通过边导入边保存的方式，把静态的二进制文件以较为平缓的数据流的方式保存为 DolphinDB 的分布式表，而不是采用全部导入内存再存为分区表的方式，从而降低内存的使用需求。
 
-`loadMyDataEx` 函数的参数可以参考 DolphinDB 内置函数 `loadTextEx`。它的语法是：loadMyDataEx(dbHandle, tableName, partitionColumns, path, [start], [length])。如果数据库中的表存在，则将导入的数据添加到已有的表 result 中。如果表不存在，则创建一张表 result，然后添加数据。最后返回这张表。
+`loadMyDataEx` 函数的参数可以参考 DolphinDB 内置函数 `loadTextEx`。它的语法是：`loadMyDataEx(dbHandle, tableName, partitionColumns, path, [start], [length])`。如果数据库中的表存在，则将导入的数据添加到已有的表 result 中。如果表不存在，则创建一张表 result，然后添加数据。最后返回这张表。
 
 ```cpp
-string dbPath = ((SystemHandleSP) db)->getDatabaseDir();
+string dbPath = ((SystemHandleSP) dbHandle)->getDatabaseDir();
+long long fileLength = Util::getFileLength(path->getString());
 vector<ConstantSP> existsTableArgs = {new String(dbPath), tableName};
 bool existsTable = heap->currentSession()->getFunctionDef("existsTable")->call(heap, existsTableArgs)->getBool();    // 相当于 existsTable(dbPath, tableName)
 ConstantSP result;
-
 if (existsTable) {    // 若表存在，加载表
-    vector<ConstantSP> loadTableArgs = {db, tableName};
-    result = heap->currentSession()->getFunctionDef("loadTable")->call(heap, loadTableArgs);    // 相当于 loadTable(db, tableName)
+    vector<ConstantSP> loadTableArgs = {dbHandle, tableName};
+    result = heap->currentSession()->getFunctionDef("loadTable")->call(heap, loadTableArgs);    // 相当于 loadTable(dbHandle, tableName)
 }
 else {    // 若表不存在，创建表
     TableSP schema = extractMyDataSchema(new Void(), new Void());
     ConstantSP dummyTable = DBFileIO::createEmptyTableFromSchema(schema);
-    vector<ConstantSP> createTableArgs = {db, dummyTable, tableName, partitionColumns};
+    vector<ConstantSP> createTableArgs = {dbHandle, dummyTable, tableName, partitionColumns};
     result = heap->currentSession()->getFunctionDef("createPartitionedTable")->call(heap, createTableArgs);    // 相当于 createPartitionedTable(db, dummyTable, tableName, partitionColumns)
 }
 ```
@@ -701,7 +701,6 @@ for (int i = 0; i < partitionNum; i++) {
     tasks.push_back(new DistributedCall(call, true));
     partitionStart += partitionLength;
 }
-
 vector<ConstantSP> appendToResultArgs = {result};
 FunctionDefSP appendToResult = Util::createPartialFunction(heap->currentSession()->getFunctionDef("append!"), appendToResultArgs);    // 相当于 append!{result}
 vector<FunctionDefSP> functors = {appendToResult};
@@ -751,7 +750,7 @@ DolphinDB 的脚本语言中提供了两个用于构造 SQL 语句的函数：`s
 
 ### 7.1.1 引入 *ScalarImp.h* 头文件
 
-通过 `parseExpr`函数生成 SQL 语句时，解析执行的过程中需要用到 String 类型，而 String 类型是 DolphinDB 内置的一个 Scalar 类型，其类定义在插件库中 *ScalarImp.h* 这个头文件。因此， 需要先引入该头文件：
+通过 `parseExpr` 函数生成 SQL 语句时，解析执行的过程中需要用到 String 类型，而 String 类型是 DolphinDB 内置的一个 Scalar 类型，其类定义在插件库中 *ScalarImp.h* 这个头文件。因此， 需要先引入该头文件：
 
 ```
 #include "ScalarImp.h"
@@ -874,7 +873,7 @@ DolphinDB 插件代码存储于 github/gitee 的 dolphindb/DolphinDBPlugin，其
 
 windows 版本要添加 “WINDOWS”，Linux 版本要添加 “LINUX”。对 release130 及以上分支，添加选项 "LOCKFREE_SYMBASE"。另外，为了兼容旧版本的编译器，libDolphinDB.so 编译时使用了 _GLIBCXX_USE_CXX11_ABI=0 的选项，因此用户在编译插件时也应该加入该选项。若 libDolphinDB.so 编译时使用 ABI=1，编译插件时则无需添加 _GLIBCXX_USE_CXX11_ABI=0 的选项。
 
-编译步骤可参考已实现的插件案例，例如 NSQ 插件的 [CMakeList.txt](https://gitee.com/dolphindb/DolphinDBPlugin/blob/master/nsq/CMakeLists.txt)。
+编译步骤可参考已实现的插件案例，例如 NSQ 插件的 [CMakeList.txt]([https://github.com/dolphindb/Tutorials_CN/blob/master/plugin/Msum/CMakeLists.txt)。
 
 ## 8.4 如何处理编译时出现包含 std::__cxx11 字样的链接问题（undefined reference）？
 
@@ -886,7 +885,7 @@ windows 版本要添加 “WINDOWS”，Linux 版本要添加 “LINUX”。对 
 ```cpp
 loadPlugin("/<YOUR_SERVER_PATH>/plugins/odbc/PluginODBC.txt");
 ```
-> 注意：格式文件介绍详见插件 [插件格式](https://gitee.com/dolphindb/DolphinDBPlugin/blob/master/README_CN.md#加载插件), 其中文件第一行规定了 lib 文件名以及路径。缺省不写路径，即需要插件库与格式文件在同一个目录。
+> 注意：格式文件介绍详见插件 [插件格式](https://github.com/dolphindb/DolphinDBPlugin/blob/master/README_CN.md#加载插件), 其中文件第一行规定了 lib 文件名以及路径。缺省不写路径，即需要插件库与格式文件在同一个目录。
 
 第 2 种，DolphinDB Server 1.20.0 及以上版本，可以通过 preloadModules 参数来自动加载。使用这个方法时需要保证预先加载的插件存在，否则 server 启动时会有异常。多个插件用逗号分离。例如:
 ```
