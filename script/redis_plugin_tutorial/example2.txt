@@ -1,0 +1,26 @@
+try{loadPlugin("./path/PluginRedis.txt")}catch(ex){print ex};
+go
+
+colName=["key", "value"]
+colType=["string", "string"]
+enableTableShareAndPersistence(table=streamTable(100:0, colName, colType), tableName=`table1, cacheSize=10000, asynWrite=false)
+
+def myHandle(conn, msg) {
+	redis::batchSet(conn, msg[0], msg[1])
+}
+
+conn = redis::connect(host, port)
+subscribeTable(tableName="table1", handler=myHandle{conn})
+
+n = 1000000
+for(x in 0:n){
+	insert into table1 values("key" + x, "value" + x)
+}
+
+t = table(n:0, [`id, `val], [`string, `string])
+for(x in 0:n){
+	insert into t values("key" + x, redis::run(conn, "GET", "key" + x))
+}
+
+ret = exec count(*) from t
+assert "test", n==ret
