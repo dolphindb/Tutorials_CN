@@ -1,0 +1,72 @@
+installPlugin("redis")
+loadPlugin("redis")
+
+
+def saveHashDataToRedis(conn, tb){
+    id = exec id from tb
+    // 通过 string 函数将数据转为 string 类型
+    data = select string(time) as time,string(dwMileage) as dwMileage,
+        string(speed) as speed, string(longitude) as longitude, string(latitude) as latitude,
+        string(elevation) as elevation from tb
+    redis::batchHashSet(conn, id, data)
+}
+
+def redisjob(){
+    conn=redis::connect(192.168.0.75, 6379)
+    redis::run(conn, "AUTH", "password")
+    go
+    // 获取每个 id 对应的最新时间的行情数据
+    signalData = select * from loadTable("dfs://signalData", "data") context by id order by time limit -1
+    saveHashDataToRedis(conn, signalData)
+    redis::release(conn)
+}
+
+
+def submitByHalfSecond(){
+    do {
+        redisjob()
+        sleep(500)
+    } while(true)
+}
+submitJob("submitByHalfSecond", "submitByHalfSecond", submitByHalfSecond)
+
+
+//创建一个库模拟写入
+if(existsDatabase("dfs://signalData")){dropDatabase("dfs://signalData")}
+create database "dfs://signalData" partitioned by VALUE([2024.03.05]),engine="TSDB",atomic="CHUNK"
+create table "dfs://signalData"."data"(
+    time TIMESTAMP[compress="delta"],
+    ID SYMBOL,
+    dwMileage DOUBLE,
+    speed DOUBLE,
+    longitude DOUBLE,
+    latitude DOUBLE,
+    elevation DOUBLE
+)
+partitioned by time
+sortColumns = [`ID,`time]
+
+pt = loadTable("dfs://signalData","data")
+
+// 模拟数据写入
+//测试写入极限可调整 num 参数，以及simulateData任务中的sleep时间
+num = 1000
+id = take(string(1..1000),num)
+time = stretch(2024.01.01 00:00:00.000+(0..999)*1000,num)
+dwMileage = rand(10.0,num)
+speed = rand(10.0,num)
+longitude = rand(10.0,num)
+latitude = rand(10.0,num)
+elevation = rand(10.0,num)
+t = table(time,id,dwMileage,speed,longitude,latitude,elevation)
+
+def simulateData(dbName,tbName,mutable t){
+    do{
+        update t set time = (t[`time]+1000)
+        loadTable(dbName,tbName).append!(t)
+        sleep(1000)
+    }while(true)
+}
+
+submitJob("simulateData","simulateData",simulateData{"dfs://signalData","data"},t)  
+
