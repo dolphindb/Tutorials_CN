@@ -1,0 +1,155 @@
+/*
+基于 ATR （平均真实范围）和 RSI（相对强弱指数）结合的技术分析指标实现期货 CTA 策略。基于分钟频率数据，实现以下的 CTA 策略逻辑：
+	计算1分钟内标的的最高价、最低价与前收盘价的差值的绝对值 TR 指标，然后求得 TR 指标平均值，即 ATR。
+	用过去10分钟的收盘价数据计算 RSI 指标。
+
+开仓：
+	当 RSI 值大于70且ATR大于其10分钟均值时，买入开仓。
+	当 RSI 值小于30且ATR大于其10分钟均值时，卖出开仓。
+止损：
+	持有多仓时，K线达到最高点后，回落0.004时，卖平
+	持有空仓时，K线达到最地点后，反弹0.004时，买平
+ */
+ loadPlugin("Backtest")
+ loadPlugin("MatchingEngineSimulator")
+@state
+def atr(high, low, close, m=14,n=10) {
+	prevClosePrice=prev(close)
+	tr = rowMax([high-low,abs(high-prevClosePrice),abs(low-prevClosePrice)])
+	atr=ema(tr, m)
+	mAtr=mavg(atr,n)
+	return atr,mAtr
+}
+@state
+def rsi(close, timePeriod=14) {
+	 deltaClose = deltas(close)
+	 up = iif(nullCompare(>, deltaClose, 0), deltaClose, 0)
+	 down = iif(nullCompare(>, deltaClose, 0), 0, -deltaClose)
+	 upAvg = ema(up, timePeriod)
+	 downAvg = ema(down, timePeriod)
+	 return 100.0 * upAvg / (upAvg + downAvg)
+}
+
+def initialize(mutable contextDict){
+	d=dict(STRING,ANY)
+	d["ATR"]=<atr(signal[0], signal[1], signal[2], 14,10)[0]>
+	d["mATR"]=<atr(signal[0], signal[1], signal[2], 14,10)[1]>
+	d["RSI"]=<rsi(signal[2], 14)>
+	Backtest::subscribeIndicator(contextDict["engine"], "kline", d)
+	//RSI买入信号指标
+	contextDict["buySignalRSI"]=70.
+	//RSI卖出信号指标
+	contextDict["sellSignalRSI"]=30.
+	///平仓线
+	contextDict["closeLine"]=0.004
+	//
+	contextDict["lowPrice"]=dict(STRING,ANY)
+	contextDict["highPrice"]=dict(STRING,ANY)
+	//
+}
+def beforeTrading(mutable contextDict){
+	
+}
+def onBar(mutable contextDict, msg){
+	//行情回测，编写策略逻辑
+	for(istock in msg.keys()){
+		longPos=Backtest::getPosition(contextDict["engine"],istock).longPosition[0]
+		shortPos=Backtest::getPosition(contextDict["engine"],istock).shortPosition[0]
+		price=msg[istock]["close"]
+		//没有多头持仓，并且多头趋势时，买入
+		if(longPos<1 and shortPos<1 and msg[istock]["ATR"]>msg[istock]["mATR"] and msg[istock]["RSI"]>contextDict["buySignalRSI"] and 
+		msg[istock]["mATR"]>0){
+			Backtest::submitOrder(contextDict["engine"], (istock,msg[istock]["symbolSource"],contextDict["tradeTime"],5, price+0.02, 0., 2, 1, 0),"buyOpen")
+		        	contextDict["highPrice"][istock]=price
+		        	continue
+		}
+		//没有空头持仓，并且空头趋势时，卖出
+		if(longPos<1 and shortPos<1 and msg[istock]["ATR"]>msg[istock]["mATR"] and msg[istock]["RSI"]<contextDict["sellSignalRSI"] and 
+		msg[istock]["mATR"]>0){
+			Backtest::submitOrder(contextDict["engine"], (istock,msg[istock]["symbolSource"],contextDict["tradeTime"],5,price-0.02, 0., 2, 2, 0),"sellOpen")
+		        	contextDict["lowPrice"][istock]=price
+		        	continue
+		}
+		if(longPos>0 and price>contextDict["highPrice"][istock]){//更新最高价
+		        	contextDict["highPrice"][istock]=max(price,contextDict["highPrice"][istock])
+		}
+		else if(longPos>0  and price<=contextDict["highPrice"][istock]*(1-contextDict["closeLine"])){//平仓
+			Backtest::submitOrder(contextDict["engine"], (istock,msg[istock]["symbolSource"],contextDict["tradeTime"],5,price-0.02, 0., 2, 3, 0),"sellClose")
+		}
+		if(shortPos>0 and price<contextDict["highPrice"][istock]){//更新最低价
+		        	contextDict["lowPrice"][istock]=max(price,contextDict["lowPrice"][istock])
+		}
+		else if(shortPos>0  and price>=contextDict["highPrice"][istock]*(1+contextDict["closeLine"])){//平仓
+			Backtest::submitOrder(contextDict["engine"], (istock,msg[istock]["symbolSource"],contextDict["tradeTime"],5,price+0.02, 0., 2, 4, 0),"buyClose")
+		}		
+	}
+}
+
+def onOrder( mutable contextDict,orders){
+	//print orders
+}
+def onTrade(mutable contextDict,trades){
+}
+def afterTrading(mutable contextDict){	
+//	print("afterTrading")	
+//	print( contextDict["tradeTime"].date())
+}
+def finalized (mutable contextDict){
+}
+go
+userConfig=dict(STRING,ANY) 
+userConfig["startDate"]= 2023.02.01        
+userConfig["endDate"]= 2023.02.28       
+userConfig["strategyGroup"]= "future"
+userConfig["cash"]= 10000000
+userConfig["commission"]= 1.5
+userConfig["tax"]= 0.0 // useless in future goods backtest engine
+userConfig["dataType"]=3
+userConfig["msgAsTable"]= false
+userConfig["frequency"]= 0
+userConfig["outputOrderInfo"]= true
+userConfig["depth"]= 5
+
+// -------------------------
+t=loadText("/hdd/hdd6/yrxie/dolphindb/futureTestData.csv")
+
+tb=select ContractID as symbol,Market as symbolSource,concatDateTime(Date,BarTime) as tradeTime,TradeDate as tradingDay,OpenPrice as open,
+LowPrice as low,HighPrice as high, ClosePrice as close,long(volume) as volume,Value*1.0 as amount,ULimitPrice as upLimitPrice,
+LLimitPrice as downLimitPrice,fixedLengthArrayVector([backwardFactorHighPrice,backwardFactorLowPrice,backwardFactorClosePrice]) as signal,
+PreClosePrice as prevClosePrice,SetPrice as settlementPrice, PreSetPrice as prevSettlementPrice from t where ContractID in [`SS2303]
+schema(tb).colDefs
+symbol=distinct(t.ContractID)
+basicInfo = table(symbol as symbol, take(100.,size(symbol)) as multiplier, take(0.2,size(symbol)) as marginRatio,
+				take(0.01,size(symbol)) as tradeUnit, take(0.02,size(symbol)) as priceUnit, 
+				take(0.03,size(symbol)) as priceTick, take(1.5,size(symbol)) as commission, take(1,size(symbol)) as deliveryCommissionMode)
+//执行回测				
+try{Backtest::dropBacktestEngine("Backtest_test1")}catch(ex){print ex}
+engine= Backtest::createBacktestEngine(`Backtest_test1, userConfig,basicInfo, initialize, beforeTrading,onBar,,onOrder,onTrade,afterTrading,finalized);
+distinct(tb.tradingDay)
+// ===================================================================================
+
+timer Backtest::appendQuotationMsg(engine, tb)
+
+///回测结束标志
+a = select * from tb where tradeTime=max(tradeTime) limit 1
+update a set symbol = "END"
+Backtest::appendQuotationMsg(engine, a)
+go
+// ===================================================================================
+res=select * from Backtest::getTradeDetails(engine) where orderStatus in [0,1]
+
+Backtest::getAvailableCash(engine)
+
+Backtest::getDailyPosition(engine)
+
+Backtest::getDailyTotalPortfolios(engine)
+
+Backtest::getTotalPortfolios(engine)
+
+t=Backtest::getReturnSummary(engine)
+update t set mylabel=`ttt
+
+t=select * from Backtest::getReturnSummary(engine)
+update t set mylabel=`ttt
+t=Backtest::getTradeDetails(engine)
+Backtest::getTradeDetails(engine)
