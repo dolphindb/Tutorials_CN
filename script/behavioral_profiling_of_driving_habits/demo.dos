@@ -1,0 +1,95 @@
+def simulateData(num,idNum,freq){
+    setRandomSeed(10086)
+    name = "user"+string(take(1..idNum,num))
+    id = take(1..idNum,num)
+    ts =stretch((now() + (1..int(num\idNum))*freq),num)
+    totalMileage = rand(10000,idNum)
+    t = table(name,id,ts)
+    addColumn(t,[`totalMileage,`speed,`throttle,`brake,`lane],[DOUBLE,DOUBLE,DOUBLE,DOUBLE,INT])   
+    for(i in 1..idNum){
+        avg = rand(100,1)[0]
+        std = rand(10,1)[0]
+        speedTmp = randNormal(avg,std,int(num\idNum))
+        totalMileageTmp = totalMileage[i-1]+cumsum(speedTmp/36000)
+        avg = rand((avg-10)..(avg+10),1)[0]
+        std = rand(10,1)[0]
+        throttleTmp = randNormal(avg,std,int(num\idNum))
+        avg = rand(100,1)[0]
+        std = rand(10,1)[0]
+        brakeTmp = randNormal(avg,std,int(num\idNum))
+        laneTmp = stretch(rand(1..4,rand(1..(avg+1),1)[0]),int(num\idNum))
+        update t set  speed = speedTmp where id = i
+        update t set  throttle = throttleTmp where id = i
+        update t set  brake = brakeTmp where id = i 
+        update t set  lane = laneTmp where id = i 
+        update t set  totalMileage = totalMileageTmp where id = i 
+    }
+    return t
+}
+//模拟数据
+num = 1000000
+idNum = 100
+freq = 100
+t = simulateData(num,idNum,freq)
+
+
+//获取速度特征值并建模
+speedFactor = select avg(iif(speed<0,0,speed)) as speed,avg(iif(throttle<0,0,iif(throttle>100,100,throttle))) as throttle,
+                     avg(iif(brake<0,0,iif(brake>100,100,brake))) as brake from t group by id
+speedFactor
+update!(table = speedFactor,colNames = [`speed,`throttle,`brake],newValues = <[zscore(speed),zscore(throttle),zscore(brake)]> ) 
+speedFactor
+
+model = kmeans(speedFactor[:,1:4],3,1000,,"k-means++")
+speedFactor[`label] = model.kmeansPredict(speedFactor[:,1:4]) 
+
+//pca降维作图
+pcaModel = pca(sqlDS(<select * from speedFactor>),[`speed,`throttle,`brake],2,,1000)
+res = table(transpose(pcaModel.components**transpose(matrix(speedFactor[:,1:4]))))
+centers = table(transpose(pcaModel.components**transpose(model.centers)))
+res[`lable]=model.labels  
+saveText(res,"pca.csv")
+saveText(centers,"centers.csv")
+
+//驾驶风格特征
+styleFactor = select std(iif(speed<0,0,speed)) as speed,    
+sum(iif(deltas(iif(throttle<0,0,iif(throttle>100,100,throttle)))>20,1,0)) as throttleChangeCount,
+sum(iif(deltas(iif(brake<0,0,iif(brake>100,100,brake)))>20,1,0)) as brakeChangeCount,
+sum(iif(lane!=prev(lane),1,0)) as laneChangeCount 
+from t group by id 
+update!(table = styleFactor,
+    colNames = [`speed,`throttleChangeCount,`brakeChangeCount,`laneChangeCount],
+    newValues = <[zscore(speed),zscore(throttleChangeCount),zscore(brakeChangeCount),zscore(laneChangeCount)]>) 
+styleFactor
+model = kmeans(styleFactor[:,1:5],3,1000,,"k-means++")
+styleFactor[`label] = model.kmeansPredict(styleFactor[:,1:5]) 
+styleFactor
+t1[`label] = model.kmeansPredict(styleFactor[:,1:5])
+
+//pca降维作图
+pcaModel = pca(sqlDS(<select * from styleFactor>),[`speed,`throttleChangeCount,`brakeChangeCount,`laneChangeCount],2,,,"full")
+res = table(transpose(pcaModel.components**transpose(matrix(styleFactor[:,1:5]))))
+centers = table(transpose(pcaModel.components**transpose(model.centers)))
+res[`lable]=model.labels 
+saveText(res,"pca.csv")
+saveText(centers,"centers.csv")
+
+//驾驶经验特征  
+experienceFactor = select last(totalMileage) as totalMileage,sum(iif(deltas(iif(brake<0,0,iif(brake>100,100,brake)))>20,1,0)) as brakeChangeCount from t group by id
+t = select last(totalMileage) as totalMileage,sum(iif(deltas(iif(brake<0,0,iif(brake>100,100,brake)))>20,1,0)) as brakeChangeCount from t group by id
+
+update!(table = experienceFactor,colNames = [`totalMileage,`brakeChangeCount],newValues = <[zscore(totalMileage),zscore(brakeChangeCount)]> )
+experienceFactor
+model = kmeans(experienceFactor[:,1:3],3,1000,,"k-means++")
+experienceFactor[`label] = model.kmeansPredict(experienceFactor[:,1:3]) 
+experienceFactor
+
+t
+
+//pca降维作图，本身二维可不降维
+pcaModel = pca(sqlDS(<select * from experienceFactor>),[`totalMileage,`brakeChangeCount],2,,,"full")
+res = table(transpose(pcaModel.components**transpose(matrix(experienceFactor[:,1:3]))))
+centers = table(transpose(pcaModel.components**transpose(model.centers)))
+res[`lable]=model.labels 
+saveText(res,"pca.csv")
+saveText(centers,"centers.csv")
