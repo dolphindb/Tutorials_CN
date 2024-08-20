@@ -1,0 +1,307 @@
+//use backtestUtils
+/*
+ * 动态网格策略设置网格间距 alpha 和反弹间距 beta，当标的价格触发网格线之后再次触发反弹价格时执行买入或卖出操作。
+ * 具体策略逻辑：
+ * 构建网格策略参数：初始价格为策略开盘时的第一个成交价，网格间距 alpha 设置为2%，反弹间距 beta设置为1%，每格的交易金额 M 设置为10万
+ * 开仓逻辑：标的价格触发基准价之下的第 n 个网格线，等待最新价格从最低价反弹 beta 买入，数量为n*M/最新价
+ * 平仓逻辑：标的价格触发基准价之上的第 n 个网格线，等待最新价格从最高价回落 beta 卖出，数量为n*M/最新价
+ * 根据开仓或者平仓信号，更新基准价为最新买或卖价格
+ */
+
+//step 1：策略实现
+def initialize(mutable contextDict){
+	//通过Backtest::setUniverse可以更换当日股票池，
+	//如Backtest::setUniverse(contextDict["engine"],["688088.XSHG","688157.XSHG","688208.XSHG"])
+	print("initialize")
+	// 网格策略参数	
+	// 初始价格
+	
+	contextDict["initPrice"] = dict(SYMBOL,ANY)
+	// 网格间距（百分数）
+	contextDict["alpha"]=0.01
+	// 回落间距（百分数）
+	contextDict["beta"] =0.005
+	// 每格交易金额
+	contextDict["M"] = 100000
+	contextDict["baseBuyPrice"] = dict(SYMBOL,ANY)
+	contextDict["baseSellPrice"] = dict(SYMBOL,ANY)
+	contextDict["lowPrice"]=dict(SYMBOL,ANY)
+	contextDict["highPrice"]=dict(SYMBOL,ANY)
+	contextDict["N"]=dict(SYMBOL,ANY)
+	// 手续费费率
+	contextDict["feeRatio"] = 0.00015
+	//记录每日统计量
+	contextDict['dailyReport' ]= table(1000:0,[`SecurityID,`tradeDate,`closePrice,`buyVolume,
+	`buyAmount,`sellVolume,`sellAmount,`PosExposureVolume,`PosExposureValue,`dailyEarning],
+	[SYMBOL,DATE,DOUBLE,DOUBLE,DOUBLE,DOUBLE,DOUBLE,DOUBLE,DOUBLE,DOUBLE])
+	//日志
+	contextDict["log"]=table(10000:0,[`tradeDate,`time,`info],[DATE,TIMESTAMP,STRING])
+	
+}
+
+
+def beforeTrading(mutable contextDict){
+	//每日盘前回调函数
+	//1、通过contextDict["tradeDate"]可以获取当日；
+	//2、通过Backtest::setUniverse可以更换当日股票池，
+	//    如Backtest::setUniverse(contextDict["engine"],["688088.XSHG","688157.XSHG","688208.XSHG"])
+	//print ("beforeTrading: "+contextDict["tradeDate"])
+	tb=contextDict["log"]
+	contextDict["log"]=tb.append!(table(contextDict["tradeDate"] as tradeDate,now() as time,"beforeTrading" as info))
+}  
+def updateBaseBuyPrice(istock,lastPrice,basePrice,mutable baseBuyPrice,mutable baseSellPrice,mutable N,mutable highPrice,mutable lowPrice,alpha,n,mode=0){
+	//根据最新价和最新的基准价更新网格线和最高或者最低价
+	baseBuyPrice[istock]=basePrice*(1-alpha)
+	baseSellPrice[istock]=basePrice*(1+alpha)
+	N[istock]=n
+	if(mode==0){
+		//买入、卖出等初始化
+		lowPrice[istock]=0.
+		highPrice[istock]=10000.
+	}
+	else if(mode==1){
+		//下跌,更新下网格线	
+		lowPrice[istock]=lastPrice
+		highPrice[istock]=10000.		
+	}
+	else if(mode==2){
+		//上涨，更新上网格线
+		lowPrice[istock]=0.
+		highPrice[istock]=lastPrice			
+	}
+}
+def onSnapshot(mutable contextDict, msg){
+	////msg可以为字典或表，最新时刻的tick数据
+	///contextDict["tradeTime"] ///当前的最新时间，回测框架提供
+	// 交易时间
+	
+	if(second(contextDict["tradeTime"])<09:30:00 or second(contextDict["tradeTime"])>14:57:00){
+		return 
+	}
+	alpha=contextDict["alpha"]
+	// 回落间距（百分数）
+	beta=contextDict["beta"]
+	M=contextDict["M"] 
+	for (istock in msg.keys()){
+		lastPrice=msg[istock]["lastPrice"]
+		////设置初始价
+		if(not istock in contextDict["initPrice"].keys()){
+			contextDict["initPrice"][istock]=lastPrice
+			updateBaseBuyPrice(istock,lastPrice,lastPrice, contextDict["baseBuyPrice"],
+			contextDict["baseSellPrice"] , contextDict["N"], contextDict["highPrice"], contextDict["lowPrice"],alpha,1,0)
+		}
+		init_price=contextDict["initPrice"][istock]
+		if(lastPrice<=contextDict["baseBuyPrice"][istock]){
+			//下跌,更新下网格线
+			n=floor(log(lastPrice\init_price)\log(1-alpha))+1	
+			if(n>contextDict["N"][istock]){
+				newBasePrice=init_price*pow((1-alpha),n)
+				updateBaseBuyPrice(istock,lastPrice,newBasePrice, contextDict["baseBuyPrice"], contextDict["baseSellPrice"], 
+				contextDict["N"], contextDict["highPrice"], contextDict["lowPrice"],alpha,n,1)
+			}
+			
+		}
+		else if(lastPrice>contextDict["baseSellPrice"][istock]){
+			//上涨，更新上网格线
+			n=floor(log(lastPrice\init_price)\log(1+alpha))+1
+			if(n>contextDict["N"][istock]){
+				newBasePrice=init_price*pow((1+alpha),n)
+				updateBaseBuyPrice(istock,lastPrice,newBasePrice, contextDict["baseBuyPrice"], 
+				contextDict["baseSellPrice"] , contextDict["N"], contextDict["highPrice"], contextDict["lowPrice"],alpha,n,2)
+			}
+		}
+		if(contextDict["lowPrice"][istock]>0. and lastPrice>contextDict["lowPrice"][istock]*(1+beta)){
+			//买入
+			qty=int(contextDict["N"][istock]*M\lastPrice)/100*100
+			Backtest::submitOrder(contextDict["engine"], (istock,contextDict["tradeTime"] , 5, lastPrice, qty, 1),"buy")		
+			contextDict["initPrice"][istock]=lastPrice
+			updateBaseBuyPrice(istock,lastPrice,lastPrice, contextDict["baseBuyPrice"], 
+			contextDict["baseSellPrice"] , contextDict["N"], contextDict["highPrice"], contextDict["lowPrice"],alpha,1,0)
+			
+		}
+		else if(contextDict["highPrice"][istock]<10000. and lastPrice<contextDict["highPrice"][istock]*(1-beta)){
+			//卖出
+			qty=Backtest::getPosition(contextDict["engine"],istock).todayBuyVolume[0]
+			if(qty<=0){
+				continue
+			}
+			qty=min([int(contextDict["N"][istock]*M\lastPrice)/100*100,qty])
+			Backtest::submitOrder(contextDict["engine"], (istock,contextDict["tradeTime"] , 5, lastPrice, qty, 3),"sell")
+			contextDict["initPrice"][istock]=lastPrice
+			updateBaseBuyPrice(istock,lastPrice,lastPrice, contextDict["baseBuyPrice"], contextDict["baseSellPrice"] , 
+			contextDict["N"], contextDict["highPrice"], contextDict["lowPrice"],alpha,1,0)
+		}
+		//实时更新最低或者最高价
+		if(contextDict["lowPrice"][istock]>0){
+			contextDict["lowPrice"][istock]=min([contextDict["lowPrice"][istock],lastPrice])
+		}
+		if(contextDict["highPrice"][istock]<10000.){
+			contextDict["highPrice"][istock]=max([contextDict["highPrice"][istock],lastPrice])
+		}
+	}
+}
+
+def onOrder(mutable contextDict,orders){
+	/* orders为字典列表
+	orderId->11
+	symbol->688981.XSHG
+	timestamp->2023.02.01T09:33:33.000
+	qty->5956
+	price->0
+	status->4;-1（订单拒绝）;0（部成）1（完全成交   ）2（已经撤单） 4（已报）
+	direction->3
+	tradeQty->0
+	tradeValue->0
+	label->
+	updateTime->2023.02.01T09:33:33.660
+	 */
+	for ( iorder in orders){	
+		if( not iorder.status  in [1]){ 
+			//   
+			return 
+		}	
+	}
+}
+
+def onTrade(mutable contextDict,trades){
+	/*成交主推回调
+	 * trades为字典列表
+	orderId->11
+	symbol->688981.XSHG
+	tradePrice->41.96
+	tradeQty->5956
+	tradeValue->249913.760000000009313
+	totalFee->0
+	totalVolume->5956 累计成交量
+	totalValue->249913.760000000009313
+	direction->3
+	tradeTime->2023.02.01T09:33:33.660
+	orderPrice->41.96
+	label->
+	 */
+	
+}
+
+def afterTrading(mutable contextDict){
+	/*
+	 * 每日盘后调用
+	 */
+	tradeDate=contextDict["tradeDate"]
+	//print ("afterTrading: "+tradeDate) 
+}
+
+def finalized (mutable contextDict){
+	tb=contextDict["log"]
+	contextDict["log"]=tb.append!(table(contextDict["tradeDate"] as tradeDate,now() as time,"finalized" as info))	
+ 	//print("finalized")
+ }
+
+
+// step 2：策略配置与引擎创建
+startDate=2021.01.01
+endDate=2021.01.04
+userConfig=dict(STRING,ANY)
+userConfig["startDate"]=startDate
+userConfig["endDate"]=endDate
+///策略类型,暂时固定股票///
+userConfig["strategyGroup"]= "stock"
+///以指定的频率通过逐笔数据合成快照
+userConfig["frequency"]= 0
+userConfig["cash"]= 100000000
+///手续费,        
+userConfig["commission"]= 0.0
+//印花税,
+userConfig["tax"]= 0.0
+//行情选择快照+成交
+userConfig["dataType"]= 2
+//行情
+////tick的数据格式，table或dict
+userConfig["msgAsTable"]= false
+
+strategyName="gridStrategy"
+
+try{Backtest::dropBacktestEngine(strategyName)}catch(ex){print ex}
+engine = Backtest::createBacktestEngine(strategyName, userConfig,,initialize, beforeTrading,,onSnapshot,onOrder,onTrade,afterTrading,finalized)
+go
+
+//defg fff(x){
+//	
+//	return count(distinct(x))
+//	}
+// step 3：获取数据与执行策略回测
+//t=select fff(datetime.date()) as d from loadTable("dfs://level2_tickTrade",`tickTradeTable) where datetime.date() between startDate:endDate and 
+//SecurityID like "600%SH" group by SecurityID order by d desc  map
+//codes=t.SecurityID[:4]
+////
+//timer gridStrategyData=getSnapShotHqData(startDate,endDate,codes,2)///开始执行回测
+timer Backtest::appendQuotationMsg(engine,gridStrategyData)
+// step 4：获取回测结果
+  //成交明细
+tradeDetails=Backtest::getTradeDetails(engine)
+//查询当前的未成交（未完成）订单列表
+openOrders=Backtest::getOpenOrders(long(engine))
+//每日持仓
+dailyPosition=Backtest::getDailyPosition(long(engine))
+// 可用资金
+enableCash=Backtest::getAvailableCash(long(engine))
+//未成交订单明细
+openOrders=tradeDetails[tradeDetails.orderStatus==-3]
+//日组合指标展示
+totalPortfolios=Backtest::getTotalPortfolios(long(engine))
+////回测结果综合展示
+returnSummary=Backtest::getReturnSummary(long(engine))
+
+
+/**********************以下是并行回测代码****************************************************/
+/*
+// step 3:并行策略回测
+
+startDate=2021.01.01
+endDate=2021.01.31
+userConfig=dict(STRING,ANY)
+userConfig["startDate"]=startDate
+userConfig["endDate"]=endDate
+///策略类型,暂时固定股票///
+userConfig["strategyGroup"]= "stock"
+///以指定的频率通过逐笔数据合成快照
+userConfig["frequency"]= 0
+userConfig["cash"]= 100000000
+///手续费,        
+userConfig["commission"]= 0.0
+//印花税,
+userConfig["tax"]= 0.0
+//行情选择快照+成交
+userConfig["dataType"]= 2
+//行情
+////tick的数据格式，table或dict
+userConfig["msgAsTable"]= false
+
+strategyName="gridStrategy"
+
+//获取这段时间停牌天数最少的股票
+defg fff(x){return count(distinct(x))}
+t=select fff(datetime.date()) as d from loadTable("dfs://level2_tickTrade",`tickTradeTable) where datetime.date() between startDate:endDate and 
+SecurityID like "600%SH" group by SecurityID order by d desc  map
+codes=t.SecurityID[:80]
+
+////1:按股票并行
+////2:按交易日并行
+////3:按交易日按天单独并行
+///4:把股票分成n分份并行
+parallelMode=4
+nSize=10
+timer{dailyReport,tradeOutputTable,engines,removeJods,ts=runBacktestParallelMode(strategyName,userConfig,initialize, beforeTrading,,
+	onSnapshot,onOrder,onTrade,afterTrading,finalized,startDate,endDate,codes,parallelMode,nSize)}
+
+//总耗时
+print(exec max(endTime)-min(startTime) from getRecentJobs(size(ts.keys())))
+// step 4:获取并行计算结果
+//数据查询计算耗时
+//ts=dict(ts.keys()+"job",ts.values())
+t=select *from getRecentJobs(10000)  where jobDesc in ts.keys()
+t=select * ,ts[string(jobDesc)] as runBacktest from t where rowNo(endTime)>t.size()-size(ts.keys() )-1
+t=select (max(endTime) -min(startTime))\1000 as "总耗时(s)",mean(endTime-startTime)\1000 as "总的平均耗时(s)",mean(runBacktest)\1000 as "回测执行的平均耗时(s)",mean(endTime-startTime-runBacktest)\1000 as "数据回放的平均耗时(s)",mean(endTime-startTime)\1000\60 as "总的平均耗时(min)",mean(runBacktest)\1000\60 as "回测执行的平均耗时(min)",mean(endTime-startTime-runBacktest)\1000\60 as "数据回放的平均耗时(min)" from t
+print(t)
+ */
+
+

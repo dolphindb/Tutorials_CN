@@ -1,0 +1,443 @@
+//use backtestUtils 
+/*
+ * 以下实现一个简单的做市策略逻辑：
+ * 策略参数说明:
+ --------最小报价金额
+ --------双边报价最大的买卖价差（百分数）
+ --------单边最大的持仓量
+ --------对冲价格偏移量(单位为元)
+ --------当日亏损金额上限
+ --------最新一分钟的价格波动上限
+ *双边报价逻辑:
+ --------当前没有报价时，首先获取最新 tick 盘口的买卖中间价 midPrice =（ask1+bid1）/2，以 min（midPrice-最大的买卖价差/2，bid1）
+ --------和 max（midPrice+最大的买卖价差/2,ask1）的价格进行双边报价，报价数量为最小报价金额除以相应的价格
+ *对冲模块逻辑:
+ --------报价订单发生成交时，以成交价加减对冲价格偏移量进行对冲
+ *风控模块逻辑：
+  --------当日亏损金额超过限制时，停止当日报价
+  -------当单边的持仓量超过规定上限时，停止接受新的报价，并进行平仓操作。直到持仓数量减少至单边最大持仓量的四分之一时，重新开始接受报价
+   ------- 当最新一分钟的价格波动超过设定的上限时，暂定本次报价
+ */
+
+//step 1：策略实现
+//signal,py
+//pySwordfish
+
+@state
+def maxVolatility_1m(lastPrice,n=20){
+	//计算过去n个tick的波动率
+	return mmax(lastPrice,n)/mmin(lastPrice,n)-1.
+	
+}
+
+def initialize(mutable contextDict,userParam){
+	//通过Backtest::setUniverse可以更换当日股票池，
+	//如Backtest::setUniverse(contextDict["engine"],["688088.XSHG","688157.XSHG","688208.XSHG"])
+	print("initialize")
+	// 报价模块参数
+	contextDict["maxBidAskSpread"]=userParam["maxBidAskSpread"]//双边报价最大的买卖价差
+	contextDict["quotAmount"]=userParam["quotAmount"] ///报价金额
+	// 对冲模块参数
+	contextDict["hedgeAmount"]=userParam["hedgeAmount"]//对冲偏移金额
+	//风控参数
+	contextDict["maxPos"]=userParam["maxPos"]//最大单边持仓上限
+	contextDict["maxLossAmount"]=userParam["maxLossAmount"] //当日亏损上限金额
+	contextDict["maxVolatility_1m"]=userParam["maxVolatility_1m"] //最新一分钟的价格波动上限
+	// 费率
+	contextDict["sellFeeRatio"] = 0.0005
+	contextDict["buyFeeRatio"] = 0.0004
+	///记录每日统计量
+	contextDict['dailyReport' ]=   table(1000:0,[`SecurityID,`tradeDate,`quoteBuyVolume,`quoteBuyAmount,`quoteSellVolume,`quoteSellAmount,
+	`hedgeBuyVolume,`hedgeBuyAmount,`hedgeSellVolume,`hedgeSellAmount,`closeBuyVolume,`closeBuyAmount,`closeSellvolume,`closeSellamount,
+	`PosExposureVolume,`PosExposureValue,`transactionCost,`closePrice],
+	[SYMBOL,DATE,DOUBLE,DOUBLE,DOUBLE,DOUBLE,DOUBLE,DOUBLE,DOUBLE,DOUBLE,DOUBLE,DOUBLE,DOUBLE,DOUBLE,DOUBLE,DOUBLE,DOUBLE,DOUBLE])
+	//订阅快照行情的指标
+	d=dict(STRING,ANY)
+	d["maxVolatility_1m"]=<maxVolatility_1m(lastPrice,20)>
+	//d["gta90"]=<maxVolatility_1m(lastPrice,20)>
+	Backtest::subscribeIndicator(contextDict["engine"], "snapshot", d)
+	//日志
+	contextDict["log"]=table(10000:0,[`tradeDate,`time,`info],[DATE,TIMESTAMP,STRING])
+}
+def beforeTrading(mutable contextDict){
+	//每日盘前回调函数
+	//1、通过contextDict["tradeDate"]可以获取当日；
+	//2、通过Backtest::setUniverse可以更换当日股票池，
+	//如Backtest::setUniverse(contextDict["engine"],["688088.XSHG","688157.XSHG","688208.XSHG"])
+	print ("beforeTrading: "+contextDict["tradeDate"])
+	tb=contextDict["log"]
+	contextDict["log"]=tb.append!(table(contextDict["tradeDate"] as tradeDate,now() as time,"beforeTrading" as info))
+	contextDict["exMaxPos"]=array(STRING,0)
+}  
+
+def onSnapshot(mutable contextDict, msg){
+    quotAmount=contextDict["quotAmount"]
+    maxBidAskSpread=contextDict["maxBidAskSpread"]
+    hedgeAmount=contextDict["hedgeAmount"]
+    maxPos=contextDict["maxPos"]
+    maxLossAmount=contextDict["maxLossAmount"]
+    maxVolatility_1m=contextDict["maxVolatility_1m"]
+    bjFlag="MakingMakertOrder"
+    exMaxPos=contextDict["exMaxPos"]    
+    for (row in 0:msg.rows()){ 
+        istock = msg[row].symbol
+        opens = Backtest::getOpenOrders(contextDict["engine"], istock, , bjFlag)
+        if(opens.size() > 0){
+            continue
+        }
+        
+        // Risk control module
+        if(msg[row].maxVolatility_1m > maxVolatility_1m){
+            continue;
+        }
+        
+        pnl = Backtest::getTodayPnl(contextDict["engine"], istock).todayPnl[0]
+        if(!isVoid(pnl) and !isNull(pnl) and pnl < (-maxLossAmount)){
+            continue;
+        }
+        
+        cost = Backtest::getPosition(contextDict["engine"], istock)
+        pos = abs(cost.todayBuyVolume[0] - cost.todaySellVolume[0])
+        if(pos >= maxPos){
+            Backtest::cancelOrder(contextDict["engine"], istock, , "hedgeOrder")
+            if(not istock in exMaxPos){
+                exMaxPos = exMaxPos.append!(istock)
+            }
+            continue;
+        }
+        
+        if(pos >= maxPos \ 4 and istock in exMaxPos){
+            continue
+        }
+        else{
+            exMaxPos = exMaxPos[exMaxPos != istock]
+        }
+        
+        // Order module
+        askPrice0 = (msg[row].offerPrice)[0]
+        bidPrice0 = (msg[row].bidPrice)[0]   
+        
+        if(any([askPrice0, bidPrice0] <= 0) or any(isNull([askPrice0, bidPrice0]))){
+            continue
+        }
+        
+        midPrice = askPrice0 + bidPrice0  
+        buyPrice = min(midPrice - maxBidAskSpread \(2 + maxBidAskSpread), bidPrice0)
+        sellPrice = max(midPrice + maxBidAskSpread \(2 + maxBidAskSpread), askPrice0)
+        
+        qty = max(ceil(quotAmount \ [buyPrice, sellPrice]), 200)
+        
+        Backtest::submitOrder(contextDict["engine"], 
+            ([istock, istock], [contextDict["tradeTime"], contextDict["tradeTime"]], 
+            [5, 5], [buyPrice, sellPrice], qty, [1, 2]), bjFlag)
+    }
+    
+    contextDict["exMaxPos"] = exMaxPos
+    
+    // Close position logic
+    for (istock in exMaxPos){
+        if(size(Backtest::getOpenOrders(contextDict["engine"], istock, , )) > 0){
+            continue    
+        }
+        cost = Backtest::getPosition(contextDict["engine"], istock)
+        pos = cost.todayBuyVolume[0] - cost.todaySellVolume[0]
+        
+        if(pos >= 200){    
+            askPrice0 = msg[msg.symbol == istock]["offerPrice"][0]
+            if(any([askPrice0] <= 0) or any(isNull([askPrice0]))){
+                continue
+            }
+            Backtest::submitOrder(contextDict["engine"], 
+                (istock, contextDict["tradeTime"], 5, askPrice0, pos, 3), 
+                "closePosition")    
+        }
+        else if(pos <= -200){
+            bidPrice0 = msg[msg.symbol == istock]["bidPrice"][0]
+            if(any([bidPrice0] <= 0) or any(isNull([bidPrice0]))){
+                continue
+            }
+            Backtest::submitOrder(contextDict["engine"], 
+                (istock, contextDict["tradeTime"], 3, bidPrice0, abs(pos), 4), 
+                "closePosition")    
+        }
+    }
+}
+
+def onOrder( mutable contextDict,orders){
+	/* orders为字典列表
+	orderId->11
+	symbol->688981.XSHG
+	timestamp->2023.02.01T09:33:33.000
+	qty->5956
+	price->0
+	status->4;-1（订单拒绝）;0（部成）1（完全成交   ）2（已经撤单） 4（已报）
+	direction->3
+	tradeQty->0
+	tradeValue->0
+	label->
+	updateTime->2023.02.01T09:33:33.660	
+	 */
+	for ( iorder in orders){	
+		if( not iorder.status  in [1]){ 
+			//   
+			return 
+		}	
+	}
+}
+
+
+def onTrade(mutable contextDict,trades){
+	/*
+	 * trades为字典列表
+	orderId->15
+	symbol->688981.XSHG
+	tradePrice->41.979999999999996
+	tradeQty->74
+	tradeValue->3106.519999999999981
+	totalFee->0
+	totalVolume->2384
+	totalValue->100080.319999999992433
+	direction->3
+	tradeTime->2023.02.01T09:33:44.070
+	orderPrice->41.979999999999996
+	label->
+	 */
+	///成交主推回调
+	///在这里处理对冲模块
+	hedgeOffsetAmount=contextDict["hedgeAmount"]                 // 对冲偏移金额
+	for (itrade in trades){
+		if(itrade.label!="MakingMakertOrder"){
+			continue
+		}
+		bsFlag=3
+		stock=itrade.symbol
+		pos=Backtest::getPosition(contextDict["engine"],stock)
+		vol=pos.longPosition[0]-pos.lastDayLongPosition[0]
+		if(itrade.direction==2){
+			bsFlag=4
+			vol=pos.shortPosition[0]-pos.lastDayShortPosition[0]
+		}
+		openOrders=Backtest::getOpenOrders(contextDict["engine"],stock,,"hedgeOrder")
+		openQty=sum(openOrders[openOrders.direction==bsFlag]["openQty"])
+		if(isNull(openQty)){
+			openQty=0
+		}
+		vol=vol-openQty
+		if(vol <200){
+			continue
+		}
+		//  获取到成交的数量，以及标的	
+		if(bsFlag==3){
+			price=itrade.tradePrice+hedgeOffsetAmount
+		}
+		else{
+			
+			price=itrade.tradePrice-hedgeOffsetAmount
+		}
+		///下达对冲单
+		Backtest::submitOrder(contextDict["engine"], (stock, itrade.tradeTime, 5, price, vol, bsFlag),"hedgeOrder")
+	}
+}
+
+
+def afterTrading(mutable contextDict){
+	/*
+	 * 每日盘后调用
+	 */
+	tradeDate=contextDict["tradeDate"]
+	print ("afterTrading: "+tradeDate)
+	tb=contextDict["log"]
+	contextDict["log"]=tb.append!(table(contextDict["tradeDate"] as tradeDate,now() as time,"afterTrading" as info))
+	//每日盘后回调函数,每日进行盘后指标统计
+	///a)	成交量（买卖双边）SecurityID,BSFlag ,volume,amount
+	tradeOutputTable= select * from Backtest::getTradeDetails(contextDict["engine"]) where sendTime.date()=tradeDate
+
+	lastprice= Backtest::getLastPrice(contextDict["engine"])
+	 buyfee=contextDict["sellFeeRatio"]
+	 sellfell=contextDict["buyFeeRatio"]
+
+	tb=select sum(tradeQty) as volume,sum(TradePrice*tradeQty) as amount  from tradeOutputTable  
+	where OrderStatus in [0,1]  group by symbol as SecurityID, Direction as BSFlag ,label     
+	tb=select sum(iif(BSFlag==1 and label="MakingMakertOrder",volume,0)) as quoteBuyVolume, 
+	sum(iif(BSFlag==1 and label="MakingMakertOrder",amount,0)) as quoteBuyAmount, 
+	sum(iif(BSFlag==2 and label="MakingMakertOrder",volume,0))as quoteSellVolume,
+	sum(iif(BSFlag==2 and label="MakingMakertOrder",amount,0))+sum(iif(BSFlag==2,amount,0)) as quoteSellAmount,
+	sum(iif(BSFlag==1 and label="hedgeOrder",volume,0))  as hedgeBuyVolume, 
+	sum(iif(BSFlag==1 and label="hedgeOrder",amount,0)) as hedgeBuyAmount, 
+	sum(iif(BSFlag==2 and label="hedgeOrder",volume,0)) as hedgeSellVolume,
+	sum(iif(BSFlag==1 and label="hedgeOrder",amount,0)) as hedgeSellAmount,
+	sum(iif(BSFlag==1 and label="closePosition",volume,0))  as closeBuyVolume, 
+	sum(iif(BSFlag==1 and label="closePosition",amount,0)) as closeBuyAmount, 
+	sum(iif(BSFlag==2 and label="closePosition",volume,0)) as closeSellvolume,
+	sum(iif(BSFlag==2 and label="closePosition",amount,0)) as closeSellamount,
+	sum(iif(BSFlag==1,volume,0))-sum(iif(BSFlag==3,volume,0))-sum(iif(BSFlag==2,volume,0))+sum(iif(BSFlag==4,volume,0)) as PosExposureVolume,
+	(sum(iif(BSFlag==1,amount,0))+sum(iif(BSFlag==4,amount,0)))*buyfee+
+	(sum(iif(BSFlag==2,amount,0))+sum(iif(BSFlag==3,amount,0)))*sellfell as transactionCost
+	from tb group by SecurityID
+	tb=select *,tradeDate as tradeDate,lastprice[SecurityID] as closePrice,PosExposureVolume*lastprice[SecurityID] as PosExposureValue from tb
+	
+	dailyReport=contextDict['dailyReport' ] 
+	reorderColumns!(tb, colNames(dailyReport))
+	contextDict['dailyReport' ]=dailyReport.append!(tb)
+}
+
+def finalized (mutable contextDict){
+	//
+	tb=contextDict["log"]
+	contextDict["log"]=tb.append!(table(contextDict["tradeDate"] as tradeDate,now() as time,"finalized" as info))
+ 	print('finalized')
+ }
+
+//执行策略回测
+// step 2：策略配置与引擎创建
+startDate=2023.02.01
+endDate=2023.02.02
+userConfig=dict(STRING,ANY)
+userConfig["startDate"]=startDate
+userConfig["endDate"]=endDate
+///策略类型,暂时固定股票///
+userConfig["strategyGroup"]= "stock"
+///以指定的频率通过逐笔数据合成快照
+userConfig["frequency"]= 0
+userConfig["cash"]= 100000000
+//行情选择快照+成交
+userConfig["dataType"]=0
+userConfig["latency"]= 50
+//手续费,        
+userConfig["commission"]= 0.0
+//印花税,
+userConfig["tax"]= 0.0
+////tick的数据格式，table或dict
+userConfig["msgAsTable"]= true
+//策略参数设置
+userParam=dict(STRING,FLOAT)
+userParam["maxBidAskSpread"]=0.03//双边报价最大的买卖价差
+userParam["quotAmount"]=100000  ///报价金额
+// 对冲模块参数
+userParam["hedgeAmount"]=0.02//对冲偏移金额
+//订单延时
+
+//风控参数
+userParam["maxPos"]=2000//最大单边持仓上限
+userParam["maxLossAmount"]=200000 //当日亏损上限金额
+userParam["maxVolatility_1m"]=0.03 //最新一分钟
+
+strategyName="marketMakingStrategy"
+try{Backtest::dropBacktestEngine(strategyName)}catch(ex){print ex}
+engine = Backtest::createBacktestEngine(strategyName, userConfig,,initialize{,userParam}, 
+	beforeTrading,,onSnapshot,onOrder,onTrade,afterTrading,finalized)
+go
+Backtest::appendQuotationMsg(engine,select* from marketMakingStrategyData)
+tradeDetails=Backtest::getTradeDetails(engine)
+//查询当前的未成交（未完成）订单列表
+openOrders=Backtest::getOpenOrders(long(engine))
+//每日持仓
+dailyPosition=Backtest::getDailyPosition(long(engine))
+// 可用资金
+enableCash=Backtest::getAvailableCash(long(engine))
+//未成交订单明细
+openOrders=tradeDetails[tradeDetails.orderStatus==-3]
+//日组合指标展示
+totalPortfolios=Backtest::getDailyTotalPortfolios(long(engine))
+//回测结果综合展示
+returnSummary=Backtest::getReturnSummary(long(engine))
+
+/**********************以下是并行回测代码****************************************************/
+/* 并行回测去掉这一行
+// step 3:并行策略回测
+jods=array(STRING, 0, 10)
+codes=(exec distinct(SecurityID) from loadTable("dfs://level2_tl","snapshot") where SecurityID like "68%" and tradeTime.date() between startDate:endDate )[:10]
+//清空所有的引擎
+destroyAllBacktestEngine()
+//把股票分成n分份，并行
+nSize=1
+cuts=cut(codes,nSize)
+i=0
+for( icodes in cuts){
+	//把股票分成n分份，并行
+	print icodes
+	for(hedgeAmount in [0.01,0.02,0.03,0.04]){
+		for(maxVolatility_1m in [0.03,0.04,0.05]){
+			//策略参数设置
+			userParam=dict(STRING,FLOAT)
+			userParam["maxBidAskSpread"]=0.03//双边报价最大的买卖价差
+			userParam["quotAmount"]=100000  ///报价金额
+			// 对冲模块参数
+			userParam["hedgeAmount"]=hedgeAmount//对冲偏移金额
+			//风控参数
+			userParam["maxPos"]=2000//最大单边持仓上限
+			userParam["maxLossAmount"]=200000 //当日亏损上限金额
+			userParam["maxVolatility_1m"]=maxVolatility_1m //最新一分钟
+			//strategyName="marketMakingStrategy"
+			strategyName="mMStrategy"
+			strategyName=strategyName+strReplace(concat(each(def(a,b):a+"_"+string(b),userParam.keys(),userParam.values())),".","")+"_n"+string(i)
+			print strategyName		
+			jobId=submitJob(strategyName,strategyName+"job",runBacktest_tick,userConfig,initialize{,userParam}, beforeTrading,,
+			onSnapshot,onOrder,onTrade,afterTrading,finalized,strategyName,startDate,endDate,icodes)
+			jods=jods.append!(jobId)
+		}
+	}
+	i=i+1
+}
+	
+// step 4:获取并行计算结果
+def getDailyReport(mutable jods){
+	dailyReport=table(1:0,[`symbol],[SYMBOL])
+	engines=[]
+	allJods=jods
+	removeJods=array(STRING, 0, 10)
+	tradeOutputTable=table(1:0,[`symbol],[SYMBOL])
+	tsRun=dict(STRING,DOUBLE)
+	do{
+		i=0
+		jods=(set(allJods)-set(removeJods)).keys()
+		for( ijob in jods){
+			i=i+1
+			try{
+				engine,ts=getJobReturn(ijob)
+				tsRun[string(engine)+"job"]=ts
+				if(strFind(engine,"not complete yet.")<0 and strFind(engine,"Out of memory")<0){
+					allEngine = Backtest::getBacktestEngineList()
+					temp=Backtest::getContextDict(allEngine[engine])["dailyReport"]
+					update temp set label=string(ijob)
+					if(size(dailyReport)<1){
+						
+						dailyReport=temp
+					}
+					else{
+						dailyReport=dailyReport.append!(temp)
+					}
+					if(size(tradeOutputTable)<1){
+						
+						temp=Backtest::getTradeDetails(allEngine[engine]) 
+						update temp set label=string(ijob)
+						tradeOutputTable=temp
+						}
+					else{
+						temp=Backtest::getTradeDetails(allEngine[engine]) 
+						update temp set label=string(ijob)
+						tradeOutputTable=tradeOutputTable.append!(temp)
+					}
+					engines=engines.append!(allEngine[engine])
+					removeJods=removeJods.append!(ijob)	
+				}
+			}
+			catch(ex){		
+			}
+		}	
+		
+	}while(i>0)
+	return tradeOutputTable,dailyReport,engines,tsRun
+}
+//查询计算结果
+//select * from tradeOutputTable where orderstatus in [0,1]
+tradeOutputTable,dailyReport,engines,ts=getDailyReport(jods)
+
+// step 4:获取并行计算结果
+t=select *from getRecentJobs(10000)  where jobDesc in ts.keys() 
+t=select * ,ts[string(jobDesc)] as runBacktest from t where rowNo(endTime)>t.size()-size(ts.keys() )-1
+t=select (max(endTime) -min(startTime))\1000 as "总耗时(s)",mean(endTime-startTime)\1000 as "总的平均耗时(s)",mean(runBacktest)\1000 as "回测执行的平均耗时(s)",mean(endTime-startTime-runBacktest)\1000 as "数据回放的平均耗时(s)",mean(endTime-startTime)\1000\60 as "总的平均耗时(min)",mean(runBacktest)\1000\60 as "回测执行的平均耗时(min)",mean(endTime-startTime-runBacktest)\1000\60 as "数据回放的平均耗时(min)" from t
+print(t)
+
+
+*/

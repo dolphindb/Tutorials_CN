@@ -1,0 +1,346 @@
+//use backtestUtils
+/*
+*基于 Level 2 快照数据和逐笔成交数据，实现以下的 CTA 策略逻辑：
+1、快照数据计算 MACD 指标，当 MACD 指标出现金叉之后，且满足下面两个条件之一时，执行买入：
+------------1.1、基于逐笔成交，成交价的过去30秒内的 CCI 指标从下向上突破+100线进入超买区间，并且过去30秒的成交量大于50000股时，买入500股。
+------------1.2、当成交价的过去30秒内 CCI 指标从下向上突破-100线时，买入500股。
+2、MACD 指标死叉时，卖出
+*/
+@state
+def macd(lastPrice,short_= 240, long_ = 520, m = 180) {
+	dif = ewmMean(lastPrice, span=short_,adjust=false) - ewmMean(lastPrice, span=long_,adjust=false)
+	dea = ewmMean(dif, span=m,adjust=false)
+	macd = (dif - dea) * 2
+	return round(macd,4),round(prev(macd),4)
+}
+@state
+def myCCI(close,t,orderType) {
+	high=tmmax(t, iif(orderType==0,close,NULL), 30s)
+	low=tmmin(t, iif(orderType==0,close,NULL), 30s)
+	tp = iif(orderType==0,(high + low + close) \ 3,NULL)
+	avg_=tmavg(t,iif(orderType==0,close,NULL), 30s)
+	tmmad=tmavg(t,abs(tp-avg_),30s)
+	cci=ffill((tp - avg_) \ (0.015 *tmmad))
+	return round(cci,4),round(prev(cci),4)
+}
+@state
+def tradeVol30s(qty,time,orderType){
+	return tmsum(time,iif(orderType==0,qty,NULL),30s)
+}
+def initialize(mutable contextDict){
+	//通过Backtest::setUniverse可以更换当日股票池，
+	//如Backtest::setUniverse(contextDict["engine"],["688088.XSHG","688157.XSHG","688208.XSHG"])
+	print("initialize")
+	//订阅快照行情的指标
+	d=dict(STRING,ANY)
+	d["macd"]=<macd(lastPrice,240,520,180)[0]>
+	d["prevMacd"]=<macd(lastPrice,240,520,180)[1]>
+	Backtest::subscribeIndicator(contextDict["engine"], "snapshot", d)
+
+	d=dict(STRING,ANY)
+	d["cci"]=<myCCI(price,timestamp,orderType)[0]>
+	d["prevcci"]=<myCCI(price,timestamp,orderType)[1]>
+	d["tradeVol30s"]=<tradeVol30s(qty,timestamp,orderType)>
+	Backtest::subscribeIndicator(contextDict["engine"], "trade", d)
+	// 费率
+	contextDict["sellFeeRatio"] = 0.0005
+	contextDict["buyFeeRatio"] = 0.0004
+	///记录每日统计量
+	contextDict['dailyReport' ]=   table(1000:0,[`SecurityID,`tradeDate,`buyVolume,`buyAmount,`closeVolume,`closeAmount,`closePrice],
+	[SYMBOL,DATE,DOUBLE,DOUBLE,DOUBLE,DOUBLE,DOUBLE])
+	//
+	contextDict["buyList"] =array(SYMBOL,0)
+	contextDict["buyVol"] =500
+	//日志
+	contextDict["log"]=table(10000:0,[`tradeDate,`time,`info],[DATE,TIMESTAMP,STRING])
+}
+
+
+def beforeTrading(mutable contextDict){
+	//每日盘前回调函数
+	//1、通过contextDict["tradeDate"]可以获取当日；
+	//2、通过Backtest::setUniverse可以更换当日股票池，
+	//如Backtest::setUniverse(contextDict["engine"],["688088.XSHG","688157.XSHG","688208.XSHG"])
+	print ("beforeTrading: "+contextDict["tradeDate"])
+	tb=contextDict["log"]
+	contextDict["log"]=tb.append!(table(contextDict["tradeDate"] as tradeDate,now() as time,"beforeTrading" as info))
+}  
+
+def onSnapshot(mutable contextDict, msg){
+	////msg可以为字典或表，最新时刻的tick数据
+	if(second(contextDict["tradeTime"])<09:40:00 or second(contextDict["tradeTime"])>14:57:00){
+		return 
+	}
+	buyList=contextDict["buyList"]
+	///记录买入卖出信号处理
+	for (istock in msg.keys()){
+		macd=msg[istock]["macd"]
+		prevMacd=msg[istock]["prevMacd"]
+		if(prevMacd<0 and macd>0){
+			pos=Backtest::getPosition(contextDict["engine"],istock).longPosition[0]
+			if((pos<0) and (not istock in buyList)){	
+				buyList=buyList.append!(istock)
+			}
+		}
+		else if(prevMacd>0 and macd<0){
+			pos=Backtest::getPosition(contextDict["engine"],istock).longPosition[0]
+			openQty=sum(nullFill(Backtest::getOpenOrders(contextDict["engine"],istock,,"close").openQty,0))
+			if(pos-openQty>0){
+				//卖出
+				pos=pos-openQty
+				price=round(msg[istock]["lastPrice"]-0.02,3)
+				Backtest::submitOrder(contextDict["engine"], (istock,contextDict["tradeTime"], 5, price, pos, 3),"close")
+			}
+		}
+	}
+	contextDict["buyList"]=buyList		
+}
+	
+def onTick(mutable contextDict, msg){
+	//print msg
+	//
+	if(second(contextDict["tradeTime"])<09:40:00 or second(contextDict["tradeTime"])>14:57:00){
+		return 
+	}
+	trade=msg["trade"]
+	if(trade.keys().size()==0){
+		return 
+	}
+	buyList=contextDict["buyList"]
+	sellList=contextDict["sellList"]
+	//step 1;买入
+	for(istock in trade.keys()){
+		contextDict["trade"]=trade
+		if(istock in buyList){
+			cci=trade[istock]["cci"]
+			prevcci=trade[istock]["prevcci"]
+			tradeVol30s=trade[istock]["tradeVol30s"]
+			//
+			buyFlag=false
+			//指标从下向上突破+100线进入超买区间时，过去30s内的成交量大于10000股是买入
+			if(prevcci<100. and cci>=100. and tradeVol30s>10000){
+				buyFlag=true
+			}
+			//指标从下向上突破-100线，买入
+			if(prevcci<-100. and cci>=-100. ){
+				buyFlag=true
+			}
+			if(buyFlag==false){
+				continue
+			}
+			//有持仓
+			pos=Backtest::getPosition(contextDict["engine"],istock).longPosition[0]
+			if(pos>0){
+				continue
+			}
+			//有在途单
+			opens=Backtest::getOpenOrders(contextDict["engine"],istock,,"buy")
+			if(opens.size()>0){
+				continue
+			}
+			//
+			price=round(trade[istock]["price"],2)
+			Backtest::submitOrder(contextDict["engine"], (istock,trade[istock]["timestamp"], 5, price, contextDict["buyVol"], 1),"buy")
+			buyList=buyList[buyList!=istock]
+		}
+	}
+}
+
+
+def onOrder( mutable contextDict,orders){
+	/* orders为字典列表
+	orderId->11
+	symbol->688981.XSHG
+	timestamp->2023.02.01T09:33:33.000
+	qty->5956
+	price->0
+	status->4;-1（订单拒绝）;0（部成）1（完全成交   ）2（已经撤单） 4（已报）
+	direction->3
+	tradeQty->0
+	tradeValue->0
+	label->
+	updateTime->2023.02.01T09:33:33.660
+		
+	 */
+	
+	for ( iorder in orders){	
+		if( not iorder.status  in [1]){ 
+			//   
+			return 
+		}	
+	}
+}
+
+
+def onTrade(mutable contextDict,trades){
+	/*
+	 * trades为字典列表
+	orderId->11
+	symbol->688981.XSHG
+	tradePrice->41.96
+	tradeQty->5956
+	tradeValue->249913.760000000009313
+	totalFee->0
+	totalVolume->5956
+	totalValue->249913.760000000009313
+	direction->3
+	tradeTime->2023.02.01T09:33:33.660
+	orderPrice->41.96
+	label->
+	 */
+	
+}
+
+
+def afterTrading(mutable contextDict){
+	/*
+	 * 每日盘后调用
+	 */
+	tradeDate=contextDict["tradeDate"]
+	print ("afterTrading: "+tradeDate)
+	tb=contextDict["log"]
+	contextDict["log"]=tb.append!(table(contextDict["tradeDate"] as tradeDate,now() as time,"afterTrading" as info))
+	//每日盘后回调函数,每日进行盘后指标统计
+	tradeOutputTable= select * from Backtest::getTradeDetails(contextDict["engine"]) where sendTime.date()=tradeDate
+
+	lastprice= Backtest::getLastPrice(contextDict["engine"])
+
+	tb=select sum(tradeQty) as volume,sum(tradePrice*tradeQty) as amount  from tradeOutputTable  
+	where OrderStatus in [0,1]  group by symbol as SecurityID, Direction as BSFlag  
+	tb=select tradeDate as tradeDate,sum(iif(BSFlag==1 ,volume,0)) as buyVolume, 
+	sum(iif(BSFlag==1,amount,0)) as buyAmount, 
+	sum(iif(BSFlag==3 ,volume,0))as closeVolume,
+	sum(iif(BSFlag==3 ,amount,0)) as closeAmount
+	from tb group by SecurityID
+	update tb set closePrice=lastprice[SecurityID]
+	dailyReport=contextDict['dailyReport' ] 
+	reorderColumns!(tb, colNames(dailyReport))
+	contextDict['dailyReport' ]=dailyReport.append!(tb)
+
+}
+
+def finalized (mutable contextDict){
+	//
+	tb=contextDict["log"]
+	contextDict["log"]=tb.append!(table(contextDict["tradeDate"] as tradeDate,now() as time,"finalized" as info))
+	
+ 	print('finalized')
+ }
+
+// step 2：策略配置与引擎创建
+startDate=2023.02.01
+endDate=2023.02.10
+userConfig=dict(STRING,ANY)
+userConfig["startDate"]=startDate
+userConfig["endDate"]=endDate
+///策略类型,暂时固定股票///
+userConfig["strategyGroup"]= "stock"
+///以指定的频率通过逐笔数据合成快照
+userConfig["frequency"]= 0
+//订单延时
+userConfig["latency"]= 50
+userConfig["cash"]= 100000000
+///手续费,        
+userConfig["commission"]= 0.0
+//印花税,
+userConfig["tax"]= 0.0
+//行情选择逐笔
+userConfig["dataType"]= 0
+//是否订阅逐笔行情
+userConfig["enableSubscriptionToTickQuotes"]= true
+//是否需要获取委托订单在行情中的位置
+userConfig["outputQueuePosition"]= 1
+////tick的数据格式，table或dict
+userConfig["msgAsTable"]= false
+strategyName="stockCTA"
+codes=(exec distinct(SecurityID) from  loadTable("dfs://level2_tl","snapshot") where tradetime.date()=startDate and  market=`sz and SecurityID like "3%")[:1]
+//
+//prevClosePrice=select first(PreCloPrice) as prevClose from loadTable("dfs://level2_tl","snapshot") where  
+//tradetime.date() between startDate:endDate and  SecurityID in codes group by  SecurityID as symbol,tradetime.date() as tradeDate
+//update prevClosePrice set symbol=symbol+".XSHE"
+//prevClosePrice.replaceColumn!(`symbol,string(prevClosePrice.symbol))
+//stockCTAPrevClosePriceData=prevClosePrice
+userConfig["prevClosePrice"]=stockCTAPrevClosePriceData
+try{Backtest::dropBacktestEngine(strategyName)}catch(ex){print ex}
+engine = Backtest::createBacktestEngine(strategyName, userConfig,,initialize, beforeTrading,onTick,onSnapshot,onOrder,onTrade,afterTrading,finalized)
+go
+
+// step 3：获取数据与执行策略回测
+//
+//stockCTAData=getTickHqData(startDate,endDate,codes)///开始执行回测
+timer Backtest::appendQuotationMsg(engine,select * from stockCTAData)
+//exec distinct(symbol) from tickData
+// step 4：获取回测结果
+  //成交明细
+
+tradeDetails=Backtest::getTradeDetails(long(engine))
+//查询当前的未成交（未完成）订单列表
+openOrders=Backtest::getOpenOrders(long(engine))
+//每日持仓
+dailyPosition=Backtest::getDailyPosition(long(engine))
+// 可用资金
+enableCash=Backtest::getAvailableCash(long(engine))
+//未成交订单明细
+openOrders=tradeDetails[tradeDetails.orderStatus==-3]
+//日组合指标展示
+totalPortfolios=Backtest::getDailyTotalPortfolios(long(engine))
+//回测结果综合展示
+returnSummary=Backtest::getReturnSummary(long(engine))
+//查询逻辑上下文
+a=Backtest::getContextDict(long(engine))["trade"].keys()
+Backtest::getContextDict(long(engine))["dailyReport"]
+
+
+
+/**********************以下是并行回测代码****************************************************/
+
+/*
+startDate=2023.02.01
+endDate=2023.02.28
+userConfig=dict(STRING,ANY)
+userConfig["startDate"]= startDate
+userConfig["endDate"]=endDate
+///策略类型,暂时固定股票///
+userConfig["strategyGroup"]= "stock"
+///以指定的频率通过逐笔数据合成快照
+userConfig["frequency"]= 0
+userConfig["cash"]= 100000000
+///手续费,        
+userConfig["commission"]= 0.0
+//印花税,
+userConfig["tax"]= 0.0
+//订单撮合模式,1或者2
+userConfig["dataType"]= 0
+//是否订阅逐笔行情
+userConfig["enableSubscriptionToTickQuotes"]= true
+//是否需要获取委托订单在行情中的位置
+userConfig["outputQueuePosition"]= 2
+////tick的数据格式，table或dict
+userConfig["msgAsTable"]= false
+strategyName="stockCTA"
+// step 3:并行策略回测
+codes=(exec distinct(SecurityID) from  loadTable("dfs://level2_tl","snapshot") where tradetime.date() between startDate:endDate and  
+market=`sh and SecurityID like "6%")[:50]
+////1:按股票并行
+////2:按交易日并行
+////3:按交易日按天单独并行
+///4:把股票分成n分份并行
+parallelMode=2
+n=5
+dailyReport,tradeOutputTable,engines,removeJods,ts=runBacktestParallelMode(strategyName,userConfig,initialize, beforeTrading,onTick,
+	onSnapshot,onOrder,onTrade,afterTrading,finalized,startDate,endDate,codes,parallelMode,n)
+
+
+// step 4:获取并行计算结果
+
+//耗时统计
+t=select *from getRecentJobs(10000)  where jobDesc in ts.keys() 
+t=select * ,ts[string(jobDesc)] as runBacktest from t where rowNo(endTime)>t.size()-size(ts.keys() )-1
+t=select (max(endTime) -min(startTime))\1000 as "总耗时(s)",mean(endTime-startTime)\1000 as "总的平均耗时(s)",mean(runBacktest)\1000 as "回测执行的平均耗时(s)",mean(endTime-startTime-runBacktest)\1000 as "数据回放的平均耗时(s)",mean(endTime-startTime)\1000\60 as "总的平均耗时(min)",mean(runBacktest)\1000\60 as "回测执行的平均耗时(min)",mean(endTime-startTime-runBacktest)\1000\60 as "数据回放的平均耗时(min)" from t
+print(t)
+*/
+
+
+
+
+
