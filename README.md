@@ -170,7 +170,6 @@
 
 - 模块
 
-  - [基于 DolphinDB 的 Barra 多因子风险模型实践](barra_multi_factor_risk_model_0.md)
   - [技术分析 (Technical Analysis) 指标库](../../../DolphinDBModules/blob/master/ta/README_CN.md)
   - [mytt (My 麦语言 T 通达信 T 同花顺) 指标库](../../../DolphinDBModules/blob/master/mytt/README.md)
   - [WorldQuant 101 Alpha 因子指标库](../../../DolphinDBModules/blob/master/wq101alpha/README_CN.md)
