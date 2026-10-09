@@ -20,7 +20,7 @@ tradeDS = replayDS(sqlObj=<select * from loadTable("dfs://trade", "trade") where
 replay(inputTables=tradeDS, outputTables=tradeStream, dateColumn=`Date, timeColumn=`Time, replayRate=10000, absoluteRate=true)
 ```
 
-以上脚本将数据库 "dfs://trade" 中的 "trade" 表中 2020 年 12 月 31 日的数据以每秒 1 万条的速度注入目标表 tradeStream 中。更多关于 replay、replayDS 函数的介绍可以参考 [DolphinDB 历史数据回放教程](https://gitee.com/dolphindb/Tutorials_CN/blob/master/historical_data_replay.md)、[replay用户手册](https://www.dolphindb.cn/cn/help/200/FunctionsandCommands/FunctionReferences/r/replay.html?highlight=replay)、[replayDS用户手册](https://www.dolphindb.cn/cn/help/200/FunctionsandCommands/FunctionReferences/r/replayDS.html?highlight=replayds)。
+以上脚本将数据库 "dfs://trade" 中的 "trade" 表中 2020 年 12 月 31 日的数据以每秒 1 万条的速度注入目标表 tradeStream 中。更多关于 replay、replayDS 函数的介绍可以参考 [DolphinDB 历史数据回放教程](https://gitee.com/dolphindb/Tutorials_CN/blob/master/historical_data_replay.md)、[replay用户手册](https://docs.dolphindb.cn/zh/funcs/r/replay.html?highlight=replay)、[replayDS用户手册](https://docs.dolphindb.cn/zh/funcs/r/replayDS.html?highlight=replayds)。
 
 但是，单表回放并不能满足所有的回放要求。因为在实践中，一个领域问题往往需要多个不同类型的消息协作，例如金融领域的行情数据包括逐笔委托、逐笔成交、快照等，为了更好地模拟实际交易中的实时数据流，通常需要将以上三类数据同时进行回放，这时便提出了多表回放的需求。
 
@@ -204,9 +204,9 @@ snapshotSchema = createSchemaTable("dfs://snapshot", "snapshot")
 joinEngine=createAsofJoinEngine(name="tradeJoinSnapshot", leftTable=tradeSchema, rightTable=snapshotSchema, outputTable=prevailingQuotes, metrics=<[Price, TradeQty, BidPX1, OfferPX1, abs(Price-(BidPX1+OfferPX1)/2), snapshotSchema.Time]>, matchingColumn=`SecurityID, timeColumn=`Time, useSystemTime=false, delayedTime=1)
 ```
 
-使用 asof join 引擎实现在对股票分组的基础上，对于每条输入的 trade 记录，实时关联与之在时间列上最接近的一条 snapshot 记录，并使用 trade 中的价格字段和 snapshot 中的报价字段进行指标计算。最终，以上配置的 asof join 引擎会输出和左表行数相同的结果。asof join 引擎更多介绍请参考 [createAsofJoinEngine 用户手册](https://www.dolphindb.cn/cn/help/200/FunctionsandCommands/FunctionReferences/c/createAsofJoinEngine.html?highlight=asofjoin)。
+使用 asof join 引擎实现在对股票分组的基础上，对于每条输入的 trade 记录，实时关联与之在时间列上最接近的一条 snapshot 记录，并使用 trade 中的价格字段和 snapshot 中的报价字段进行指标计算。最终，以上配置的 asof join 引擎会输出和左表行数相同的结果。asof join 引擎更多介绍请参考 [createAsofJoinEngine 用户手册](https://docs.dolphindb.cn/zh/funcs/c/createAsofJoinEngine.html?highlight=asofjoin)。
 
-考虑到实际的业务含义，此例中 asof join 引擎在用于两个数据流的实时关联时，配置参数 useSystemTime=false 以按照数据中的时间列进行关联计算。使用数据中的时间列，相较于使用数据注入引擎时的系统时间作为时间列，可以避免在实时场景中两个数据流到达引擎的时刻乱序而带来的问题。但是，在此处，因为异构回放能够严格保证两个数据流的处理顺序，因此也可以使用数据注入引擎的系统时间进行关联计算。除了在使用 asof join 引擎时配置参数 useSystemTime=true 外，使用 look up join 引擎也能够实现按系统时间进行实时关联，即当每一条 trade 表中的记录注入引擎时，总是立刻去关联已经注入引擎的最新的一条相应股票的 snapshot 记录，得到的计算结果会同上文中的 asof join 引擎实现完全一致，而由于 look up join 引擎在内部实现上更简单，所以在计算性能上会有稍好的表现，完成脚本见附录 [03. 消费场景 1: 计算个股交易成本_lookUpJoin 实现. txt](script/stock_market_replay/03.calTradeCost_lookUpJoin.txt)。look up join 引擎更多介绍请参考 [createLookUpJoinEngine 用户手册](https://www.dolphindb.cn/cn/help/200/FunctionsandCommands/FunctionReferences/c/createLookupJoinEngine.html)。
+考虑到实际的业务含义，此例中 asof join 引擎在用于两个数据流的实时关联时，配置参数 useSystemTime=false 以按照数据中的时间列进行关联计算。使用数据中的时间列，相较于使用数据注入引擎时的系统时间作为时间列，可以避免在实时场景中两个数据流到达引擎的时刻乱序而带来的问题。但是，在此处，因为异构回放能够严格保证两个数据流的处理顺序，因此也可以使用数据注入引擎的系统时间进行关联计算。除了在使用 asof join 引擎时配置参数 useSystemTime=true 外，使用 look up join 引擎也能够实现按系统时间进行实时关联，即当每一条 trade 表中的记录注入引擎时，总是立刻去关联已经注入引擎的最新的一条相应股票的 snapshot 记录，得到的计算结果会同上文中的 asof join 引擎实现完全一致，而由于 look up join 引擎在内部实现上更简单，所以在计算性能上会有稍好的表现，完成脚本见附录 [03. 消费场景 1: 计算个股交易成本_lookUpJoin 实现. txt](script/stock_market_replay/03.calTradeCost_lookUpJoin.txt)。look up join 引擎更多介绍请参考 [createLookUpJoinEngine 用户手册](https://docs.dolphindb.cn/zh/funcs/c/createLookupJoinEngine.html)。
 
 自定义函数 createSchemaTable，用于获取数据库表的表结构，以做为创建引擎时的参数传入。
 

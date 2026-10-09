@@ -57,7 +57,7 @@ s3Endpoint={your_s3_Endpoint}
 
 ### 2.2 设置数据迁移范围
 
-在 DolphinDB 中，您可以使用 [setRetentionPolicy](https://www.dolphindb.cn/cn/help/FunctionsandCommands/CommandsReferences/s/setRetentionPolicy.html) 函数的参数 *hoursToColdVolume* 来配置数据的保留时间。
+在 DolphinDB 中，您可以使用 [setRetentionPolicy](https://docs.dolphindb.cn/zh/funcs/s/setRetentionPolicy.html) 函数的参数 *hoursToColdVolume* 来配置数据的保留时间。
 
 假设在上文中，我们已经配置了 `coldVolumes`：
 
@@ -74,7 +74,7 @@ tbl = db.createPartitionedTable(data, "table1", `cdate)
 tbl.append!(data)
 ```
 
-接着，我们使用 [setRetentionPolicy](https://www.dolphindb.cn/cn/help/FunctionsandCommands/CommandsReferences/s/setRetentionPolicy.html) 函数做如下配置：
+接着，我们使用 [setRetentionPolicy](https://docs.dolphindb.cn/zh/funcs/s/setRetentionPolicy.html) 函数做如下配置：
 
 超过五天（120h）的数据将会被迁移至冷数据层，超过三十天（720h）的数据将会删除。因为 `database` 只有一层 `VALUE` 分区，所以时间列分区维度为0。
 
@@ -86,13 +86,13 @@ setRetentionPolicy(db, 720, 0, 120)
 
 ### 2.3 触发数据迁移
 
-设置之后，DolphinDB 会在后台每隔1小时检查并迁移范围内的数据。这里为了演示方便，我们使用 [moveHotDataToColdVolume](https://www.dolphindb.cn/cn/help/FunctionsandCommands/CommandsReferences/m/moveHotDataToColdVolume.html) 函数来手动触发迁移。
+设置之后，DolphinDB 会在后台每隔1小时检查并迁移范围内的数据。这里为了演示方便，我们使用 [moveHotDataToColdVolume](https://docs.dolphindb.cn/zh/funcs/m/moveHotDataToColdVolume.html) 函数来手动触发迁移。
 
 ```
 pnodeRun(moveHotDataToColdVolume) //在每个datanode上执行函数，手动触发迁移
 ```
 
-之后，DolphinDB 会发起最近15天到最近7天的分区的数据迁移任务。DolphinDB 使用原有的 recovery 机制实现数据的迁移，可以通过 [getRecoveryTaskStatus](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/g/getRecoveryTaskStatus.html?highlight=recovery) 函数来查看 recovery 任务的执行状态：
+之后，DolphinDB 会发起最近15天到最近7天的分区的数据迁移任务。DolphinDB 使用原有的 recovery 机制实现数据的迁移，可以通过 [getRecoveryTaskStatus](https://docs.dolphindb.cn/zh/funcs/g/getRecoveryTaskStatus.html?highlight=recovery) 函数来查看 recovery 任务的执行状态：
 
 ```
 rpc(getControllerAlias(), getRecoveryTaskStatus) //可以看到创建了最近15天到最近7天的数据迁移任务
@@ -140,7 +140,7 @@ rpc(getControllerAlias(), getClusterChunksStatus)
 
 ### 3.1 自动数据迁移触发机制
 
-使用 [setRetentionPolicy](https://www.dolphindb.cn/cn/help/FunctionsandCommands/CommandsReferences/s/setRetentionPolicy.html) 函数设置好后，DolphinDB 会使用后台工作线程，每隔1小时按照数据库的时间分区检查在 [当前时间 - *hoursToColdVolume* - 10天，当前时间 - *hoursToColdVolume*) 范围内是否存在需要被迁移的数据，如果存在，则触发数据迁移，生成对应的 recovery 任务。在触发时，工作线程可能不会一次性将所有的符合条件的分区全部迁移，而是以 DB 为单位，每隔一小时迁移一个DB下所有待迁移的数据，从而减少 recovery 的压力，提高可用性。
+使用 [setRetentionPolicy](https://docs.dolphindb.cn/zh/funcs/s/setRetentionPolicy.html) 函数设置好后，DolphinDB 会使用后台工作线程，每隔1小时按照数据库的时间分区检查在 [当前时间 - *hoursToColdVolume* - 10天，当前时间 - *hoursToColdVolume*) 范围内是否存在需要被迁移的数据，如果存在，则触发数据迁移，生成对应的 recovery 任务。在触发时，工作线程可能不会一次性将所有的符合条件的分区全部迁移，而是以 DB 为单位，每隔一小时迁移一个DB下所有待迁移的数据，从而减少 recovery 的压力，提高可用性。
 
 举例来说，假设有两个DB：`dfs://db1`，`dfs://db2`。它们都按照时间分区。*hoursToColdVolume* 设置120h，即保留5天内的数据：
 
@@ -154,7 +154,7 @@ rpc(getControllerAlias(), getClusterChunksStatus)
 
 分级存储依托于 DolphinDB 的 recovery 机制，以分区为单位，将每个节点的分区副本迁移到低速磁盘或者 S3 对象存储中。数据迁移内部的大致流程：
 
-1. 用户使用 [setRetentionPolicy](https://www.dolphindb.cn/cn/help/FunctionsandCommands/CommandsReferences/s/setRetentionPolicy.html) 函数设置 *hoursToColdVolume* 来配置数据的保留时间。
+1. 用户使用 [setRetentionPolicy](https://docs.dolphindb.cn/zh/funcs/s/setRetentionPolicy.html) 函数设置 *hoursToColdVolume* 来配置数据的保留时间。
 2. DolphinDB 后台线程根据时间分区检查需要被迁移的数据，创建 recovery 任务。
 3. 执行 recovery 任务，上传或拷贝对应的数据文件到对应的 *S3/* 本地路径。
 4. 修改分区元数据，更新分区路径，修改分区权限为 `READ_ONLY`。

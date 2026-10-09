@@ -4,15 +4,16 @@
 
 本文将从使用场景介绍、原理简述、函数使用、场景实践四部分进行具体阐述。
 
-- [一、场景介绍](#一场景介绍)
-- [二、原理简述](#二原理简述)
-- [三、函数使用](#三函数使用)
-  - [1. MultithreadedTableWriter（MTW）](#1-multithreadedtablewritermtw)
-  - [2. PartitionedTableAppender（PTA）](#2-partitionedtableappenderpta)
-  - [3. AutoFitTableAppender（AFTA）](#3-autofittableappenderafta)
-  - [4. AutoFitTableUpsert（AFTU）](#4-autofittableupsertaftu)
-- [四、场景实践](#四场景实践)
-- [附件](#附件)
+- [DolphinDB C++ API 数据写入使用指南](#dolphindb-c-api-数据写入使用指南)
+	- [一、场景介绍](#一场景介绍)
+	- [二、原理简述](#二原理简述)
+	- [三、函数使用](#三函数使用)
+		- [1. MultithreadedTableWriter（MTW）](#1-multithreadedtablewritermtw)
+		- [2. PartitionedTableAppender（PTA）](#2-partitionedtableappenderpta)
+		- [3. AutoFitTableAppender（AFTA）](#3-autofittableappenderafta)
+		- [4. AutoFitTableUpsert（AFTU）](#4-autofittableupsertaftu)
+	- [四、场景实践](#四场景实践)
+	- [附件](#附件)
 
 ## 一、场景介绍
 
@@ -57,7 +58,7 @@ tableInsert 方法可以将汇总数据简单快速地写入内存表；
 
 传统的开发人员通常对关系型数据库的行式存储（Row-Based）比较熟悉，数据按单行或多行的方式提交并写入，这种写入方式很容易理解，但是基于行式存储的数据库实际上并不是为大数据处理而设计的，海量数据的写入很容易遇到性能瓶颈。
 
-DolphinDB 采用列式存储（Column-Based），在内存中维护一个 Cache Engine，当数据写入文件时，并不是直接写入到磁盘，而是先写入操作系统的缓冲页面中，再批量写入磁盘。为了确保写入数据不会在内存中丢失， DolphinDB 使用 WAL（Write Ahead Logging）的机制。详情可参考 DolphinDB 用户手册的[数据模型](https://www.dolphindb.cn/cn/help/DatabaseandDistributedComputing/Database/DataModel.html)。
+DolphinDB 采用列式存储（Column-Based），在内存中维护一个 Cache Engine，当数据写入文件时，并不是直接写入到磁盘，而是先写入操作系统的缓冲页面中，再批量写入磁盘。为了确保写入数据不会在内存中丢失， DolphinDB 使用 WAL（Write Ahead Logging）的机制。详情可参考 DolphinDB 用户手册的[数据模型](https://docs.dolphindb.cn/zh/db_distr_comp/db/multimodal_storage.html)。
 
 以一个5列（字段）的数据表为例，写入100万行的数据时，行式存储按行方式提交并写入，需要执行100万次的文件写入操作；而列式存储对单列进行写入，可以按列一次性提交100万个值，最少仅需5次文件操作就能完成数据写入。两种写入方式在海量数据的处理方面性能差异巨大。
 
@@ -88,7 +89,7 @@ DolphinDB C++ API 支持多种数据写入方法，涵盖多样化的写入场�
 - AFTA 能够自动将 C++ 字段类型转换为 DolphinDB 字段类型完成写入，使用上较 PTA 更为简单，同样适合数据汇总写入场景。PTA 的写入速度要好于 AFTA，在对写入效率有要求且仅进行追加写的情况下，建议优先考虑 PTA。
 - AFTU 是 AFTA 的更新写版本，更适合于重复数据存在的场景，读取新数据不存在重复时直接插入，存在重复时更新。针对数据写入是否需要更新，即当写入的数据在数据库中已有相同的主键或者相同的指定字段时，选择更新该条旧数据或者直接插入新数据，C++ API 给出了不同的写入方式。其中，MTW 内部分别实现了更新写和追加写，以 *mode* 参数的形式提供选择；而 PTA 仅提供了追加写的方式。
 
-MTW，PTA，AFTA，AFTU 四种方法涵盖了绝大多数写入场景，其底层实现均调用了 `tableInsert` 或 `upsert!` （DolphinDB 脚本函数，关于 `tableInsert` 的更多介绍请参考 [tableInsert — DolphinDB 2.0 documentation](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/t/tableInsert.html)）。下节将重点介绍 MTW，PTA，AFTA，AFTU 四种函数的使用。
+MTW，PTA，AFTA，AFTU 四种方法涵盖了绝大多数写入场景，其底层实现均调用了 `tableInsert` 或 `upsert!` （DolphinDB 脚本函数，关于 `tableInsert` 的更多介绍请参考 [tableInsert — DolphinDB 2.0 documentation](https://docs.dolphindb.cn/zh/funcs/t/tableInsert.html)）。下节将重点介绍 MTW，PTA，AFTA，AFTU 四种函数的使用。
 
 DolphinDB C++ API 的具体安装教程可参考 [README_CN.md · dolphindb/api-cplusplus - Gitee](https://gitee.com/dolphindb/api-cplusplus/blob/release200/README_CN.md)。
 

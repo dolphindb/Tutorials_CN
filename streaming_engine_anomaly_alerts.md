@@ -2,28 +2,29 @@
 
 物联网的发展为智能安防和自动化监控带来了更多便利，与此同时，新型城镇建设、智慧城市与智慧社区的发展也为门禁管理等安防问题智能化提出了更高的要求。在智能化发展的背景下，门禁不仅仅是门禁，更是一套集成了访客、考勤、消费、巡更、梯控等更多功能的全面便捷的系统安全应用。目前门禁系统主要用于出入口管理，在我国加速推动智慧城市、智慧工地、智慧社区等智慧化建设发展的前提下，门禁系统智能化升级的趋势成为必然，其普及率和使用率也将更加广泛，随着接入门禁系统设备越来越多，对其产生的海量数据进行实时快速的处理也成为了日益重要的问题。DolphinDB 提供了流数据表和流计算引擎用于实时数据处理，为智能安防提供了有力支持。本教程将介绍如何使用流计算引擎多级级联实现对门禁设备异常状态的实时监测。
 
-- [1. 背景介绍](#1-背景介绍)
-  - [1.1 行业背景](#11-行业背景)
-  - [1.2 真实场景](#12-真实场景)
-  - [1.3 DolphinDB优势](#13-dolphindb优势)
-- [2. 需求](#2-需求)
-- [3. 实验环境](#3-实验环境)
-- [4. 设计思路](#4-设计思路)
-  - [4.1 使用 DolphinDB 内置流计算引擎监测门禁异常状态](#41-使用-dolphindb-内置流计算引擎监测门禁异常状态)
-  - [4.2 设计思路与方案](#42-设计思路与方案)
-- [5. 实现步骤](#5-实现步骤)
-  - [5.1 定义并共享输入输出流数据表](#51-定义并共享输入输出流数据表)
-  - [5.2 创建响应式状态引擎过滤重复数据](#52-创建响应式状态引擎过滤重复数据)
-  - [5.3 通过级联会话窗口引擎检测状态超时数据](#53-通过级联会话窗口引擎检测状态超时数据)
-  - [5.4 响应式状态引擎过滤关门告警](#54-响应式状态引擎过滤关门告警)
-  - [5.5 订阅流数据](#55-订阅流数据)
-  - [5.6 从 MQTT 服务器接收数据](#56-从-mqtt-服务器接收数据)
-- [6. 模拟写入与验证](#6-模拟写入与验证)
-  - [6.1 模拟门禁设备写入数据](#61-模拟门禁设备写入数据)
-  - [6.2 验证监测结果准确性](#62-验证监测结果准确性)
-- [7. 总结](#7-总结)
-- [参考文献](#参考文献)
-- [附录](#附录)
+- [DolphinDB 流计算应用：引擎级联监测门禁异常状态](#dolphindb-流计算应用引擎级联监测门禁异常状态)
+  - [1. 背景介绍](#1-背景介绍)
+    - [1.1 行业背景](#11-行业背景)
+    - [1.2 真实场景](#12-真实场景)
+    - [1.3 DolphinDB优势](#13-dolphindb优势)
+  - [2. 需求](#2-需求)
+  - [3. 实验环境](#3-实验环境)
+  - [4. 设计思路](#4-设计思路)
+    - [4.1 使用 DolphinDB 内置流计算引擎监测门禁异常状态](#41-使用-dolphindb-内置流计算引擎监测门禁异常状态)
+    - [4.2 设计思路与方案](#42-设计思路与方案)
+  - [5. 实现步骤](#5-实现步骤)
+    - [5.1 定义并共享输入输出流数据表](#51-定义并共享输入输出流数据表)
+    - [5.2 创建响应式状态引擎过滤重复数据](#52-创建响应式状态引擎过滤重复数据)
+    - [5.3 通过级联会话窗口引擎检测状态超时数据](#53-通过级联会话窗口引擎检测状态超时数据)
+    - [5.4 响应式状态引擎过滤关门告警](#54-响应式状态引擎过滤关门告警)
+    - [5.5 订阅流数据](#55-订阅流数据)
+    - [5.6 从 MQTT 服务器接收数据](#56-从-mqtt-服务器接收数据)
+  - [6. 模拟写入与验证](#6-模拟写入与验证)
+    - [6.1 模拟门禁设备写入数据](#61-模拟门禁设备写入数据)
+    - [6.2 验证监测结果准确性](#62-验证监测结果准确性)
+  - [7. 总结](#7-总结)
+  - [参考文献](#参考文献)
+  - [附录](#附录)
 
 ## 1. 背景介绍
 
@@ -138,14 +139,14 @@ st=streamTable(
 enableTableShareAndPersistence(st,`doorRecord, false, true, 100000, 100, 0);
 ```
 
-其次定义异常状态流数据表 `outputSt1` ，用于响应式状态引擎的输出，并将其持久化到磁盘上。[createReactiveStateEngine](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/c/createReactiveStateEngine.html) 响应式状态引擎对输出表的格式有严格要求，它的第一列必须是分组列，其中，根据 `keyColumn` 的设置，输出表的前几列必须和 `keyColumn` 设置的列及其顺序保持一致。在本例中，分组列为门号 `doorNum` ，数据类型为 INT 。之后的两列分别为 DATETIME 类型和 INT 类型，用于记录时间和事件码。创建及共享流数据表代码如下：
+其次定义异常状态流数据表 `outputSt1` ，用于响应式状态引擎的输出，并将其持久化到磁盘上。[createReactiveStateEngine](https://docs.dolphindb.cn/zh/funcs/c/createReactiveStateEngine.html) 响应式状态引擎对输出表的格式有严格要求，它的第一列必须是分组列，其中，根据 `keyColumn` 的设置，输出表的前几列必须和 `keyColumn` 设置的列及其顺序保持一致。在本例中，分组列为门号 `doorNum` ，数据类型为 INT 。之后的两列分别为 DATETIME 类型和 INT 类型，用于记录时间和事件码。创建及共享流数据表代码如下：
 
 ```
 out1 =streamTable(10000:0,`doorNum`eventDate`doorEventCode,[INT,DATETIME, INT])
 enableTableShareAndPersistence(out1,`outputSt,false,true,100000)
 ```
 
-有关函数及各参数的详细说明，参考 [DolphinDB用户手册](https://www.dolphindb.cn/cn/help/index.html)
+有关函数及各参数的详细说明，参考 [DolphinDB用户手册](https://docs.dolphindb.cn/zh/about/ddb_intro.html)
 
 ### 5.2 创建响应式状态引擎过滤重复数据
 
@@ -161,7 +162,7 @@ reactivEngine1 = createReactiveStateEngine(name=`reactivEngine1,metrics=<[eventD
     filter=<prev(doorEventCode)!=doorEventCode>)
 ```
 
-有关函数及各参数的详细说明，参考 [DolphinDB用户手册](https://www.dolphindb.cn/cn/help/index.html)。
+有关函数及各参数的详细说明，参考 [DolphinDB用户手册](https://docs.dolphindb.cn/zh/about/ddb_intro.html)。
 
 ### 5.3 通过级联会话窗口引擎检测状态超时数据
 
@@ -176,7 +177,7 @@ swEngine = createSessionWindowEngine(name="swEngine",sessionGap = 300,metrics=<l
 
 ### 5.4 响应式状态引擎过滤关门告警
 
-上级会话窗口引擎获取到的数据包括开门和关门超过5分钟的数据，因此需要再通过响应式状态引擎过滤掉关门状态超时数据，只保留开门告警。与上一级引擎类似，首先同样创建一张内存表，为响应式状态引擎提供输入的表结构，在该响应式状态引擎中，设置分组列 `keyColumn` 为门号 `doorNum` ，两个计算指标为 `eventDate` 和 `doorEventCode`，表示原样输出。filter参数设置为 `doorEventCode in [11,12,56,60,65,67]`，即只输出记录的事件码为开门事件的数据。参考 DolphinDB 用户手册中 [createReactiveStateEngine](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/c/createReactiveStateEngine.html) 页面内容完成对其他参数的设置。代码如下：
+上级会话窗口引擎获取到的数据包括开门和关门超过5分钟的数据，因此需要再通过响应式状态引擎过滤掉关门状态超时数据，只保留开门告警。与上一级引擎类似，首先同样创建一张内存表，为响应式状态引擎提供输入的表结构，在该响应式状态引擎中，设置分组列 `keyColumn` 为门号 `doorNum` ，两个计算指标为 `eventDate` 和 `doorEventCode`，表示原样输出。filter参数设置为 `doorEventCode in [11,12,56,60,65,67]`，即只输出记录的事件码为开门事件的数据。参考 DolphinDB 用户手册中 [createReactiveStateEngine](https://docs.dolphindb.cn/zh/funcs/c/createReactiveStateEngine.html) 页面内容完成对其他参数的设置。代码如下：
 
 ```
 swOut1 =table(1:0,`eventDate`doorNum`doorEventCode,[DATETIME,INT, INT])
@@ -238,7 +239,7 @@ startEventDate=datetimeAdd(startEventDate , 125, `s)
 
 ### 6.2 验证监测结果准确性
 
-从模拟的数据中查询出开门超时且符合过滤条件的数据，通过 [eqObj()](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/e/eqObj.html?highlight=eqobj) 方法比较流计算引擎获取到的异常数据与真实异常数据是否相同，从而验证监测结果的准确性。
+从模拟的数据中查询出开门超时且符合过滤条件的数据，通过 [eqObj()](https://docs.dolphindb.cn/zh/funcs/e/eqObj.html?highlight=eqobj) 方法比较流计算引擎获取到的异常数据与真实异常数据是否相同，从而验证监测结果的准确性。
 
 ```
 t = select *, deltas(eventDate), prev(doorNum), prev(eventDate), prev(doorEventCode) 

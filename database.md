@@ -455,7 +455,7 @@ tb2=loadTable("dfs://db2","tb2")
 tb2.append!(allData)
 ```
 
-* 但通常分布式表的数据量非常大，无法全量加载到内存中，可以用[`repartitionDS`](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/r/repartitionDS.html)函数划分数据源，将数据划分为若干个内存能够容纳的小数据块，再通过map-reduce的方法将数据块分批加载到内存并保存到新的数据库中。这样做不仅可以解决内存不够的问题，而且通过并行加载提升性能。`repartitionDS`函数的语法如下：
+* 但通常分布式表的数据量非常大，无法全量加载到内存中，可以用[`repartitionDS`](https://docs.dolphindb.cn/zh/funcs/r/repartitionDS.html)函数划分数据源，将数据划分为若干个内存能够容纳的小数据块，再通过map-reduce的方法将数据块分批加载到内存并保存到新的数据库中。这样做不仅可以解决内存不够的问题，而且通过并行加载提升性能。`repartitionDS`函数的语法如下：
 
 ```
 repartitionDS(query, [column], [partitionType], [partitionScheme], [local=true])
@@ -509,7 +509,7 @@ mr(ds=datasrc, mapFunc=writeDataTo{"dfs://db2","tb2"}, parallel=false)
 
 #### 6.2 复制DFS表
 
-如果只需复制DFS表，不改变数据的分区类型和分区方案，可以使用[`sqlDS`](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/s/sqlDS.html)函数划分数据源。例如，把6.1中表tb1的内容复制到同一个数据库的表tb1_bak中：
+如果只需复制DFS表，不改变数据的分区类型和分区方案，可以使用[`sqlDS`](https://docs.dolphindb.cn/zh/funcs/s/sqlDS.html)函数划分数据源。例如，把6.1中表tb1的内容复制到同一个数据库的表tb1_bak中：
 
 ```
 //创建tb1_bak

@@ -93,7 +93,7 @@ mockData(2020.06.01..2020.06.02, 09:30:00 13:00:00)
 
 where 条件子句包含一个或多个条件表达式，根据表达式指定的过滤条件，可以过滤出满足需求的记录。
 
-条件表达式中可以使用 DolphinDB 内置函数，如聚合、序列、向量函数，也可以使用用户自定义函数。需要注意的是，DolphinDB 不支持在分布式查询的 where 子句中使用聚合函数，如[sum](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/s/sum.html)、[count](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/c/count.html)。因为执行聚合函数之前，分布式查询需要通过 where 子句来筛选相关分区的数据，达到分区剪枝的效果，减少查询耗时。如果聚合函数出现在 where 子句中，则分布式查询不能缩窄相关分区范围。
+条件表达式中可以使用 DolphinDB 内置函数，如聚合、序列、向量函数，也可以使用用户自定义函数。需要注意的是，DolphinDB 不支持在分布式查询的 where 子句中使用聚合函数，如[sum](https://docs.dolphindb.cn/zh/funcs/s/sum.html)、[count](https://docs.dolphindb.cn/zh/funcs/c/count.html)。因为执行聚合函数之前，分布式查询需要通过 where 子句来筛选相关分区的数据，达到分区剪枝的效果，减少查询耗时。如果聚合函数出现在 where 子句中，则分布式查询不能缩窄相关分区范围。
 
 ### 2.1 where 条件子句使用 in 关键字
 
@@ -122,7 +122,7 @@ timer res1 = select SecurityID, DateTime
 
 **查询耗时 336 ms。**
 
-需要注意的是，以上脚本中的 [timer](https://www.dolphindb.cn/cn/help/200/ProgrammingStatements/timer.html) 函数通常用于计算一行或一段脚本的执行时间，该时间指的是脚本在 DolphinDB Server 端的运行耗时，而不包括脚本运行结果集返回到客户端的耗时。若结果集数据量过大，序列化/反序列化以及网络传输的耗时可能会远远超过脚本在服务器上的运行耗时。
+需要注意的是，以上脚本中的 [timer](https://docs.dolphindb.cn/zh/progr/statements/timer.html) 函数通常用于计算一行或一段脚本的执行时间，该时间指的是脚本在 DolphinDB Server 端的运行耗时，而不包括脚本运行结果集返回到客户端的耗时。若结果集数据量过大，序列化/反序列化以及网络传输的耗时可能会远远超过脚本在服务器上的运行耗时。
 
 
 
@@ -143,7 +143,7 @@ timer res2 = select SecurityID, DateTime
 each(eqObj, res1.values(), res2.values()) // true
 ```
 
-[each](https://www.dolphindb.cn/cn/help/Functionalprogramming/TemplateFunctions/each.html) 函数对表的每列分别通过 [eqObj](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/e/eqObj.html) 比较，返回均为 true，说明优化前后返回的结果相同。但与优化前写法相比，优化后写法查询性能提升约4倍。这是因为，在 SQL 语句中，表连接的耗时远高于 where 子句中的过滤条件的耗时，因此在能够使用字典或 in 关键字的情况下应避免使用 join。
+[each](https://docs.dolphindb.cn/zh/funcs/ho_funcs/each.html) 函数对表的每列分别通过 [eqObj](https://docs.dolphindb.cn/zh/funcs/e/eqObj.html) 比较，返回均为 true，说明优化前后返回的结果相同。但与优化前写法相比，优化后写法查询性能提升约4倍。这是因为，在 SQL 语句中，表连接的耗时远高于 where 子句中的过滤条件的耗时，因此在能够使用字典或 in 关键字的情况下应避免使用 join。
 
 ### 2.2 分组数据过滤
 
@@ -222,7 +222,7 @@ t = table(take(2019.01.01..2019.01.03, N) as date,
           take(2200 1900 2100 3200 6800 5400 1300 2500 8800, N) as qty)
 ```
 
-根据过滤条件是否使用序列相关函数，如 [deltas](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/d/deltas.html), [ratios](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/r/ratio.html), [ffill](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/f/ffill.html), [move](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/m/move.html), [prev](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/p/prev.html), [cumsum](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/c/cumsum.html) 等，可以分为以下两种情况。
+根据过滤条件是否使用序列相关函数，如 [deltas](https://docs.dolphindb.cn/zh/funcs/d/deltas.html), [ratios](https://docs.dolphindb.cn/zh/funcs/r/ratio.html), [ffill](https://docs.dolphindb.cn/zh/funcs/f/ffill.html), [move](https://docs.dolphindb.cn/zh/funcs/m/move.html), [prev](https://docs.dolphindb.cn/zh/funcs/p/prev.html), [cumsum](https://docs.dolphindb.cn/zh/funcs/c/cumsum.html) 等，可以分为以下两种情况。
 
 #### 2.3.1 过滤条件与序列无关
 
@@ -305,7 +305,7 @@ snapshot = loadTable("dfs://Level1", "Snapshot")
 
 **优化前**：
 
-where 条件子句根据日期过滤时，使用 [temporalFormat](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/t/temporalFormat.html) 函数对于日期进行格式转换，如下：
+where 条件子句根据日期过滤时，使用 [temporalFormat](https://docs.dolphindb.cn/zh/funcs/t/temporalFormat.html) 函数对于日期进行格式转换，如下：
 
 ```
 timer t1 = select count(*) from snapshot 
@@ -319,7 +319,7 @@ timer t1 = select count(*) from snapshot
 
 **优化后**：
 
-使用 [date](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/d/date.html) 函数将 DateTime 字段转换为 DATE 类型，如下：
+使用 [date](https://docs.dolphindb.cn/zh/funcs/d/date.html) 函数将 DateTime 字段转换为 DATE 类型，如下：
 
 ```
 timer t2 = select count(*) from snapshot 
@@ -497,7 +497,7 @@ TSDB 是 DolphinDB 2.0 版本推出的存储引擎，引入了排序列，相当
 
 **此例中，TSDB 存储引擎的查询性能较 OLAP 存储引擎提升约 4 倍。**
 
-context by 是 DolphinDB SQL 独有的创新，是对标准 SQL 语句的拓展。在关系型数据库管理系统中，一张表由行的集合组成，行之间没有顺序。可以使用如 [min](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/m/min.html), [max](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/m/max.html), [avg](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/a/avg.html) 等聚合函数来对行进行分组，但是不能对分组内的行使用序列相关的聚合函数，比如 [first](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/f/first.html), [last](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/l/last.html) 等，或者使用顺序敏感的滑动窗口函数和累积计算函数，如 [cumsum](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/c/cumsum.html), [cummax](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/c/cummax.html), [ratios](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/r/ratios.html), [deltas](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/d/deltas.html) 等。
+context by 是 DolphinDB SQL 独有的创新，是对标准 SQL 语句的拓展。在关系型数据库管理系统中，一张表由行的集合组成，行之间没有顺序。可以使用如 [min](https://docs.dolphindb.cn/zh/funcs/m/min.html), [max](https://docs.dolphindb.cn/zh/funcs/m/max.html), [avg](https://docs.dolphindb.cn/zh/funcs/a/avg.html) 等聚合函数来对行进行分组，但是不能对分组内的行使用序列相关的聚合函数，比如 [first](https://docs.dolphindb.cn/zh/funcs/f/first.html), [last](https://docs.dolphindb.cn/zh/funcs/l/last.html) 等，或者使用顺序敏感的滑动窗口函数和累积计算函数，如 [cumsum](https://docs.dolphindb.cn/zh/funcs/c/cumsum.html), [cummax](https://docs.dolphindb.cn/zh/funcs/c/cummax.html), [ratios](https://docs.dolphindb.cn/zh/funcs/r/ratios.html), [deltas](https://docs.dolphindb.cn/zh/funcs/d/deltas.html) 等。
 
 DolphinDB 使用列式存储引擎，因此能更好地支持对时间序列的数据进行处理，而其特有的 context by 子句使组内处理时间序列数据更加方便。
 
@@ -518,7 +518,7 @@ t = cj(table(syms as symbol), table(rand(100.0, N) as price, rand(10000, N) as v
 
 **优化前**：
 
-使用循环，每一次取出某只股票相应的10000条记录的价格、交易量字段，计算 [mwavg](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/m/mwavg.html)，共执行3000次，然后合并每一次的计算结果。
+使用循环，每一次取出某只股票相应的10000条记录的价格、交易量字段，计算 [mwavg](https://docs.dolphindb.cn/zh/funcs/m/mwavg.html)，共执行3000次，然后合并每一次的计算结果。
 
 ```
 arr = array(ANY, syms.size())
@@ -589,7 +589,7 @@ timer result = select wavg(LastPx, Volume) as vwap
 
 cgroup by (cumulative group) 为 DolphinDB SQL 独有的功能，是对标准 SQL 语句的拓展，可以进行累计分组计算，第一次计算使用第一组记录，第二次计算使用前两组记录，第三次计算使用前三组记录，以此类推。
 
-使用 cgroup by 时，必须同时使用 order by 对分组计算结果进行排序。cgroup by 的 SQL 语句仅支持以下聚合函数：[sum](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/s/sum.html), [sum2](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/s/sum2.html), [sum3](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/s/sum3.html), [sum4](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/s/sum4.html), [prod](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/p/prod.html), [max](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/m/max.html), [min](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/m/min.html), [first](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/f/first.html), [last](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/l/last.html), [count](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/c/count.html), [size](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/s/size.html), [avg](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/a/avg.html), [std](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/s/std.html), [var](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/v/var.html), [skew](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/s/skew.html), [kurtosis](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/k/kurtosis.html), [wsum](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/w/wsum.html), [wavg](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/w/wavg.html), [corr](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/c/corr.html), [covar](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/c/covar.html), [contextCount](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/c/contextCount.html), [contextSum](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/c/contextSum.html), [contextSum2](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/c/contextSum2.html)。
+使用 cgroup by 时，必须同时使用 order by 对分组计算结果进行排序。cgroup by 的 SQL 语句仅支持以下聚合函数：[sum](https://docs.dolphindb.cn/zh/funcs/s/sum.html), [sum2](https://docs.dolphindb.cn/zh/funcs/s/sum2.html), [sum3](https://docs.dolphindb.cn/zh/funcs/s/sum3.html), [sum4](https://docs.dolphindb.cn/zh/funcs/s/sum4.html), [prod](https://docs.dolphindb.cn/zh/funcs/p/prod.html), [max](https://docs.dolphindb.cn/zh/funcs/m/max.html), [min](https://docs.dolphindb.cn/zh/funcs/m/min.html), [first](https://docs.dolphindb.cn/zh/funcs/f/first.html), [last](https://docs.dolphindb.cn/zh/funcs/l/last.html), [count](https://docs.dolphindb.cn/zh/funcs/c/count.html), [size](https://docs.dolphindb.cn/zh/funcs/s/size.html), [avg](https://docs.dolphindb.cn/zh/funcs/a/avg.html), [std](https://docs.dolphindb.cn/zh/funcs/s/std.html), [var](https://docs.dolphindb.cn/zh/funcs/v/var.html), [skew](https://docs.dolphindb.cn/zh/funcs/s/skew.html), [kurtosis](https://docs.dolphindb.cn/zh/funcs/k/kurtosis.html), [wsum](https://docs.dolphindb.cn/zh/funcs/w/wsum.html), [wavg](https://docs.dolphindb.cn/zh/funcs/w/wavg.html), [corr](https://docs.dolphindb.cn/zh/funcs/c/corr.html), [covar](https://docs.dolphindb.cn/zh/funcs/c/covar.html), [contextCount](https://docs.dolphindb.cn/zh/funcs/c/contextCount.html), [contextSum](https://docs.dolphindb.cn/zh/funcs/c/contextSum.html), [contextSum2](https://docs.dolphindb.cn/zh/funcs/c/contextSum2.html)。
 
 ### 4.4 计算 N 股 VWAP
 
@@ -684,7 +684,7 @@ timer t = select last(OfferPrice1) \ first(OfferPrice1) - 1
 
 
 
-[segment](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/s/segment.html) 函数用于向量分组，将连续相同的元素分为一组，返回与输入向量等长的向量。下一个案例中也使用了 segment 函数分组，以展示该函数在连续区间分组计算时的易用性。
+[segment](https://docs.dolphindb.cn/zh/funcs/s/segment.html) 函数用于向量分组，将连续相同的元素分为一组，返回与输入向量等长的向量。下一个案例中也使用了 segment 函数分组，以展示该函数在连续区间分组计算时的易用性。
 
 ### 4.6 计算不同连续区间的最值
 
@@ -738,7 +738,7 @@ timer(1000) {
 
 **优化后：**
 
-使用 [segment](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/s/segment.html) 函数结合 context by 语句对大于或等于目标值的连续数据分组，并使用 having 语句过滤。
+使用 [segment](https://docs.dolphindb.cn/zh/funcs/s/segment.html) 函数结合 context by 语句对大于或等于目标值的连续数据分组，并使用 having 语句过滤。
 
 ```
 timer(1000) res2 = select * from t 
@@ -758,7 +758,7 @@ each(eqObj, res1.values(), res2.values()) // true
 
 **与优化前写法相比，优化后写法查询性能提升约 10%。**
 
-[segment](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/s/segment.html)  函数一般用于序列相关的分组，与循环相比，性能略有提升，可以化繁为简，使代码更为优雅。
+[segment](https://docs.dolphindb.cn/zh/funcs/s/segment.html)  函数一般用于序列相关的分组，与循环相比，性能略有提升，可以化繁为简，使代码更为优雅。
 
 ### 4.7 不同聚合方式计算指标
 
@@ -877,7 +877,7 @@ timer {
 
 **优化后：**
 
-使用 pivot by 子句根据时间、股票代码对于数据表重新排序，将时间作为行，股票代码作为列，然后使用 [ffill](https://dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/f/ffill.html) 函数填充 NULL 元素，使用 [avg](https://dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/a/avg.html) 函数计算均值，最后 [rowSum](https://dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/r/rowSum.html) 函数计算每个时间点的股票价值之和，仅需以下一行代码，即可实现上述所有步骤。示例如下：
+使用 pivot by 子句根据时间、股票代码对于数据表重新排序，将时间作为行，股票代码作为列，然后使用 [ffill](https://docs.dolphindb.cn/zh/funcs/f/ffill.html) 函数填充 NULL 元素，使用 [avg](https://docs.dolphindb.cn/zh/funcs/a/avg.html) 函数计算均值，最后 [rowSum](https://docs.dolphindb.cn/zh/funcs/r/rowSum.html) 函数计算每个时间点的股票价值之和，仅需以下一行代码，即可实现上述所有步骤。示例如下：
 
 ```
 timer t2 = select rowSum(ffill(last(weightedPrice))) from ETF pivot by Time, Symbol
@@ -915,7 +915,7 @@ t = table(take(`id1`id2`id3, N) as id,
 
 ```
 
-使用 [bar](https://dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/b/bar.html) 函数对时间做一分钟聚合，并使用 pivot by 子句根据分钟、测点对数据表重新排序，将分钟作为行，测点作为列，然后使用 ffill 函数填充 NULL 元素，使用 avg 函数计算均值，然后再使用 rowSum 函数计算每个时间点的测点值之和。最后使用 group by 子句结合 interval 函数对于缺失值进行填充。
+使用 [bar](https://docs.dolphindb.cn/zh/funcs/b/bar.html) 函数对时间做一分钟聚合，并使用 pivot by 子句根据分钟、测点对数据表重新排序，将分钟作为行，测点作为列，然后使用 ffill 函数填充 NULL 元素，使用 avg 函数计算均值，然后再使用 rowSum 函数计算每个时间点的测点值之和。最后使用 group by 子句结合 interval 函数对于缺失值进行填充。
 
 ```
 timePeriod = 2021.01.01T00:00:00.000 : 2021.01.01T01:00:00.000
@@ -958,7 +958,7 @@ def caclCumVol(target, cumVol, nextVol) {
 
 ```
 
-使用高阶函数 [accumulate](https://dolphindb.cn/cn/help/Functionalprogramming/TemplateFunctions/accumulate.html)，迭代地应用 caclCumVol 函数到前一个累计成交量和下一个成交量上。如果累计成交量等于当前一条数据的成交量，则表示开始一个新的组，此时记录下当前这条数据的时间，作为一个窗口的起始时间，否则为空，通过 ffill 填充，使得同一组数据拥有相同的起始时间，最后根据起始时间分组并做聚合计算。
+使用高阶函数 [accumulate](https://docs.dolphindb.cn/zh/funcs/ho_funcs/accumulate.html)，迭代地应用 caclCumVol 函数到前一个累计成交量和下一个成交量上。如果累计成交量等于当前一条数据的成交量，则表示开始一个新的组，此时记录下当前这条数据的时间，作为一个窗口的起始时间，否则为空，通过 ffill 填充，使得同一组数据拥有相同的起始时间，最后根据起始时间分组并做聚合计算。
 
 ```
 timer result = select first(wind_code) as wind_code, first(date) as date, sum(volume) as sum_volume, last(time) as endTime 
@@ -1123,7 +1123,7 @@ timer {
 
 **第一种优化写法：**
 
-自定义一个函数 getType，使用 [iif](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/i/iif.html) 函数嵌套方式得到当前成交单子类型，然后使用 group by 对日期、股票、买卖方向、单子类型分组，并计算累计交易量、交易额。
+自定义一个函数 getType，使用 [iif](https://docs.dolphindb.cn/zh/funcs/i/iif.html) 函数嵌套方式得到当前成交单子类型，然后使用 group by 对日期、股票、买卖方向、单子类型分组，并计算累计交易量、交易额。
 
 ```
 def getType(amount) {
@@ -1157,7 +1157,7 @@ timer res3 = select sum(volume) as volume_sum, sum(volume*price) as amount_sum
 
 **查询耗时 95 ms。**
 
-与第一种优化写法区别在于，使用 [asof](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/a/asof.html) 函数而非自定义函数，判断交易额落在哪个区间，然后以此分组并计算累计交易量、交易额。
+与第一种优化写法区别在于，使用 [asof](https://docs.dolphindb.cn/zh/funcs/a/asof.html) 函数而非自定义函数，判断交易额落在哪个区间，然后以此分组并计算累计交易量、交易额。
 
 ```
 each(eqObj, (select date, symbol, side, type, volume_sum, amount_sum 
@@ -1247,7 +1247,7 @@ min_num = 10
 
 **优化前：**
 
-查询语句拼接为一个字符串，使用 [parseExpr](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/p/parseExpr.html) 函数将字符串解析为元代码，再使用 [eval](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/e/eval.html) 函数执行生成的元代码。
+查询语句拼接为一个字符串，使用 [parseExpr](https://docs.dolphindb.cn/zh/funcs/p/parseExpr.html) 函数将字符串解析为元代码，再使用 [eval](https://docs.dolphindb.cn/zh/funcs/e/eval.html) 函数执行生成的元代码。
 
 ```
 res = parseExpr("select " + avg + "(cal_variable) as FactorValue from t group by bar(TradeTime, " + min_num + "m) as minute_TradeTime, SecurityID, DataDate").eval()
@@ -1260,7 +1260,7 @@ res = parseExpr("select " + avg + "(cal_variable) as FactorValue from t group by
 
 **优化后：**
 
-DolphinDB 内置了 [sql](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/s/sql.html) 函数用于动态生成 SQL 语句，然后使用 eval 函数执行生成的 SQL 语句。其中，[sqlCol](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/s/sqlCol.html) 函数将列名转化为表达式，[makeCall](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/m/makeCall.html) 函数指定参数调用 [bar](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/b/bar.html) 函数并生成脚本，[sqlColAlias](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/s/sqlColAlias.html) 函数使用元代码和别名定义一个列。
+DolphinDB 内置了 [sql](https://docs.dolphindb.cn/zh/funcs/s/sql.html) 函数用于动态生成 SQL 语句，然后使用 eval 函数执行生成的 SQL 语句。其中，[sqlCol](https://docs.dolphindb.cn/zh/funcs/s/sqlCol.html) 函数将列名转化为表达式，[makeCall](https://docs.dolphindb.cn/zh/funcs/m/makeCall.html) 函数指定参数调用 [bar](https://docs.dolphindb.cn/zh/funcs/b/bar.html) 函数并生成脚本，[sqlColAlias](https://docs.dolphindb.cn/zh/funcs/s/sqlColAlias.html) 函数使用元代码和别名定义一个列。
 
 ```
 groupingCols = [sqlColAlias(makeCall(bar, sqlCol("TradeTime"), duration(min_num.string() + "m")), "minute_TradTime"), sqlCol("SecurityID"), sqlCol("DataDate")]
@@ -1271,7 +1271,7 @@ res = sql(select = sqlCol("cal_variable", funcByName("avg"), "FactorValue"),
 
 **查询耗时 200 ms。**
 
-类似地，[sqlUpdate](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/s/sqlUpdate.html) 函数用于动态生成 SQL update 语句的元代码，[sqlDelete](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/s/sqlDelete.html) 函数用于动态生成 SQL delete 语句的元代码。
+类似地，[sqlUpdate](https://docs.dolphindb.cn/zh/funcs/s/sqlUpdate.html) 函数用于动态生成 SQL update 语句的元代码，[sqlDelete](https://docs.dolphindb.cn/zh/funcs/s/sqlDelete.html) 函数用于动态生成 SQL delete 语句的元代码。
 
 ### 5.2 动态生成 SQL 语句案例 2
 

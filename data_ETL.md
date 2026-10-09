@@ -170,7 +170,7 @@ V：数据处理速度：每秒处理多少条记录。
 
 - 索引
 
-当分布式表使用 TSDB 引擎时，且查询语句命中 [Sort Key](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/c/createPartitionedTable.html) 时，可以通过扫描稀疏索引文件，来查询对应的数据块ID。进而只读取对应数据块，从而避免全表扫描。
+当分布式表使用 TSDB 引擎时，且查询语句命中 [Sort Key](https://docs.dolphindb.cn/zh/funcs/c/createPartitionedTable.html) 时，可以通过扫描稀疏索引文件，来查询对应的数据块ID。进而只读取对应数据块，从而避免全表扫描。
 
 ### 3.2 提高处理速度
 

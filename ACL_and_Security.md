@@ -39,7 +39,7 @@ DolphinDB database 提供了强大、灵活、安全的权限控制系统。
 
 用户和组都是承载权限的实体。我们可以赋予或禁止一个用户、一个组某项权限。用户最终的实际权限是用户本身的权限，加上所属组的权限的结果（详见[1.2 用户权限确定规则](#12-用户权限确定规则)）。
 
-DolphinDB 系统通过用户名和密码对用户进行身份校检，通过 [login](https://www.dolphindb.cn/cn/help/FunctionsandCommands/CommandsReferences/l/login.html) 和 [logout](https://www.dolphindb.cn/cn/help/FunctionsandCommands/CommandsReferences/l/logout.html) 来进行用户的登录和注销管理。 用户可以通过使用 [changePwd](https://www.dolphindb.cn/cn/help/FunctionsandCommands/CommandsReferences/c/changePwd.html) 来改变自己的登录密码。
+DolphinDB 系统通过用户名和密码对用户进行身份校检，通过 [login](https://docs.dolphindb.cn/zh/funcs/l/login.html) 和 [logout](https://docs.dolphindb.cn/zh/funcs/l/logout.html) 来进行用户的登录和注销管理。 用户可以通过使用 [changePwd](https://docs.dolphindb.cn/zh/funcs/c/changePwd.html) 来改变自己的登录密码。
 
 #### 1.1.2 管理员 <!-- omit in toc -->
 
@@ -47,7 +47,7 @@ DolphinDB 系统通过用户名和密码对用户进行身份校检，通过 [lo
 
 DolphinDB 集群第一次启动时，会自动创建用户名为 "admin"，密码为 "123456" 的超级管理员。此管理员拥有所有的权限，且无法被删除。超级管理员 “admin” 无法被删除，其权限也无法被剥夺。
 
-超级管理员可以创建其他用户，对用户进行分组，并选择是否设定为管理员。新创建的管理员、用户和组没有任何权限。管理员可以赋予或禁止其他管理员，用户和组的权限，撤销权限设置。管理员可以通过 [resetPwd](https://www.dolphindb.cn/cn/help/FunctionsandCommands/CommandsReferences/r/resetPwd.html) 修改用户的密码。
+超级管理员可以创建其他用户，对用户进行分组，并选择是否设定为管理员。新创建的管理员、用户和组没有任何权限。管理员可以赋予或禁止其他管理员，用户和组的权限，撤销权限设置。管理员可以通过 [resetPwd](https://docs.dolphindb.cn/zh/funcs/r/resetPwd.html) 修改用户的密码。
 
 管理员可使用的函数或命令有：
   * `addGroupMember`： 添加组成员
@@ -62,7 +62,7 @@ DolphinDB 集群第一次启动时，会自动创建用户名为 "admin"，密�
   * `getUsersByGroupId`：获取组的用户列表
   * `getUserList`：获取除管理员之外的所有用户名
   * `resetPwd`：重置用户的密码
-  具体用法请参考 [DolphinDB 用户手册](https://www.dolphindb.cn/cn/help/Introduction/index.html)。
+  具体用法请参考 [DolphinDB 用户手册](https://docs.dolphindb.cn/zh/about/ddb_intro.html)。
 
 以下为超级管理员、管理员和普通用户的总结表：
 
@@ -88,7 +88,7 @@ DolphinDB 集群第一次启动时，会自动创建用户名为 "admin"，密�
 
 若用户的某项权限被禁止，要使用户获得此权限，有以下两种方式：
 
-1. 由管理员在所有禁止该权限的所属组中使用 [grant](https://www.dolphindb.cn/cn/help/FunctionsandCommands/CommandsReferences/g/grant.html) 命令，从而重新赋予该项权限；
+1. 由管理员在所有禁止该权限的所属组中使用 [grant](https://docs.dolphindb.cn/zh/funcs/g/grant.html) 命令，从而重新赋予该项权限；
 2. 由管理员使用revoke命令，在所有禁止该权限的所属组中撤销之前的禁止权限命令：  
      * 若该用户之前在其他组被赋予过该权限，此时获得此权限；
      * 若该用户之前在其他组没有赋予该权限，则此时处于既未被赋予、也未被禁止该权限的状态，需要使用 `grant` 命令，赋予用户该项权限。
@@ -145,7 +145,7 @@ DolphinDB 提供以下权限类别:
 
 ## 2. 权限操作
 
-管理员可使用 `grant`/`deny`/`revoke` 命令在控制节点上来设置用户或组的权限。用户也可以使用命令 [addAccessControl](https://www.dolphindb.cn/cn/help/FunctionsandCommands/CommandsReferences/a/addAccessControl.html) 限制其他用户访问该用户创建的共享内存表或者流数据引擎。使用 `addAccessControl` 后，其他用户只有被管理员赋予访问权限后，才可访问该用户创建的共享表或者流数据引擎。
+管理员可使用 `grant`/`deny`/`revoke` 命令在控制节点上来设置用户或组的权限。用户也可以使用命令 [addAccessControl](https://docs.dolphindb.cn/zh/funcs/a/addAccessControl.html) 限制其他用户访问该用户创建的共享内存表或者流数据引擎。使用 `addAccessControl` 后，其他用户只有被管理员赋予访问权限后，才可访问该用户创建的共享表或者流数据引擎。
 
 本章将分别举例讨论在分布式数据库、共享内存表、流数据表以及流数据引擎中的权限操作。
 
@@ -281,7 +281,7 @@ addAccessControl(st2)
 ### 2.4 其它应用
 #### 2.4.1 函数视图(function view) <!-- omit in toc -->
 
-[函数视图](https://www.dolphindb.cn/cn/help/DatabaseandDistributedComputing/DatabaseOperations/FunctionView.html)提供了一种灵活的方式来控制用户访问数据库和表。在视图的基础上，函数视图提供了函数功能，可以同时访问数据库并进行相关计算。
+[函数视图](https://docs.dolphindb.cn/zh/db_distr_comp/db_oper/FunctionView.html)提供了一种灵活的方式来控制用户访问数据库和表。在视图的基础上，函数视图提供了函数功能，可以同时访问数据库并进行相关计算。
 
 注意：
 

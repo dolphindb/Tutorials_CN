@@ -37,10 +37,10 @@ DolphinDB 中数据表和矩阵都采用了列式存储。以下是表和矩阵�
 
 - 二元运算符：+, -, *, /, ratio, %, &&, ||, &, |, pow
 - 序列函数：ratios, deltas, prev, next, move
-- [滑动窗口函数](https://www.dolphindb.cn/cn/help/200/FunctionsandCommands/SeriesOfFunctions/mFunctions.html)：mcount，mavg, msum, mmax, mimax, mimin, mmin, mprod, mstd, mvar, mmed, mpercentile, mrank, mwavg, mwsum, mbeta, mcorr, mcovar
-- [累计窗口函数](https://www.dolphindb.cn/cn/help/200/FunctionsandCommands/SeriesOfFunctions/cumFunctions.html)：cumcount, cumavg, cumsum, cummax, cummin, cumprod, cumstd, cumvar, cummed, cumpercentile, cumPositiveStreak, cumrank, cumwavg, cumwsum, cumbeta, cumcorr, cumcovar
+- [滑动窗口函数](https://docs.dolphindb.cn/zh/funcs/themes/mFunctions.html)：mcount，mavg, msum, mmax, mimax, mimin, mmin, mprod, mstd, mvar, mmed, mpercentile, mrank, mwavg, mwsum, mbeta, mcorr, mcovar
+- [累计窗口函数](https://docs.dolphindb.cn/zh/funcs/themes/cumFunctions.html)：cumcount, cumavg, cumsum, cummax, cummin, cumprod, cumstd, cumvar, cummed, cumpercentile, cumPositiveStreak, cumrank, cumwavg, cumwsum, cumbeta, cumcorr, cumcovar
 - 聚合函数：count, avg, sum, sum2, first, firstNot, last, lastNot, max, min, std, var, med, mode, percentile, atImax, atImin, wavg, wsum, beta, corr, covar
-- [row 系列函数](https://www.dolphindb.cn/cn/help/200/FunctionsandCommands/SeriesOfFunctions/rowFunctions.html)（针对面板数据的每一行进行计算）：rowCount, rowAvg, rowSum, rowSum2, rowProd, rowMax, rowMin, rowStd, rowVar, rowBeta, rowCorr, rowAnd, rowOr, rowXor
+- [row 系列函数](https://docs.dolphindb.cn/zh/funcs/themes/rowFunctions.html)（针对面板数据的每一行进行计算）：rowCount, rowAvg, rowSum, rowSum2, rowProd, rowMax, rowMin, rowStd, rowVar, rowBeta, rowCorr, rowAnd, rowOr, rowXor
 
 下文通过举例的方式让读者更能了解这些函数是如何进行面板数据操作。
 
@@ -341,7 +341,7 @@ rowMin(price);
 
 indexedMatrix 和 indexedSeries 在进行二元运算时，系统会自动以 "outer join" 的方式对齐，然后进行运算。
 
-1.30.20/2.00.8 版本后，DolphinDB 提供了用于矩阵对齐的函数 [align](https://www.dolphindb.cn/cn/help/200/FunctionsandCommands/FunctionReferences/a/align.html)，拓展了标签矩阵的对齐功能，使矩阵对齐和运算更加灵活。
+1.30.20/2.00.8 版本后，DolphinDB 提供了用于矩阵对齐的函数 [align](https://docs.dolphindb.cn/zh/funcs/a/align.html)，拓展了标签矩阵的对齐功能，使矩阵对齐和运算更加灵活。
 
 (1) indexedSeries 之间的对齐运算
 
@@ -480,7 +480,7 @@ b|13       13       15
 
 ### 3.3 重采样和频度转换
 
-DolphinDB 提供了 [resample](https://www.dolphindb.cn/cn/help/200/FunctionsandCommands/FunctionReferences/r/resample.html) 和 [asfreq](https://www.dolphindb.cn/cn/help/200/FunctionsandCommands/FunctionReferences/a/asfreq.html) 函数，用于对有时间类型索引的 indexedSeries 或者 indexedMatrix 进行重采样和频度转换。
+DolphinDB 提供了 [resample](https://docs.dolphindb.cn/zh/funcs/r/resample.html) 和 [asfreq](https://docs.dolphindb.cn/zh/funcs/a/asfreq.html) 函数，用于对有时间类型索引的 indexedSeries 或者 indexedMatrix 进行重采样和频度转换。
 
 其实现目的是为用户提供一个对常规时间序列数据重新采样和频率转换的便捷的方法。
 
@@ -582,7 +582,7 @@ each(mfunc, m, 0 1)
 
 DolphinDB 提供了按行进行运算的高阶函数 byRow，以及一系列内置的 row 函数（参见 row 系列函数）。
 
-以对某个矩阵应用 row 函数 [rowCount](https://www.dolphindb.cn/cn/help/200/FunctionsandCommands/FunctionReferences/r/rowCount.html) 为例：
+以对某个矩阵应用 row 函数 [rowCount](https://docs.dolphindb.cn/zh/funcs/r/rowCount.html) 为例：
 
 ```
 m=matrix([4.5 NULL 1.5, 1.5 4.8 5.9, 4.9 2.0 NULL]);
@@ -605,7 +605,7 @@ byRow(mfunc{, 0}, m)
 
 #### 3.4.3 分组聚合
 
-数据表的分组聚合可以通过 SQL 的 [group by](https://www.dolphindb.cn/cn/help/200/SQLStatements/groupby.html) 语句实现；而通过 [regroup](https://www.dolphindb.cn/cn/help/200/FunctionsandCommands/FunctionReferences/r/regroup.html) 函数，可以实现矩阵的分组聚合操作。
+数据表的分组聚合可以通过 SQL 的 [group by](https://docs.dolphindb.cn/zh/funcs/ho_funcs/groupby.html) 语句实现；而通过 [regroup](https://docs.dolphindb.cn/zh/funcs/r/regroup.html) 函数，可以实现矩阵的分组聚合操作。
 
 根据给出的时间标签将一个价格矩阵进行分组聚合：
 
@@ -616,7 +616,7 @@ price = (190 + rand(10.0, 2000))$1000:2
 regroup(price, minute(timestamp), avg, true)
 ```
 
-对于 [pivot by](https://www.dolphindb.cn/cn/help/200/SQLStatements/pivotBy.html) 产生的面板矩阵，按照 label 进行聚合，可以通过 [rowNames](https://www.dolphindb.cn/cn/help/200/FunctionsandCommands/FunctionReferences/r/rowNames.html) 或者 [colNames](https://www.dolphindb.cn/cn/help/200/FunctionsandCommands/FunctionReferences/c/columnNames.html) 获取标签：
+对于 [pivot by](https://docs.dolphindb.cn/zh/progr/sql/pivotBy.html) 产生的面板矩阵，按照 label 进行聚合，可以通过 [rowNames](https://docs.dolphindb.cn/zh/funcs/r/rowNames.html) 或者 [colNames](https://docs.dolphindb.cn/zh/funcs/c/columnNames.html) 获取标签：
 
 ```
 n=1000

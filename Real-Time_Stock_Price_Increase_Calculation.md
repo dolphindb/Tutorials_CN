@@ -71,7 +71,7 @@
 
 ### 1.3 实时计算方案
 
-本教程通过 [createReactiveStateEngine](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/c/createReactiveStateEngine.html?highlight=createreactivestateengine) 函数创建响应式状态引擎实时计算股票涨幅，通过 [createCrossSectionalEngine](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/c/createCrossSectionalEngine.html?highlight=createcrosssectionalaggregator) 函数创建横截面引擎对股票截面上的涨幅进行排序生成涨幅榜。
+本教程通过 [createReactiveStateEngine](https://docs.dolphindb.cn/zh/funcs/c/createReactiveStateEngine.html?highlight=createreactivestateengine) 函数创建响应式状态引擎实时计算股票涨幅，通过 [createCrossSectionalEngine](https://docs.dolphindb.cn/zh/funcs/c/createCrossSectionalEngine.html?highlight=createcrosssectionalaggregator) 函数创建横截面引擎对股票截面上的涨幅进行排序生成涨幅榜。
 
 本教程实现的处理流程如下图所示：
 
@@ -79,11 +79,11 @@
 
 **处理流程图说明：**
 
-- 实时数据：为了测试方便，本教程选择从数据库内取出某一天的快照数据，通过 [replay](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/r/replay.html?highlight=replay) 函数指定速率回放，以此模拟实时数据。
+- 实时数据：为了测试方便，本教程选择从数据库内取出某一天的快照数据，通过 [replay](https://docs.dolphindb.cn/zh/funcs/r/replay.html?highlight=replay) 函数指定速率回放，以此模拟实时数据。
 - snapshotStreamTable 是 DolphinDB 中的流数据表，用于接收实时数据源的数据并发布给流计算引擎进行实时计算。
-- [subscribeTable](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/s/subscribeTable.html?highlight=subscribetable) 订阅流数据表，将 snapshotStreamTable 中的增量数据根据股票代码 SecurityID 过滤出沪市主板 A 股的数据，并添加到流计算引擎中计算涨幅。
-- 响应式状态引擎结合内置的 [tmfirst](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/t/tmfirst.html?highlight=tmfirst), [tmove](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/t/tmove.html?highlight=tmove) 函数实时计算涨幅。
-- 横截面引擎结合内置的 [rank](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/r/rank.html?highlight=rank) 函数实时计算排名。
+- [subscribeTable](https://docs.dolphindb.cn/zh/funcs/s/subscribeTable.html?highlight=subscribetable) 订阅流数据表，将 snapshotStreamTable 中的增量数据根据股票代码 SecurityID 过滤出沪市主板 A 股的数据，并添加到流计算引擎中计算涨幅。
+- 响应式状态引擎结合内置的 [tmfirst](https://docs.dolphindb.cn/zh/funcs/t/tmfirst.html?highlight=tmfirst), [tmove](https://docs.dolphindb.cn/zh/funcs/t/tmove.html?highlight=tmove) 函数实时计算涨幅。
+- 横截面引擎结合内置的 [rank](https://docs.dolphindb.cn/zh/funcs/r/rank.html?highlight=rank) 函数实时计算排名。
 - 计算结果表是 DolphinDB 中的共享键值表，用于维护涨幅榜的截面，其数据可以被外部消费者消费。
 - Grafana 查询引擎输出的计算结果，以实现动态展示涨幅榜的效果。
 
@@ -186,7 +186,7 @@ loadTextEx(dbHandle=database(dbName), tableName=tbName, partitionColumns=`DateTi
 
 - 测试只使用了 2021年12月01日上交所 30 只股票 10:30:00 前的数据，共 32972 条数据，内存占用约 30 M
 - 历史数据对象为 csv 文本数据，磁盘空间占用  23 MB
-- [loadTextEx](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/l/loadTextEx.html?highlight=loadtextex) 函数可以直接将数据文件加载到数据库中。其中系统会对数据文件中的数据执行 *transform* 参数指定的函数，再将得到的结果保存到数据库中，本教程中将 csv 中的十档量价数据转化为了 array vector 进行存储
+- [loadTextEx](https://docs.dolphindb.cn/zh/funcs/l/loadTextEx.html?highlight=loadtextex) 函数可以直接将数据文件加载到数据库中。其中系统会对数据文件中的数据执行 *transform* 参数指定的函数，再将得到的结果保存到数据库中，本教程中将 csv 中的十档量价数据转化为了 array vector 进行存储
 
 数据导入完成后，可以执行以下查询语句确认数据是否导入成功：
 

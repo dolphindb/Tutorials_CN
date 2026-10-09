@@ -2,26 +2,32 @@
 
 DolphinDB 是一款高性能分布式时序数据库。与传统的关系数据库和常见的时序数据库不同，DolphinDB 不仅提供了高速存取时序数据的基本功能，而且内置了向量化的多范式编程语言与强大的计算引擎。DolphinDB 的计算引擎不仅可以用于量化金融的回测和研发，也可以用于生产环境的实时计算，譬如各种频率的金融量化因子的流式实时计算。
 
-- [1.1 DolphinDB 流计算框架](#11-dolphindb-流计算框架)
-- [1.2 数据结构](#12-数据结构)
-- [2.1 实现示例](#21-实现示例)
-	- [**2.1.1 WorldQuant Alpha 1**](#211-worldquant-alpha-1)
-	- [**2.1.2 国泰君安 001 因子**](#212-国泰君安-001-因子)
-- [2.2 改写规则](#22-改写规则)
-- [2.3 注意事项](#23-注意事项)
-- [3.1 实现示例](#31-实现示例)
-	- [**3.1.1 价格涨跌幅**](#311-价格涨跌幅)
-	- [**3.1.2 加权平均价格**](#312-加权平均价格)
-- [3.2 无状态函数和状态函数](#32-无状态函数和状态函数)
-	- [**3.2.1 无状态函数**](#321-无状态函数)
-	- [**3.2.2 状态函数**](#322-状态函数)
-	- [**3.2.3 状态和无状态的拆分**](#323-状态和无状态的拆分)
-- [3.3 if-else](#33-if-else)
-- [3.4 历史数据访问（窗口计算和迭代）](#34-历史数据访问窗口计算和迭代)
-- [3.5 循环](#35-循环)
-- [4.1 数组向量 (array vector)](#41-数组向量-array-vector)
-- [4.2 即时编译(JIT)](#42-即时编译jit)
-- [4.3 性能测试](#43-性能测试)
+- [金融因子流式实现](#金融因子流式实现)
+- [1. 概述](#1-概述)
+	- [1.1 DolphinDB 流计算框架](#11-dolphindb-流计算框架)
+	- [1.2 数据结构](#12-数据结构)
+- [2. 日频因子流式实现](#2-日频因子流式实现)
+	- [2.1 实现示例](#21-实现示例)
+		- [**2.1.1 WorldQuant Alpha 1**](#211-worldquant-alpha-1)
+		- [**2.1.2 国泰君安 001 因子**](#212-国泰君安-001-因子)
+	- [2.2 改写规则](#22-改写规则)
+	- [2.3 注意事项](#23-注意事项)
+- [3. 高频因子流式实现](#3-高频因子流式实现)
+	- [3.1 实现示例](#31-实现示例)
+		- [**3.1.1 价格涨跌幅**](#311-价格涨跌幅)
+		- [**3.1.2 加权平均价格**](#312-加权平均价格)
+	- [3.2 无状态函数和状态函数](#32-无状态函数和状态函数)
+		- [**3.2.1 无状态函数**](#321-无状态函数)
+		- [**3.2.2 状态函数**](#322-状态函数)
+		- [**3.2.3 状态和无状态的拆分**](#323-状态和无状态的拆分)
+	- [3.3 if-else](#33-if-else)
+	- [3.4 历史数据访问（窗口计算和迭代）](#34-历史数据访问窗口计算和迭代)
+	- [3.5 循环](#35-循环)
+- [4. 进阶：高频因子流式实现优化](#4-进阶高频因子流式实现优化)
+	- [4.1 数组向量 (array vector)](#41-数组向量-array-vector)
+	- [4.2 即时编译(JIT)](#42-即时编译jit)
+	- [4.3 性能测试](#43-性能测试)
+- [附件](#附件)
 
 
 # 1. 概述
@@ -34,7 +40,7 @@ DolphinDB 内置的流数据框架支持流数据的发布，订阅，预处理�
 
 本教程主要介绍如何在 **“流数据表 ——> 订阅者(内置流计算引擎) ——> 计算结果”** 这段过程中，利用内置流计算引擎实现金融量化因子并优化之。
 
-DolphinDB 内置流数据引擎详情可见： [流数据引擎 — DolphinDB 2.0 文档](https://www.dolphindb.cn/cn/help/FunctionsandCommands/SeriesOfFunctions/streamingEngine.html)
+DolphinDB 内置流数据引擎详情可见： [流数据引擎 — DolphinDB 2.0 文档](https://docs.dolphindb.cn/zh/funcs/themes/streamingEngine.html)
 
 ## 1.2 数据结构
 
@@ -132,7 +138,7 @@ DolphinDB 提供了存储可变长二维数组的数据类型 array vector。在
 
 DolphinDB 内置的流计算引擎有时间序列引擎，响应式状态引擎，横截面引擎等。在实际场景下，复杂的因子可能涉及横截面、历史状态、时序窗口三种逻辑，需要多个引擎级联才能实现因子逻辑。
 
-为了提高转写效率，DolphinDB 提供了一个 [**引擎流水线解析器（Stream Engine Parser）**](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/s/streamEngineParser.html?highlight=streamengineparser)可以自动解析并创建引擎流水线，使得用户无需编写复杂的级联代码。因此复杂日频因子的实时流计算一般考虑使用 **引擎流水线解析器** 来实现。
+为了提高转写效率，DolphinDB 提供了一个 [**引擎流水线解析器（Stream Engine Parser）**](https://docs.dolphindb.cn/zh/funcs/s/streamEngineParser.html?highlight=streamengineparser)可以自动解析并创建引擎流水线，使得用户无需编写复杂的级联代码。因此复杂日频因子的实时流计算一般考虑使用 **引擎流水线解析器** 来实现。
 
 DolphinDB 目前已经实现了 [WorldQuant 101 Alpha 因子库](https://gitee.com/dolphindb/DolphinDBModules/blob/master/wq101alpha/README_CN.md#worldquant-101-alpha-因子指标库-) 和 [国泰君安 191 Alphas 因子库](https://gitee.com/dolphindb/DolphinDBModules/blob/master/gtja191Alpha/README_CN.md#/dolphindb/DolphinDBModules/blob/master/gtja191Alpha/src/gtja191Alpha.dos) 两个因子库内的函数，分别封装在 wq101alpha.dos 和 gtja191Alpha.dos 模块中。这两个模块实现了批流一体，用户可以方便地通过函数 `streamEngineParser` 实现模块中日频因子的流式计算。
 
@@ -322,9 +328,9 @@ dateTime                000001 000002
 
 - **streamEngineParser 的 metrics 的解析规则如下**：
 
-① [行计算系列（row 系列）](https://www.dolphindb.cn/cn/help/FunctionsandCommands/SeriesOfFunctions/rowFunctions.html)的函数会被分发给横截面引擎进行计算，所以涉及横截面计算的逻辑需要使用 row 系列函数。如果没有对应的 row 系列的函数，用户可以通过高阶函数 `byRow` 自行实现逐行计算的逻辑。
+① [行计算系列（row 系列）](https://docs.dolphindb.cn/zh/funcs/themes/rowFunctions.html)的函数会被分发给横截面引擎进行计算，所以涉及横截面计算的逻辑需要使用 row 系列函数。如果没有对应的 row 系列的函数，用户可以通过高阶函数 `byRow` 自行实现逐行计算的逻辑。
 
-② [rolling](https://www.dolphindb.cn/cn/help/200/Functionalprogramming/TemplateFunctions/rolling.html) 函数会被分发给时序聚合引擎进行计算，所以涉及时序窗口的计算需要使用 `rolling` 函数。
+② [rolling](https://docs.dolphindb.cn/zh/funcs/ho_funcs/rolling.html) 函数会被分发给时序聚合引擎进行计算，所以涉及时序窗口的计算需要使用 `rolling` 函数。
 
 ③ 其余所有计算会被分发给响应式状态引擎进行计算。响应式状态引擎因子的具体转写注意事项可以**参见[第3章节](#3-高频因子流式实现)。**
 
@@ -357,7 +363,7 @@ def gtjaAlpha1(open, close, vol){
 
 # 3. 高频因子流式实现 
 
-响应式状态引擎里注入的每一条数据都会触发一次计算，产生一条结果。高频因子的实时流计算一般可以考虑使用 **响应式状态引擎**（[**createReactiveStateEngine**](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/c/createReactiveStateEngine.html)）来实现。
+响应式状态引擎里注入的每一条数据都会触发一次计算，产生一条结果。高频因子的实时流计算一般可以考虑使用 **响应式状态引擎**（[**createReactiveStateEngine**](https://docs.dolphindb.cn/zh/funcs/c/createReactiveStateEngine.html)）来实现。
 
 ## 3.1 实现示例
 
@@ -556,7 +562,7 @@ def factorWeightedAveragedPrice(bidPrice0, bidOrderQty0, offerPrice0, offerOrder
 metrics = <[dateTime, factorWeightedAveragedPrice(bidPrice0, bidOrderQty0, offerPrice0, offerOrderQty0)]>
 ```
 
-上述处理方法是通用方法。但对于 `if-else`， DolphinDB 里有函数 `iif` 可以替代，并且更推荐使用 [`iif`](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/i/iif.html?highlight=iif)。
+上述处理方法是通用方法。但对于 `if-else`， DolphinDB 里有函数 `iif` 可以替代，并且更推荐使用 [`iif`](https://docs.dolphindb.cn/zh/funcs/i/iif.html?highlight=iif)。
 
 ```
 def factorWeightedAveragedPrice(bidPrice0, bidOrderQty0, offerPrice0, offerOrderQty0){
@@ -830,7 +836,7 @@ securityID tradeTime               sum    avg    sum_avg                 anyVect
 
 ## 3.4 历史数据访问（窗口计算和迭代）
 
-DolphinDB 内置了丰富的计算函数来帮助用户在状态函数里面实现各种涉及历史数据的计算。比如：[滑动窗口系列（m 系列）](https://www.dolphindb.cn/cn/help/FunctionsandCommands/SeriesOfFunctions/mFunctions.html)、[时序滑动窗口系列（tm 系列）](https://www.dolphindb.cn/cn/help/FunctionsandCommands/SeriesOfFunctions/tmFunctions.html)、[累计窗口系列（cum 系列）](https://www.dolphindb.cn/cn/help/FunctionsandCommands/SeriesOfFunctions/cumFunctions.html)、[`ffill`](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/f/ffill.html) 等函数。
+DolphinDB 内置了丰富的计算函数来帮助用户在状态函数里面实现各种涉及历史数据的计算。比如：[滑动窗口系列（m 系列）](https://docs.dolphindb.cn/zh/funcs/themes/mFunctions.html)、[时序滑动窗口系列（tm 系列）](https://docs.dolphindb.cn/zh/funcs/themes/tmFunctions.html)、[累计窗口系列（cum 系列）](https://docs.dolphindb.cn/zh/funcs/themes/cumFunctions.html)、[`ffill`](https://docs.dolphindb.cn/zh/funcs/f/ffill.html) 等函数。
 
 除此之外，还有 `movingWindowData` 和 `tmovingWindowData` 可以直接返回变量历史值组成的向量，方便用户实现更多的自定义计算。
 
@@ -924,7 +930,7 @@ select * from resultTable
 
 - **注意事项**
 
-① 高阶函数 [moving(func, …)](https://www.dolphindb.cn/cn/help/Functionalprogramming/TemplateFunctions/moving.html?highlight=moving) 中的 *func* 是一个聚合函数，需要用 defg 定义 `func` 函数。
+① 高阶函数 [moving(func, …)](https://docs.dolphindb.cn/zh/funcs/ho_funcs/moving.html) 中的 *func* 是一个聚合函数，需要用 defg 定义 `func` 函数。
 
 ② 状态函数不支持函数自身调用的写法，所以遇到需要历史因子值的逻辑时（比如当前计算值为空，就用上一个因子值填充）会很难表示。为此，DolphinDB 提供了 `conditionalIterate`、`genericStateIterate` 等函数。但是，这些函数记录的不是因子函数最终 return 的结果，而是截至该函数所在当前行代码运行后计算的结果。所以，为了正确的取到因子函数的历史结果，逻辑上需要把 `conditionalIterate`、`genericStateIterate` 等函数放在整个状态函数的最后一步。
 

@@ -35,7 +35,7 @@ __参数 memoryReleaseRate 控制将未使用的内存释放给操作系统的�
 
 __参数 maxPartitionNumPerQuery 控制单次查询数据量__：系统默认允许单次最多可查找 65536 个分区的数据。若一次查询过多分区，需加载到内存的数据量过大，则可能导致 OOM。可根据需求以及可用内存量，适当调节该参数，控制单次可查询的分区数量。
 
-关于参数配置的详情，参见用户手册，内存配置参数（[单实例配置](https://www.dolphindb.cn/cn/help/DatabaseandDistributedComputing/Configuration/StandaloneMode.html)）
+关于参数配置的详情，参见用户手册，内存配置参数（[单实例配置](https://docs.dolphindb.cn/zh/db_distr_comp/cfg/function_configuration.html)）
 
 ## 2. 高效使用内存
 

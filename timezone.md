@@ -89,7 +89,7 @@ DolphinDB 支持以下九种表示时间的数据类型：
 
 #### 1.2.1 方案一：存储时区信息<!-- omit in toc --> 
 
-- step 1 : 北京买家的交易时间为`2022.05.20 11:30:05`，可以使用 DolphinDB 的内置函数 [gmtime](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/g/gmtime.html)，将本地时间转换成零时区时间，并配合 [long](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/l/long.html) 函数得到Unix 时间戳，同理可得卖方东京时间的 Unix 时间戳。以数据库服务部署在东八区的中国为例，具体代码如下：
+- step 1 : 北京买家的交易时间为`2022.05.20 11:30:05`，可以使用 DolphinDB 的内置函数 [gmtime](https://docs.dolphindb.cn/zh/funcs/g/gmtime.html)，将本地时间转换成零时区时间，并配合 [long](https://docs.dolphindb.cn/zh/funcs/l/long.html) 函数得到Unix 时间戳，同理可得卖方东京时间的 Unix 时间戳。以数据库服务部署在东八区的中国为例，具体代码如下：
 
 ```
 $ gmtime(2022.05.20 11:30:05)
@@ -493,7 +493,7 @@ mysql> select * from taqTs limit 5;
 
 ## 4. CSV 文件的时间处理
 
-DolphinDB 提供内置函数 [loadText](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/l/loadText.html) 和 [loadTextEx](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/l/loadTextEx.html) 函数，实现将 csv 数据加载到 DolphinDB 的内存表和分布式表中。本节以 [loadText](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/l/loadText.html) 函数为例，对于日期列或时间列，如果 DolphinDB 识别的数据类型不符合预期，不仅需要在 schema 的 type 列指定时间类型，还需要在 format 列中指定数据文件中日期或时间的格式（用字符串表示），如 "MM/dd/yyyy"。如何表示日期和时间格式请参考[日期和时间的调整及格式](https://www.dolphindb.cn/cn/help/DataManipulation/TemporalObjects/ParsingandFormatofTemporalVariables.html)。如何加载文本数据请参考 [DolphinDB文本数据加载教程](https://gitee.com/dolphindb/Tutorials_CN/blob/master/import_csv.md)。
+DolphinDB 提供内置函数 [loadText](https://docs.dolphindb.cn/zh/funcs/l/loadText.html) 和 [loadTextEx](https://docs.dolphindb.cn/zh/funcs/l/loadTextEx.html) 函数，实现将 csv 数据加载到 DolphinDB 的内存表和分布式表中。本节以 [loadText](https://docs.dolphindb.cn/zh/funcs/l/loadText.html) 函数为例，对于日期列或时间列，如果 DolphinDB 识别的数据类型不符合预期，不仅需要在 schema 的 type 列指定时间类型，还需要在 format 列中指定数据文件中日期或时间的格式（用字符串表示），如 "MM/dd/yyyy"。如何表示日期和时间格式请参考[日期和时间的调整及格式](https://docs.dolphindb.cn/zh/progr/data_mani/format_temp_obj.html)。如何加载文本数据请参考 [DolphinDB文本数据加载教程](https://gitee.com/dolphindb/Tutorials_CN/blob/master/import_csv.md)。
 
 
 
@@ -509,7 +509,7 @@ data = loadText("/data/taq.csv")
 
 在使用时如涉及时区信息，可根据需要使用以下内置函数。以上述 data 表为例进行说明：
 
-- 利用 DolphinDB 内置时区转换函数 [gmtime](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/g/gmtime.html)，把本地时间（测试系统的本地时间为东八区时间）转换成格林尼治时间（零时区时间）：
+- 利用 DolphinDB 内置时区转换函数 [gmtime](https://docs.dolphindb.cn/zh/funcs/g/gmtime.html)，把本地时间（测试系统的本地时间为东八区时间）转换成格林尼治时间（零时区时间）：
 
 ```
 gmData = select gmtime(concatDateTime(date,time)) as utc, * from data;
@@ -518,7 +518,7 @@ gmData = select gmtime(concatDateTime(date,time)) as utc, * from data;
 
 ![image-20220824090627776](https://github.com/dolphindb/Tutorials_CN/raw/master/images/timezone/timezone-7.png)
 
-- 利用 DolphinDB 内置时区转换函数 [localtime](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/l/localtime.html)，把零时区时间转换成本地时间（测试系统的本地时间为东八区时间） ：
+- 利用 DolphinDB 内置时区转换函数 [localtime](https://docs.dolphindb.cn/zh/funcs/l/localtime.html)，把零时区时间转换成本地时间（测试系统的本地时间为东八区时间） ：
 
 ```
 localData = select localtime(utc) as localtime,* from gmData;
@@ -527,7 +527,7 @@ localData = select localtime(utc) as localtime,* from gmData;
 
 ![image-20220824090814412](https://github.com/dolphindb/Tutorials_CN/raw/master/images/timezone/timezone-8.png)
 
-- 利用 DolphinDB 内置时区转换函数 [convertTZ](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/c/convertTZ.html)，完成两个指定时区之间的转换：
+- 利用 DolphinDB 内置时区转换函数 [convertTZ](https://docs.dolphindb.cn/zh/funcs/c/convertTZ.html)，完成两个指定时区之间的转换：
 
 ```
 convertTZ(2022.04.25T08:25:45,"US/Eastern","Asia/Shanghai");
@@ -549,7 +549,7 @@ DolphinDB 存储时间值时没有时区信息。相反，它提供各种时区�
 
 - **如何实现有无时区的存储**
   - 对于不需要时区信息的存储，用户将原始时间（DATE , TIME , TIMESTAMP 类型均可）的数据直接存入 DolphinDB 即可。DolphinDB 将按原时间输出，不会增加时区转换。
-  - 对于需要时区信息的存储，用户在写入数据库时可以通过 DolphinDB 内置时区转换函数 [gmtime](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/g/gmtime.html) 将本地时间转换成 UTC 时间进行存储，之后客户端查询时可以通过 DolphinDB 内置时区转换函数 [localtime](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/l/localtime.html) 和 [convertTZ](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/c/convertTZ.html) 将 UTC 时间转换成本地时间和其它时区的时间。
+  - 对于需要时区信息的存储，用户在写入数据库时可以通过 DolphinDB 内置时区转换函数 [gmtime](https://docs.dolphindb.cn/zh/funcs/g/gmtime.html) 将本地时间转换成 UTC 时间进行存储，之后客户端查询时可以通过 DolphinDB 内置时区转换函数 [localtime](https://docs.dolphindb.cn/zh/funcs/l/localtime.html) 和 [convertTZ](https://docs.dolphindb.cn/zh/funcs/c/convertTZ.html) 将 UTC 时间转换成本地时间和其它时区的时间。
 - 储存没有时区信息的时间值。
 
 直接将时间值（日期、时间或TIMESTAMP类型）保存到 DolphinDB。数据将按照最初保存的方式返回，没有任何时区转换。

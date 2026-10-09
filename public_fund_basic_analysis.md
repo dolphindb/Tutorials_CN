@@ -56,11 +56,11 @@
 | Closed     | DOUBLE   | 封闭期       |
 | Status     | INT      | 状态         |
 
-> 字符串字段使用 SYMBOL 类型和 STRING 类型存储的差异，参考：[数据类型 — DolphinDB 2.0 文档](https://www.dolphindb.cn/cn/help/200/DataTypesandStructures/DataTypes/index.html)的字符串部分内容。
+> 字符串字段使用 SYMBOL 类型和 STRING 类型存储的差异，参考：[数据类型 — DolphinDB 2.0 文档](https://docs.dolphindb.cn/zh/progr/data_types.html)的字符串部分内容。
 
 ### 1.2 公开市场数据导入
 
-截止 2022 年 7 月，已经面市的公募基金总数约 1 万多只，公开市场数据表的行数与面市公募基金总数相等，所以这个表的数据量相对比较小，建议使用 DolphinDB 的[维度表](https://www.dolphindb.cn/cn/help/200/FunctionsandCommands/FunctionReferences/c/createTable.html)进行存储。以 csv 数据文件导入 DolphinDB 维度表为例，具体代码如下：
+截止 2022 年 7 月，已经面市的公募基金总数约 1 万多只，公开市场数据表的行数与面市公募基金总数相等，所以这个表的数据量相对比较小，建议使用 DolphinDB 的[维度表](https://docs.dolphindb.cn/zh/funcs/c/createTable.html)进行存储。以 csv 数据文件导入 DolphinDB 维度表为例，具体代码如下：
 
 > 10 万行以下的单表数据建议用 DolphinDB 的维度表存储。
 
@@ -137,7 +137,7 @@ select top 50 * from  fundFee where Type == "债券型", not(FullName like "%指
 
 #### 1.3.3 按基金类型分组后的信息摘要
 
-DolphinDB 的 [stat 函数](https://www.dolphindb.cn/cn/help/200/FunctionsandCommands/FunctionReferences/s/stat.html)可以快速生成数据的统计信息，包括平均值、最大值、最小值、计数、中位数和标准差等，[quantile 函数](https://www.dolphindb.cn/cn/help/200/FunctionsandCommands/FunctionReferences/q/quantile.html)可以快速计算分位数，可以通过 [def](https://www.dolphindb.cn/cn/help/200/Objects/FunctionCall.html) 自定义一个信息摘要统计函数，然后对 Type 列进行分组计算，具体代码如下：
+DolphinDB 的 [stat 函数](https://docs.dolphindb.cn/zh/funcs/s/stat.html)可以快速生成数据的统计信息，包括平均值、最大值、最小值、计数、中位数和标准差等，[quantile 函数](https://docs.dolphindb.cn/zh/funcs/q/quantile.html)可以快速计算分位数，可以通过 [def](https://docs.dolphindb.cn/zh/progr/objs/func_call.html) 自定义一个信息摘要统计函数，然后对 Type 列进行分组计算，具体代码如下：
 
 ```
 // user defined summary statistics function
@@ -193,7 +193,7 @@ select describe(Fee) as `count`mean`std`min`q_25`q_50`q_75`max`median from fundF
 
 ### 2.2 工作日数据导入
 
-工作日数据表的数据量相对比较小，建议使用 DolphinDB 的[维度表](https://www.dolphindb.cn/cn/help/200/FunctionsandCommands/FunctionReferences/c/createTable.html)进行存储。以 csv 数据文件导入 DolphinDB 维度表为例，具体代码如下：
+工作日数据表的数据量相对比较小，建议使用 DolphinDB 的[维度表](https://docs.dolphindb.cn/zh/funcs/c/createTable.html)进行存储。以 csv 数据文件导入 DolphinDB 维度表为例，具体代码如下：
 
 ```
 csvDataPath = "/ssd/ssd2/data/fundData/workday.csv"
@@ -235,7 +235,7 @@ loadTable(dbName, tbName).append!(tmp)
 
 ### 2.4 历史净值数据导入
 
-截止 2022 年 7 月，历史净值数据表的数据量大约是 1 千多万条，建议使用 DolphinDB 的[分区表](https://www.dolphindb.cn/cn/help/200/FunctionsandCommands/FunctionReferences/c/createPartitionedTable.html)进行存储，分区方法是在时间维度按照年为最小单位进行分区。以 csv 数据文件导入 DolphinDB 分区表为例，具体代码如下：
+截止 2022 年 7 月，历史净值数据表的数据量大约是 1 千多万条，建议使用 DolphinDB 的[分区表](https://docs.dolphindb.cn/zh/funcs/c/createPartitionedTable.html)进行存储，分区方法是在时间维度按照年为最小单位进行分区。以 csv 数据文件导入 DolphinDB 分区表为例，具体代码如下：
 
 ```
 csvDataPath = "/ssd/ssd2/data/fundData/publicFundNetValue.csv"
@@ -284,7 +284,7 @@ loadTable(dbName, tbName).append!(tmp)
 
 ![06.wideForm](./images/public_fund_basic_analysis/06.wideForm.png)
 
-在进行数据时间序列分析时，一般的范式是使用 **wide-form** 表格数据。但原始数据常常为 **long-form** 表格数据，DolphinDB 提供了 [pivot 函数](https://www.dolphindb.cn/cn/help/200/Functionalprogramming/TemplateFunctions/pivot.html) 和 [panel 函数](https://www.dolphindb.cn/cn/help/200/FunctionsandCommands/FunctionReferences/p/panel.html)，把数据从 **long-form** 转变为 **wide-form**。
+在进行数据时间序列分析时，一般的范式是使用 **wide-form** 表格数据。但原始数据常常为 **long-form** 表格数据，DolphinDB 提供了 [pivot 函数](https://docs.dolphindb.cn/zh/funcs/ho_funcs/pivot.html) 和 [panel 函数](https://docs.dolphindb.cn/zh/funcs/p/panel.html)，把数据从 **long-form** 转变为 **wide-form**。
 
 #### 2.5.1 计算复权净值日收益率
 
@@ -310,7 +310,7 @@ oriData = select TradeDate, SecurityID, AdjNetValue from fundNetValue
 panelData = panel(row=oriData.TradeDate, col=oriData.SecurityID, metrics=oriData.AdjNetValue, rowLabel=workdays, parallel=true)
 ```
 
-使用 DolphinDB 的 [percentChange 函数](https://www.dolphindb.cn/cn/help/200/FunctionsandCommands/FunctionReferences/p/percentChange.html)计算复权净值日收益率，NULL 值的填充最大窗口是 10，具体代码如下：
+使用 DolphinDB 的 [percentChange 函数](https://docs.dolphindb.cn/zh/funcs/p/percentChange.html)计算复权净值日收益率，NULL 值的填充最大窗口是 10，具体代码如下：
 
 ```
 returnsMatrix = panelData.ffill(10).percentChange()

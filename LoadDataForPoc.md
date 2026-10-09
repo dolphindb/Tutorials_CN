@@ -5,17 +5,11 @@
 - [金融 PoC 用户历史数据导入指导手册之股票 level2 逐笔篇](#金融-poc-用户历史数据导入指导手册之股票-level2-逐笔篇)
   - [1 任务规划](#1-任务规划)
     - [1.1 数据源分析](#11-数据源分析)
-      - [1.1.1 存储 CSV 文件](#111-存储-csv-文件)
-      - [1.1.2 导入 CSV 文件](#112-导入-csv-文件)
     - [1.2 规划存储方案](#12-规划存储方案)
     - [1.3 规划分区](#13-规划分区)
   - [2 导入步骤](#2-导入步骤)
     - [2.1 建库建表](#21-建库建表)
     - [2.2 编写导入脚本](#22-编写导入脚本)
-      - [2.2.1 导入单个文件](#221-导入单个文件)
-      - [2.2.2 清洗转换数据](#222-清洗转换数据)
-      - [2.2.3 并行导入](#223-并行导入)
-      - [2.2.4 监测导入状态](#224-监测导入状态)
   - [3 附件](#3-附件)
 
 ## 1 任务规划
@@ -45,12 +39,12 @@ CSV 文件需要解压好，放到 DolphinDB 所在服务器上，并确认用�
 
 使用 Linux 系统的 head 等命令打开 CSV 文件，确定要导入或添加的列在 DolphinDB 数据库中的字段名称和数据类型。字段名称的确定方式如下：
 
-* 如果 CSV 文件有列名，使用函数 [extractTextSchema](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/e/extractTextSchema.html) 提取 CSV 文件的列名和列类型作为字段名称和类型。
+* 如果 CSV 文件有列名，使用函数 [extractTextSchema](https://docs.dolphindb.cn/zh/funcs/e/extractTextSchema.html) 提取 CSV 文件的列名和列类型作为字段名称和类型。
 * 如果 CSV 文件没有列名，根据相关数据对应的说明文档确定字段名称和类型（见下文的字段类型转换）。
 
 **字段类型转换**
 
-DolphinDB 支持的数据类型如下图，详情见 [DolphinDB 数据类型](https://www.dolphindb.cn/cn/help/DataTypesandStructures/DataTypes/index.html)。
+DolphinDB 支持的数据类型如下图，详情见 [DolphinDB 数据类型](https://docs.dolphindb.cn/zh/progr/data_types.html)。
 
 <div align=center><img src=images/LoadDataForPoc/dataType.png width=75%> </div>
 
@@ -113,9 +107,9 @@ DolphinDB 导入数据的步骤是先把 CSV 文件读入内存，再写入硬�
 
 ### 2.1 建库建表
 
-本教程以上海证券交易所的逐笔委托数据为例来建库建表，点击 [Entrust](https://www.dolphindb.cn/downloads/docs/LoadDataForPoc.zip) 下载用例数据。文件解压后放到 loadForPoc/SH/Order/20210104 目录下。在 DolphinDB 中，可以使用 [create](https://www.dolphindb.cn/cn/help/SQLStatements/create.html) 语句建库建表。DolphinDB 建库时有 OLAP 和 TSDB 两种存储引擎可以选择，具体的选择原则可参考 [数据模型](https://www.dolphindb.cn/cn/help/DatabaseandDistributedComputing/Database/DataModel.html)。
+本教程以上海证券交易所的逐笔委托数据为例来建库建表，点击 [Entrust](https://www.dolphindb.cn/downloads/docs/LoadDataForPoc.zip) 下载用例数据。文件解压后放到 loadForPoc/SH/Order/20210104 目录下。在 DolphinDB 中，可以使用 [create](https://docs.dolphindb.cn/zh/progr/sql/create.html) 语句建库建表。DolphinDB 建库时有 OLAP 和 TSDB 两种存储引擎可以选择，具体的选择原则可参考 [数据模型](https://docs.dolphindb.cn/zh/db_distr_comp/db/multimodal_storage.html)。
 
-本教程推荐选用 [TSDB](https://www.dolphindb.cn/cn/help/DatabaseandDistributedComputing/Database/DataModel.html) 引擎。上市每天逐笔委托数据大小在 3GB 左右，根据前面的分区规划，先按日期做值分区，再用股票代码做7个 HASH 分区。按日期值分区时，**VALUE 的初始值写两三天的初始值即可，实际分区值会根据数据的实际日期自动扩展**。
+本教程推荐选用 [TSDB](https://docs.dolphindb.cn/zh/db_distr_comp/db/multimodal_storage.html) 引擎。上市每天逐笔委托数据大小在 3GB 左右，根据前面的分区规划，先按日期做值分区，再用股票代码做7个 HASH 分区。按日期值分区时，**VALUE 的初始值写两三天的初始值即可，实际分区值会根据数据的实际日期自动扩展**。
 
 完整的建库代码如下：
 
@@ -171,7 +165,7 @@ sortColumns = [`SecurityID,`TransactTime]
 
 #### 2.2.1 导入单个文件
 
-DolphinDB 导入数据的核心函数是 [loadTextEx](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/l/loadTextEx.html)，可用于 CSV 文件读取、数据清洗和入库一体化操作。导入数据核心代码如下：
+DolphinDB 导入数据的核心函数是 [loadTextEx](https://docs.dolphindb.cn/zh/funcs/l/loadTextEx.html)，可用于 CSV 文件读取、数据清洗和入库一体化操作。导入数据核心代码如下：
 
 ```
 db = database("dfs://sh_entrust")
@@ -209,7 +203,7 @@ select top 10 * from loadTable("dfs://sh_entrust",`entrust)
 
 #### 2.2.2 清洗转换数据
 
-上一节的核心导入代码中，使用了 [loadTextEx](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/l/loadTextEx.html) 函数，其中 transform 参数引用了 transType 函数定义，其作用是数据清洗和类型转换。[loadTextEx](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/l/loadTextEx.html) 导入机制如下：
+上一节的核心导入代码中，使用了 [loadTextEx](https://docs.dolphindb.cn/zh/funcs/l/loadTextEx.html) 函数，其中 transform 参数引用了 transType 函数定义，其作用是数据清洗和类型转换。[loadTextEx](https://docs.dolphindb.cn/zh/funcs/l/loadTextEx.html) 导入机制如下：
 
 首先，把 CSV 文件加载到内存生成一个内存表，这个内存表的数据类型可能和之前建立的分布式数据表定义的类型不一致。可以通过指定 schema 的方式尝试进行自动转换，详见：[指定数据导入格式](https://gitee.com/dolphindb/Tutorials_CN/blob/master/import_csv.md#2-%E6%8C%87%E5%AE%9A%E6%95%B0%E6%8D%AE%E5%AF%BC%E5%85%A5%E6%A0%BC%E5%BC%8F)。无法进行自动转换的类型会提示失败。此时，我们需要使用 transform 参数引用的函数进行类型转换和数据清洗。从该函数的返回值中获得清洗转换后的数据，类型依然是一个内存表。然后，把处理好的内存表数据写到硬盘上对应数据库中的数据表内。如果 transform 参数已赋值，**分布式表的结构和 transform 参数引用的函数返回的表的结构保持一致，不用和原 CSV 文件的结构保持一致。**
 
@@ -223,7 +217,7 @@ transform 能够非常方便地完成但不限于如下需求：
 
 ##### 转换数据类型 <!-- omit in toc -->
 
-DolphinDB 提供了读取 CSV 文件 schema 的函数 [extractTextSchema](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/e/extractTextSchema.html)。使用以下代码提取 CSV 文件的 schema：
+DolphinDB 提供了读取 CSV 文件 schema 的函数 [extractTextSchema](https://docs.dolphindb.cn/zh/funcs/e/extractTextSchema.html)。使用以下代码提取 CSV 文件的 schema：
 
 ```
 filePath = "/home/ychan/data/loadForPoc/SH/Order/20210104/Entrust.csv"
@@ -255,9 +249,9 @@ def transType(mutable memTable)
 }
 ```
 
-可以看到，每修改一列就增加一个 [replaceColumn!](https://www.dolphindb.cn/cn/help/FunctionsandCommands/CommandsReferences/r/replaceColumn%21.html) 函数。这个函数的作用是使用一个向量替换 table 中指定列，替换后，指定列的数据类型与向量的数据类型一致。在这个案例中，它的第一个参数是数据表的列名，第二个参数是使用相关函数对内存表的指定列处理之后的数据。所以，数据类型的转换的关键在于 [replaceColumn!](https://www.dolphindb.cn/cn/help/FunctionsandCommands/CommandsReferences/r/replaceColumn%21.html) 函数第二个参数的写法。在金融数据的导入实践中，主要有以下几类：
+可以看到，每修改一列就增加一个 [replaceColumn!](https://docs.dolphindb.cn/zh/funcs/r/replaceColumn%21.html) 函数。这个函数的作用是使用一个向量替换 table 中指定列，替换后，指定列的数据类型与向量的数据类型一致。在这个案例中，它的第一个参数是数据表的列名，第二个参数是使用相关函数对内存表的指定列处理之后的数据。所以，数据类型的转换的关键在于 [replaceColumn!](https://docs.dolphindb.cn/zh/funcs/r/replaceColumn%21.html) 函数第二个参数的写法。在金融数据的导入实践中，主要有以下几类：
 
-* 时间日期为 epoch 格式，也就是指定时间减去 1970-01-01 00:00:00 的差值。这个差值可以到秒、毫秒等，它是一串纯数字，会自动识别成整数。在转换时，直接把这个整数传递给 DolphinDB 对应时间日期类型的函数即可，如需精确到秒，使用 [datetime](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/d/datetime.html)，精确到毫秒使用 [timestamp](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/t/timestamp.html)，精确到纳秒使用 [namotimestamp](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/n/nanotimestamp.html) 。逐笔数据一般精确到毫秒，类型转换函数的写法为：
+* 时间日期为 epoch 格式，也就是指定时间减去 1970-01-01 00:00:00 的差值。这个差值可以到秒、毫秒等，它是一串纯数字，会自动识别成整数。在转换时，直接把这个整数传递给 DolphinDB 对应时间日期类型的函数即可，如需精确到秒，使用 [datetime](https://docs.dolphindb.cn/zh/funcs/d/datetime.html)，精确到毫秒使用 [timestamp](https://docs.dolphindb.cn/zh/funcs/t/timestamp.html)，精确到纳秒使用 [namotimestamp](https://docs.dolphindb.cn/zh/funcs/n/nanotimestamp.html) 。逐笔数据一般精确到毫秒，类型转换函数的写法为：
 
     ```
     def transType(mutable memTable)
@@ -266,7 +260,7 @@ def transType(mutable memTable)
     }
     ```
 
-* 时间是日期格式，是纯数字组成的年月日时分秒等，中间没有分割符。比如 20220101，20220101093000 等，这些格式会被识别为整数。转换时，先把这些数字使用 [string](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/s/string.html) 函数转成字符串，再用 [temporalParse](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/t/temporalParse.html) 格式化成对应的日期格式。逐笔数据一般精确到毫秒，这种类型转换函数的写法为：
+* 时间是日期格式，是纯数字组成的年月日时分秒等，中间没有分割符。比如 20220101，20220101093000 等，这些格式会被识别为整数。转换时，先把这些数字使用 [string](https://docs.dolphindb.cn/zh/funcs/s/string.html) 函数转成字符串，再用 [temporalParse](https://docs.dolphindb.cn/zh/funcs/t/temporalParse.html) 格式化成对应的日期格式。逐笔数据一般精确到毫秒，这种类型转换函数的写法为：
 
     ```
     def transType(mutable memTable)
@@ -275,7 +269,7 @@ def transType(mutable memTable)
     }
     ```
 
-* 股票代码是纯数字，会识别成整数。股票代码推荐定义为 SYMBOL 类型，在内存表中，只要使用 [string](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/s/string.html) 函数把其转化为字符串格式，在导入时，就能够自动存储为 SYMBOL 类型。此外，股票代码一般是6位，以零开头的需要用 [lpad](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/l/lpad.html) 函数要进行补齐。纯数字股票代码列转换的函数写法为
+* 股票代码是纯数字，会识别成整数。股票代码推荐定义为 SYMBOL 类型，在内存表中，只要使用 [string](https://docs.dolphindb.cn/zh/funcs/s/string.html) 函数把其转化为字符串格式，在导入时，就能够自动存储为 SYMBOL 类型。此外，股票代码一般是6位，以零开头的需要用 [lpad](https://docs.dolphindb.cn/zh/funcs/l/lpad.html) 函数要进行补齐。纯数字股票代码列转换的函数写法为
 
     ```
     def transType(mutable memTable)
@@ -284,7 +278,7 @@ def transType(mutable memTable)
     }
     ```
 
-* 如果遇到其它一些类型转换可参考【[函数分类](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionStatistics/index.html) 】寻找相关函数。或在技术支持群寻求帮助。
+* 如果遇到其它一些类型转换可参考【[函数分类](https://docs.dolphindb.cn/zh/funcs/funcs_by_topics.html) 】寻找相关函数。或在技术支持群寻求帮助。
 
 ##### 文件名给出某列信息，在 CSV 文件的基础上增加此列 <!-- omit in toc -->
 
@@ -298,7 +292,7 @@ def addCol(mutable memTable,datePara)
 }
 ```
 
-新增的列总是在最后，如果和分布式表的顺序不一致，在这个函数返回之前，先用 [reorderColumns!](https://www.dolphindb.cn/cn/help/FunctionsandCommands/CommandsReferences/r/reorderColumns%21.html) 函数调整成一致。
+新增的列总是在最后，如果和分布式表的顺序不一致，在这个函数返回之前，先用 [reorderColumns!](https://docs.dolphindb.cn/zh/funcs/r/reorderColumns%21.html) 函数调整成一致。
 
 ##### 过滤数据 <!-- omit in toc -->
 
@@ -384,7 +378,7 @@ parallelLoad(allFileContents)
 
 * parallelLoad，包含唯一参数 allFileContents，参数值为目录，最小级别为快照、逐笔委托、逐笔成交等。parallelLoad 函数遍历指定目录下的所有日期作为任务参数，调用 loadOneDayFile 按日期提交任务。
 
-loadOneDayFile 和 parallelLoad 这两个函数的写法不唯一，可以根据数据的存储格式参考本案例代码灵活设计。主要目的是按天提交任务，每个任务导入某种数据一天的数据。这些代码执行完成后，会马上返回，所提交的异步任务会在后台执行，可以调用 [getRecentJobs](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/g/getRecentJobs.html) 函数查看后台的任务执行情况。任务情况如下图所示：
+loadOneDayFile 和 parallelLoad 这两个函数的写法不唯一，可以根据数据的存储格式参考本案例代码灵活设计。主要目的是按天提交任务，每个任务导入某种数据一天的数据。这些代码执行完成后，会马上返回，所提交的异步任务会在后台执行，可以调用 [getRecentJobs](https://docs.dolphindb.cn/zh/funcs/g/getRecentJobs.html) 函数查看后台的任务执行情况。任务情况如下图所示：
 
 <div align=center><img src=images/LoadDataForPoc/getRecentJobs.jpg width=80%> </div>
 
@@ -404,7 +398,7 @@ errorMsg 可能的错误信息及解决方式如下：
 
 <div align=center><img src=images/LoadDataForPoc/hardWrite.jpg width=50%> </div>
 
-并行导入追求高速的写入性能，通过配置多块磁盘，可发挥硬盘并行 IO 的能力。通过单机配置文件 dolphindb.cfg 或集群配置文件 cluster.cfg 中的 volumes 参数进行磁盘配置。详细的磁盘配置方法详见：[磁盘参数](https://www.dolphindb.cn/cn/help/DatabaseandDistributedComputing/Configuration/ConfigParamRef.html#id15)。
+并行导入追求高速的写入性能，通过配置多块磁盘，可发挥硬盘并行 IO 的能力。通过单机配置文件 dolphindb.cfg 或集群配置文件 cluster.cfg 中的 volumes 参数进行磁盘配置。详细的磁盘配置方法详见：[磁盘参数](https://docs.dolphindb.cn/zh/db_distr_comp/cfg/function_configuration.html)。
 
 并行导入时，通过观察硬盘的写入速度、内存消耗情况、CPU 利用率、集群间网络速率，查看资源使用情况。如果内存、CPU 和集群间网络都还有盈余，硬盘的 IO 还没有饱和，可以把 workerNum 配置修改的大一些，提升并行度。
 

@@ -34,7 +34,7 @@ DolphinDB 2.00.8 及以上版本支持本篇所有代码。此外，1.30.20 及�
 
 ## 1.1 DolphinDB 批计算表关联
 
-在批计算场景中， DolphinDB SQL 语句中不仅提供了与传统关系型数据库类似的 [equi join](https://www.dolphindb.cn/cn/help/SQLStatements/TableJoiners/equijoin.html), [full join](https://www.dolphindb.cn/cn/help/SQLStatements/TableJoiners/fulljoin.html), [left join](https://www.dolphindb.cn/cn/help/SQLStatements/TableJoiners/leftjoin.html), [prefix join](https://www.dolphindb.cn/cn/help/SQLStatements/TableJoiners/prefixjoin.html), [cross join](https://www.dolphindb.cn/cn/help/SQLStatements/TableJoiners/crossjoin.html) 等表连接方式，还提供了两种专门为时序数据设计的连接方式：[asof join](https://www.dolphindb.cn/cn/help/SQLStatements/TableJoiners/asofjoin.html) 和 [window join](https://www.dolphindb.cn/cn/help/SQLStatements/TableJoiners/windowjoin.html)。
+在批计算场景中， DolphinDB SQL 语句中不仅提供了与传统关系型数据库类似的 [equi join](https://docs.dolphindb.cn/zh/progr/sql/equijoin.html), [full join](https://docs.dolphindb.cn/zh/progr/sql/fulljoin.html), [left join](https://docs.dolphindb.cn/zh/progr/sql/leftjoin.html), [prefix join](https://docs.dolphindb.cn/zh/progr/sql/prefixjoin.html), [cross join](https://docs.dolphindb.cn/zh/progr/sql/crossjoin.html) 等表连接方式，还提供了两种专门为时序数据设计的连接方式：[asof join](https://docs.dolphindb.cn/zh/progr/sql/asofjoin.html) 和 [window join](https://docs.dolphindb.cn/zh/progr/sql/windowjoin.html)。
 
 以下是一个简单的 asof join 批计算的示例，更详细应用介绍请参考：[应用教程：使用 Asof Join, Window Join 快速估计个股交易成本](https://ask.dolphindb.net/article/9)。我们将通过它进一步分析实时连接中的挑战。
 
@@ -64,7 +64,7 @@ asof join 能够关联当前时刻或距离当前时刻最近时刻的数据。�
 
 # 2. 流数据连接引擎
 
-DolphinDB 提供了 [createAsofJoinEngine](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/c/createAsofJoinEngine.html), [createWindowJoinEngine](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/c/createWindowJoinEngine.html), [createEquiJoinEngine](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/c/createEquiJoinEngine.html), [createLeftSemiJoinEngine](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/c/createLeftSemiJoinEngine.html), [createLookupJoinEngine](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/c/createLookupJoinEngine.html) 等 5 种不同的流计算连接引擎函数，不同连接引擎的关联规则基本上与批计算中相应的 join 类似，差异将在后续小节中详细说明。本章首先概述 DolphinDB 流计算引擎，之后依次介绍各个引擎的原理和效果。
+DolphinDB 提供了 [createAsofJoinEngine](https://docs.dolphindb.cn/zh/funcs/c/createAsofJoinEngine.html), [createWindowJoinEngine](https://docs.dolphindb.cn/zh/funcs/c/createWindowJoinEngine.html), [createEquiJoinEngine](https://docs.dolphindb.cn/zh/funcs/c/createEquiJoinEngine.html), [createLeftSemiJoinEngine](https://docs.dolphindb.cn/zh/funcs/c/createLeftSemiJoinEngine.html), [createLookupJoinEngine](https://docs.dolphindb.cn/zh/funcs/c/createLookupJoinEngine.html) 等 5 种不同的流计算连接引擎函数，不同连接引擎的关联规则基本上与批计算中相应的 join 类似，差异将在后续小节中详细说明。本章首先概述 DolphinDB 流计算引擎，之后依次介绍各个引擎的原理和效果。
 
 流计算连接引擎是 DolphinDB 中对数据流进行实时关联的计算模块，可以理解为一个设置了关联规则的计算黑盒，输入为2条数据流，输出为1条数据流，引擎内部会自动维护计算状态。
 
@@ -160,7 +160,7 @@ Equi Join 引擎的连接机制类似于 SQL 中的 equi join，按连接列和�
 
 建议按推荐场景使用Equi Join 引擎，即对连接列和时间列唯一的数据使用本引擎。若非推荐场景，为了理解输出效果，可以参考如下设计原理：Equi Join 引擎内部分别为左右表数据维护两个以连接列和时间列作为键值的键值表作为缓存，并对每条记录标识是否关联过。下面以左表为例介绍，右表同理。当一条左表记录注入引擎，则查找右表缓存， 若能成功匹配则输出一条结果，并在右表缓存中标识对应记录为已关联，这时左表缓存中不会保存这条立刻关联输出的左表记录（此原理会导致上图中后续的灰色数据(A,t1,4)无法匹配而不输出），若未能匹配成功，则将该条左表记录加入左表缓存，并标识为未关联。
 
-需要注意，对于缓存中的已关联、未关联的数据，Equi Join 引擎都会进行过期清理，清理原理可参考用户手册 [createEquiJoinEngine](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/c/createEquiJoinEngine.html)。若遵循推荐场景使用此引擎，但是引擎输出结果与 SQL equi join 结果仍不完全一致，则是设置的清理规则导致的差异。
+需要注意，对于缓存中的已关联、未关联的数据，Equi Join 引擎都会进行过期清理，清理原理可参考用户手册 [createEquiJoinEngine](https://docs.dolphindb.cn/zh/funcs/c/createEquiJoinEngine.html)。若遵循推荐场景使用此引擎，但是引擎输出结果与 SQL equi join 结果仍不完全一致，则是设置的清理规则导致的差异。
 
 ## 2.4 Lookup Join 引擎（createLookupJoinEngine）
 
@@ -186,7 +186,7 @@ Left Semi Join 引擎的连接机制类似于 SQL 中的 equi join ，按连接�
 
 DolphinDB 中流计算连接引擎是结合各类实际业务场景而设计的，本章将从 6 个实际应用案例出发介绍各个连接引擎适用的具体场景。为了便于解释关联效果，下文案例中均以少量的模拟数据依次注入右表、左表来模拟数据流输入。
 
-流计算脚本开发和调试过程中推荐使用 [getStreamingStat](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/g/getStreamingStat.html) 函数监控流订阅的状态，[getStreamEngineStat ](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/g/getStreamEngineStat.html)函数监控流数据引擎的状态。此外，文末[附录](#附录)中提供了清理流数据环境的通用脚本，用于一键清理所有的流数据表、取消所有的订阅、释放所有的流引擎。
+流计算脚本开发和调试过程中推荐使用 [getStreamingStat](https://docs.dolphindb.cn/zh/funcs/g/getStreamingStat.html) 函数监控流订阅的状态，[getStreamEngineStat ](https://docs.dolphindb.cn/zh/funcs/g/getStreamEngineStat.html)函数监控流数据引擎的状态。此外，文末[附录](#附录)中提供了清理流数据环境的通用脚本，用于一键清理所有的流数据表、取消所有的订阅、释放所有的流引擎。
 
 ## 3.1 用 Asof Join 引擎计算个股交易成本
 
@@ -320,7 +320,7 @@ subscribeTable(tableName="trades", actionName="minAggr", handler=tsEngine1, msgA
 subscribeTable(tableName="snapshot", actionName="minAggr", handler=tsEngine2, msgAsTable=true, offset=-1, hash=2) 
 ```
 
-- 首先用两个独立的时序聚合引擎（[createTimeSeriesEngine](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/c/createTimeSeriesEngine.html)）对原始的快照和成交数据流按数据中的时间戳做实时聚合、输出每一分钟的指标，之后通过引擎级联的方式，将两个时序聚合引擎的输出分别作为左右表注入连接引擎。引擎级联更详细的介绍见 [流数据教程：4.1 流水线处理](https://gitee.com/dolphindb/Tutorials_CN/blob/master/streaming_tutorial.md#41_流水线处理) 。
+- 首先用两个独立的时序聚合引擎（[createTimeSeriesEngine](https://docs.dolphindb.cn/zh/funcs/c/createTimeSeriesEngine.html)）对原始的快照和成交数据流按数据中的时间戳做实时聚合、输出每一分钟的指标，之后通过引擎级联的方式，将两个时序聚合引擎的输出分别作为左右表注入连接引擎。引擎级联更详细的介绍见 [流数据教程：4.1 流水线处理](https://gitee.com/dolphindb/Tutorials_CN/blob/master/streaming_tutorial.md#41_流水线处理) 。
 - Equi Join 引擎对左、右表的处理是完全相同的，即上例中在 createEquiJoinEngine 时交换左右表不会影响关联结果。
 
 构造数据写入作为原始输入的 2 个流数据表：
@@ -468,7 +468,7 @@ subscribeTable(tableName="stockKline", actionName="appendStock", handler=getLeft
 
 ```
 
-- 数据流向：首先，股票数据 stockKline 注入连接引擎 leftJoinIndex1 的左表，指数数据经过滤后注入该引擎的右表，这一步将股票与指数的分钟指标关联。之后，将上述连接引擎的输出直接注入响应式状态引擎（[createReactiveStateEngine](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/c/createReactiveStateEngine.html)），利用响应式状态引擎内置的 mcorr 和 ratios 函数计算股票与指数的相关性指标。多个引擎之间采用了引擎级联的方式处理，引擎级联更详细的介绍见 [流数据教程：4.1 流水线处理](https://gitee.com/dolphindb/Tutorials_CN/blob/master/streaming_tutorial.md#41_流水线处理) 。响应式状态引擎教程见 [金融高频因子的流批统一计算：DolphinDB响应式状态引擎介绍](https://gitee.com/dolphindb/Tutorials_CN/blob/master/reactive_state_engine.md) 。
+- 数据流向：首先，股票数据 stockKline 注入连接引擎 leftJoinIndex1 的左表，指数数据经过滤后注入该引擎的右表，这一步将股票与指数的分钟指标关联。之后，将上述连接引擎的输出直接注入响应式状态引擎（[createReactiveStateEngine](https://docs.dolphindb.cn/zh/funcs/c/createReactiveStateEngine.html)），利用响应式状态引擎内置的 mcorr 和 ratios 函数计算股票与指数的相关性指标。多个引擎之间采用了引擎级联的方式处理，引擎级联更详细的介绍见 [流数据教程：4.1 流水线处理](https://gitee.com/dolphindb/Tutorials_CN/blob/master/streaming_tutorial.md#41_流水线处理) 。响应式状态引擎教程见 [金融高频因子的流批统一计算：DolphinDB响应式状态引擎介绍](https://gitee.com/dolphindb/Tutorials_CN/blob/master/reactive_state_engine.md) 。
 - 订阅指数数据 indexKline 时指定 handler 为自定义函数 appendIndex ，是指不断地收到 indexKline 数据后，首先过滤出指数数据中指数名为 idx1 的数据，然后再注入连接引擎的右表。
 
 构造数据写入作为原始输入的 2 个流数据表：

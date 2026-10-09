@@ -1,17 +1,18 @@
 # redo log 和 cache engine：相关概念和配置说明
 
-- [1. redo log/cache engine相关概念](#1-redo-logcache-engine相关概念)
-  - [1.1 什么是 redo log](#11-什么是-redo-log)
-  - [1.2 什么是 cache engine](#12-什么是-cache-engine)
-  - [1.3 redo log 和 cache engine 的写入和回收](#13-redo-log-和-cache-engine-的写入和回收)
-  - [1.4 为什么需要redo log/cache engine](#14-为什么需要redo-logcache-engine)
-- [2. 配置说明](#2-配置说明)
-  - [2.1 redo log 相关配置和函数](#21-redo-log-相关配置和函数)
-  - [2.2 cache engine 相关配置和函数](#22-cache-engine-相关配置和函数)
-- [3. 性能的影响与优化建议](#3-性能的影响与优化建议)
-  - [3.1 磁盘负载和内存使用](#31-磁盘负载和内存使用)
-  - [3.2 对节点启动的影响](#32-对节点启动的影响)
-  - [3.3 相关性能优化的建议](#33-相关性能优化的建议)
+- [redo log 和 cache engine：相关概念和配置说明](#redo-log-和-cache-engine相关概念和配置说明)
+  - [1. redo log/cache engine相关概念](#1-redo-logcache-engine相关概念)
+    - [1.1 什么是 redo log](#11-什么是-redo-log)
+    - [1.2 什么是 cache engine](#12-什么是-cache-engine)
+    - [1.3 redo log 和 cache engine 的写入和回收](#13-redo-log-和-cache-engine-的写入和回收)
+    - [1.4 为什么需要redo log/cache engine](#14-为什么需要redo-logcache-engine)
+  - [2. 配置说明](#2-配置说明)
+    - [2.1 redo log 相关配置和函数](#21-redo-log-相关配置和函数)
+    - [2.2 cache engine 相关配置和函数](#22-cache-engine-相关配置和函数)
+  - [3. 性能的影响与优化建议](#3-性能的影响与优化建议)
+    - [3.1 磁盘负载和内存使用](#31-磁盘负载和内存使用)
+    - [3.2 对节点启动的影响](#32-对节点启动的影响)
+    - [3.3 相关性能优化的建议](#33-相关性能优化的建议)
 
 这篇教程重点介绍了 DolphinDB 中的 redo log 和 cache engine 机制以及其配置对整体性能的影响。
 
@@ -92,18 +93,18 @@ DolphinDB 采用列式存储，一个分区内的每一列数据单独存放在�
 
 配置参数：
 
-- [dataSync](https://www.dolphindb.cn/cn/help/DatabaseandDistributedComputing/Configuration/StandaloneMode.html?highlight=dataSync): 是否使用 redo log 功能。取值为 1 代表开启 redo log；默认值为 0，表示不启用该功能。
-- [redoLogDir](https://www.dolphindb.cn/cn/help/DatabaseandDistributedComputing/Configuration/StandaloneMode.html?highlight=redoLogDir): redo log 文件的存放位置。一般建议将该位置设置到 SSD 硬盘上以获取最佳的性能。默认在 homeDir（由 home 参数决定）下的 log/redoLog 目录下。如果是集群模式，注意要分别设置不同数据节点的目录，避免使用相同目录，造成写入错误。
-- [redoLogPurgeLimit](https://www.dolphindb.cn/cn/help/DatabaseandDistributedComputing/Configuration/StandaloneMode.html?highlight=redoLogPurgeLimit): redo log 文件占用的最大空间，单位为 GB，默认值为 4。当 redo log 文件大小超过该值时会自动开始回收。
-- [redoLogPurgeInterval](https://www.dolphindb.cn/cn/help/DatabaseandDistributedComputing/Configuration/StandaloneMode.html?highlight=redoLogPurgeInterval): redo log 自动回收的周期，单位为秒，默认值为 30，表示每 30 秒自动回收一次。
-- [TSDBRedoLogDir](https://www.dolphindb.cn/cn/help/DatabaseandDistributedComputing/Configuration/StandaloneMode.html?highlight=TSDBRedoLogDir): TSDB 存储引擎重做日志的目录。
+- [dataSync](https://docs.dolphindb.cn/zh/db_distr_comp/cfg/function_configuration.html): 是否使用 redo log 功能。取值为 1 代表开启 redo log；默认值为 0，表示不启用该功能。
+- [redoLogDir](https://docs.dolphindb.cn/zh/db_distr_comp/cfg/function_configuration.html): redo log 文件的存放位置。一般建议将该位置设置到 SSD 硬盘上以获取最佳的性能。默认在 homeDir（由 home 参数决定）下的 log/redoLog 目录下。如果是集群模式，注意要分别设置不同数据节点的目录，避免使用相同目录，造成写入错误。
+- [redoLogPurgeLimit](https://docs.dolphindb.cn/zh/db_distr_comp/cfg/function_configuration.html): redo log 文件占用的最大空间，单位为 GB，默认值为 4。当 redo log 文件大小超过该值时会自动开始回收。
+- [redoLogPurgeInterval](https://docs.dolphindb.cn/zh/db_distr_comp/cfg/function_configuration.html): redo log 自动回收的周期，单位为秒，默认值为 30，表示每 30 秒自动回收一次。
+- [TSDBRedoLogDir](https://docs.dolphindb.cn/zh/db_distr_comp/cfg/function_configuration.html): TSDB 存储引擎重做日志的目录。
 
 > 需要注意有些参数需要配置在控制节点配置文件，有些参数则需要配置在数据节点的配置文件里，上面链接会有具体说明。
 
 运维函数：
 
-- [getRedoLogGCStat](https://www.dolphindb.cn/cn/help/200/FunctionsandCommands/FunctionReferences/g/getRedoLogGCStat.html): 获取 redo log 垃圾回收的状态。
-- [imtForceGCRedolog](https://www.dolphindb.cn/cn/help/200/FunctionsandCommands/imt/imtForceGCRedolog.html): 跳过长时间未回收的事务继续回收后续事务。
+- [getRedoLogGCStat](https://docs.dolphindb.cn/zh/funcs/g/getRedoLogGCStat.html): 获取 redo log 垃圾回收的状态。
+- [imtForceGCRedolog](https://docs.dolphindb.cn/zh/funcs/i/imtForceGCRedolog.html): 跳过长时间未回收的事务继续回收后续事务。
 
 ### 2.2 cache engine 相关配置和函数
 
@@ -111,26 +112,26 @@ DolphinDB 采用列式存储，一个分区内的每一列数据单独存放在�
 
 配置参数：
 
-- [OLAPCacheEngineSize](https://www.dolphindb.cn/cn/help/DatabaseandDistributedComputing/Configuration/StandaloneMode.html?highlight=olapcacheenginesize): cache engine 中数据量上限，单位为 GB。默认值为 0，表示不使用 cache engine。若该值大于 0，那么当 cache engine 占用内存大于该值的 30% 时，会主动开始异步回收。
+- [OLAPCacheEngineSize](https://docs.dolphindb.cn/zh/db_distr_comp/cfg/function_configuration.html): cache engine 中数据量上限，单位为 GB。默认值为 0，表示不使用 cache engine。若该值大于 0，那么当 cache engine 占用内存大于该值的 30% 时，会主动开始异步回收。
 
 函数/命令：
 
-- [flushOLAPCache](https://www.dolphindb.cn/cn/help/FunctionsandCommands/CommandsReferences/f/flushOLAPCache.html): 手动清空缓存。只有已经完成的事务才会被清空，正在进行但是还没有提交的事务不会被清空。
-- [getOLAPCacheEngineSize](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/g/getOLAPCacheEngineSize.html): 返回 cache engine 占用的内存量。
-- [setOLAPCacheEngineSize](https://www.dolphindb.cn/cn/help/FunctionsandCommands/CommandsReferences/s/setOLAPCacheEngineSize.html): 在线修改 OLAP 引擎 cache engine 的容量。
-- [getOLAPCacheEngineStat](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/g/getOLAPCacheEngineStat.html): 返回 cache engine 的状态。
+- [flushOLAPCache](https://docs.dolphindb.cn/zh/funcs/f/flushOLAPCache.html): 手动清空缓存。只有已经完成的事务才会被清空，正在进行但是还没有提交的事务不会被清空。
+- [getOLAPCacheEngineSize](https://docs.dolphindb.cn/zh/funcs/g/getOLAPCacheEngineSize.html): 返回 cache engine 占用的内存量。
+- [setOLAPCacheEngineSize](https://docs.dolphindb.cn/zh/funcs/s/setOLAPCacheEngineSize.html): 在线修改 OLAP 引擎 cache engine 的容量。
+- [getOLAPCacheEngineStat](https://docs.dolphindb.cn/zh/funcs/g/getOLAPCacheEngineStat.html): 返回 cache engine 的状态。
 
 **TSDB 引擎 cache engine 相关参数和函数**
 
 配置参数：
 
-- [TSDBCacheEngineSize](https://www.dolphindb.cn/cn/help/DatabaseandDistributedComputing/Configuration/StandaloneMode.html?highlight=TSDBCacheEngineSize): 默认为 1G， 用于配置 TSDB cache engine 的大小，注意如果写入压力太大，系统的 cache engine 内存占用会达到两倍的 TSDBCacheEngineSize 大小。 这是因为写入数据量达到 TSDBCacheEngineSize 时 ，系统会开始将这部分数据刷盘。若刷盘时有新数据的继续写入，系统会重新申请一个新的内存空间。老的内存空间在后台继续做刷盘操作，如果刷盘不够快，有可能因为写入导致新的内存也达到 TSDB CacheEngineSize 大小，所以内存峰值可能会达到 2 倍的 TSDBCacheEngineSize。
+- [TSDBCacheEngineSize](https://docs.dolphindb.cn/zh/db_distr_comp/cfg/function_configuration.html): 默认为 1G， 用于配置 TSDB cache engine 的大小，注意如果写入压力太大，系统的 cache engine 内存占用会达到两倍的 TSDBCacheEngineSize 大小。 这是因为写入数据量达到 TSDBCacheEngineSize 时 ，系统会开始将这部分数据刷盘。若刷盘时有新数据的继续写入，系统会重新申请一个新的内存空间。老的内存空间在后台继续做刷盘操作，如果刷盘不够快，有可能因为写入导致新的内存也达到 TSDB CacheEngineSize 大小，所以内存峰值可能会达到 2 倍的 TSDBCacheEngineSize。
 
 函数/命令:
 
-- [flushTSDBCache](https://www.dolphindb.cn/cn/help/FunctionsandCommands/CommandsReferences/f/flushTSDBCache.html?highlight=flushtsdbcache): 将 TSDB 引擎缓冲区里已经完成的事务强制写入数据库。
-- [getTSDBCacheEngineSize](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/g/getTSDBCacheEngineSize.html?highlight=gettsdbcacheenginesize): 查看 TSDB 引擎 CacheEngine 许使用的内存上限。
-- [setTSDBCacheEngineSize](https://www.dolphindb.cn/cn/help/FunctionsandCommands/CommandsReferences/s/setTSDBCacheEngineSize.html?highlight=settsdb): 用于在线修改 TSDB 引擎的 CacheEngine 容量。
+- [flushTSDBCache](https://docs.dolphindb.cn/zh/funcs/f/flushTSDBCache.html?highlight=flushtsdbcache): 将 TSDB 引擎缓冲区里已经完成的事务强制写入数据库。
+- [getTSDBCacheEngineSize](https://docs.dolphindb.cn/zh/funcs/g/getTSDBCacheEngineSize.html?highlight=gettsdbcacheenginesize): 查看 TSDB 引擎 CacheEngine 许使用的内存上限。
+- [setTSDBCacheEngineSize](https://docs.dolphindb.cn/zh/funcs/s/setTSDBCacheEngineSize.html?highlight=settsdb): 用于在线修改 TSDB 引擎的 CacheEngine 容量。
 
 
 

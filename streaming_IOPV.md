@@ -152,8 +152,8 @@ timeSeriesValue 得到每个时间戳下的所有成分券价值，本次代码�
 
 对面板数据的纵轴（时间序列）的空置填充最近前一笔有效价值，再对横轴（成分券）汇总即可得到每个时间戳上的 IOPV 结果。
 
-* [ffill](https://www.dolphindb.cn/cn/help/200/FunctionsandCommands/FunctionReferences/f/ffill.html) 会找到前一笔最近的非空值，相当于传统方法取前一股票价值。
-* [rowSum](https://www.dolphindb.cn/cn/help/200/FunctionsandCommands/FunctionReferences/r/rowSum.html?highlight=rowsum) 对横向行数据汇总，即把所有成分券的价值汇总得出 IOPV。
+* [ffill](https://docs.dolphindb.cn/zh/funcs/f/ffill.html) 会找到前一笔最近的非空值，相当于传统方法取前一股票价值。
+* [rowSum](https://docs.dolphindb.cn/zh/funcs/r/rowSum.html?highlight=rowsum) 对横向行数据汇总，即把所有成分券的价值汇总得出 IOPV。
 
 在 DolphinDB 中使用一行代码就能完成传统 IOPV 计算步骤3中的复杂逻辑；同时，DolphinDB 是向量计算，能够充分利用多线程完成高效运算。
 
@@ -212,7 +212,7 @@ subscribeTable(tableName="TradeStreamData", actionName="trade_subscribe", offset
 *  最后 subscribeTable 的时候执行 ```IOPV_engine``` 计算引擎，只读取成分券 ```portfolio.key()``` 的行情数据，这种数据过滤处理可以提高执行速度。
 
 **横截面计算逻辑**
-> (1) [横截面计算 createCrossSectionalEngine](https://www.dolphindb.cn/cn/help/200/FunctionsandCommands/FunctionReferences/c/createCrossSectionalEngine.html)，顾名思义就是一个时间戳（时间截面）上的计算，也可以表述为多只股票的数据在同一时间截面 (同一时间戳）上的计算。在这个例子中，就是一个时间截面（时间戳）上需要汇总（sum）所有的股票价值得到净值。<p>
+> (1) [横截面计算 createCrossSectionalEngine](https://docs.dolphindb.cn/zh/funcs/c/createCrossSectionalEngine.html)，顾名思义就是一个时间戳（时间截面）上的计算，也可以表述为多只股票的数据在同一时间截面 (同一时间戳）上的计算。在这个例子中，就是一个时间截面（时间戳）上需要汇总（sum）所有的股票价值得到净值。<p>
 > (2) 在实时 IOPV 计算时，只要收到了一只成分券的最新价格，就计算一次 IOPV，所以设置了 ```triggeringPattern='perRow'```；代表只要收到一笔新的逐笔成交行情，就会触发一次 IOPV 计算。<p>
 > (3) ```metrics=[<last(tradedate)>, <sum(ffill(price) * portfolio[SecurityID]/1000)>]``` 是 IOPV 计算的业务逻辑。<p>
 
@@ -269,7 +269,7 @@ metricsResult = [
 createReactiveStateEngine(name="IOPVResult", metrics=metricsResult, dummyTable=tradeResultDummy, outputTable=IOPVResult, keyColumn=`BasketID, keepOrder=true)
 ```
 
-**[响应式状态引擎](https://www.dolphindb.cn/cn/help/200/FunctionsandCommands/FunctionReferences/c/createReactiveStateEngine.html) 增量计算逻辑（5.1~5.3 增量计算逻辑介绍）**
+**[响应式状态引擎](https://docs.dolphindb.cn/zh/funcs/c/createReactiveStateEngine.html) 增量计算逻辑（5.1~5.3 增量计算逻辑介绍）**
 > ![](images/streaming_IOPV/incrumental_computing.png) <p>
 > (1) 我们先简单创建一张估值表，包含 ```"securityID","price","vol","value"``` 四个字段，其中 ```value=price*vol```。<p>
 > (2) 计算 IOPV*1000，只需要把10只票的价值相加即可。<p>

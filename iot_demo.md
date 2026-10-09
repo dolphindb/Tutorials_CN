@@ -73,13 +73,13 @@ newValuePartitionPolicy=add
 
 ### 4.3 实现步骤
 
-首先我们定义一个流数据表 st 用于接收实时采集的温度数据，使用[`enableTableShareAndPersistence`](https://www.dolphindb.cn/cn/help/FunctionsandCommands/CommandsReferences/e/enableTableShareAndPersistence.html)函数对 st 表做持久化并共享为 sensorTemp，内存中保留的最大数据量是 100 万行。
+首先我们定义一个流数据表 st 用于接收实时采集的温度数据，使用[`enableTableShareAndPersistence`](https://docs.dolphindb.cn/zh/funcs/e/enableTableShareAndPersistence.html)函数对 st 表做持久化并共享为 sensorTemp，内存中保留的最大数据量是 100 万行。
 ```
 st=streamTable(1000000:0,`hardwareId`ts`temp1`temp2`temp3,[INT,TIMESTAMP,DOUBLE,DOUBLE,DOUBLE])
 enableTableShareAndPersistence(table=st, tableName=`sensorTemp, asynWrite=true, compress=false, cacheSize=1000000)
 
 ```
-通过订阅流数据表 sensorTmp，把采集的数据准实时的批量保存到分布式数据库中。分布式表使用日期和设备编号两个分区维度。在物联网大数据场景下，经常要清除过时的数据，这样分区的模式可以简单的通过删除指定日期分区就可以快速的清理过期数据。[`subscribeTable`](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/s/subscribeTable.html)函数最后两个参数控制数据保存的频率，只有订阅数据达到 100 万或时间间隔达到 10 秒才批量将数据写入分布式数据库。
+通过订阅流数据表 sensorTmp，把采集的数据准实时的批量保存到分布式数据库中。分布式表使用日期和设备编号两个分区维度。在物联网大数据场景下，经常要清除过时的数据，这样分区的模式可以简单的通过删除指定日期分区就可以快速的清理过期数据。[`subscribeTable`](https://docs.dolphindb.cn/zh/funcs/s/subscribeTable.html)函数最后两个参数控制数据保存的频率，只有订阅数据达到 100 万或时间间隔达到 10 秒才批量将数据写入分布式数据库。
 
 ```
 db1 = database("",VALUE,today()..(today()+30))
@@ -91,7 +91,7 @@ subscribeTable(tableName="sensorTemp", actionName="sensorTemp", offset=-1, handl
 
 ```
 
-在对流数据做分布式保存数据库的同时，系统使用[`createTimeSeriesEngine`](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/c/createTimeSeriesEngine.html)函数创建一个指标聚合引擎，用于实时计算。函数第一个参数表示时间序列聚合引擎的名称，是时间序列聚合引擎的唯一标识。第二个参数指定了窗口大小为 60 秒，第三个参数指定每 2 秒钟做一次求均值运算，第四个参数是运算的元代码，可以由用户自己指定计算函数，任何系统支持的或用户自定义的聚合函数这里都能支持，通过指定分组字段 hardwareId，函数会将流数据按设备分成 1000 个队列进行均值运算，每个设备都会按各自的窗口计算得到对应的平均温度。最后通过`subscribeTable`订阅流数据，在有新数据进来时触发实时计算，并将运算结果保存到一个新的数据流表 sensorTempAvg 中。
+在对流数据做分布式保存数据库的同时，系统使用[`createTimeSeriesEngine`](https://docs.dolphindb.cn/zh/funcs/c/createTimeSeriesEngine.html)函数创建一个指标聚合引擎，用于实时计算。函数第一个参数表示时间序列聚合引擎的名称，是时间序列聚合引擎的唯一标识。第二个参数指定了窗口大小为 60 秒，第三个参数指定每 2 秒钟做一次求均值运算，第四个参数是运算的元代码，可以由用户自己指定计算函数，任何系统支持的或用户自定义的聚合函数这里都能支持，通过指定分组字段 hardwareId，函数会将流数据按设备分成 1000 个队列进行均值运算，每个设备都会按各自的窗口计算得到对应的平均温度。最后通过`subscribeTable`订阅流数据，在有新数据进来时触发实时计算，并将运算结果保存到一个新的数据流表 sensorTempAvg 中。
 
 createTimeSeriesAggregator 参数说明：时间序列聚合引擎的名称，窗口时间，运算间隔时间，聚合运算元代码，原始数据输入表，运算结果输出表，时序字段，分组字段，触发 GC 记录数阈值。
 

@@ -1,7 +1,7 @@
 # 使用Prometheus监控告警
 
 DolphinDB提供了三种方式进行性能监控：
-* 使用内置函数,如[`getperf`](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/g/getPerf.html),[`getClusterPerf`](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/g/getClusterPerf.html)和[`getJobStat`](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/g/getJobStat.html)；
+* 使用内置函数,如[`getperf`](https://docs.dolphindb.cn/zh/funcs/g/getPerf.html),[`getClusterPerf`](https://docs.dolphindb.cn/zh/funcs/g/getClusterPerf.html)和[`getJobStat`](https://docs.dolphindb.cn/zh/funcs/g/getJobStat.html)；
 * Web界面；
 * 通过第三方系统的API，如Prometheus, Grafana等。
 

@@ -165,7 +165,7 @@
 
 - MessageThrottle
 
-  实现流数据订阅 throttle 参数功能的线程，数量为1。系统每隔一段时间检查当前节点上是否存在经过  throttle 时间但仍未达到 batchSize 的订阅（[subscribeTable](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/s/subscribeTable.html) 函数中指定了 batchSize 和 throttle ）。如果存在，则触发一次订阅的消息处理。通过 `subThrottle` 配置触发检查的间隔时间，默认值为1000，单位为毫秒。
+  实现流数据订阅 throttle 参数功能的线程，数量为1。系统每隔一段时间检查当前节点上是否存在经过  throttle 时间但仍未达到 batchSize 的订阅（[subscribeTable](https://docs.dolphindb.cn/zh/funcs/s/subscribeTable.html) 函数中指定了 batchSize 和 throttle ）。如果存在，则触发一次订阅的消息处理。通过 `subThrottle` 配置触发检查的间隔时间，默认值为1000，单位为毫秒。
 
 - AsynchronousPublisher
 

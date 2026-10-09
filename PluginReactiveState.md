@@ -57,7 +57,7 @@ go
 use rse
 ```
 
-状态函数导入后，我们就可以利用该函数构造 metric 并创建响应式状态引擎，和普通的响应式状态函数的[使用方法](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/c/createReactiveStateEngine.html)相同。
+状态函数导入后，我们就可以利用该函数构造 metric 并创建响应式状态引擎，和普通的响应式状态函数的[使用方法](https://docs.dolphindb.cn/zh/funcs/c/createReactiveStateEngine.html)相同。
 
 ```
 n=10

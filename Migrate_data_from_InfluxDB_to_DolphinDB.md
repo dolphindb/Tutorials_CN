@@ -43,7 +43,7 @@ DolphinDB 支持用户通过 DataX 插件实现数据的读写，但考虑到，
 
 ### 1. 生成测试数据
 
-在实际迁移过程中，我们需要注意数据完成迁移后所使用的数据类型。具体 DolphinDB 支持的数据类型，可以参考 [数据类型](https://www.dolphindb.cn/cn/help/200/DataTypesandStructures/DataTypes/index.html)
+在实际迁移过程中，我们需要注意数据完成迁移后所使用的数据类型。具体 DolphinDB 支持的数据类型，可以参考 [数据类型](https://docs.dolphindb.cn/zh/progr/data_types.html)
 
 这里以 InfluxDB 官方提供的示例数据里的“设备示例数据”([Sample data](https://docs.influxdata.com/influxdb/v2.5/reference/sample-data/#machine-production-sample-data) ) 为例，说明如何把数据导入到 DolphinDB。
 
@@ -202,9 +202,9 @@ def transData(dbName, tbName, mutable data) {
 }
 ```
 
-这里主要定义了2个函数，转换函数入口是 transData。在 writer 的定义里，需要把参数 saveFunctionName 设置为转换入口函数"transData"。上面的函数实现里，主要是先对这个字符串类型的时间列做解析，生成需要的时间列，最后调用 [append!](https://www.dolphindb.cn/cn/help/200/FunctionsandCommands/FunctionReferences/a/append!.html) 去写入分布式表。
+这里主要定义了2个函数，转换函数入口是 transData。在 writer 的定义里，需要把参数 saveFunctionName 设置为转换入口函数"transData"。上面的函数实现里，主要是先对这个字符串类型的时间列做解析，生成需要的时间列，最后调用 [append!](https://docs.dolphindb.cn/zh/funcs/a/append!.html) 去写入分布式表。
 
-在转换时间列时，通过函数 [temporalParse](https://www.dolphindb.cn/cn/help/200/FunctionsandCommands/FunctionReferences/t/temporalParse.html) 去分析时间字符串，并通过函数 [localtime](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/l/localtime.html) 去将 UTC 时间转换成本地时间并进行存储。如果业务上有需要，也可以不做时区转换，存储 temporalParse 的结果。关于时间信息处理相关的实践例子，可以参考 [DolphinDB 中有关时间信息的最佳实践指南](https://gitee.com/dolphindb/Tutorials_CN/blob/master/timezone.md) 。
+在转换时间列时，通过函数 [temporalParse](https://docs.dolphindb.cn/zh/funcs/t/temporalParse.html) 去分析时间字符串，并通过函数 [localtime](https://docs.dolphindb.cn/zh/funcs/l/localtime.html) 去将 UTC 时间转换成本地时间并进行存储。如果业务上有需要，也可以不做时区转换，存储 temporalParse 的结果。关于时间信息处理相关的实践例子，可以参考 [DolphinDB 中有关时间信息的最佳实践指南](https://gitee.com/dolphindb/Tutorials_CN/blob/master/timezone.md) 。
 
 ### 6\. 执行 addax 任务
 

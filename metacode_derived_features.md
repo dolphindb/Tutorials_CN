@@ -124,7 +124,7 @@
 
 ## 3. DolphinDB 元编程代码
 
-本教程中的重点和难点是批量生成大量特征列计算表达式，使用元编程的方式可以显著减少所需的代码量。关于元编程的详情请参考[元编程](https://www.dolphindb.cn/cn/help/Objects/Metaprogramming.html)。本教程通过元编程函数 [sql](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/s/sql.html) 生成元代码。在计算特征的自定义聚合函数中，首先进行一二级指标计算，再进行衍生特征计算。通过 DolphinDB 元编程对 level 2 快照数据完成676列衍生特征的完整计算代码如下：
+本教程中的重点和难点是批量生成大量特征列计算表达式，使用元编程的方式可以显著减少所需的代码量。关于元编程的详情请参考[元编程](https://docs.dolphindb.cn/zh/progr/objs/meta_progr.html)。本教程通过元编程函数 [sql](https://docs.dolphindb.cn/zh/funcs/s/sql.html) 生成元代码。在计算特征的自定义聚合函数中，首先进行一二级指标计算，再进行衍生特征计算。通过 DolphinDB 元编程对 level 2 快照数据完成676列衍生特征的完整计算代码如下：
 
 * [DolphinDB 批计算代码](script/metacode_derived_features/metacode_derived_features.txt)：十档量价数据用多列存储。
 
@@ -198,7 +198,7 @@ colNum = 0..9$STRING
 colName = `DateTime <- (`BidPrice + colNum) <- (`BidOrderQty + colNum) <- (`OfferPrice + colNum) <- (`OfferOrderQty + colNum) <- (`Wap + colNum) <- `WapBalance`PriceSpread`BidSpread`OfferSpread`TotalVolume`VolumeImbalance <- (`LogReturn + colNum) <- (`LogReturnOffer + colNum) <- (`LogReturnBid + colNum)
 subTable.rename!(colName)
 ```
->其中 “<-” 是 DolphinDB 函数 [join](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/j/join.html) 的简写符号，此处用于将各字段拼接成列向量。
+>其中 “<-” 是 DolphinDB 函数 [join](https://docs.dolphindb.cn/zh/funcs/j/join.html) 的简写符号，此处用于将各字段拼接成列向量。
 
 最后将元代码作为参数传入计算特征的自定义聚合函数，配合一二级指标拼接而成的 table 进行676列衍生指标的计算，并以676列的形式作为聚合结果返回，具体代码如下：
 
@@ -240,7 +240,7 @@ return concatMatrix([result, result150, result300, result450])
 
 ## 5. 模型构建
 
-DolphinDB 支持一系列常用的机器学习算法，例如 [最小二乘回归、随机森林、K - 平均等，使用户能够方便地完成回归、分类、聚类等任务](https://www.dolphindb.cn/cn/help/200/FunctionsandCommands/FunctionStatistics/index.html)。除了内置的经典的机器学习函数，DolphinDB 还支持许多第三方库，因此我们也可以调用 DolphinDB 提供的第三方库插件来进行模型训练。
+DolphinDB 支持一系列常用的机器学习算法，例如 [最小二乘回归、随机森林、K - 平均等，使用户能够方便地完成回归、分类、聚类等任务](https://docs.dolphindb.cn/zh/funcs/funcs_by_topics.html)。除了内置的经典的机器学习函数，DolphinDB 还支持许多第三方库，因此我们也可以调用 DolphinDB 提供的第三方库插件来进行模型训练。
 
 XGBOOST（Extreme Gradient Boosting）是一种 Tree Boosting 的可扩展机器学习系统，它在 Gradient Boosting 框架下实现机器学习算法，提供了并行树提升（也称为 GBDT，GBM），可以快速准确地解决许多数据科学的问题。
 

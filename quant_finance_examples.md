@@ -114,7 +114,7 @@ K线数据或相关的signal数据都是基于高精度的行情数据降低时�
 
 中国股票市场每3秒更新一条 level 2 的行情数据，一般包括股票代码、日期、时间、交易量、交易价格、交易次数、买方与卖方的10档报价与量等常用信息，以及其它信息等数据。本例中所用数据为上海证券交易所A股股票2020年6月的 level 2 数据，每天的数据是一个约2.5GB的CSV文件，共68列数据。所有数据文件均存于同一个文件夹下。若其中一半的列为常用数据，遵循每个表每个分区中的常用数据压缩前为100MB左右的原则，可将数据库设计为复合分区。按天（date列）进行值分区，并按照股票代码（symbol列）分为10个HASH分区。
 
-建库以及导入数据的脚本如下。使用[`loadTextEx`](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/l/loadTextEx.html)导入分布式数据库，其详情请参阅[文本数据加载教程](./import_csv.md)。若您已有高频数据，可使用以下脚本建库，但请注意数据中列名与本例中列名一致。若您尚无高频数据，请见3.3节。
+建库以及导入数据的脚本如下。使用[`loadTextEx`](https://docs.dolphindb.cn/zh/funcs/l/loadTextEx.html)导入分布式数据库，其详情请参阅[文本数据加载教程](./import_csv.md)。若您已有高频数据，可使用以下脚本建库，但请注意数据中列名与本例中列名一致。若您尚无高频数据，请见3.3节。
 ```
 dbDate = database("", VALUE, 2020.01.01..2020.12.31)
 dbSymbol=database("", HASH, [SYMBOL, 10])
@@ -215,7 +215,7 @@ schemaTable=table(
 db.createPartitionedTable(schemaTable,`quotes,`date`symbol)
 
 ```
-对于二进制格式的文件，DolphinDB提供了2个函数用于导入：[`readRecord!`](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/r/readRecord!.html)函数和[`loadRecord`](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/l/loadRecord.html)函数。二者的区别是，前者不支持导入字符串类型的数据，后者支持。在二进制文件中，date列和time列的数据以数值形式存储，可以使用[`temporalParse`](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/t/temporalParse.html)函数进行日期和时间类型数据的格式转换。再使用[`replaceColumn!`](https://www.dolphindb.cn/cn/help/FunctionsandCommands/CommandsReferences/r/replaceColumn!.html)函数替换表中原有的列。symbol和market列在二进制文件中也是数值形式存储，处理的方式类似。具体代码如下所示：
+对于二进制格式的文件，DolphinDB提供了2个函数用于导入：[`readRecord!`](https://docs.dolphindb.cn/zh/funcs/r/readRecord!.html)函数和[`loadRecord`](https://docs.dolphindb.cn/zh/funcs/l/loadRecord.html)函数。二者的区别是，前者不支持导入字符串类型的数据，后者支持。在二进制文件中，date列和time列的数据以数值形式存储，可以使用[`temporalParse`](https://docs.dolphindb.cn/zh/funcs/t/temporalParse.html)函数进行日期和时间类型数据的格式转换。再使用[`replaceColumn!`](https://docs.dolphindb.cn/zh/funcs/r/replaceColumn!.html)函数替换表中原有的列。symbol和market列在二进制文件中也是数值形式存储，处理的方式类似。具体代码如下所示：
 ```
 schema = [
 ("symbol", INT), ("market", INT), ("date", INT), ("time", INT), ("preClose", DOUBLE),
@@ -254,7 +254,7 @@ importBinFiles(dataDir, schema);
 
 若您尚无高频数据，可下载[20200601.csv](http://www.dolphindb.cn/downloads/tutorial/20200601.zip)（或[20200601.bin](http://www.dolphindb.cn/downloads/tutorial/20200601_bin.zip)），采用3.1节（或3.2节）中的脚本，将这天数据载入数据库，然后通过修改日期，生成多天的高频数据以供测试。
 
-下列代码通过[`sqlDS`](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/s/sqlDS.html)函数将之前导入的2020.06.01这一天的数据，按分布式表一个分区生成一个数据源的方式，共分成10个数据源，然后通过[`mr`](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/m/mr.html)函数将这10份数据先取到内存更新日期，再写入数据库。`mr`函数的parallel参数可设为true，即采用并行执行，以加块生成模拟数据的速度。若服务器内存不足容纳一天的数据，则需要设为false，即采用串行执行以尽量少占用内存。
+下列代码通过[`sqlDS`](https://docs.dolphindb.cn/zh/funcs/s/sqlDS.html)函数将之前导入的2020.06.01这一天的数据，按分布式表一个分区生成一个数据源的方式，共分成10个数据源，然后通过[`mr`](https://docs.dolphindb.cn/zh/funcs/m/mr.html)函数将这10份数据先取到内存更新日期，再写入数据库。`mr`函数的parallel参数可设为true，即采用并行执行，以加块生成模拟数据的速度。若服务器内存不足容纳一天的数据，则需要设为false，即采用串行执行以尽量少占用内存。
 
 ```
 def writeData(mutable t,dbName,tableName, days){
@@ -454,7 +454,7 @@ corrMatrix = pcross(corr, retMatrix);
 ```
 首先计算分钟级K线，然后获取交易量最大的100只股票。将分钟级K线数据整理为每分钟价格矩阵（priceMatrix），其中每列为一只股票，每行为一分钟。然后对价格矩阵使用高阶函数`each`，对每列应用函数ratios(x)-1，将价格矩阵转化为收益率矩阵（retMatrix）。最后对收益率矩阵使用高阶函数`pcross`，对其每两列应用函数`corr`以计算其两两相关性。最终结果为100*100的相关性矩阵（corrMatrix）。
 
-有关其它高阶函数以及更多细节，请参考用户手册中的[高阶函数](https://www.dolphindb.cn/cn/help/Functionalprogramming/TemplateFunctions/index.html)。
+有关其它高阶函数以及更多细节，请参考用户手册中的[高阶函数](https://docs.dolphindb.cn/zh/funcs/ho_funcs/ho_funcs.html)。
 
 ### 4.7 使用API读写数据
 

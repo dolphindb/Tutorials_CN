@@ -34,12 +34,12 @@ DolphinDB 提供了流数据表 (stream table) 和流计算引擎用于实时数
 
 ### 3.1 定义输入输出流数据表
 
-首先定义一个流数据表用于接收实时采集的传感器数据，并用[`enableTableShareAndPersistence`](https://www.dolphindb.cn/cn/help/FunctionsandCommands/CommandsReferences/e/enableTableShareAndPersistence.html)函数把流数据表共享和持久化到硬盘上。指定 cacheSize 参数以限制内存中保留的最大数据量是 100 万行。虽然传感器设备有很多指标，因为本例只涉及温度指标，所以本例对表结构进行了简化，表结构仅包含三列，即传感器编号 deviceID，时间 ts 和温度 temperature。代码如下：
+首先定义一个流数据表用于接收实时采集的传感器数据，并用[`enableTableShareAndPersistence`](https://docs.dolphindb.cn/zh/funcs/e/enableTableShareAndPersistence.html)函数把流数据表共享和持久化到硬盘上。指定 cacheSize 参数以限制内存中保留的最大数据量是 100 万行。虽然传感器设备有很多指标，因为本例只涉及温度指标，所以本例对表结构进行了简化，表结构仅包含三列，即传感器编号 deviceID，时间 ts 和温度 temperature。代码如下：
 ```
 st=streamTable(1000000:0,`deviceID`ts`temperature,[INT,DATETIME,FLOAT])
 enableTableShareAndPersistence(table=st,tableName=`sensor,asynWrite=false,compress=true, cacheSize=1000000)
 ```
-其次定义报警输出流数据表用于异常检测引擎的输出。按照 DolphinDB 用户手册中对创建异常检测引擎函数[`createAnomalyDetectionEngine`](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/c/createAnomalyDetectionEngine.html)各参数的说明，异常引擎对输出表的格式有严格要求。它的第一列必须是时间类型，用于存放检测到异常的时间戳，并且该列的数据类型需与输入表的时间列一致。如果 keyColumn(分组列) 参数不为空，那么第二列为 keyColumn。在本例中，分组列为传感器编号 deviceID。之后的两列分别为 int 类型和 string/symbol 类型，用于记录异常的类型（在 metrics 中的下标）和异常的内容。建表代码如下：
+其次定义报警输出流数据表用于异常检测引擎的输出。按照 DolphinDB 用户手册中对创建异常检测引擎函数[`createAnomalyDetectionEngine`](https://docs.dolphindb.cn/zh/funcs/c/createAnomalyDetectionEngine.html)各参数的说明，异常引擎对输出表的格式有严格要求。它的第一列必须是时间类型，用于存放检测到异常的时间戳，并且该列的数据类型需与输入表的时间列一致。如果 keyColumn(分组列) 参数不为空，那么第二列为 keyColumn。在本例中，分组列为传感器编号 deviceID。之后的两列分别为 int 类型和 string/symbol 类型，用于记录异常的类型（在 metrics 中的下标）和异常的内容。建表代码如下：
 ```
 share streamTable(1000:0, `time`deviceID`anomalyType`anomalyString, [DATETIME,INT,INT, SYMBOL]) as warningTable
 ```
@@ -52,11 +52,11 @@ subscribeTable(tableName="sensor", actionName="sensorAnomalyDetection", offset=0
 ```
 ### 3.3 创建自定义消息处理函数，实现传感器离线报警的功能
 
-第二个需求，需要保存每个传感器的最新数据采集时间，用于判断是否已有 5 分钟未采集数据。本例采用[键值内存表](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/k/keyedTable.html)保存每个设备的最新状态，并以传感器编号 deviceID 作为主键。键值表中，基于键值的查找和更新具有非常高的效率。收到传感器数据时，用[`append!`](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/a/append!.html)函数更新键值表中的记录。如果新记录中的主键值不存在于表中，那么往表中添加新的记录；如果新记录的主键值与已有记录的主键值重复时，会更新表中该主键值对应的记录。
+第二个需求，需要保存每个传感器的最新数据采集时间，用于判断是否已有 5 分钟未采集数据。本例采用[键值内存表](https://docs.dolphindb.cn/zh/funcs/k/keyedTable.html)保存每个设备的最新状态，并以传感器编号 deviceID 作为主键。键值表中，基于键值的查找和更新具有非常高的效率。收到传感器数据时，用[`append!`](https://docs.dolphindb.cn/zh/funcs/a/append!.html)函数更新键值表中的记录。如果新记录中的主键值不存在于表中，那么往表中添加新的记录；如果新记录的主键值与已有记录的主键值重复时，会更新表中该主键值对应的记录。
 
 在输出异常信息到报警输出流数据表时，异常的类型 anomalyType 因为上节异常检测引擎已用 0，所以这里设为 1。异常的内容设为空。
 
-配置函数[`subscribeTable`](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/s/subscribeTable.html)的参数 throttle 和 batchSize，可以达到批量处理消息提升性能的目的。参数 throttle 决定 handler 间隔多久时间处理一次消息，本例中设定为每秒处理一次。这里要注意当消息的数量达到 batchSize 时，即便间隔时间没到也会处理进来的消息，所以需要将 batchSize 设置为一个比较大的数。示例代码如下，其中传感器数 deviceNum 假设为 3：
+配置函数[`subscribeTable`](https://docs.dolphindb.cn/zh/funcs/s/subscribeTable.html)的参数 throttle 和 batchSize，可以达到批量处理消息提升性能的目的。参数 throttle 决定 handler 间隔多久时间处理一次消息，本例中设定为每秒处理一次。这里要注意当消息的数量达到 batchSize 时，即便间隔时间没到也会处理进来的消息，所以需要将 batchSize 设置为一个比较大的数。示例代码如下，其中传感器数 deviceNum 假设为 3：
 
 ```
 t=keyedTable(`deviceID,100:0,`deviceID`time,[INT,DATETIME])

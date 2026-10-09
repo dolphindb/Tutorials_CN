@@ -230,7 +230,7 @@ def queryWideModel(dbname,tbname,start_time,end_time,aim_factor){
 
 * 新增因子
 
-在新增因子的场景，窄表模式可以使用 [append!](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/a/append!.html) 插入新的因子数据；而宽表模式需要先进行 [addColumn](https://www.dolphindb.cn/cn/help/FunctionsandCommands/CommandsReferences/a/addColumn.html) 操作，然后通过 [update](https://www.dolphindb.cn/cn/help/SQLStatements/update.html) 操作更新新增因子列数据。在 DolphinDB 当前的设计下，更新宽表模式中某一列因子，需要将分区数据全部重写，耗时较长
+在新增因子的场景，窄表模式可以使用 [append!](https://docs.dolphindb.cn/zh/funcs/a/append!.html) 插入新的因子数据；而宽表模式需要先进行 [addColumn](https://docs.dolphindb.cn/zh/funcs/a/addColumn.html) 操作，然后通过 [update](https://www.dolphindb.cn/cn/help/SQLStatements/update.html) 操作更新新增因子列数据。在 DolphinDB 当前的设计下，更新宽表模式中某一列因子，需要将分区数据全部重写，耗时较长
 
 假设此处需要新增第 f10002 号因子在2022.1.1至2022.1.31时间范围内的数据，不同存储模式下的新增因子脚本如下所示：
 

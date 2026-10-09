@@ -7,6 +7,7 @@
 **目录**
 
 
+- [DolphinDB 搭建行情回放服务的最佳实践](#dolphindb-搭建行情回放服务的最佳实践)
 - [1. 基于 DolphinDB 的行情回放服务](#1-基于-dolphindb-的行情回放服务)
   - [1.1 行情回放服务架构](#11-行情回放服务架构)
   - [1.2 回放服务搭建步骤](#12-回放服务搭建步骤)
@@ -19,10 +20,21 @@
   - [3.5 封装函数视图](#35-封装函数视图)
 - [4. API 提交回放](#4-api-提交回放)
   - [4.1 C++ API](#41-c-api)
+    - [4.1.1 C++ API 调用回放服务](#411-c-api-调用回放服务)
   - [4.2 Python API](#42-python-api)
+    - [4.2.1 Python API 调用回放服务](#421-python-api-调用回放服务)
 - [5. API 订阅消费](#5-api-订阅消费)
   - [5.1 C++ API](#51-c-api)
+    - [5.1.1 反序列化器构造](#511-反序列化器构造)
+    - [5.1.2 C++ API 订阅回放服务](#512-c-api-订阅回放服务)
+    - [5.1.3 消费函数构造](#513-消费函数构造)
+    - [5.1.4 程序执行](#514-程序执行)
+    - [5.1.5 消费输出](#515-消费输出)
   - [5.2 Python API](#52-python-api)
+    - [5.2.1 反序列化器构造](#521-反序列化器构造)
+    - [5.2.2 Python API 订阅回放服务](#522-python-api-订阅回放服务)
+    - [5.2.3 消费函数构造](#523-消费函数构造)
+    - [5.2.4 消费输出](#524-消费输出)
 - [6. 性能测试](#6-性能测试)
   - [6.1 测试服务器配置](#61-测试服务器配置)
   - [6.2 50 支深交所股票一天全速并发回放性能测试](#62-50-支深交所股票一天全速并发回放性能测试)
@@ -184,11 +196,11 @@ def stkReplay(stkList, mutable startDate, mutable endDate, replayRate, replayUui
 
 自定义函数 stkReplay 是整个回放的主体函数，用户传入的参数在 stkReplay 里会进行有效性判断及格式处理，可以根据实际需求更改。
 
-首先，用 maxCnt 来控制用户一次回放股票数量的最大上限，本例中设置的是 50 。returnBody 构造了信息字典，返回给用户以提示执行错误或执行成功。回放开始日期 startDate 和回放结束日期 endDate 利用  [datetimeParse](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/d/datetimeParse.html?highlight=datetimeparse) 函数进行格式处理 。replayRate 是回放速率，replayUuid 是回放表名名称，replayName 是回放数据源列表，sortColumn 是数据源同回放时间戳排序列列名。
+首先，用 maxCnt 来控制用户一次回放股票数量的最大上限，本例中设置的是 50 。returnBody 构造了信息字典，返回给用户以提示执行错误或执行成功。回放开始日期 startDate 和回放结束日期 endDate 利用  [datetimeParse](https://docs.dolphindb.cn/zh/funcs/d/datetimeParse.html?highlight=datetimeparse) 函数进行格式处理 。replayRate 是回放速率，replayUuid 是回放表名名称，replayName 是回放数据源列表，sortColumn 是数据源同回放时间戳排序列列名。
 
-当输入参数无误后，便初始化回放结果流表，结果流表为异构流数据表，字段类型为 BLOB 的字段包含了一条原始记录的全部信息，同时结果流表为持久化流表，[enableTableShareAndPersistence](https://www.dolphindb.cn/cn/help/FunctionsandCommands/CommandsReferences/e/enableTableShareAndPersistence.html?highlight=enabletableshareandpersistence) 函数把流数据表共享并把它持久化到磁盘上，使用持久化流表可以避免内存占用过大。当回放数据源包含逐笔成交（transaction ）或逐笔委托（order）时，本例实现了对相同时间戳的逐笔数据按交易所原始消息记录号（ApplSeqNum）进行排序（具体实现见 [3.3 replayJob 函数](#33-replayjob-函数定义回放任务内容)），所以结果流表中必须冗余一列来存放排序列。若回放数据源仅包含快照（snapshot）时，则不需要冗余一列排序列。
+当输入参数无误后，便初始化回放结果流表，结果流表为异构流数据表，字段类型为 BLOB 的字段包含了一条原始记录的全部信息，同时结果流表为持久化流表，[enableTableShareAndPersistence](https://docs.dolphindb.cn/zh/funcs/e/enableTableShareAndPersistence.html?highlight=enabletableshareandpersistence) 函数把流数据表共享并把它持久化到磁盘上，使用持久化流表可以避免内存占用过大。当回放数据源包含逐笔成交（transaction ）或逐笔委托（order）时，本例实现了对相同时间戳的逐笔数据按交易所原始消息记录号（ApplSeqNum）进行排序（具体实现见 [3.3 replayJob 函数](#33-replayjob-函数定义回放任务内容)），所以结果流表中必须冗余一列来存放排序列。若回放数据源仅包含快照（snapshot）时，则不需要冗余一列排序列。
 
-定义回放需要的其他参数。inputDict 构造了回放数据源列表字典，利用 [each](https://www.dolphindb.cn/cn/help/Functionalprogramming/TemplateFunctions/each.html?highlight=each) 函数和 [部分应用](https://www.dolphindb.cn/cn/help/Functionalprogramming/PartialApplication.html?highlight=部分应用) 可以对多个数据源进行简洁的定义。dateDict 和 timeDict 构造了回放数据源时间戳字典。最后通过 [submitJob](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/s/submitJob.html?highlight=submitjob) 提交后台回放任务。
+定义回放需要的其他参数。inputDict 构造了回放数据源列表字典，利用 [each](https://docs.dolphindb.cn/zh/funcs/ho_funcs/each.html) 函数和 [部分应用](https://docs.dolphindb.cn/zh/progr/partial_app.html) 可以对多个数据源进行简洁的定义。dateDict 和 timeDict 构造了回放数据源时间戳字典。最后通过 [submitJob](https://docs.dolphindb.cn/zh/funcs/s/submitJob.html?highlight=submitjob) 提交后台回放任务。
 
 ## 3.2 dsTb 函数：构造回放数据源
 
@@ -231,7 +243,7 @@ replayName = ["order"]
 ds = dsTb(timeRS, startDate, endDate, stkList, replayName)
 ```
 
-ds 为一个向量，其中每一个元素如下，数据源被划分为多个小的 SQL 查询语句，具体原理参考 [replayDS 函数](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/r/replayDS.html?highlight=replayds)。
+ds 为一个向量，其中每一个元素如下，数据源被划分为多个小的 SQL 查询语句，具体原理参考 [replayDS 函数](https://docs.dolphindb.cn/zh/funcs/r/replayDS.html?highlight=replayds)。
 
 ```
 DataSource< select [4] * from tab where time(MDTime) < 09:30:00.000,nanotime(MDTime) >= 00:00:00.000000000,date(MDDate) == 2021.12.01,MDDate >= 2021.12.01 and MDDate < 2021.12.02 and SecurityID in ["000616.SZ"] order by MDDate asc,MDTime asc >
@@ -309,7 +321,7 @@ def createEnd(tabName, sortColumn)
 
 ## 3.5 封装函数视图
 
-将以上函数利用 [addFunctionView](https://www.dolphindb.cn/cn/help/FunctionsandCommands/CommandsReferences/a/addFunctionView.html?highlight=addf) 封装成函数视图，具体代码如下。 API 端仅需要调用主函数 `stkReplay`，第四章回放全部基于该函数视图。
+将以上函数利用 [addFunctionView](https://docs.dolphindb.cn/zh/funcs/a/addFunctionView.html?highlight=addf) 封装成函数视图，具体代码如下。 API 端仅需要调用主函数 `stkReplay`，第四章回放全部基于该函数视图。
 
 ```
 addFunctionView(dsTb)

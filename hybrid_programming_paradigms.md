@@ -187,7 +187,7 @@ DolphinDB的数据库采用列式数据存储，计算的时候又采用向量�
 - DolphinDB支持对时间序列数据的序列关系进行建模，包括领先（lead），滞后（lag），滑动窗口（sliding window），累积窗口（cumulative window）等。更重要的是在这类建模中用到的常用指标和函数，DolphinDB都做了优化，性能优于其它系统1~2个数量级。
 - DolphinDB提供了专门为时间序列设计的高效而常用的表联结方式：asof join和window join。
 
-我们以一个简单的例子来解释window join。譬如要统计一组人员在某些时间点前三个月的平均工资。我们可以简单的用window join（`wj`）来实现。window join函数的具体解释请参考[用户手册](https://www.dolphindb.cn/cn/help/SQLStatements/TableJoiners/windowjoin.html)
+我们以一个简单的例子来解释window join。譬如要统计一组人员在某些时间点前三个月的平均工资。我们可以简单的用window join（`wj`）来实现。window join函数的具体解释请参考[用户手册](https://docs.dolphindb.cn/zh/progr/sql/windowjoin.html)
 
 ```
 p = table(1 2 3 as id, 2018.06M 2018.07M 2018.07M as month)

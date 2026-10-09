@@ -4,6 +4,7 @@ DolphinDB提供了从基于Java的GUI, VS Code Extension, Web界面，到命令�
 
 **目录**
 
+- [DolphinDB客户端软件教程](#dolphindb客户端软件教程)
   - [1. DolphinDB GUI](#1-dolphindb-gui)
     - [1.1 核心概念](#11-核心概念)
     - [1.2 安装和启动](#12-安装和启动)
@@ -242,7 +243,7 @@ Jupyter Notebook 是基于网页的用于交互计算的应用程序，可被应
 
 * [DolphinDB VSCode 插件说明](https://github.com/dolphindb/vscode-extension/blob/master/README.zh.md "DolphinDB VSCode 插件说明")
 * [DolphinDB GUI使用手册](https://www.dolphindb.cn/cn/gui/index.html "DolphinDB GUI使用手册")
-* [DolphinDB 用户手册](https://www.dolphindb.cn/cn/help/200/index.html "DolphinDB 用户手册")
+* [DolphinDB 用户手册](https://docs.dolphindb.cn/zh/about/ddb_intro.html "DolphinDB 用户手册")
 * [DolphinDB 教程](https://gitee.com/dolphindb/Tutorials_CN/tree/master "DolphinDB 教程")
 
 DolphinDB Jupyter Notebook 扩展插件提供以下功能：

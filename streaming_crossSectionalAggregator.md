@@ -21,7 +21,7 @@ createCrossSectionalAggregator(name, [metrics], dummyTable, [outputTable], keyCo
 
 name是一个字符串，表示横截面引擎的名称，是横截面引擎的唯一标识。它可以包含字母，数字和下划线，但必须以字母开头。
 
-metrics是元代码。它可以是系统内置或用户自定义的函数，如<[sum(qty), avg(price)]>，可以对结果使用表达式，如<[avg(price1)-avg(price2)]>，也可以对计算列进行运算，如<[std(price1-price2)]>，也可以是一个函数返回多个指标，如自定义函数 func(price) , 则可以指定metrics为<[func(price) as ['res1','res2']> 。详情可参考[元编程](https://www.dolphindb.cn/cn/help/Objects/Metaprogramming.html)。metrics可以都是聚合表达式，也可以都是非聚合表达式，不能混合。如果是非聚合表达式，输出的记录数必须等于输入的记录数。
+metrics是元代码。它可以是系统内置或用户自定义的函数，如<[sum(qty), avg(price)]>，可以对结果使用表达式，如<[avg(price1)-avg(price2)]>，也可以对计算列进行运算，如<[std(price1-price2)]>，也可以是一个函数返回多个指标，如自定义函数 func(price) , 则可以指定metrics为<[func(price) as ['res1','res2']> 。详情可参考[元编程](https://docs.dolphindb.cn/zh/progr/objs/meta_progr.html)。metrics可以都是聚合表达式，也可以都是非聚合表达式，不能混合。如果是非聚合表达式，输出的记录数必须等于输入的记录数。
 
 dummyTable是表对象，它可以不包含数据，但它的结构必须与订阅的流数据表相同。
 

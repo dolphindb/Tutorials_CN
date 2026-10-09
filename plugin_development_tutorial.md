@@ -161,7 +161,7 @@ ConstantSP result = cumsum->call(heap, v, new Void());
 
 # 2. 如何开发支持时间序列数据处理的插件函数
 
-DolphinDB 的特色之一在于它对时间序列有良好支持。本章以编写一个 [msum](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/m/msum.html) 函数的插件为例，介绍如何开发插件函数支持时间序列数据处理。
+DolphinDB 的特色之一在于它对时间序列有良好支持。本章以编写一个 [msum](https://docs.dolphindb.cn/zh/funcs/m/msum.html) 函数的插件为例，介绍如何开发插件函数支持时间序列数据处理。
 
 时间序列处理函数通常接受向量作为参数，并对向量中的每个元素进行计算处理。在本例中，`msum` 函数接受两个参数：一个向量和一个窗口大小。它的原型是：
 
@@ -178,7 +178,7 @@ ConstantSP result = Util::createVector(DT_DOUBLE, size);
 ```
 
 <!--
-在 DolphinDB 中，一个向量可能是 Fast vector，也可能是 [bigarray](https://www.dolphindb.cn/cn/help/DataTypesandStructures/DataForms/Vector/BigArray.html)，它们的实现机制不同，需要用 `isFastMode` 函数判断，分别处理：
+在 DolphinDB 中，一个向量可能是 Fast vector，也可能是 [bigarray](https://docs.dolphindb.cn/zh/progr/data_types_forms/BigArray.html)，它们的实现机制不同，需要用 `isFastMode` 函数判断，分别处理：
 
 ```
 VectorSP x = X;
@@ -268,7 +268,7 @@ ConstantSP msum(const ConstantSP &X, const ConstantSP &window) {
 
 在 DolphinDB 中，SQL 的聚合函数通常接受一个或多个向量作为参数，最终返回一个标量。在开发聚合函数的插件时，需要了解如何访问向量中的元素。
 
-DolphinDB 中的向量有两种存储方式。一种是常规数组，数据在内存中连续存储，另一种是 [大数组](https://www.dolphindb.cn/cn/help/DataTypesandStructures/DataForms/Vector/BigArray.html)，其中的数据分块存储。
+DolphinDB 中的向量有两种存储方式。一种是常规数组，数据在内存中连续存储，另一种是 [大数组](https://docs.dolphindb.cn/zh/progr/data_types_forms/BigArray.html)，其中的数据分块存储。
 
 本章将以编写一个求 [几何平均数](https://en.wikipedia.org/wiki/Geometric_mean) 的函数为例，介绍如何开发聚合函数，重点关注数组中元素的访问。
 
@@ -405,7 +405,7 @@ double result = segments[index>> segmentSizeInBit][index & segmentMask];
 
 # 4. 如何开发支持新的分布式算法的插件函数
 
-在 DolphinDB database 中，MapReduce 是执行分布式算法的通用计算框架。DolphinDB 提供了 [mr](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/m/mr.html) 函数和 [imr](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/i/imr.html) 函数，使用户能通过脚本实现分布式算法。在编写分布式算法的插件时，使用的同样是这两个函数。对通用计算的详细介绍，可以参考[通用计算教程](general_computing.md)。本章主要介绍如何用 C\+\+ 语言编写自定义的 map, reduce 等函数，并调用 `mr` 和 `imr` 这两个函数，最终实现分布式计算。
+在 DolphinDB database 中，MapReduce 是执行分布式算法的通用计算框架。DolphinDB 提供了 [mr](https://docs.dolphindb.cn/zh/funcs/m/mr.html) 函数和 [imr](https://docs.dolphindb.cn/zh/funcs/i/imr.html) 函数，使用户能通过脚本实现分布式算法。在编写分布式算法的插件时，使用的同样是这两个函数。对通用计算的详细介绍，可以参考[通用计算教程](general_computing.md)。本章主要介绍如何用 C\+\+ 语言编写自定义的 map, reduce 等函数，并调用 `mr` 和 `imr` 这两个函数，最终实现分布式计算。
 
 ## 4.1 分布式算法范例
 
@@ -459,7 +459,7 @@ ConstantSP columnAvgFinal(const ConstantSP &result, const ConstantSP &placeholde
 FunctionDefSP mapFunc = Heap->currentSession()->getFunctionDef("columnAvg::columnAvgMap");
 ```
 
-在本例中，map 函数接受两个参数 table 和 colNames ，但 `mr` 只允许 map 函数有一个参数，因此需要以 [部分应用](https://www.dolphindb.cn/cn/help/Functionalprogramming/PartialApplication.html) 的形式调用 map 函数，可以用 Util::createPartialFunction 将它包装为部分应用，实现如下：
+在本例中，map 函数接受两个参数 table 和 colNames ，但 `mr` 只允许 map 函数有一个参数，因此需要以 [部分应用](https://docs.dolphindb.cn/zh/progr/partial_app.html) 的形式调用 map 函数，可以用 Util::createPartialFunction 将它包装为部分应用，实现如下：
 
 ```cpp
 vector<ConstantSP> mapWithColNamesArgs {new Void(), colNames};
@@ -684,7 +684,7 @@ else {    // 若表不存在，创建表
 }
 ```
 
-读取数据并添加到表中的代码实现采用了 [pipeline 框架](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/p/pipeline.html)。它的初始任务是一系列具有不同 start 参数的 `loadMyData` 函数调用，pipeline 的 `follower` 函数是一个部分应用 append!{result}，相当于把整个读取数据的任务分成若干份执行，调用 `loadMyData` 分块读取后，将相应的数据通过 `append!` 插入表中。核心部分的代码如下：
+读取数据并添加到表中的代码实现采用了 [pipeline 框架](https://docs.dolphindb.cn/zh/funcs/p/pipeline.html)。它的初始任务是一系列具有不同 start 参数的 `loadMyData` 函数调用，pipeline 的 `follower` 函数是一个部分应用 append!{result}，相当于把整个读取数据的任务分成若干份执行，调用 `loadMyData` 分块读取后，将相应的数据通过 `append!` 插入表中。核心部分的代码如下：
 
 ```cpp
 int sizePerPartition = 16 * 1024 * 1024;

@@ -3,19 +3,20 @@
 DolphinDB 已经有非常多的窗口计算函数，例如 m 系列的滑动窗口计算，cum 系列累计窗口计算，tm 系列的的时间窗口滑动计算。但是所有这类函数都是对窗口内的所有记录进行指标计算，难免包含很多噪音。DolphinDB 的金融领域用户反馈，通过交易量信息等对窗口内的记录进行过滤，得到的计算指标具有更高的质量，以此为基础的交易策略能带来更多的 Alpha。同时用户也反馈，通过自定义函数来计算按额外信息过滤后的指标，消耗的时间过长。为此，DolphinDB 推出了 TopN 系列内置函数，涵盖 mTopN 系列、tmTopN 系列、cumTopN 系列，通过增量计算，大幅提升性能。DolphinDB 2.00.10 及 1.30.22 版本均支持本教程中涉及的功能。
 
 本教程将从以下几个角度介绍 TopN 系列函数：
-- [1. TopN 系列函数能解决的问题、计算规则及实现](#1-topn-系列函数能解决的问题计算规则及实现)
-	- [1.1 TopN 系列函数解决的痛点问题](#11-topn-系列函数解决的痛点问题)
-	- [1.2 TopN 系列函数的计算规则及实现](#12-topn-系列函数的计算规则及实现)
-- [2. mTopN 、tmTopN 系列的应用场景](#2-mtopn-tmtopn-系列的应用场景)
-	- [2.1 mTopN 应用场景](#21-mtopn-应用场景)
-	- [2.2 tmTopN 应用场景](#22-tmtopn-应用场景)
-- [3. cumTopN 系列的应用场景](#3-cumtopn-系列的应用场景)
-- [4. 自定义 TopN 函数](#4-自定义-topn-函数)
-	- [4.1 自定义 TopN 的实现方法](#41-自定义-topn-的实现方法)
-	- [4.2 内置 TopN 与自定义 TopN 的性能对比](#42-内置-topn-与自定义-topn-的性能对比)
-- [5. TopN 的批流一体场景](#5-topn-的批流一体场景)
-- [6. DECIMAL 的使用](#6-decimal-的使用)
-- [7. 总结](#7-总结)
+- [DolphinDB TopN 系列函数教程](#dolphindb-topn-系列函数教程)
+	- [1. TopN 系列函数能解决的问题、计算规则及实现](#1-topn-系列函数能解决的问题计算规则及实现)
+		- [1.1 TopN 系列函数解决的痛点问题](#11-topn-系列函数解决的痛点问题)
+		- [1.2 TopN 系列函数的计算规则及实现](#12-topn-系列函数的计算规则及实现)
+	- [2. mTopN 、tmTopN 系列的应用场景](#2-mtopn-tmtopn-系列的应用场景)
+		- [2.1 mTopN 应用场景](#21-mtopn-应用场景)
+		- [2.2 tmTopN 应用场景](#22-tmtopn-应用场景)
+	- [3. cumTopN 系列的应用场景](#3-cumtopn-系列的应用场景)
+	- [4. 自定义 TopN 函数](#4-自定义-topn-函数)
+		- [4.1 自定义 TopN 的实现方法](#41-自定义-topn-的实现方法)
+		- [4.2 内置 TopN 与自定义 TopN 的性能对比](#42-内置-topn-与自定义-topn-的性能对比)
+	- [5. TopN 的批流一体场景](#5-topn-的批流一体场景)
+	- [6. DECIMAL 的使用](#6-decimal-的使用)
+	- [7. 总结](#7-总结)
 
 
 
@@ -89,7 +90,7 @@ TopN 系列函数基本上可以归纳为以下几种类型：mfuncTopN、tmfunc
 以 `mfuncTopN(X, S, window, top, [ascending=true], [tiesMethod])` 为例，其计算过程为：
 
 1. 将 *X*  根据 *S* 进行稳定排序（排序方式由 *ascending* 指定，默认 true 为升序）
-2. 取排序结果的前 top 个元素进行计算。如果有多个具有相同值的元素无法全部进入前 top，可通过 *tiesMethod* 参数设置对这些值的选取规则。简单的说，*tiesMethod* 为 latest 时，优先选取最新的数据，为 oldest 时，优先选取最老的数据，为 all 时，选取全部数据。具体的用法规则可参考 TopN 的用户手册 ([TopN 系列 — DolphinDB 2.0 documentation](https://www.dolphindb.cn/cn/help/FunctionsandCommands/SeriesOfFunctions/TopN.html) )。
+2. 取排序结果的前 top 个元素进行计算。如果有多个具有相同值的元素无法全部进入前 top，可通过 *tiesMethod* 参数设置对这些值的选取规则。简单的说，*tiesMethod* 为 latest 时，优先选取最新的数据，为 oldest 时，优先选取最老的数据，为 all 时，选取全部数据。具体的用法规则可参考 TopN 的用户手册 ([tmTopN 系列](https://docs.dolphindb.cn/zh/funcs/themes/tmTopN.html)和([mTopN 系列](https://docs.dolphindb.cn/zh/funcs/themes/TopN.html)。
 
 目前支持 TopN 的计算函数共有36个：
 

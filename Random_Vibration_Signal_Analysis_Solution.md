@@ -370,7 +370,7 @@ share streamTable(100:0, `datetime`source`type`metric,[TIMESTAMP,SYMBOL,INT,STRI
 - 引擎输出：流表 srms
 - 计算规则：聚合函数 rms
 
-时序序列聚合引擎按定义的规则对窗口进行聚合计算。规则一般按元代码的形式进行定义。本案例将 rms 函数作为一个聚合函数，计算过去 2 分钟内振动信号的均方根值，并返回 rmsAcc、rmsVel、rmsDis。下面代码即是元代码形式的规则。更多元编程相关内容请参考 [元编程 — DolphinDB 2.0 文档](https://www.dolphindb.cn/cn/help/Objects/Metaprogramming.html?highlight=metacode) 。
+时序序列聚合引擎按定义的规则对窗口进行聚合计算。规则一般按元代码的形式进行定义。本案例将 rms 函数作为一个聚合函数，计算过去 2 分钟内振动信号的均方根值，并返回 rmsAcc、rmsVel、rmsDis。下面代码即是元代码形式的规则。更多元编程相关内容请参考 [元编程 — DolphinDB 2.0 文档](https://docs.dolphindb.cn/zh/progr/objs/meta_progr.html?highlight=metacode) 。
 
 ```
 metrics=<[rms(signalnose,N,sensitivity,gain,window, noverlap, nfft, fs,bandwidthL,bandwidthH) as `rmsAcc`rmsVel`rmsDis]>
@@ -394,7 +394,7 @@ tsAggr1 = createTimeSeriesAggregator(name="tsAggr1",  windowSize=2*60*1000, ste
 tsAggr2 = createAnomalyDetectionEngine(name="tsAggr2", metrics=<[rmsAcc > 0.055, rmsVel >0.32, rmsDis > 34.5]>, dummyTable=srms, outputTable=warn, timeColumn=`datetime, keyColumn=`source, windowSize=2*60*1000, step=2*60*1000)
 ```
 
-更多时序序列数据聚合引擎和异常检测引擎相关内容请参考：[DolphinDB 教程：流数据时序引擎](https://gitee.com/dolphindb/Tutorials_CN/blob/master/stream_aggregator.md) ，[流数据引擎 — DolphinDB 2.0 文档](https://www.dolphindb.cn/cn/help/FunctionsandCommands/SeriesOfFunctions/streamingEngine.html) 
+更多时序序列数据聚合引擎和异常检测引擎相关内容请参考：[DolphinDB 教程：流数据时序引擎](https://gitee.com/dolphindb/Tutorials_CN/blob/master/stream_aggregator.md) ，[流数据引擎 — DolphinDB 2.0 文档](https://docs.dolphindb.cn/zh/funcs/themes/streamingEngine.html) 
 
 #### 4.4.3 数据的订阅
 

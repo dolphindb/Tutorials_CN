@@ -60,7 +60,7 @@ windowSize与step的单位取决于useSystemTime参数。若useSystemTime=true�
 
 如果windowSize为数组，则metrics必须和windowSize大小一致的数组，一一对应计算。比如定义windowSize=[3,6], metrics=[<[sum(volume),avg(price)]>, <std(volume)>], 则sum(volume)和avg(price)按windowSize=3聚合，std(volume)按windowSize=6聚合。
 
-DolphinDB 针对部分内置的聚合函数在流数据时序引擎中的使用进行了优化，最大程度降低了重复计算，显著提高运行速度，详情参照用户手册[createTimeSeriesEngine](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/c/createTimeSeriesEngine.html)函数。
+DolphinDB 针对部分内置的聚合函数在流数据时序引擎中的使用进行了优化，最大程度降低了重复计算，显著提高运行速度，详情参照用户手册[createTimeSeriesEngine](https://docs.dolphindb.cn/zh/funcs/c/createTimeSeriesEngine.html)函数。
 
 
 - dummyTable
@@ -841,7 +841,7 @@ subscribeTable(server="", tableName="trades", actionName="timeseries", offset=0,
 
 DolphinDB database提供流数据引擎的管理函数，方便查询和管理系统中已经存在的流数据引擎。
 
-- 获取已定义的流数据引擎清单，可使用函数[`getStreamEngineStat (deprecated name: getAggregatorStat)`](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/g/getStreamEngineStat.html)。
-- 获取流数据引擎的句柄，可使用函数[`getStreamEngine (deprecated name: getAggregator)`](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/g/getStreamEngine.html)。
-- 删除流数据引擎，可使用函数[`dropStreamEngine (deprecated name: dropAggregator)`](https://www.dolphindb.cn/cn/help/FunctionsandCommands/CommandsReferences/d/dropStreamEngine.html)。
+- 获取已定义的流数据引擎清单，可使用函数[`getStreamEngineStat (deprecated name: getAggregatorStat)`](https://docs.dolphindb.cn/zh/funcs/g/getStreamEngineStat.html)。
+- 获取流数据引擎的句柄，可使用函数[`getStreamEngine (deprecated name: getAggregator)`](https://docs.dolphindb.cn/zh/funcs/g/getStreamEngine.html)。
+- 删除流数据引擎，可使用函数[`dropStreamEngine (deprecated name: dropAggregator)`](https://docs.dolphindb.cn/zh/funcs/d/dropStreamEngine.html)。
 

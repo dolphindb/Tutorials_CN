@@ -530,7 +530,7 @@ getStreamingStat().subWorkers
 
 ## 3.4 机器学习
 
-机器学习是计算密集型的场景，模型的训练过程会消耗大量的 CPU、内存资源。将机器学习的作业部署至某个计算节点，可以避免对数据写入、读取类任务的负面影响。例如在 CN2 上，使用 [adaBoost ](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/a/adaBoostRegressor.html?highlight=adaboost#adaboostregressor)训练股票年波动率：
+机器学习是计算密集型的场景，模型的训练过程会消耗大量的 CPU、内存资源。将机器学习的作业部署至某个计算节点，可以避免对数据写入、读取类任务的负面影响。例如在 CN2 上，使用 [adaBoost ](https://docs.dolphindb.cn/zh/funcs/a/adaBoostRegressor.html?highlight=adaboost#adaboostregressor)训练股票年波动率：
 ```
 def tranAdaBoost(TrainData){
 	db = database(,HASH, [SYMBOL, 10])

@@ -242,7 +242,7 @@ subscribeTable(server="", tableName="trades", actionName="adengine",offset=ofst+
 
 ## 6. createAnomalyDetectionEngine函数介绍
 
-详见 [DolphinDB 用户手册](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/c/createAnomalyDetectionEngine.html)
+详见 [DolphinDB 用户手册](https://docs.dolphindb.cn/zh/funcs/c/createAnomalyDetectionEngine.html)
 
 ## 6.总结
 

@@ -4,7 +4,7 @@ DolphinDB 定时作业（scheduled job）功能，实现系统在规定时间以
 
 ## 1. 创建定时作业
 
-使用函数 [scheduleJob](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/s/scheduleJob.html) 创建定时作业。作业创建后，系统会序列化作业定义信息并保存到文件`<homeDir>/sysmgmt/jobEditlog.meta`。语法如下：
+使用函数 [scheduleJob](https://docs.dolphindb.cn/zh/funcs/s/scheduleJob.html) 创建定时作业。作业创建后，系统会序列化作业定义信息并保存到文件`<homeDir>/sysmgmt/jobEditlog.meta`。语法如下：
 
 ```
 scheduleJob(jobId, jobDesc, jobFunc, scheduleTime, startDate, endDate, frequency, [days], [onComplete])
@@ -12,7 +12,7 @@ scheduleJob(jobId, jobDesc, jobFunc, scheduleTime, startDate, endDate, frequency
 
 注意：
 
-1. *jobFun* 是一个没有参数的函数，通常是一个[部分应用](https://www.dolphindb.cn/cn/help/Functionalprogramming/PartialApplication.html)，可以设置为自定义函数、内置函数、插件函数、函数视图和模块中的函数等。这给了作业定义极大的灵活性：凡是能用函数来表示的工作，都可以作为定时任务来运行。比如用自定义函数、插件函数等做计算分析，用内置函数 [run](https://www.dolphindb.cn/cn/help/FunctionsandCommands/CommandsReferences/r/run.html) 运行一个脚本文件，用 [shell](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/s/shell.html) 函数执行操作系统管理等等。
+1. *jobFun* 是一个没有参数的函数，通常是一个[部分应用](https://docs.dolphindb.cn/zh/progr/partial_app.html)，可以设置为自定义函数、内置函数、插件函数、函数视图和模块中的函数等。这给了作业定义极大的灵活性：凡是能用函数来表示的工作，都可以作为定时任务来运行。比如用自定义函数、插件函数等做计算分析，用内置函数 [run](https://docs.dolphindb.cn/zh/funcs/r/run.html) 运行一个脚本文件，用 [shell](https://docs.dolphindb.cn/zh/funcs/s/shell.html) 函数执行操作系统管理等等。
 2. 函数返回值是定时作业的作业 ID。如果输入的 jobId 与已有定时作业的作业 ID 不重复，系统返回输入的 jobId。否则在 jobId 后面添加当前日期，"000", "001" 等作为后缀，直到产生唯一的作业 ID。
 3. 当到达设定时间，定时作业将在后台运行。
 4. 两次定时任务的执行时间（scheduleTime）的最小间隔为5分钟。
@@ -28,7 +28,7 @@ def getMaxTemperature(deviceID){
 scheduleJob(`testJob, "getMaxTemperature", getMaxTemperature{1}, 00:00m, today(), today()+30, 'D');
 ```
 
-注意：自定义函数 `getMaxTemperature` 的参数是设备编号，[部分应用](https://www.dolphindb.cn/cn/help/Functionalprogramming/PartialApplication.html) getMaxTemperature{1} 代表给设备编号赋值1。
+注意：自定义函数 `getMaxTemperature` 的参数是设备编号，[部分应用](https://docs.dolphindb.cn/zh/progr/partial_app.html) getMaxTemperature{1} 代表给设备编号赋值1。
 
 - 示例2：在2020年每个月1号的0点使用 run 函数执行脚本文件 monthlyJob.dos。
 
@@ -36,7 +36,7 @@ scheduleJob(`testJob, "getMaxTemperature", getMaxTemperature{1}, 00:00m, today()
 scheduleJob(`monthlyJob, "Monthly Job 1", run{"/home/DolphinDB/script/monthlyJob.dos"}, 00:00m, 2020.01.01, 2020.12.31, 'M', 1);
 ```
 
-注意：指定脚本文件 monthlyJob.dos 的完整路径作为[部分应用](https://www.dolphindb.cn/cn/help/Functionalprogramming/PartialApplication.html) run 函数的参数。
+注意：指定脚本文件 monthlyJob.dos 的完整路径作为[部分应用](https://docs.dolphindb.cn/zh/progr/partial_app.html) run 函数的参数。
 
 - 示例3：在每周日的1点执行删除日志文件的操作系统命令。作业函数使用 shell 函数，并指定命令 "rm /home/DolphinDB/server/dolphindb.log" 作为参数。
 
@@ -82,7 +82,7 @@ scheduleJob(jobId=`PnL, jobDesc="Calculate Profit & Loss", jobFunc=run{"PnL.dos"
 
 ## 2. 查询定时作业
 
-使用函数 [getScheduledJobs](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/g/getScheduledJobs.html) 查询节点中的定时作业定义信息。函数语法如下：
+使用函数 [getScheduledJobs](https://docs.dolphindb.cn/zh/funcs/g/getScheduledJobs.html) 查询节点中的定时作业定义信息。函数语法如下：
 
 ```
 getScheduledJobs([jobIdPattern])
@@ -94,12 +94,12 @@ getScheduledJobs([jobIdPattern])
 2. 函数的返回值是表格形式的定时作业信息。若 *jobId* 没有指定，则返回所有作业；
 3. 可以通过 pnodeRun(getScheduledJobs) 或在 web 上的作业管理“已定时的作业”中查看查询集群的定时作业信息。
 
-系统会将每次作业的执行情况保存在目录 `<homeDir>/batchJobs` 下，包括定时作业的运行日志和返回值。运行日志保存在 `<jodId>.msg` 文件中；如果定时任务有返回值，它会保存在 `<jobId>.object` 文件中。可以使用函数 [getJobMessage](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/g/getJobMessage.html) 查看每个作业的运行日志，使用函数 [getJobReturn](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/g/getJobReturn.html) 查看作业的返回值。
+系统会将每次作业的执行情况保存在目录 `<homeDir>/batchJobs` 下，包括定时作业的运行日志和返回值。运行日志保存在 `<jodId>.msg` 文件中；如果定时任务有返回值，它会保存在 `<jobId>.object` 文件中。可以使用函数 [getJobMessage](https://docs.dolphindb.cn/zh/funcs/g/getJobMessage.html) 查看每个作业的运行日志，使用函数 [getJobReturn](https://docs.dolphindb.cn/zh/funcs/g/getJobReturn.html) 查看作业的返回值。
 
 注意 *jobID* 的取值：
 
 1. 创建作业时，若指定的 *jobId* 与已有定时作业的作业 ID 重复，系统将为其添加后缀直到作业 ID 不重复；
-2. 对多次执行的作业，每次执行定时作业时，作业 ID 是不一样的，需要用函数 [getRecentJobs](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/g/getRecentJobs.html) 查看已完成的定时作业。
+2. 对多次执行的作业，每次执行定时作业时，作业 ID 是不一样的，需要用函数 [getRecentJobs](https://docs.dolphindb.cn/zh/funcs/g/getRecentJobs.html) 查看已完成的定时作业。
 
 - 示例5：定义定时作业，查询定时作业的信息。
 
@@ -135,7 +135,7 @@ testJob20200214000  foo 	2020.02.14T18:00:23.148	2020.02.14T18:00:26.749
 
 ## 3. 删除定时作业
 
-使用函数 [deleteScheduledJob](https://www.dolphindb.cn/cn/help/FunctionsandCommands/CommandsReferences/d/deleteScheduledJob.html) 删除定时作业。语法如下：
+使用函数 [deleteScheduledJob](https://docs.dolphindb.cn/zh/funcs/d/deleteScheduledJob.html) 删除定时作业。语法如下：
 
 ```
 deleteScheduledJob(jobId)
@@ -143,7 +143,7 @@ deleteScheduledJob(jobId)
 
 注意：
 
-- 删除前可以使用函数 [getScheduledJobs](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/g/getScheduledJobs.html) 得到作业 ID。
+- 删除前可以使用函数 [getScheduledJobs](https://docs.dolphindb.cn/zh/funcs/g/getScheduledJobs.html) 得到作业 ID。
 - 使用该命令时，管理员可以删除其他用户创建的任务，非管理员用户只能删除自己创建的任务。
 
 ## 4. 定时作业运行时的权限
@@ -171,11 +171,11 @@ scheduleJob(`guestGetDfsjob, "dfs read", foo1, [12:00m, 21:03m, 21:45m], 2020.01
 2020-02-14 21:03:23.194914 Not granted to read table dfs://FuturesContract/tb
 ```
 
-因此，若定时作业要访问集群中的某个分布式表，需要先以管理员 (admin) 或其他授权用户身份登录。具体操作可以通过函数 [login](https://www.dolphindb.cn/cn/help/FunctionsandCommands/CommandsReferences/l/login.html) 完成。
+因此，若定时作业要访问集群中的某个分布式表，需要先以管理员 (admin) 或其他授权用户身份登录。具体操作可以通过函数 [login](https://docs.dolphindb.cn/zh/funcs/l/login.html) 完成。
 
 注意：
 
-从上述日志中可以发现，访问分布式表后的语句没有被执行，即作业执行过程中若遇到错误，执行就会中断。为防止出现异常而停止执行后续脚本，可使用 [try-catch ](https://www.dolphindb.cn/cn/help/ProgrammingStatements/tryCatch.html?highlight=try%20catch)语句俘获异常。代码运行中可以使用函数 print 打印运行信息，输出结果记录在日志文件 `<jobId>.msg` 中。
+从上述日志中可以发现，访问分布式表后的语句没有被执行，即作业执行过程中若遇到错误，执行就会中断。为防止出现异常而停止执行后续脚本，可使用 [try-catch ](https://docs.dolphindb.cn/zh/progr/statements/tryCatch.html)语句俘获异常。代码运行中可以使用函数 print 打印运行信息，输出结果记录在日志文件 `<jobId>.msg` 中。
 
 ## 5. 定时作业的序列化与反序列化
 
@@ -372,6 +372,6 @@ foo()
 | 作业函数引用了插件中的函数，但是作业加载前没有加载该插件。            | 建议在用户的启动脚本中定义加载该插件。                    |
 | 定时运行一个脚本文件，执行时找不到依赖的函数。                  | 脚本文件必须包含依赖的自定义函数。                        |
 | 创建定时作业的用户没有访问分布式数据库表的权限。                 | 授权该用户访问相应数据库的权限。                         |
-| 在启动脚本中使用函数 [scheduleJob](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/s/scheduleJob.html),  [getScheduledJobs](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/g/getScheduledJobs.html) 和 [deleteScheduledJob](https://www.dolphindb.cn/cn/help/FunctionsandCommands/CommandsReferences/d/deleteScheduledJob.html) 时抛出异常。 | 节点启动时，定时作业在启动脚本之后加载，所以不能在启动脚本中使用与定时作业相关的任何功能，包括函数scheduleJob, getScheduledJobs 和deleteScheduledJob。如果需要在系统启动时初始化某些定时作业相关的任务，只能在初始化定时任务模块完成后通过 postStart 脚本执行。postStart 脚本文件路径由参数 postStart 指定。`if(getScheduledJobs().jobDesc.find("daily resub") == -1){	scheduleJob(jobId=`daily, jobDesc="daily resub", jobFunc=run{"/home/appadmin/server/resubJob.dos"}, scheduleTime=08:30m, startDate=2021.08.30, endDate=2023.12.01, frequency='D')	}` |
+| 在启动脚本中使用函数 [scheduleJob](https://docs.dolphindb.cn/zh/funcs/s/scheduleJob.html),  [getScheduledJobs](https://docs.dolphindb.cn/zh/funcs/g/getScheduledJobs.html) 和 [deleteScheduledJob](https://docs.dolphindb.cn/zh/funcs/d/deleteScheduledJob.html) 时抛出异常。 | 节点启动时，定时作业在启动脚本之后加载，所以不能在启动脚本中使用与定时作业相关的任何功能，包括函数scheduleJob, getScheduledJobs 和deleteScheduledJob。如果需要在系统启动时初始化某些定时作业相关的任务，只能在初始化定时任务模块完成后通过 postStart 脚本执行。postStart 脚本文件路径由参数 postStart 指定。`if(getScheduledJobs().jobDesc.find("daily resub") == -1){	scheduleJob(jobId=`daily, jobDesc="daily resub", jobFunc=run{"/home/appadmin/server/resubJob.dos"}, scheduleTime=08:30m, startDate=2021.08.30, endDate=2023.12.01, frequency='D')	}` |
 
 特殊情况下，可能出现在系统重启时定时作业加载失败，甚至系统无法启动的情况。尤其是版本升级时，可能因为内置函数、插件函数等函数接口变化导致作业无法加载，或者出现一些兼容性 bug 导致系统重启失败。因此，建议用户在开发时保留定义定时作业的脚本。若因定时任务导致系统无法启动，可以先删除定时作业的序列化文件`<homeDir>/sysmgmt/jobEditlog.meta`，在系统重启后再重新创建定时作业。

@@ -57,7 +57,7 @@ DolphinDB支持函数化编程：函数对象可以作为高阶函数的参数�
 
 CSV 数据文件中常用整数表示时间，如 “93100000” 表示 “9:31:00.000”。为了便于查询分析，建议将这类数据转换为时间类型，再存储到 DolphinDB 数据库中。
 
-针对这种场景，可通过 [`loadTextEx`](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/l/loadTextEx.html?highlight=loadtextex) 函数的 `transform` 参数将文本文件中待转化的时间列指定为相应的数据类型。
+针对这种场景，可通过 [`loadTextEx`](https://docs.dolphindb.cn/zh/funcs/l/loadTextEx.html?highlight=loadtextex) 函数的 `transform` 参数将文本文件中待转化的时间列指定为相应的数据类型。
 
 本例中会用到 CSV 文件 [candle_201801.csv](./data/candle_201801.csv)，数据样本如下：
 
@@ -350,7 +350,7 @@ mostCorrelated=select * from table(corrMatrix.columnNames() as ts_code, corrMatr
 
 ### 3.2 each 使用案例
 
-某些场景需要把函数应用到指定参数中的每个元素。若不使用函数化编程，需要使用 for 循环。DolphinDB 提供的高阶函数，例如 [`each`](https://www.dolphindb.cn/cn/help/Functionalprogramming/TemplateFunctions/each.html), `peach`, `loop`, `ploop` 等，可以简化代码。
+某些场景需要把函数应用到指定参数中的每个元素。若不使用函数化编程，需要使用 for 循环。DolphinDB 提供的高阶函数，例如 [`each`](https://docs.dolphindb.cn/zh/funcs/ho_funcs/each.html), `peach`, `loop`, `ploop` 等，可以简化代码。
 
 #### 3.2.1 获取数据表各个列的 NULL 值个数
 
@@ -534,7 +534,7 @@ loop(loadText, fileDir + "/" + files(fileDir).filename).unionAll(false)
 
 解决方案：
 
-使用高阶函数 [`moving`](https://www.dolphindb.cn/cn/help/Functionalprogramming/TemplateFunctions/moving.html?highlight=moving)。下例编写自定义函数 rangeTest 对每个窗口的数据进行上述区间判断，返回 true 或 false。
+使用高阶函数 [`moving`](https://docs.dolphindb.cn/zh/funcs/ho_funcs/moving.html)。下例编写自定义函数 rangeTest 对每个窗口的数据进行上述区间判断，返回 true 或 false。
 
 ```
 defg rangeTest(close, downlimit, uplimit){
@@ -605,7 +605,7 @@ t2 = select *, log(bidPrice / prev(mavg(bidPrice,3))) as ln from t
 t22 = select *, log(bidPrice / mavg(prev(bidPrice),3)) as ln from t
 ```
 
-此处调用 [`prev`](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/p/prev.html?highlight=prev) 函数获取前一行的数据。
+此处调用 [`prev`](https://docs.dolphindb.cn/zh/funcs/p/prev.html?highlight=prev) 函数获取前一行的数据。
 
 “先计算均值再移动结果” 和 “先移动列再计算均值” 效果等价的。唯一的区别是：表 t22 第三行会产生一个结果。
 
@@ -617,7 +617,7 @@ F = 0.02
 def cleanFun(F, x, y): iif(abs(x) > F, y, x)
 ```
 
-这里的参数 x 表示当前值，y 表示前一个值。然后调用高阶函数 [`eachPre`](https://www.dolphindb.cn/cn/help/Functionalprogramming/TemplateFunctions/eachPre.html?highlight=eachpre) 来对相邻元素两两计算，该函数等价于实现: F(X[0], pre), F(X[1], X[0]), ..., F(X[n], X[n-1])。对应脚本如下：
+这里的参数 x 表示当前值，y 表示前一个值。然后调用高阶函数 [`eachPre`](https://docs.dolphindb.cn/zh/funcs/ho_funcs/eachPre.html) 来对相邻元素两两计算，该函数等价于实现: F(X[0], pre), F(X[1], X[0]), ..., F(X[n], X[n-1])。对应脚本如下：
 
 ```shell
 t2[`clean] = eachPre(cleanFun{F}, t2[`ln])
@@ -645,7 +645,7 @@ a4=5 3 2
 m = matrix(a1,a2,a3,a4)
 ```
 
-一种思路是，对每行分别计算最大值的下标，可以直接调用 [`imax`](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/i/imax.html?highlight=imax) 函数实现。`imax` 在矩阵每列单独计算，返回一个向量。
+一种思路是，对每行分别计算最大值的下标，可以直接调用 [`imax`](https://docs.dolphindb.cn/zh/funcs/i/imax.html?highlight=imax) 函数实现。`imax` 在矩阵每列单独计算，返回一个向量。
 
 为求每行的计算结果，可以先对矩阵进行转置操作，然后调用 `imax` 函数进行计算。
 
@@ -682,7 +682,7 @@ segmentby(cumsum,x,y);
 
 上例中，根据 y 确定了 3 个分组：1 1 1, -1 -1 -1 和 1 1 1，由此把 x 也分为 3 组：1 2 3, 0 3 2 和 1 4 5，并将 cumsum 函数应用到 x 的每个分组，计算每个分组的累计和。
 
-DolphinDB 还提供了内置函数 [`segment`](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/s/segment.html?highlight=segment) 用于在SQL语句中进行分组。与 segmentby 不同，它只返回分组信息，而不对分组进行计算。
+DolphinDB 还提供了内置函数 [`segment`](https://docs.dolphindb.cn/zh/funcs/s/segment.html?highlight=segment) 用于在SQL语句中进行分组。与 segmentby 不同，它只返回分组信息，而不对分组进行计算。
 
 下例中，将表的某列数据按照给定阈值进行分组，连续小于或大于该阈值的数据被划分为一组。连续大于该阈值的分组将保留组内最大值对应的记录并输出（若有重复值则输出第一条）。
 
@@ -908,7 +908,7 @@ scheduleJob(`testJob, "getMaxTemperature", getMaxTemperature{1}, 00:00m, today()
 
 ### 4.2 获取集群其它节点作业信息
 
-在 DolphinDB 中提交定时作业后，可通过函数 [`getRecentJobs`](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/g/getRecentJobs.html?highlight=getrecentjobs) 来取得本地节点上最近几个批处理作业的状态。如查看本地节点最近 3 个批处理作业状态，可以用如下所示脚本实现：
+在 DolphinDB 中提交定时作业后，可通过函数 [`getRecentJobs`](https://docs.dolphindb.cn/zh/funcs/g/getRecentJobs.html?highlight=getrecentjobs) 来取得本地节点上最近几个批处理作业的状态。如查看本地节点最近 3 个批处理作业状态，可以用如下所示脚本实现：
 
 ```shell
 getRecentJobs(3);
@@ -965,7 +965,7 @@ subscribeTable(tableName="trades", actionName="action30", handler=cumulativeAver
 
 ### 5.1 使用 map reduce，对 tick 数据降精度
 
-下例中，使用 [`mr`](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/m/mr.html?highlight=mr) 函数（map reduce）将 tick 数据转化为分钟级数据。
+下例中，使用 [`mr`](https://docs.dolphindb.cn/zh/funcs/m/mr.html?highlight=mr) 函数（map reduce）将 tick 数据转化为分钟级数据。
 
 在DolphinDB中，可以使用SQL语句基于 tick 数据计算分钟级数据：
 
@@ -1184,7 +1184,7 @@ t=table(2020.11.01 2020.11.02 as date, `IBM`MSFT as ticker, 1.0 2 as past1, 2.0 
 benchX = 10 15 7 8 9 1 2.0
 ```
 
-DolphinDB 提供了最小二乘回归函数 [`ols`](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/o/ols.html?highlight=ols)。
+DolphinDB 提供了最小二乘回归函数 [`ols`](https://docs.dolphindb.cn/zh/funcs/o/ols.html?highlight=ols)。
 
 先将表中参与计算的以下列转化成矩阵：
 
@@ -1217,4 +1217,4 @@ t[`residual] = each(def(y, x){ return ols(y, x, true, 2).ANOVA.SS[1]}{,benchX}, 
 
 ## 7. 总结
 
-除了上面提到的一些函数与高阶函数。DolphinDB 还提供了丰富的 [函数库](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/index.html)，包括数学函数、统计函数、分布相关函数、假设检验函数、机器学习函数、逻辑函数、字符串函数、时间函数、数据操作函数、窗口函数、高阶函数、元编程、分布式计算函数、流计算函数、定时任务函数、性能监控函数、用户权限管理函数等。
+除了上面提到的一些函数与高阶函数。DolphinDB 还提供了丰富的 [函数库](https://docs.dolphindb.cn/zh/funcs/index.html)，包括数学函数、统计函数、分布相关函数、假设检验函数、机器学习函数、逻辑函数、字符串函数、时间函数、数据操作函数、窗口函数、高阶函数、元编程、分布式计算函数、流计算函数、定时任务函数、性能监控函数、用户权限管理函数等。

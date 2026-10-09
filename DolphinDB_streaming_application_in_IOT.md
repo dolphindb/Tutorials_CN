@@ -79,21 +79,21 @@ DolphinDB 流数据引擎所计算的因子可分为无状态因子与有状态�
 
 ### 4.1 定义输入输出流数据表
 
-首先，定义一个流数据表用于接收实时采集的传感器数据，表结构包含三列，即标签 tag、时间 ts 和标签值 value。通过 [enableTableShareAndPersistence](https://www.dolphindb.cn/cn/help/FunctionsandCommands/CommandsReferences/e/enableTableShareAndPersistence.html) 函数共享流数据表并持久化到硬盘上。通过 cacheSize 参数将内存中可保存的最大数据量设定为 10 万行。代码如下：
+首先，定义一个流数据表用于接收实时采集的传感器数据，表结构包含三列，即标签 tag、时间 ts 和标签值 value。通过 [enableTableShareAndPersistence](https://docs.dolphindb.cn/zh/funcs/e/enableTableShareAndPersistence.html) 函数共享流数据表并持久化到硬盘上。通过 cacheSize 参数将内存中可保存的最大数据量设定为 10 万行。代码如下：
 
 ```
 stream01=streamTable(100000:0,`tag`ts`value,[SYMBOL,TIMESTAMP, INT])
 enableTableShareAndPersistence(table=stream01,tableName=`inputSt,asynWrite=false,compress=true, cacheSize=100000)
 ```
 
-其次，定义响应式状态引擎的输出表。引擎的输出表可以是内存表或分布式表。本文定义如下所示流数据表 outputSt1 为满足第一个需求的跟踪状态变化的输出表，并参考 DolphinDB 用户手册中 [createReactiveStateEngine](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/c/createReactiveStateEngine.html) 各参数的设置说明完成对输出表的定义。根据 keyColumn(分组列) 的设置，输出表的前几列必须和 keyColumn 设置的列及其顺序保持一致，后面是计算结果列。本例的 keyColumn 为 tag，计算结果列为 ts 和 value，与输入表一致。建表代码如下：
+其次，定义响应式状态引擎的输出表。引擎的输出表可以是内存表或分布式表。本文定义如下所示流数据表 outputSt1 为满足第一个需求的跟踪状态变化的输出表，并参考 DolphinDB 用户手册中 [createReactiveStateEngine](https://docs.dolphindb.cn/zh/funcs/c/createReactiveStateEngine.html) 各参数的设置说明完成对输出表的定义。根据 keyColumn(分组列) 的设置，输出表的前几列必须和 keyColumn 设置的列及其顺序保持一致，后面是计算结果列。本例的 keyColumn 为 tag，计算结果列为 ts 和 value，与输入表一致。建表代码如下：
 
 ```
 out1 =streamTable(10000:0,`tag`ts`value,[SYMBOL,TIMESTAMP, INT])
 enableTableShareAndPersistence(table=out1,tableName=`outputSt1,asynWrite=false,compress=true, cacheSize=100000)
 ```
 
-最后，定义用于告警信息输出的流数据表 outputSt2，以满足第二个场景需求。参考 DolphinDB 用户手册中 [createSessionWindowEngine](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/c/createSessionWindowEngine.html) 各参数的设置说明完成对输出表的定义。它的第一列必须是时间类型，其时间为各个窗口的起始时刻或者结束时刻。如果 keyColumn (分组列) 参数不为空，则其后几列和 _keyColumn_ 设置的列及其顺序保持一致。最后为计算结果列，可为多列，在本例中，仅记录丢失数据前最后一条记录的标签测量值。建表代码如下：
+最后，定义用于告警信息输出的流数据表 outputSt2，以满足第二个场景需求。参考 DolphinDB 用户手册中 [createSessionWindowEngine](https://docs.dolphindb.cn/zh/funcs/c/createSessionWindowEngine.html) 各参数的设置说明完成对输出表的定义。它的第一列必须是时间类型，其时间为各个窗口的起始时刻或者结束时刻。如果 keyColumn (分组列) 参数不为空，则其后几列和 _keyColumn_ 设置的列及其顺序保持一致。最后为计算结果列，可为多列，在本例中，仅记录丢失数据前最后一条记录的标签测量值。建表代码如下：
 
 ```
 out2 =streamTable(10000:0,`ts`tag`lastValue,[TIMESTAMP,SYMBOL, INT])
@@ -111,7 +111,7 @@ reactivEngine = createReactiveStateEngine(name=`reactivEngine, metrics=<[ts, val
 
 ### 4.3 创建会话窗口引擎实现传感器丢失数据实时报警
 
-会话窗口引擎中，设置 keyColumn（分组列）为传感器标签 tag，timeColumn（时间列）为 ts。检测需求是 30 秒内无数据，所以 sessionGap 为 30000（单位为毫秒，同 ts 列），表示收到某条数据后经过该时间的等待仍无新数据到来，就终止当前窗口。设置 useSessionStartTime 为 false，表示输出表中的时刻为数据窗口结束时刻，即每个窗口中最后一条数据的时刻 + *sessionGap*。参考 DolphinDB 用户手册中 [createSessionWindowEngine](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/c/createSessionWindowEngine.html) 页面内容完成对其他参数的设置。代码如下：
+会话窗口引擎中，设置 keyColumn（分组列）为传感器标签 tag，timeColumn（时间列）为 ts。检测需求是 30 秒内无数据，所以 sessionGap 为 30000（单位为毫秒，同 ts 列），表示收到某条数据后经过该时间的等待仍无新数据到来，就终止当前窗口。设置 useSessionStartTime 为 false，表示输出表中的时刻为数据窗口结束时刻，即每个窗口中最后一条数据的时刻 + *sessionGap*。参考 DolphinDB 用户手册中 [createSessionWindowEngine](https://docs.dolphindb.cn/zh/funcs/c/createSessionWindowEngine.html) 页面内容完成对其他参数的设置。代码如下：
 
 ```
 swEngine = createSessionWindowEngine(name = "swEngine", sessionGap = 30000, metrics = < last(value)>,
@@ -133,14 +133,14 @@ subscribeTable(tableName="inputSt", actionName="monitor", offset=0,
 
 注意：
 
-1. 本例没启用快照（snapshot）机制。为了满足生产环境业务持续性的需要，DolphinDB 内置的流式计算引擎包括会话窗口引擎、响应式状态引擎均支持快照输出。若需要启用快照机制，则引擎创建时需要指定两个额外的参数 snapshotDir 和 snapshotIntervalInMsgCount。snapshotDir 用于指定存储快照的目录。snapshotIntervalInMsgCount 指定处理多少条消息后产生一个快照。此外，引擎启用快照机制，调用 [subscribeTable](https://www.dolphindb.cn/cn/help/200/FunctionsandCommands/FunctionReferences/s/subscribeTable.html) 函数订阅流数据也需相应的修改：
+1. 本例没启用快照（snapshot）机制。为了满足生产环境业务持续性的需要，DolphinDB 内置的流式计算引擎包括会话窗口引擎、响应式状态引擎均支持快照输出。若需要启用快照机制，则引擎创建时需要指定两个额外的参数 snapshotDir 和 snapshotIntervalInMsgCount。snapshotDir 用于指定存储快照的目录。snapshotIntervalInMsgCount 指定处理多少条消息后产生一个快照。此外，引擎启用快照机制，调用 [subscribeTable](https://docs.dolphindb.cn/zh/funcs/s/subscribeTable.html) 函数订阅流数据也需相应的修改：
 
 * 首先，必须指定消息的 offset。
 * 其次，handler 必须使用 `appendMsg` 函数。`appendMsg` 函数接受两个参数，msgBody 和 msgId。
 * 再次，参数 handlerNeedMsgId 必须指定为 true。
 * 更详细的说明请参阅 [流数据教程](https://gitee.com/dolphindb/Tutorials_CN/blob/master/streaming_tutorial.md#43-%E5%BF%AB%E7%85%A7%E6%9C%BA%E5%88%B6) 第 4.3 节或用户手册中会话窗口引擎、响应式状态引擎的说明。
 
-2. 若设备极多，数据采集频率很高，可能需要处理大量消息。这时可在 DolphinDB 消息订阅函数 [subscribeTable](https://www.dolphindb.cn/cn/help/200/FunctionsandCommands/FunctionReferences/s/subscribeTable.html) 中指定可选参数 filter 与 hash，让多个订阅客户端并行处理消息。相关详细说明请参阅 [流数据教程](https://gitee.com/dolphindb/Tutorials_CN/blob/master/streaming_tutorial.md#42-%E5%B9%B6%E8%A1%8C%E5%A4%84%E7%90%86) 第 4.2 节或用户手册中 [subscribeTable](https://www.dolphindb.cn/cn/help/200/FunctionsandCommands/FunctionReferences/s/subscribeTable.html) 和 [setStreamTableFilterColumn](https://www.dolphindb.cn/cn/help/200/FunctionsandCommands/CommandsReferences/s/setStreamTableFilterColumn.html) 的说明。
+2. 若设备极多，数据采集频率很高，可能需要处理大量消息。这时可在 DolphinDB 消息订阅函数 [subscribeTable](https://docs.dolphindb.cn/zh/funcs/s/subscribeTable.html) 中指定可选参数 filter 与 hash，让多个订阅客户端并行处理消息。相关详细说明请参阅 [流数据教程](https://gitee.com/dolphindb/Tutorials_CN/blob/master/streaming_tutorial.md#42-%E5%B9%B6%E8%A1%8C%E5%A4%84%E7%90%86) 第 4.2 节或用户手册中 [subscribeTable](https://docs.dolphindb.cn/zh/funcs/s/subscribeTable.html) 和 [setStreamTableFilterColumn](https://docs.dolphindb.cn/zh/funcs/s/setStreamTableFilterColumn.html) 的说明。
 
 ### 4.5 从 MQTT 服务器接收数据
 

@@ -100,7 +100,7 @@ try{loadPlugin("/DolphinDB/server/plugins/nsq/PluginNsq.txt")} catch(ex){print(e
 * snapshot\_sh\_stream：用于接收和发布上交所 L2 快照实时流数据。    
 * snapshot\_sz\_stream：用于接收和发布深交所 L2 快照实时流数据。    
 * 将内存表共享是为了让该表连接当前节点其它会话可见，比如通过 API 实时查询流数据表时的会话与定义这些表的会话不是同一个，所以需要共享。    
-* 对流数据表进行持久化的目的主要有两个：一是控制该表的最大内存占用，通过设置 [enableTableShareAndPersistence 函数](https://www.dolphindb.cn/cn/help/FunctionsandCommands/CommandsReferences/e/enableTableShareAndPersistence.html)中的 cacheSize 大小，控制该表在内存中保留的最大记录条数，进而控制该表的最大内存占用；二是在节点异常关闭的极端情况下，从持久化数据文件中恢复已经写入流数据表但是未消费的数据，保证流数据“至少消费一次”的需求。    
+* 对流数据表进行持久化的目的主要有两个：一是控制该表的最大内存占用，通过设置 [enableTableShareAndPersistence 函数](https://docs.dolphindb.cn/zh/funcs/e/enableTableShareAndPersistence.html)中的 cacheSize 大小，控制该表在内存中保留的最大记录条数，进而控制该表的最大内存占用；二是在节点异常关闭的极端情况下，从持久化数据文件中恢复已经写入流数据表但是未消费的数据，保证流数据“至少消费一次”的需求。    
 * 流数据表持久化采用异步的方式进行，可以有效提高流表写入的吞吐量。只有流数据表才可以被订阅消费，所以需要将以上的 orders\_sh\_stream, orders\_sz\_stream, trade\_sh\_stream, trade\_sz\_stream, snapshot\_sh\_stream, snapshot\_sz\_stream 定义成流数据表。
 * 图中黑色字体表示的存储库表用于在磁盘上存储实时行情数据。增量数据实时写入数据库服务通过 DolphinDB 内置的订阅发布功能实现。对流数据表发起订阅，回调函数会把增量数据写入分布式表中。本教程中的各个库表的命名方式如下：
 

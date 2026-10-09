@@ -29,7 +29,7 @@ maxec float </td><td><img src="images/cachedTable/mysql_before.png"> </td></tr>
 
 
 ## 函数说明
-函数名：<b>[cachedTable](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/c/cachedTable.html)</b>
+函数名：<b>[cachedTable](https://docs.dolphindb.cn/zh/funcs/c/cachedTable.html)</b>
 
 语法：cachedTable(updateFunc, retentionSeconds)
 

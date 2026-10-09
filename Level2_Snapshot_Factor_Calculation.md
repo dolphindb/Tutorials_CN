@@ -88,11 +88,11 @@ DolphinDB 内置的时间序列流计算引擎可以满足 Level-2 快照数据�
 
 （1）**第一类：基于快照数据计算分钟因子**
 
-第一类因子是指直接对快照数据，做指定窗口大小的滚动窗口聚合计算，比如任意分钟的 K 线等聚合指标计算。第一类因子使用了 DolphinDB 内置的时间序列引擎（createTimeSeriesEngine），具体教程可参考[时间序列引擎（createTimeSeriesEngine）](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/c/createTimeSeriesEngine.html)。
+第一类因子是指直接对快照数据，做指定窗口大小的滚动窗口聚合计算，比如任意分钟的 K 线等聚合指标计算。第一类因子使用了 DolphinDB 内置的时间序列引擎（createTimeSeriesEngine），具体教程可参考[时间序列引擎（createTimeSeriesEngine）](https://docs.dolphindb.cn/zh/funcs/c/createTimeSeriesEngine.html)。
 
 （2）**第二类：进一步加工分钟因子为复杂因子**
 
-第二类因子是指对第一类因子做进一步加工，做步长为1行、窗口为 n 行或者指定时间的滑动窗口计算，比如 EMA、RSI 等有状态因子的计算。第二类因子使用了 DolphinDB 内置的流计算引擎（createReactiveStateEngine），具体教程可参考[响应式状态引擎（createReactiveStateEngine）](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/c/createReactiveStateEngine.html)。
+第二类因子是指对第一类因子做进一步加工，做步长为1行、窗口为 n 行或者指定时间的滑动窗口计算，比如 EMA、RSI 等有状态因子的计算。第二类因子使用了 DolphinDB 内置的流计算引擎（createReactiveStateEngine），具体教程可参考[响应式状态引擎（createReactiveStateEngine）](https://docs.dolphindb.cn/zh/funcs/c/createReactiveStateEngine.html)。
 
 ### 2.4 用户二次开发自定义因子表达式
 

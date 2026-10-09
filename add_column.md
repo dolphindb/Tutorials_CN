@@ -12,14 +12,15 @@ DolphinDB 为工业物联网和金融提供了一站式解决方案。数据处�
 
 在这一数据处理流程中，涉及到了 3 类表：分布式表（DFS table）、流数据表、流数据引擎的输入表和输出表。如果数据采集的维度增加，那么这 3 类表都要做相应的处理。
 
-- [1. 给分布式表增加字段](#1-给分布式表增加字段)
-- [2. 给流数据表增加字段](#2-给流数据表增加字段)
-- [3. 给流数据引擎增加计算指标](#3-给流数据引擎增加计算指标)
-- [4. 总结](#4-总结)
+- [动态增加字段和计算指标](#动态增加字段和计算指标)
+	- [1. 给分布式表增加字段](#1-给分布式表增加字段)
+	- [2. 给流数据表增加字段](#2-给流数据表增加字段)
+	- [3. 给流数据引擎增加计算指标](#3-给流数据引擎增加计算指标)
+	- [4. 总结](#4-总结)
 
 ## 1. 给分布式表增加字段
 
-如果计划给流数据表新增加字段，而订阅者分布式表没有做相应的调整，那么流数据将无法写入分布式表，这是由于流数据表和分布式表结构不一致造成的。因此，如果需要给流数据表增加字段，必须首先要给订阅者分布式表增加字段。DolphinDB 提供了 [addColumn](https://www.dolphindb.cn/cn/help/200/FunctionsandCommands/CommandsReferences/a/addColumn.html) 函数为分布式表增加字段。
+如果计划给流数据表新增加字段，而订阅者分布式表没有做相应的调整，那么流数据将无法写入分布式表，这是由于流数据表和分布式表结构不一致造成的。因此，如果需要给流数据表增加字段，必须首先要给订阅者分布式表增加字段。DolphinDB 提供了 [addColumn](https://docs.dolphindb.cn/zh/funcs/a/addColumn.html) 函数为分布式表增加字段。
 
 例：创建一个分布式数据库，计划用于保存流数据表的数据。
 
@@ -31,7 +32,7 @@ db=database("dfs://iotDemo",RANGE,`A`F`M`T`Z)
 pt = db.createPartitionedTable(table(1000:0,`time`equipmentId`voltage`current,[TIMESTAMP,SYMBOL,INT,DOUBLE]), `pt, `equipmentId)
 ```
 
-若给流数据表 streamTb 新增两个字段，作为持久化存储流数据的分布式表 pt 也需要先增加两个字段。注意：分布式表增加字段后，需要使用 [loadTable](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/l/loadTable.html) 函数重新加载，才会生效。
+若给流数据表 streamTb 新增两个字段，作为持久化存储流数据的分布式表 pt 也需要先增加两个字段。注意：分布式表增加字段后，需要使用 [loadTable](https://docs.dolphindb.cn/zh/funcs/l/loadTable.html) 函数重新加载，才会生效。
 
 ```
 addColumn(pt,`temperature`humidity,[DOUBLE,DOUBLE])
@@ -58,7 +59,7 @@ addColumn(streamTb,`temperature`humidity,[DOUBLE,DOUBLE])
 
 ## 3. 给流数据引擎增加计算指标
 
-用户在定义流数据引擎时，需要使用[元代码](https://www.dolphindb.cn/cn/help/Objects/Metaprogramming.html)来指定计算指标。随着需求的变化，计算指标往往也会做出相应的改变。DolphinDB 提供了 [addMetrics](https://www.dolphindb.cn/cn/help/200/FunctionsandCommands/CommandsReferences/a/addMetrics.html) 函数来增加流数据引擎的计算指标。
+用户在定义流数据引擎时，需要使用[元代码](https://docs.dolphindb.cn/zh/progr/objs/meta_progr.html)来指定计算指标。随着需求的变化，计算指标往往也会做出相应的改变。DolphinDB 提供了 [addMetrics](https://docs.dolphindb.cn/zh/funcs/a/addMetrics.html) 函数来增加流数据引擎的计算指标。
 
 <!-- ### 语法
 
@@ -66,7 +67,7 @@ addMetrics(engine/name, newMetrics, newMetricsSchema, [windowSize])
 
 ### 参数
 
-* engine 是流数据引擎，即 [createTimeSeriesEngine](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/c/createTimeSeriesEngine.html) 等函数返回的抽象表对象。请注意，暂不支持 [createAnomalyDetectionEngine](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/c/createAnomalyDetectionEngine.html) 和 [createReactiveStateEngine](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/c/createReactiveStateEngine.html) 引擎。
+* engine 是流数据引擎，即 [createTimeSeriesEngine](https://docs.dolphindb.cn/zh/funcs/c/createTimeSeriesEngine.html) 等函数返回的抽象表对象。请注意，暂不支持 [createAnomalyDetectionEngine](https://docs.dolphindb.cn/zh/funcs/c/createAnomalyDetectionEngine.html) 和 [createReactiveStateEngine](https://docs.dolphindb.cn/zh/funcs/c/createReactiveStateEngine.html) 引擎。
 * name 是一个字符串，表示流数据引擎的名称。
 * newMetrics 是元代码，用于表示增加的计算指标。
 * newMetricsSchema 是表对象，用于指定新增的计算指标在输出表中的列名和数据类型。

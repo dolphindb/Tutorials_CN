@@ -6,6 +6,7 @@ Level 2 高频行情数据包含大量有价值的信息，利用这些数据生
 
 本文涉及的脚本见[附件](#6-附件)，DolphinDB server 版本为 2.00.9。
 
+- [DolphinDB 处理 Level 2 行情数据实例](#dolphindb-处理-level-2-行情数据实例)
 - [1.  Level 2 行情数据介绍](#1--level-2-行情数据介绍)
 	- [1.1 数据概况](#11-数据概况)
 	- [1.2 数据结构](#12-数据结构)
@@ -15,11 +16,23 @@ Level 2 高频行情数据包含大量有价值的信息，利用这些数据生
 	- [2.3 Level 2 行情数据存储方案](#23-level-2-行情数据存储方案)
 - [3.  基于历史数据的批量因子计算](#3--基于历史数据的批量因子计算)
 	- [3.1 快照数据的因子计算](#31-快照数据的因子计算)
+		- [3.1.1 时间加权订单斜率](#311-时间加权订单斜率)
+		- [3.1.2 加权平均订单失衡率因子](#312-加权平均订单失衡率因子)
+		- [3.1.3 成交价加权净委买比例](#313-成交价加权净委买比例)
+		- [3.1.4 十档净委买增额](#314-十档净委买增额)
+		- [3.1.5 十档买卖委托均价线性回归斜率](#315-十档买卖委托均价线性回归斜率)
+		- [3.1.6 性能测试](#316-性能测试)
 	- [3.2 逐笔成交数据的因子计算](#32-逐笔成交数据的因子计算)
+		- [3.2.1 单笔订单主动买入卖出均价](#321-单笔订单主动买入卖出均价)
+		- [3.2.2 股票延时成交订单因子](#322-股票延时成交订单因子)
 	- [3.3 逐笔委托数据的因子计算](#33-逐笔委托数据的因子计算)
+		- [3.3.1 委买委卖金额](#331-委买委卖金额)
+		- [3.3.2 买卖撤单金额](#332-买卖撤单金额)
 - [4. 基于 Level 2 实时行情数据的流式实现](#4-基于-level-2-实时行情数据的流式实现)
 	- [4.1  快照实时行情数据的高频因子流批一体实现](#41--快照实时行情数据的高频因子流批一体实现)
 	- [4.2  延时成交订单因子的流式实现](#42--延时成交订单因子的流式实现)
+		- [4.2.1 实现思路](#421-实现思路)
+		- [4.2.2  实时计算延时成交订单因子](#422--实时计算延时成交订单因子)
 - [5. 总结](#5-总结)
 - [6. 附件](#6-附件)
 
@@ -186,7 +199,7 @@ def timeWeightedOrderSlope(bid,bidQty,ask,askQty,lag=20){
 }
 ```
 
-使用函数 [`mavg`](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/m/mavg.html?highlight=mavg) 计算过去20行的移动平均时间加权订单斜率，其中 `@state` 表示用户自定义的状态函数。状态算子计算时需要用到历史状态，DolphinDB 在流式计算中对自定义状态函数，通过增量的方式实现，性能有很大的提升。
+使用函数 [`mavg`](https://docs.dolphindb.cn/zh/funcs/m/mavg.html?highlight=mavg) 计算过去20行的移动平均时间加权订单斜率，其中 `@state` 表示用户自定义的状态函数。状态算子计算时需要用到历史状态，DolphinDB 在流式计算中对自定义状态函数，通过增量的方式实现，性能有很大的提升。
 
 ### 3.1.2 加权平均订单失衡率因子
 
@@ -210,7 +223,7 @@ def wavgSOIR(bidQty,askQty,lag=20){
 }
 ```
 
-bidQty, askQty 为[数组向量](https://www.dolphindb.cn/cn/help/DataTypesandStructures/DataForms/Vector/arrayVector.html?highlight=toarray#array-vector)数据类型，分别为买方十档委托量和卖方十档委托数量。使用数组向量进行加减运算非常便捷，而使用 [`rowWavg`](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/r/rowWavg.html?highlight=rowwavg) 函数则可轻松计算加权平均值。在本例中，我们使用 `rowWavg` 函数计算各档加权平均的买卖委托量不均衡程度因子，即订单失衡率因子。最后对一段时间的指标进行移动标准化处理。
+bidQty, askQty 为[数组向量](https://docs.dolphindb.cn/zh/progr/data_types_forms/arrayVector.html?highlight=toarray#array-vector)数据类型，分别为买方十档委托量和卖方十档委托数量。使用数组向量进行加减运算非常便捷，而使用 [`rowWavg`](https://docs.dolphindb.cn/zh/funcs/r/rowWavg.html?highlight=rowwavg) 函数则可轻松计算加权平均值。在本例中，我们使用 `rowWavg` 函数计算各档加权平均的买卖委托量不均衡程度因子，即订单失衡率因子。最后对一段时间的指标进行移动标准化处理。
 
 ### 3.1.3 成交价加权净委买比例
 
@@ -261,7 +274,7 @@ def level10_Diff(price, qty, buy, lag=20){
 }
 ```
 
-以上代码，首先通过行对齐函数 [`rowAlign`](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/r/rowAlign.html?highlight=rowalign) 实现当前十档价格和前一个一十档价格进行行对齐，然后通过 [`rowAt`](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/r/rowAt.html?highlight=rowat) 和 [`nullFill`](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/n/nullFill.html?highlight=nullfill) 函数分别获取对应档位的委托量和实现价格进行对齐，最后计算总的变化额。
+以上代码，首先通过行对齐函数 [`rowAlign`](https://docs.dolphindb.cn/zh/funcs/r/rowAlign.html?highlight=rowalign) 实现当前十档价格和前一个一十档价格进行行对齐，然后通过 [`rowAt`](https://docs.dolphindb.cn/zh/funcs/r/rowAt.html?highlight=rowat) 和 [`nullFill`](https://docs.dolphindb.cn/zh/funcs/n/nullFill.html?highlight=nullfill) 函数分别获取对应档位的委托量和实现价格进行对齐，最后计算总的变化额。
 
 ### 3.1.5 十档买卖委托均价线性回归斜率
 
@@ -280,7 +293,7 @@ def level10_InferPriceTrend(bid, ask, bidQty, askQty, lag1=60, lag2=20){
 }
 ```
 
-以上代码，bid, ask, bidQty 和 askQty 均为[数组向量](https://www.dolphindb.cn/cn/help/DataTypesandStructures/DataForms/Vector/arrayVector.html?highlight=toarray#array-vector)数据类型，分别为买卖十档价格和十档委托数量。通过 [`linearTimeTrend`](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/l/linearTimeTrend.html?highlight=lineartimetrend#lineartimetrend) 函数获取因子值对时间 t 的滑动线性回归斜率，该函数返回线性回归的截距和斜率。`linearTimeTrend(price_,lag1)[1]` 表示获取十档买卖委托均价对时间t的线性回归的斜率。
+以上代码，bid, ask, bidQty 和 askQty 均为[数组向量](https://docs.dolphindb.cn/zh/progr/data_types_forms/arrayVector.html?highlight=toarray#array-vector)数据类型，分别为买卖十档价格和十档委托数量。通过 [`linearTimeTrend`](https://docs.dolphindb.cn/zh/funcs/l/linearTimeTrend.html?highlight=lineartimetrend#lineartimetrend) 函数获取因子值对时间 t 的滑动线性回归斜率，该函数返回线性回归的截距和斜率。`linearTimeTrend(price_,lag1)[1]` 表示获取十档买卖委托均价对时间t的线性回归的斜率。
 
 ### 3.1.6 性能测试
 
@@ -362,9 +375,9 @@ avg(singleOrderAveragePrice(BidApplSeqNum,OfferApplSeqNum,TradePrice,TradeQty,"S
 tradeTB where  TradePrice>0 group by SecurityID cgroup by minute(DateTime) as minute order by  minute;
 ```
 
-这里首先通过自定义函数实现单笔订单的成交均价，然后再计算单笔订单的成交均价。自定义函数中使用 [`groupby`](https://www.dolphindb.cn/cn/help/Functionalprogramming/TemplateFunctions/groupby.html?highlight=groupby#groupby-g) 函数分别计算单笔订单的成交金额和成交数量。
+这里首先通过自定义函数实现单笔订单的成交均价，然后再计算单笔订单的成交均价。自定义函数中使用 [`groupby`](https://docs.dolphindb.cn/zh/funcs/ho_funcs/groupby.html) 函数分别计算单笔订单的成交金额和成交数量。
 
-最后通过 `group by` + [`cgroup by`](https://www.dolphindb.cn/cn/help/SQLStatements/cgroupby.html?highlight=cgroup#cgroup-by) 计算每只股票当日最新一分钟单笔订单主动买入、卖出均价。计算结果如下：
+最后通过 `group by` + [`cgroup by`](https://docs.dolphindb.cn/zh/funcs/ho_funcs/groupby.html) 计算每只股票当日最新一分钟单笔订单主动买入、卖出均价。计算结果如下：
 
 <img src="./images/Level-2_stock_data_processing/3_12.png" width=60%>
 
@@ -399,7 +412,7 @@ t3 = select SecurityID,DateTime,delayedTradeNum(bsFlag, delayedTraderflag, "S") 
 
 ```
 
-下单信息记录在逐笔委托表里，如果统计下单到成交之间的时间间隔，则需要把逐笔成交表和逐笔委托表进行关联。这里首先通过[左半连接](https://www.dolphindb.cn/cn/help/SQLStatements/TableJoiners/leftjoin.html?highlight=lsj#left-join) (`lsj`) 返回逐笔成交表中所有与逐笔委托表匹配的记录，如果逐笔委托表中有多条匹配记录（如上交所的下单和撤单记录），`lsj` 将会取第一条（下单时的订单记录）匹配记录。因此，`lsj` 可以把订单委托下单的时间以及下单量准确关联到成交记录中。DolphinDB 提供很多表关联函数，具体可参考：[表连接 — DolphinDB 2.0 documentation](https://www.dolphindb.cn/cn/help/200/SQLStatements/TableJoiners/index.html#id1) 
+下单信息记录在逐笔委托表里，如果统计下单到成交之间的时间间隔，则需要把逐笔成交表和逐笔委托表进行关联。这里首先通过[左半连接](https://docs.dolphindb.cn/zh/progr/sql/leftjoin.html?highlight=lsj#left-join) (`lsj`) 返回逐笔成交表中所有与逐笔委托表匹配的记录，如果逐笔委托表中有多条匹配记录（如上交所的下单和撤单记录），`lsj` 将会取第一条（下单时的订单记录）匹配记录。因此，`lsj` 可以把订单委托下单的时间以及下单量准确关联到成交记录中。DolphinDB 提供很多表关联函数，具体可参考：[表连接 — DolphinDB 2.0 documentation](https://docs.dolphindb.cn/zh/progr/sql/tb_joiner_intro.html) 
 
 计算股票延时成交订单因子的步骤为，首先根据成交表的买卖单号与委托表的订单委托号建立连接，并计算改订单的累计延时成交次数和订单的累计成交量；其次通过自定义函数，计算股票的延时成交订单数以及延时成交的订单量。
 
@@ -425,7 +438,7 @@ calcSZOrderValue(side,price,orderQty,tradePrice,orderType,"S") as SellOrderValue
 from aj(entrustTB,tradeTB,`SecurityID`ApplSeqNum) group by SecurityID,bar(DateTime,1m) as DateTime
 ```
 
-这里通过 `aj`（[asof join](https://www.dolphindb.cn/cn/help/SQLStatements/TableJoiners/asofjoin.html?highlight=asof%20join)）把逐笔成交里的最新价格关联到逐笔成交中；对市价订单，以获取最新的成交价格作为当前市价委托单的委托价格，最后计算股票每分钟内的买卖委托金额。
+这里通过 `aj`（[asof join](https://docs.dolphindb.cn/zh/progr/sql/asofjoin.html?highlight=asof%20join)）把逐笔成交里的最新价格关联到逐笔成交中；对市价订单，以获取最新的成交价格作为当前市价委托单的委托价格，最后计算股票每分钟内的买卖委托金额。
 
 ### 3.3.2 买卖撤单金额
 
@@ -440,7 +453,7 @@ sum(iif(side=="S",Price*TradeQty,NULL)).nullFill(0) as sellwithdrawOrderValue
 from lsj(trade,entrust,`SecurityID`ApplSeqNum) group by SecurityID,bar(DateTime,1m) as DateTime
 ```
 
-这里通过 `lj`（[left join](https://www.dolphindb.cn/cn/help/SQLStatements/TableJoiners/leftjoin.html#left-join)）分别把买卖撤单的委托价格关联到撤单信息表中，然后计算每只股票每分钟的买卖撤单金额。
+这里通过 `lj`（[left join](https://docs.dolphindb.cn/zh/progr/sql/leftjoin.html#left-join)）分别把买卖撤单的委托价格关联到撤单信息表中，然后计算每只股票每分钟的买卖撤单金额。
 
 # 4. 基于 Level 2 实时行情数据的流式实现
 
@@ -472,7 +485,7 @@ def wavgSOIRStream(bidQty,askQty,lag=20){
 
 把批计算中的 ` iif(std >= 0.0000001,(Imbalance - mean) \ std, NULL) `改为 `conditionalIterate(std >= 0.0000001,(Imbalance - mean) \ std, cumlastNot)`。
 
-[`conditionalIterate`](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/c/conditionalIterate.html?highlight=conditionaliterate) 函数只适用于响应式状态引擎，通过条件迭代实现因子中的递归逻辑。假设该函数计算结果对应输出表的列为 factor，且迭代仅基于前一个值，对于第 k 条记录（k = 0, 1, 2 …），其计算逻辑为：
+[`conditionalIterate`](https://docs.dolphindb.cn/zh/funcs/c/conditionalIterate.html?highlight=conditionaliterate) 函数只适用于响应式状态引擎，通过条件迭代实现因子中的递归逻辑。假设该函数计算结果对应输出表的列为 factor，且迭代仅基于前一个值，对于第 k 条记录（k = 0, 1, 2 …），其计算逻辑为：
 
 - cond[k] == true：factor[k] = trueValue
 - cond[k] == false：factor[k] = falseIterFunc(factor)[k-1]
@@ -514,7 +527,7 @@ DolphinDB 内置的流计算引擎除了响应式状态引擎外，还有时间�
 
 <img src="./images/Level-2_stock_data_processing/4_2.png" width=70%>
 
-涉及到的流数据引擎有：[左半等值连接引擎](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/c/createLeftSemiJoinEngine.html#createleftsemijoinengine)，[响应式状态引擎](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/c/createReactiveStateEngine.html#createreactivestateengine)，[时间序列引擎](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/c/createTimeSeriesEngine.html#createtimeseriesengine)。
+涉及到的流数据引擎有：[左半等值连接引擎](https://docs.dolphindb.cn/zh/funcs/c/createLeftSemiJoinEngine.html#createleftsemijoinengine)，[响应式状态引擎](https://docs.dolphindb.cn/zh/funcs/c/createReactiveStateEngine.html#createreactivestateengine)，[时间序列引擎](https://docs.dolphindb.cn/zh/funcs/c/createTimeSeriesEngine.html#createtimeseriesengine)。
 
 流程说明：
 
@@ -522,7 +535,7 @@ DolphinDB 内置的流计算引擎除了响应式状态引擎外，还有时间�
 - 用响应式状态引擎，计算每只股票延时订单因子和延时订单成交量；
 - 用时间序列引擎 获取最新一分钟的延时订单因子和延时订单成交量，并输出结果。
 
-各引擎间直接级联，无需通过中间表。详情可参考：[用户手册流数据引擎主题](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionStatistics/index.html#id60)。
+各引擎间直接级联，无需通过中间表。详情可参考：[用户手册流数据引擎主题](https://docs.dolphindb.cn/zh/funcs/themes/streamingEngine.html)。
 
 ### 4.2.2  实时计算延时成交订单因子
 

@@ -268,7 +268,7 @@ pnodeRun(getRecoveryWorkerNum)
 
 任务执行进度如图所示。可以看到，`DeleteSource `字段全部为 True，原因为对于数据节点之间分区再平衡，从源数据节点到目的数据节点复制完成后，该参数会被置为 True，源数据节点会删除相应副本信息。
 
-`Status`字段为 In-Progress 的任务数目表示控制节点发起任务时的并发度，通过 *dfsRebalanceConcurrency* 参数配置，默认为数据节点个数的两倍。[*recoveryWorkers* ](https://www.dolphindb.cn/cn/help/DatabaseandDistributedComputing/Configuration/ConfigParamRef.html?highlight=recoveryWorkers#id21)参数表示数据节点执行任务时的并发度，默认为1。
+`Status`字段为 In-Progress 的任务数目表示控制节点发起任务时的并发度，通过 *dfsRebalanceConcurrency* 参数配置，默认为数据节点个数的两倍。[*recoveryWorkers* ](https://docs.dolphindb.cn/zh/db_distr_comp/cfg/function_configuration.html?highlight=recoveryWorkers#id21)参数表示数据节点执行任务时的并发度，默认为1。
 
 `Status` 字段为 Finished，表示该任务已经完成。等待所有任务执行完毕后，在数据节点上执行以下命令，查看再平衡后各个数据节点分区数量统计。
 

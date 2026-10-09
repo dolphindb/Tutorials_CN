@@ -118,7 +118,7 @@ select max(trip_duration / 3600) from trainData // 训练集上最大行程时�
 
 ### 3.2 位置信息主成分分析（PCA）
 
-原始数据中的纬度经度信息集中在 40.70 °N 至 40.80 °N 及 73.94 °W 至 74.02 °W 之间，数据间位置特征差异不够显著，使用 PCA 来转换经度和纬度坐标，有助于 XGBoost 决策树的拆分，DolphinDB PCA 函数使用详见 [pca — DolphinDB 2.0 documentation](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/p/pca.html)。
+原始数据中的纬度经度信息集中在 40.70 °N 至 40.80 °N 及 73.94 °W 至 74.02 °W 之间，数据间位置特征差异不够显著，使用 PCA 来转换经度和纬度坐标，有助于 XGBoost 决策树的拆分，DolphinDB PCA 函数使用详见 [pca — DolphinDB 2.0 documentation](https://docs.dolphindb.cn/zh/funcs/p/pca.html)。
 
 DolphinDB PCA 返回的结果是一个字典，包含 components、explainedVarianceRatio、singularValues 三个键，分别代表对应大小为 size(colNames)*k 的主成分分析矩阵、前 k 个主成分每个特征的方差贡献率、主成分方差（协方差矩阵特征值）。可通过主成分分析矩阵转换待处理数据，详见 [Scikit-Learn PCA.transform()](https://github.com/scikit-learn/scikit-learn/blob/9aaed4987/sklearn/decomposition/_base.py#L100)。 
 
@@ -145,7 +145,7 @@ pca_trainpick = dot((matrix(trainPickPara) - repmat(matrix(avg(trainPickPara)), 
 trainData[`pca_trainpick_0] = flatten(pca_trainpick[:, 0])
 ```
 
-DolphinDB 提供了 `plot` 函数供数据可视化。用户可通过 `chartType` 指定图表类型，详见 [plot — DolphinDB 2.0 documentation](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/p/plot.html)。 
+DolphinDB 提供了 `plot` 函数供数据可视化。用户可通过 `chartType` 指定图表类型，详见 [plot — DolphinDB 2.0 documentation](https://docs.dolphindb.cn/zh/funcs/p/plot.html)。 
 
 
 ```
@@ -156,7 +156,7 @@ plot(x, y, chartType=SCATTER)
 
 ### 3.3 位置信息聚类（KMeans）
 
-原始数据位置数据规模庞大，很难挖掘多条数据间的共同特征。KMeans 可以将经纬度相近的数据点归为同一个簇，有助于更好地归纳组内数据特征。本模型指定要生成的聚类数为 100，质心最大迭代次数为 100，选择 KMeans++ 算法生成模型，DolphinDB kmeans 可选参数及含义详见 [kmeans — DolphinDB 2.0 documentation](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/k/kmeans.html)。
+原始数据位置数据规模庞大，很难挖掘多条数据间的共同特征。KMeans 可以将经纬度相近的数据点归为同一个簇，有助于更好地归纳组内数据特征。本模型指定要生成的聚类数为 100，质心最大迭代次数为 100，选择 KMeans++ 算法生成模型，DolphinDB kmeans 可选参数及含义详见 [kmeans — DolphinDB 2.0 documentation](https://docs.dolphindb.cn/zh/funcs/k/kmeans.html)。
 
 可以使用条形图观察聚类后的数据分布。
 
@@ -176,8 +176,8 @@ trainData['pickup_cluster'] = kmeans_model.predict(select pickup_latitude, picku
 
 saveModel 和 predict 函数的使用方法可以参考：
 
-- [saveModel — DolphinDB 2.0 documentation](https://www.dolphindb.cn/cn/help/FunctionsandCommands/CommandsReferences/s/saveModel.html)
-- [predict — DolphinDB 2.0 documentation](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/p/predict.html?highlight=predict)
+- [saveModel — DolphinDB 2.0 documentation](https://docs.dolphindb.cn/zh/funcs/s/saveModel.html)
+- [predict — DolphinDB 2.0 documentation](https://docs.dolphindb.cn/zh/funcs/p/predict.html?highlight=predict)
 
 ### 3.4 新特征构建
 
@@ -279,7 +279,7 @@ DolphinDB 流数据模块采用发布 - 订阅 - 消费的模式，流数据首�
 
 用户可以使用 subscribeTable 完成流数据的订阅，并通过 *handler* 指定处理订阅数据的方法（详见 subscribeTable — DolphinDB 2.0 documentation）。在本例中，特征表需订阅订单表完成原始信息的特征提取，本模型定义 `process` 函数实现；预测表需订阅特征表使用特征信息完成行程时间预测，本模型定义 `predictDuration` 函数实现。函数实现详见[6.2 节](#62-模型代码)所附代码。
 
-为模拟实时数据，使用[ replay ](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/r/replay.html)函数回放历史数据。
+为模拟实时数据，使用[ replay ](https://docs.dolphindb.cn/zh/funcs/r/replay.html)函数回放历史数据。
 
 ```
 // 订阅订单信息表，数据从订单表流向特征表

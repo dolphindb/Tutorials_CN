@@ -133,7 +133,7 @@
 
 [数据预处理代码-TSDB](./script/machine_learning_volatility/02.dataProcessArrayVector.txt)
 
-TSDB 存储引擎作为 DolphinDB2.00 新特性，其下创建的分布式表的数据类型支持了 Array Vector。与 OLAP 存储引擎相比，在 TSDB 分布式表中，申买十价、申买十量、申卖十价、申卖十量可以使用 [Array Vector](https://www.dolphindb.cn/cn/help/DataTypesandStructures/DataForms/Vector/arrayVector.html) 存储，原 40 列数据合并为 4 列存储，在数据压缩率、数据查询和计算性能上都会有大幅提升。
+TSDB 存储引擎作为 DolphinDB2.00 新特性，其下创建的分布式表的数据类型支持了 Array Vector。与 OLAP 存储引擎相比，在 TSDB 分布式表中，申买十价、申买十量、申卖十价、申卖十量可以使用 [Array Vector](https://docs.dolphindb.cn/zh/progr/data_types_forms/arrayVector.html) 存储，原 40 列数据合并为 4 列存储，在数据压缩率、数据查询和计算性能上都会有大幅提升。
 
 数据预处理效率：
 
@@ -149,7 +149,7 @@ TSDB 存储引擎作为 DolphinDB2.00 新特性，其下创建的分布式表的
 
 [模型构建和训练代码](./script/machine_learning_volatility/03.modelBuildingTraining.txt)
 
-[机器学习模型](./machine_learning.md#%E9%99%84%E5%BD%95dolphindb%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0%E5%87%BD%E6%95%B0) 选择 [adaBoostRegressor](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/a/adaBoostRegressor.html)
+[机器学习模型](./machine_learning.md#%E9%99%84%E5%BD%95dolphindb%E6%9C%BA%E5%99%A8%E5%AD%A6%E4%B9%A0%E5%87%BD%E6%95%B0) 选择 [adaBoostRegressor](https://docs.dolphindb.cn/zh/funcs/a/adaBoostRegressor.html)
 
 评价指标：根均方百分比误差（Root Mean Square Percentage Error, RMSPE）
 
@@ -157,9 +157,9 @@ TSDB 存储引擎作为 DolphinDB2.00 新特性，其下创建的分布式表的
 
 **注意事项：**
 
-- DolphinDB 机器学习函数中除了 ols, pca, multinomialNB, kmeans, knn 外，输入均为 [sqlDS 函数](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/s/sqlDS.html) 生成的数据源。sqlDS 指定的数据源对象可以是内存表，也可以是存储在磁盘上的分布式表。对于支持分布式计算的机器学习训练函数，sqlDS 指定分布式表为数据源时，系统会自动将计算任务拆解到数据所在服务器，调用集群资源完成分布式计算。
+- DolphinDB 机器学习函数中除了 ols, pca, multinomialNB, kmeans, knn 外，输入均为 [sqlDS 函数](https://docs.dolphindb.cn/zh/funcs/s/sqlDS.html) 生成的数据源。sqlDS 指定的数据源对象可以是内存表，也可以是存储在磁盘上的分布式表。对于支持分布式计算的机器学习训练函数，sqlDS 指定分布式表为数据源时，系统会自动将计算任务拆解到数据所在服务器，调用集群资源完成分布式计算。
 - `adaBoostRegressor` 训练返回结果为字典，包含以下 key：numClasses, minImpurityDecrease, maxDepth, numBins, numTrees, maxFeatures,  model, modelName, xColNames, learningRate 和 algorithm 。其中 model 是一个元组，保存了训练生成的树；modelName 为 "AdaBoost Classifier"。
-- `adaBoostRegressor` 生成的模型可以作为 [predict 函数](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/p/predict.html) 的输入进行预测应用。
+- `adaBoostRegressor` 生成的模型可以作为 [predict 函数](https://docs.dolphindb.cn/zh/funcs/p/predict.html) 的输入进行预测应用。
 
 
 ### 3.1 建立训练集和测试集

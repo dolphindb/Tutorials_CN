@@ -20,7 +20,7 @@ DolphinDB 的计算逻辑使用脚本语言编写，但底层调用的是 C++ �
 | etf | SYMBOL | 期权合成价格的两个合约代码 |
 | etfprice | DOUBLE | 期权合成价格 |
 
-> 字符串字段使用 SYMBOL 类型和 STRING 类型存储的差异，参考：[数据类型 — DolphinDB 2.0 文档](https://www.dolphindb.cn/cn/help/DataTypesandStructures/DataTypes/index.html)的字符串部分内容。
+> 字符串字段使用 SYMBOL 类型和 STRING 类型存储的差异，参考：[数据类型 — DolphinDB 2.0 文档](https://docs.dolphindb.cn/zh/progr/data_types.html)的字符串部分内容。
 
 期权日频数据表在 DolphinDB 中存储时，建议在时间维度按年分区即可，创建库表的代码如下：
 
@@ -48,7 +48,7 @@ data 是表变量，具体数据内容如下图所示：
 
 <img src="./images/IV_Greeks_Calculation_for_ETF_Options_Using_JIT/1-1.png" width=50%>
 
-通过 [panel 函数](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/p/panel.html)对 data 进行透视操作，将窄表数据展成矩阵，生成期权日收盘价矩阵，代码如下：
+通过 [panel 函数](https://docs.dolphindb.cn/zh/funcs/p/panel.html)对 data 进行透视操作，将窄表数据展成矩阵，生成期权日收盘价矩阵，代码如下：
 
 ```
 closPriceWideMatrix = panel(data.codes, data.tradeDate, data.closePrice)
@@ -58,7 +58,7 @@ closPriceWideMatrix 是矩阵变量，具体数据内容如下图所示：
 
 <img src="./images/IV_Greeks_Calculation_for_ETF_Options_Using_JIT/1-2.png" width=50%>
 
-通过 [panel 函数](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/p/panel.html)对 data 进行透视操作，将窄表数据展成矩阵，生成期权合成价格矩阵，代码如下：
+通过 [panel 函数](https://docs.dolphindb.cn/zh/funcs/p/panel.html)对 data 进行透视操作，将窄表数据展成矩阵，生成期权合成价格矩阵，代码如下：
 
 ```
 etfPriceWideMatrix = panel(data.codes, data.tradeDate, data.etfprice)
@@ -118,7 +118,7 @@ contractInfo 是表变量，具体数据内容如下图所示：
 | **字段** | **字段类型** | **含义** |
 | tradedate | DATE | 交易日期 |
 
-交易日历存放在单列 csv 文件中，可以使用 DolphinDB 的 [loadText 函数](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/l/loadText.html)接口直接读取：
+交易日历存放在单列 csv 文件中，可以使用 DolphinDB 的 [loadText 函数](https://docs.dolphindb.cn/zh/funcs/l/loadText.html)接口直接读取：
 
 ```
 //交易日历csv文件路径
@@ -429,7 +429,7 @@ def calculateAll(closPriceWideMatrix, etfPriceWideMatrix, contractInfo, tradingD
 }
 ```
 
-calculateAll 是自定义的多日并行计算函数，主要用到了 DolphinDB 内置的 [partial 部分应用函数](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/p/partial.html)和 [ploop 并行计算函数](https://www.dolphindb.cn/cn/help/Functionalprogramming/TemplateFunctions/loopPloop.html)，直接传入要并行的函数和入参，不必像其他语言一样先定义线程池/进程池。calculateAll 函数的具体使用方法会在下一章说明。
+calculateAll 是自定义的多日并行计算函数，主要用到了 DolphinDB 内置的 [partial 部分应用函数](https://docs.dolphindb.cn/zh/funcs/p/partial.html)和 [ploop 并行计算函数](https://www.dolphindb.cn/cn/help/Functionalprogramming/TemplateFunctions/loopPloop.html)，直接传入要并行的函数和入参，不必像其他语言一样先定义线程池/进程池。calculateAll 函数的具体使用方法会在下一章说明。
 
 ## 3. 计算性能测试
 

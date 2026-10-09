@@ -6,8 +6,6 @@
     - [2.1 下载和安装](#21-下载和安装)
     - [2.2 环境变量](#22-环境变量)
     - [2.3 加载插件](#23-加载插件)
-      - [2.3.1 配置 preloadModules 配置项](#231-配置-preloadmodules-配置项)
-      - [2.3.2 调用 loadPlugin 方法](#232-调用-loadplugin-方法)
   - [3. 通过 AMD 插件订阅实时行情](#3-通过-amd-插件订阅实时行情)
     - [3.1 建立连接](#31-建立连接)
     - [3.2 创建流表](#32-创建流表)
@@ -76,8 +74,8 @@ export LD_LIBRARY_PATH="$LD_LIBRARY_PATH:/DolphinDB/server/plugins/amdquote"
 
 可以通过两种方法加载插件：
 
-- 配置 [`preloadModules`](https://dolphindb.cn/cn/help/DatabaseandDistributedComputing/Configuration/StandaloneMode.html?highlight=preloadmodules) 配置项
-- 调用 [`loadPlugin`](https://dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/l/loadPlugin.html?highlight=loadplugin) 方法
+- 配置 [`preloadModules`](https://docs.dolphindb.cn/zh/db_distr_comp/cfg/function_configuration.html) 配置项
+- 调用 [`loadPlugin`](https://docs.dolphindb.cn/zh/funcs/l/loadPlugin.html) 方法
 
 #### 2.3.1 配置 preloadModules 配置项
 
@@ -96,7 +94,7 @@ preloadModules=plugins::amdquote
 loadPlugin("/DolphinDB/server/plugins/amdquote/PluginAmdQuote.txt")
 ```
 
-> 插件不支持重复加载，重复加载会报错。故如果已经配置 preloadModules，或者已经配置 loadPlugin 到启动脚本，则无需重复调用 loadPlugin。可通过 [try-catch](https://dolphindb.cn/cn/help/ProgrammingStatements/tryCatch.html) 捕获该重复调用的错误，以避免中断脚本的执行。
+> 插件不支持重复加载，重复加载会报错。故如果已经配置 preloadModules，或者已经配置 loadPlugin 到启动脚本，则无需重复调用 loadPlugin。可通过 [try-catch](https://docs.dolphindb.cn/zh/progr/statements/tryCatch.html) 捕获该重复调用的错误，以避免中断脚本的执行。
 >
 > 传入 loadPlugin 方法的插件路径支持安装目录下的相对路径，上述脚本可写为 loadPlugin("plugins/amdquote/PluginAmdQuote.txt")
 
@@ -110,7 +108,7 @@ loadPlugin("/DolphinDB/server/plugins/amdquote/PluginAmdQuote.txt")
 | 上海市场股票逐笔委托 <br> 深圳市场股票逐笔委托                                                                                              | order     | dfs://amd order     |
 | 上海市场股票逐笔成交 <br> 深圳市场股票逐笔成交                                                                                              | execution | dfs://amd execution |
 
-另外可以通过订阅逐笔数据到[跨进程共享内存表](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/c/createIPCInMemoryTable.html)（IPC表），然后通过 C++ API 订阅 IPC 表，从而实现低延时接收行情数据到 C++ 程序进行处理。
+另外可以通过订阅逐笔数据到[跨进程共享内存表](https://docs.dolphindb.cn/zh/funcs/c/createIPCInMemoryTable.html)（IPC表），然后通过 C++ API 订阅 IPC 表，从而实现低延时接收行情数据到 C++ 程序进行处理。
 
 整个数据流转的过程如下图所示：
 
@@ -243,13 +241,13 @@ def handleSnapshotSubs(mutable msg, reorderedColNames) {
 }
 ```
 
-注意到该函数为二元函数，而 transform 参数要求为一元函数，可以通过[部分应用](https://dolphindb.cn/cn/help/Functionalprogramming/PartialApplication.html)来固定一个参数值使其变为一元函数，详见 [3.6 AMD 订阅](#36-amd-订阅)一节。
+注意到该函数为二元函数，而 transform 参数要求为一元函数，可以通过[部分应用](https://docs.dolphindb.cn/zh/progr/partial_app.html)来固定一个参数值使其变为一元函数，详见 [3.6 AMD 订阅](#36-amd-订阅)一节。
 
 > 注意：传入的一元函数中不能存在对 DFS 表的操作，例如：读取或写入 DFS 表，获取 DFS 表的 schema 等。故上述脚本的分布式表的字段顺序 reorderedColNames 需要通过参数传入，而不能直接在 transform 处理方法中读取分布式表的字段顺序。
 
 ### 3.5 入库订阅
 
-通过 [subscribeTable](https://dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/s/subscribeTable.html) 方法订阅建立的行情数据流表入库，参考脚本如下：
+通过 [subscribeTable](https://docs.dolphindb.cn/zh/funcs/s/subscribeTable.html) 方法订阅建立的行情数据流表入库，参考脚本如下：
 
 ```
 // 入库订阅，以 snapshot 为例
@@ -279,7 +277,7 @@ amdQuote::subscribe(handle, `snapshot, snapshot, 102, , handleSnapshotSubs{reord
 对部分重要参数值的解释：
 - marketType 参数值 101 表示上海市场，102 表示深圳市场。
 - codeList 参数值为空，表示订阅指定市场下所有的代码。
-- transform 参数值为 handleSnapshotSubs{reorderedColNames=reorderedColNames}，使用了[部分应用](https://dolphindb.cn/cn/help/Functionalprogramming/PartialApplication.html)来固定 handleSnapshotSubs 方法的 reorderedColNames 参数值，使其变成了一个一元函数，空缺的参数 msg 将由 amdQuote::subscribe 在调用 transform 时填充。
+- transform 参数值为 handleSnapshotSubs{reorderedColNames=reorderedColNames}，使用了[部分应用](https://docs.dolphindb.cn/zh/progr/partial_app.html)来固定 handleSnapshotSubs 方法的 reorderedColNames 参数值，使其变成了一个一元函数，空缺的参数 msg 将由 amdQuote::subscribe 在调用 transform 时填充。
 
 创建完相关订阅后，可以通过执行如下脚本查看已创建的订阅信息：
 ```
@@ -355,7 +353,7 @@ amdQuote::subscribe(handle, `orderExecution, d, 101)
 
 ### 3.9 订阅到 IPC 表
 
-amdQuote::subscribe(handle, type, streamTable, marketType, codeList, transform) 方法的 streamTable 参数支持[跨进程共享内存表（IPC 表）](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/c/createIPCInMemoryTable.html)，可以直接将行情数据写入到 IPC 表中，相关脚本如下：
+amdQuote::subscribe(handle, type, streamTable, marketType, codeList, transform) 方法的 streamTable 参数支持[跨进程共享内存表（IPC 表）](https://docs.dolphindb.cn/zh/funcs/c/createIPCInMemoryTable.html)，可以直接将行情数据写入到 IPC 表中，相关脚本如下：
 
 ```
 // 订阅到跨进程共享内存表

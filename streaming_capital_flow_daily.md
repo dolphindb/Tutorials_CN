@@ -93,9 +93,9 @@
 * tradeOriginalStream是DolphinDB中的流数据表，用于接收实时数据源的数据并发布给流计算引擎进行实时计算。
 * capitalFlowStream是DolphinDB中的流数据表，用于实时接收流计算引擎的计算结果，其数据可以被外部消费者订阅消费。
 * `parallel`参数是指流计算的并行度，本教程中把逐笔成交表`tradeOriginalStream`中的数据对`SecurityID`字段（股票代码）按照哈希算法，相对均匀地发布到`parallel`个响应式状态引擎1实现并行计算。因为逐笔成交表的数据流量较大，且日累计逐单资金流指标的计算相对复杂，所以需要使用并行流处理。
-* 响应式状态引擎1结合内置的[cumsum](https://www.dolphindb.cn/cn/help/200/FunctionsandCommands/FunctionReferences/c/cumsum.html), [prev](https://www.dolphindb.cn/cn/help/200/FunctionsandCommands/FunctionReferences/p/prev.html)函数，增量计算当前订单根据股票代码和买单订单号分组后的累计成交金额，以及当前订单合入前后的大小单标签、累计成交量，更详细的计算逻辑介在第2章的代码开发部分说明。
-* 响应式状态引擎2结合内置的[cumsum](https://www.dolphindb.cn/cn/help/200/FunctionsandCommands/FunctionReferences/c/cumsum.html), [prev](https://www.dolphindb.cn/cn/help/200/FunctionsandCommands/FunctionReferences/p/prev.html)函数，增量计算当前订单根据股票代码和卖单订单号分组后的累计成交金额，以及当前订单合入前后的大小单标签、累计成交量，同时保留上一步买方向的中间计算结果，更详细的计算逻辑会在第2章的代码开发部分说明。
-* 响应式状态引擎3结合内置的[cumsum](https://www.dolphindb.cn/cn/help/200/FunctionsandCommands/FunctionReferences/c/cumsum.html), [dynamicGroupCumsum](https://www.dolphindb.cn/cn/help/200/FunctionsandCommands/FunctionReferences/d/dynamicGroupCumsum.html), [dynamicGroupCumcount](https://www.dolphindb.cn/cn/help/200/FunctionsandCommands/FunctionReferences/d/dynamicGroupCumcount.html)函数实现根据股票代码合并的资金流指标的增量计算，更详细的计算逻辑会在第2章的代码开发部分说明。
+* 响应式状态引擎1结合内置的[cumsum](https://docs.dolphindb.cn/zh/funcs/c/cumsum.html), [prev](https://docs.dolphindb.cn/zh/funcs/p/prev.html)函数，增量计算当前订单根据股票代码和买单订单号分组后的累计成交金额，以及当前订单合入前后的大小单标签、累计成交量，更详细的计算逻辑介在第2章的代码开发部分说明。
+* 响应式状态引擎2结合内置的[cumsum](https://docs.dolphindb.cn/zh/funcs/c/cumsum.html), [prev](https://docs.dolphindb.cn/zh/funcs/p/prev.html)函数，增量计算当前订单根据股票代码和卖单订单号分组后的累计成交金额，以及当前订单合入前后的大小单标签、累计成交量，同时保留上一步买方向的中间计算结果，更详细的计算逻辑会在第2章的代码开发部分说明。
+* 响应式状态引擎3结合内置的[cumsum](https://docs.dolphindb.cn/zh/funcs/c/cumsum.html), [dynamicGroupCumsum](https://docs.dolphindb.cn/zh/funcs/d/dynamicGroupCumsum.html), [dynamicGroupCumcount](https://docs.dolphindb.cn/zh/funcs/d/dynamicGroupCumcount.html)函数实现根据股票代码合并的资金流指标的增量计算，更详细的计算逻辑会在第2章的代码开发部分说明。
 
 ## 2. 日累计资金流指标实现
 
@@ -135,8 +135,8 @@ go
 setStreamTableFilterColumn(tradeOriginalStream, `SecurityID)
 ```
 
-* [go](https://www.dolphindb.cn/cn/help/200/ProgrammingStatements/go.html)语句的作用是对代码分段进行解析和执行。
-* [setStreamTableFilterColumn](https://www.dolphindb.cn/cn/help/200/FunctionsandCommands/CommandsReferences/s/setStreamTableFilterColumn.html)函数作用是指定流数据表的过滤列，与[subscribeTable](https://www.dolphindb.cn/cn/help/200/FunctionsandCommands/FunctionReferences/s/subscribeTable.html)函数的 `filter` 参数配合使用。本教程中的作用是把逐笔成交表中的数据对股票代码按照哈希算法，相对均匀地发布到不同的流处理线程消费，实现并行计算的目的。
+* [go](https://docs.dolphindb.cn/zh/progr/statements/go.html)语句的作用是对代码分段进行解析和执行。
+* [setStreamTableFilterColumn](https://docs.dolphindb.cn/zh/funcs/s/setStreamTableFilterColumn.html)函数作用是指定流数据表的过滤列，与[subscribeTable](https://docs.dolphindb.cn/zh/funcs/s/subscribeTable.html)函数的 `filter` 参数配合使用。本教程中的作用是把逐笔成交表中的数据对股票代码按照哈希算法，相对均匀地发布到不同的流处理线程消费，实现并行计算的目的。
 
 ### 2.2 定义资金流大小单判断的函数
 
@@ -178,7 +178,7 @@ def processBuyOrderFunc(parallel){
 
 * `parallel`参数是指流计算的并行度，上述代码中是把逐笔成交表`tradeOriginalStream`中的数据对股票代码按照哈希算法，相对均匀地发布到`parallel`个响应式状态引擎1实现并行计算。这些响应式状态引擎1的计算逻辑相同，但是处理的股票不同。
 
-* 上述代码中通过DolphinDB的响应式状态引擎和内置的[cumsum](https://www.dolphindb.cn/cn/help/200/FunctionsandCommands/FunctionReferences/c/cumsum.html), [prev](https://www.dolphindb.cn/cn/help/200/FunctionsandCommands/FunctionReferences/p/prev.html)函数实现流式增量计算，分组字段为`SecurityID`和`BuyNum`，即股票代码和**买单订单号**。
+* 上述代码中通过DolphinDB的响应式状态引擎和内置的[cumsum](https://docs.dolphindb.cn/zh/funcs/c/cumsum.html), [prev](https://docs.dolphindb.cn/zh/funcs/p/prev.html)函数实现流式增量计算，分组字段为`SecurityID`和`BuyNum`，即股票代码和**买单订单号**。
 
 * `metricsBuy`中的内容为响应式状态引擎中以元代码形式表示的计算公式：
 ```
@@ -192,7 +192,7 @@ metricsBuy = [
   	<prev(cumsum(TradeAmount))>,
   	<prev(tagFunc(cumsum(TradeQty)))>]
 ```
-  `<TradeTime>`, `<SellNum>`, `<TradeAmount>`, `<TradeQty>`是**无状态**的计算，作用是保留原始表中这些字段的原始信息，输入给下一层的响应式状态引擎计算使用。`<cumsum(TradeAmount)>`, `<tagFunc(cumsum(TradeQty))>`, `<prev(cumsum(TradeAmount))>`, `<prev(tagFunc(cumsum(TradeQty)))>`是**有状态**的计算，分别计算了每一条成交记录所代表的股票按照此记录的**买单订单号**合并后的累计成交金额、当前成交记录合入后根据累计成交量判断的大小单标签、当前成交记录合入前的累计成交金额、当前成交记录合入前根据累计成交量判断的大小单标签，作用是作为第三层响应式状态引擎中的[dynamicGroupCumsum](https://www.dolphindb.cn/cn/help/200/FunctionsandCommands/FunctionReferences/d/dynamicGroupCumsum.html), [dynamicGroupCumcount](https://www.dolphindb.cn/cn/help/200/FunctionsandCommands/FunctionReferences/d/dynamicGroupCumcount.html)函数的输入，增量计算买方向的资金流指标。这些有状态因子的计算都是通过**流式增量计算**的方法实现的。
+  `<TradeTime>`, `<SellNum>`, `<TradeAmount>`, `<TradeQty>`是**无状态**的计算，作用是保留原始表中这些字段的原始信息，输入给下一层的响应式状态引擎计算使用。`<cumsum(TradeAmount)>`, `<tagFunc(cumsum(TradeQty))>`, `<prev(cumsum(TradeAmount))>`, `<prev(tagFunc(cumsum(TradeQty)))>`是**有状态**的计算，分别计算了每一条成交记录所代表的股票按照此记录的**买单订单号**合并后的累计成交金额、当前成交记录合入后根据累计成交量判断的大小单标签、当前成交记录合入前的累计成交金额、当前成交记录合入前根据累计成交量判断的大小单标签，作用是作为第三层响应式状态引擎中的[dynamicGroupCumsum](https://docs.dolphindb.cn/zh/funcs/d/dynamicGroupCumsum.html), [dynamicGroupCumcount](https://docs.dolphindb.cn/zh/funcs/d/dynamicGroupCumcount.html)函数的输入，增量计算买方向的资金流指标。这些有状态因子的计算都是通过**流式增量计算**的方法实现的。
 
 为了方便开发者快速理解这块代码的计算逻辑，下面我们输入一些样本数据来观察第一层响应式状态引擎的运行：
 
@@ -233,7 +233,7 @@ def processSellOrderFunc(parallel){
 
 * `parallel`参数是指流计算的并行度，上述代码中是创建了`parallel`个响应式状态引擎2，这些响应式状态引擎2的输入是对应的`parallel`个响应式状态引擎1的输出，实现并行计算。这些响应式状态引擎2的计算逻辑相同，但是处理的股票不同。
 
-* 上述代码中通过DolphinDB的响应式状态引擎和内置的[cumsum](https://www.dolphindb.cn/cn/help/200/FunctionsandCommands/FunctionReferences/c/cumsum.html), [prev](https://www.dolphindb.cn/cn/help/200/FunctionsandCommands/FunctionReferences/p/prev.html)函数实现流式增量计算，分组字段为`SecurityID`和`SellNum`，即股票代码和**卖单订单号**。
+* 上述代码中通过DolphinDB的响应式状态引擎和内置的[cumsum](https://docs.dolphindb.cn/zh/funcs/c/cumsum.html), [prev](https://docs.dolphindb.cn/zh/funcs/p/prev.html)函数实现流式增量计算，分组字段为`SecurityID`和`SellNum`，即股票代码和**卖单订单号**。
 
 * `metricsSell`中的内容为响应式状态引擎中以元代码形式表示的计算公式：
 ```
@@ -250,7 +250,7 @@ metricsSell = [
   	<PrevTotalBuyAmount>,
   	<PrevBuyOrderFlag>]
 ```
-  `<TradeTime>`, `<TradeAmount>`, `<BuyNum>`, `<TotalBuyAmount>`, `<BuyOrderFlag>`, `<PrevTotalBuyAmount>`, `<PrevBuyOrderFlag>`是**无状态**的计算，作用是保留原始表中这些字段的原始信息，输入给下一层的响应式状态引擎计算使用。`<cumsum(TradeAmount)>`, `<tagFunc(cumsum(TradeQty))>`, `<prev(cumsum(TradeAmount))>`, `<prev(tagFunc(cumsum(TradeQty)))>`是**有状态**的计算，分别计算了每一条成交记录所代表的股票按照此记录的**卖单订单号**合并后的累计成交金额、当前成交记录合入后根据累计成交量判断的大小单标签、当前成交记录合入前的累计成交金额、当前成交记录合入前根据累计成交量判断的大小单标签，作用是作为第三层响应式状态引擎中的[dynamicGroupCumsum](https://www.dolphindb.cn/cn/help/200/FunctionsandCommands/FunctionReferences/d/dynamicGroupCumsum.html), [dynamicGroupCumcount](https://www.dolphindb.cn/cn/help/200/FunctionsandCommands/FunctionReferences/d/dynamicGroupCumcount.html)函数的输入，增量计算卖方向的资金流指标。这些有状态因子的计算都是通过**流式增量计算**的方法实现的。
+  `<TradeTime>`, `<TradeAmount>`, `<BuyNum>`, `<TotalBuyAmount>`, `<BuyOrderFlag>`, `<PrevTotalBuyAmount>`, `<PrevBuyOrderFlag>`是**无状态**的计算，作用是保留原始表中这些字段的原始信息，输入给下一层的响应式状态引擎计算使用。`<cumsum(TradeAmount)>`, `<tagFunc(cumsum(TradeQty))>`, `<prev(cumsum(TradeAmount))>`, `<prev(tagFunc(cumsum(TradeQty)))>`是**有状态**的计算，分别计算了每一条成交记录所代表的股票按照此记录的**卖单订单号**合并后的累计成交金额、当前成交记录合入后根据累计成交量判断的大小单标签、当前成交记录合入前的累计成交金额、当前成交记录合入前根据累计成交量判断的大小单标签，作用是作为第三层响应式状态引擎中的[dynamicGroupCumsum](https://docs.dolphindb.cn/zh/funcs/d/dynamicGroupCumsum.html), [dynamicGroupCumcount](https://docs.dolphindb.cn/zh/funcs/d/dynamicGroupCumcount.html)函数的输入，增量计算卖方向的资金流指标。这些有状态因子的计算都是通过**流式增量计算**的方法实现的。
 
 为了方便开发者快速理解这块代码的计算逻辑，下面我们输入一些样本数据来观察第二层响应式状态引擎的运行：
 
@@ -283,7 +283,7 @@ def processCapitalFlowFunc(parallel){
 
 * `parallel`参数是指流计算的并行度，上述代码中是创建了`parallel`个响应式状态引擎3，这些响应式状态引擎3的输入是对应的`parallel`个响应式状态引擎2的输出，实现并行计算。这些响应式状态引擎3的计算逻辑相同，但是处理的股票不同。
 
-* 上述代码中通过DolphinDB的响应式状态引擎和内置的[cumsum](https://www.dolphindb.cn/cn/help/200/FunctionsandCommands/FunctionReferences/c/cumsum.html), [dynamicGroupCumsum](https://www.dolphindb.cn/cn/help/200/FunctionsandCommands/FunctionReferences/d/dynamicGroupCumsum.html), [dynamicGroupCumcount](https://www.dolphindb.cn/cn/help/200/FunctionsandCommands/FunctionReferences/d/dynamicGroupCumcount.html)函数实现流式增量计算，分组字段为`SecurityID`，即股票代码。
+* 上述代码中通过DolphinDB的响应式状态引擎和内置的[cumsum](https://docs.dolphindb.cn/zh/funcs/c/cumsum.html), [dynamicGroupCumsum](https://docs.dolphindb.cn/zh/funcs/d/dynamicGroupCumsum.html), [dynamicGroupCumcount](https://docs.dolphindb.cn/zh/funcs/d/dynamicGroupCumcount.html)函数实现流式增量计算，分组字段为`SecurityID`，即股票代码。
 
 * `metrics`中的内容为响应式状态引擎中以元代码形式表示的计算公式：
 ```
@@ -305,7 +305,7 @@ metrics = [<TradeTime>, <cumsum(TradeAmount)>, metrics1, metrics2, metrics3, met
 
 ![05.capitalFlowStream](images/streaming_capital_flow_daily/05.capitalFlowStream.png)
 
-上图为股票代码为`60000`的日累计逐单资金流指标计算结果。在响应式状态引擎中对每一笔输入都会进行一次响应计算，所以输出结果的条数和输入记录的条数相等。结果表中的`TotalAmount`表示从开盘到当前记录，该只股票的总成交额，计算表达式是`<cumsum(TradeAmount)>`，输入是每一笔交易的成交额，是通过[响应式状态引擎](https://www.dolphindb.cn/cn/help/200/FunctionsandCommands/FunctionReferences/c/createReactiveStateEngine.html)和[cumsum](https://www.dolphindb.cn/cn/help/200/FunctionsandCommands/FunctionReferences/c/cumsum.html)累计求和函数实现**流式增量计算**的。结果表中的`SellSmallAmount`, `SellMediumAmount`, `SellBigAmount`表示从开盘到当前记录，该只股票的卖方向小单的总成交额、卖方向中单的总成交额、卖方向大单的总成交额，计算表达式是`<dynamicGroupCumsum(TotalSellAmount, PrevTotalSellAmount, SellOrderFlag, PrevSellOrderFlag, 3)> `，输入是当前成交记录所代表的股票按照此记录的**卖单订单号**合并后的累计成交金额、当前成交记录合入前的累计成交金额、当前成交记录合入后根据累计成交量判断的大小单标签、当前成交记录合入前根据累计成交量判断的大小单标签和大小单标签数量，是通过[响应式状态引擎](https://www.dolphindb.cn/cn/help/200/FunctionsandCommands/FunctionReferences/c/createReactiveStateEngine.html)和[dynamicGroupCumsum](https://www.dolphindb.cn/cn/help/200/FunctionsandCommands/FunctionReferences/d/dynamicGroupCumsum.html)函数实现**流式增量计算**的，在日累计资金流实时计算场景中，随着交易量的不断增加，某个订单的类别可能从一个小单变成大单，此时需要从小单累计统计量中减去该笔订单已经累计的值，并在大单累计统计量中加上该笔订单的最新累计值，[dynamicGroupCumsum](https://www.dolphindb.cn/cn/help/200/FunctionsandCommands/FunctionReferences/d/dynamicGroupCumsum.html)函数即可应用在这类场景下。结果表中的`SellSmallCount`, `SellMediumCount`, `SellBigCount`表示从开盘到当前记录，该只股票的卖方向小单的总订单数、卖方向中单的总订单数、卖方向大单的总订单数，计算表达式是`<dynamicGroupCumcount(SellOrderFlag, PrevSellOrderFlag, 3)> `，输入是是当前成交记录所代表的股票按照此记录的**卖单订单号**合并后根据累计成交量判断的大小单标签、当前成交记录合入前根据累计成交量判断的大小单标签和大小单标签数量，是通过[响应式状态引擎](https://www.dolphindb.cn/cn/help/200/FunctionsandCommands/FunctionReferences/c/createReactiveStateEngine.html)和[dynamicGroupCumcount](https://www.dolphindb.cn/cn/help/200/FunctionsandCommands/FunctionReferences/d/dynamicGroupCumcount.html)函数实现**流式增量计算**的，在日累计资金流实时计算场景中，随着交易量的不断增加，某个订单的类别可能从一个小单变成大单，此时需要从小单累计统计量中减1，并在大单累计统计量中加1，[dynamicGroupCumcount](https://www.dolphindb.cn/cn/help/200/FunctionsandCommands/FunctionReferences/d/dynamicGroupCumcount.html)函数即可应用在这类场景下。结果表中的`BuySmallAmount`, `BuyMediumAmount`, `BuyBigAmount`, `BuySmallCount`, `BuyMediumCount`, `BuyBigCount`表示买方向的日累计资金流指标，与卖方向的计算逻辑相似，不在展开阐述，也是通过[响应式状态引擎](https://www.dolphindb.cn/cn/help/200/FunctionsandCommands/FunctionReferences/c/createReactiveStateEngine.html)和[dynamicGroupCumsum](https://www.dolphindb.cn/cn/help/200/FunctionsandCommands/FunctionReferences/d/dynamicGroupCumsum.html), [dynamicGroupCumcount](https://www.dolphindb.cn/cn/help/200/FunctionsandCommands/FunctionReferences/d/dynamicGroupCumcount.html)函数实现**流式增量计算**的。
+上图为股票代码为`60000`的日累计逐单资金流指标计算结果。在响应式状态引擎中对每一笔输入都会进行一次响应计算，所以输出结果的条数和输入记录的条数相等。结果表中的`TotalAmount`表示从开盘到当前记录，该只股票的总成交额，计算表达式是`<cumsum(TradeAmount)>`，输入是每一笔交易的成交额，是通过[响应式状态引擎](https://docs.dolphindb.cn/zh/funcs/c/createReactiveStateEngine.html)和[cumsum](https://docs.dolphindb.cn/zh/funcs/c/cumsum.html)累计求和函数实现**流式增量计算**的。结果表中的`SellSmallAmount`, `SellMediumAmount`, `SellBigAmount`表示从开盘到当前记录，该只股票的卖方向小单的总成交额、卖方向中单的总成交额、卖方向大单的总成交额，计算表达式是`<dynamicGroupCumsum(TotalSellAmount, PrevTotalSellAmount, SellOrderFlag, PrevSellOrderFlag, 3)> `，输入是当前成交记录所代表的股票按照此记录的**卖单订单号**合并后的累计成交金额、当前成交记录合入前的累计成交金额、当前成交记录合入后根据累计成交量判断的大小单标签、当前成交记录合入前根据累计成交量判断的大小单标签和大小单标签数量，是通过[响应式状态引擎](https://docs.dolphindb.cn/zh/funcs/c/createReactiveStateEngine.html)和[dynamicGroupCumsum](https://docs.dolphindb.cn/zh/funcs/d/dynamicGroupCumsum.html)函数实现**流式增量计算**的，在日累计资金流实时计算场景中，随着交易量的不断增加，某个订单的类别可能从一个小单变成大单，此时需要从小单累计统计量中减去该笔订单已经累计的值，并在大单累计统计量中加上该笔订单的最新累计值，[dynamicGroupCumsum](https://docs.dolphindb.cn/zh/funcs/d/dynamicGroupCumsum.html)函数即可应用在这类场景下。结果表中的`SellSmallCount`, `SellMediumCount`, `SellBigCount`表示从开盘到当前记录，该只股票的卖方向小单的总订单数、卖方向中单的总订单数、卖方向大单的总订单数，计算表达式是`<dynamicGroupCumcount(SellOrderFlag, PrevSellOrderFlag, 3)> `，输入是是当前成交记录所代表的股票按照此记录的**卖单订单号**合并后根据累计成交量判断的大小单标签、当前成交记录合入前根据累计成交量判断的大小单标签和大小单标签数量，是通过[响应式状态引擎](https://docs.dolphindb.cn/zh/funcs/c/createReactiveStateEngine.html)和[dynamicGroupCumcount](https://docs.dolphindb.cn/zh/funcs/d/dynamicGroupCumcount.html)函数实现**流式增量计算**的，在日累计资金流实时计算场景中，随着交易量的不断增加，某个订单的类别可能从一个小单变成大单，此时需要从小单累计统计量中减1，并在大单累计统计量中加1，[dynamicGroupCumcount](https://docs.dolphindb.cn/zh/funcs/d/dynamicGroupCumcount.html)函数即可应用在这类场景下。结果表中的`BuySmallAmount`, `BuyMediumAmount`, `BuyBigAmount`, `BuySmallCount`, `BuyMediumCount`, `BuyBigCount`表示买方向的日累计资金流指标，与卖方向的计算逻辑相似，不在展开阐述，也是通过[响应式状态引擎](https://docs.dolphindb.cn/zh/funcs/c/createReactiveStateEngine.html)和[dynamicGroupCumsum](https://docs.dolphindb.cn/zh/funcs/d/dynamicGroupCumsum.html), [dynamicGroupCumcount](https://docs.dolphindb.cn/zh/funcs/d/dynamicGroupCumcount.html)函数实现**流式增量计算**的。
 
 ### 2.6 固定频率往外推送计算结果
 
@@ -401,7 +401,7 @@ getRecentJobs()
 
 ### 4.2 连续响应计算性能测试
 
-本教程使用了3个响应式状态引擎串联的流水线处理，计算的并行度为3，能够支撑的上游逐笔交易数据的最大流量为5万条每秒。以上交所2020年某天1558只股票的1632万条逐笔成交数据为测试数据，通过DolphinDB的[replay](https://www.dolphindb.cn/cn/help/200/FunctionsandCommands/FunctionReferences/r/replay.html)回放工具，把历史数据以流数据的方式注入到流计算最上游的流数据表tradeOriginalStream，回放速度是全速，计算总耗时是326秒，处理的能力是5万条每秒。开发者可以增加计算的并行度，提高系统的处理能力。
+本教程使用了3个响应式状态引擎串联的流水线处理，计算的并行度为3，能够支撑的上游逐笔交易数据的最大流量为5万条每秒。以上交所2020年某天1558只股票的1632万条逐笔成交数据为测试数据，通过DolphinDB的[replay](https://docs.dolphindb.cn/zh/funcs/r/replay.html)回放工具，把历史数据以流数据的方式注入到流计算最上游的流数据表tradeOriginalStream，回放速度是全速，计算总耗时是326秒，处理的能力是5万条每秒。开发者可以增加计算的并行度，提高系统的处理能力。
 
 ## 5. 总结
 

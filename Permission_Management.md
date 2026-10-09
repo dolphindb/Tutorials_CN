@@ -180,7 +180,7 @@ deleteGroup("group1")
 - getUserList：获取除管理员之外的所有用户名，只能由管理员执行
 - getUserAccess：返回指定用户所单独被赋予的权限，不包括用户所属组的权限。管理员可以查看所有用户的权限，普通用户只能查看自己的权限，没有指定 userId 时，返回当前登录用户的权限
 
-具体用法请参考 [DolphinDB 用户手册](https://www.dolphindb.cn/cn/help/Introduction/index.html)。
+具体用法请参考 [DolphinDB 用户手册](https://docs.dolphindb.cn/zh/about/ddb_intro.html)。
 
 ## 2.权限管理
 
@@ -1081,7 +1081,7 @@ select * from loadTable(dbName,`pt)
 
 ### 6.4 视图权限
 
-[函数视图](https://www.dolphindb.cn/cn/help/DatabaseandDistributedComputing/DatabaseOperations/FunctionView.html)提供了一种灵活的方式来控制用户访问数据库和表。在视图的基础上，函数视图提供了函数功能，可以同时访问数据库并进行相关计算。
+[函数视图](https://docs.dolphindb.cn/zh/db_distr_comp/db_oper/FunctionView.html)提供了一种灵活的方式来控制用户访问数据库和表。在视图的基础上，函数视图提供了函数功能，可以同时访问数据库并进行相关计算。
 
 注意：
 

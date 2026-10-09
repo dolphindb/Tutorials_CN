@@ -12,6 +12,7 @@ DolphinDB 提供的异步复制功能通过异步方式，将主集群复制到�
 本教程将从以下几方面对 DolphinDB 的异步复制方案进行介绍：
 
 
+- [DolphinDB 集群间的异步复制](#dolphindb-集群间的异步复制)
   - [1. 概述](#1-概述)
     - [1.1 原理](#11-原理)
     - [1.2 支持性](#12-支持性)
@@ -36,13 +37,13 @@ DolphinDB 提供的异步复制功能通过异步方式，将主集群复制到�
 
 异步复制通过各种机制保证数据的一致性，但主集群数据节点的宕机仍可能导致数据丢失。在这种情况下，可以通过开启同步持久化来保证数据一致（见 [2.1](#21-主集群配置) 小节）。
 
-关于异步复制的详细原理请参考[异步复制机制](https://dolphindb.cn/cn/help/DatabaseandDistributedComputing/Database/ClusterAsyncReplication.html#id4)。
+关于异步复制的详细原理请参考[异步复制机制](https://docs.dolphindb.cn/zh/sys_man/cluster_async_replc.html)。
 
 ### 1.2 支持性
 
 异步复制功能目前支持分布式表；支持 DDL（Data  Definition Language）/ DML（Data Manipulation Languange）操作；支持在数据库层面上开启或关闭异步复制功能。
 
-关于异步复制支持性的更多介绍请参考[异步复制支持性](https://dolphindb.cn/cn/help/DatabaseandDistributedComputing/Database/ClusterAsyncReplication.html#id2)。
+关于异步复制支持性的更多介绍请参考[异步复制支持性](https://docs.dolphindb.cn/zh/sys_man/cluster_async_replc.html)。
 
 ## 2. 环境配置
 
@@ -52,7 +53,7 @@ DolphinDB 提供的异步复制功能通过异步方式，将主集群复制到�
 
 集群间的异步复制支持一个主集群，多个从集群。用户在使用异步复制功能时需要至少部署两个集群，集群类型可为单服务器集群、多服务器集群以及高可用集群。关于如何部署集群请参考[单服务器集群部署](https://gitee.com/dolphindb/Tutorials_CN/blob/master/single_machine_cluster_deploy.md)、[多服务器集群部署](https://gitee.com/dolphindb/Tutorials_CN/blob/master/multi_machine_cluster_deployment.md)、[高可用集群部署](https://gitee.com/dolphindb/Tutorials_CN/blob/master/ha_cluster_deployment.md)。
 
-本教程假定主集群配置文件位于 */dolphindb/server/cluster1/config* 目录下，从集群配置文件位于 */dolphindb/server/cluster2/config* 目录下。与异步复制相关的配置项请参考[集群间的异步复制配置项](https://www.dolphindb.cn/cn/help/DatabaseandDistributedComputing/Configuration/ConfigParamRef.html#id23)。
+本教程假定主集群配置文件位于 */dolphindb/server/cluster1/config* 目录下，从集群配置文件位于 */dolphindb/server/cluster2/config* 目录下。与异步复制相关的配置项请参考[集群间的异步复制配置项](https://docs.dolphindb.cn/zh/db_distr_comp/cfg/function_configuration.html)。
 
 ### 2.1 主集群配置
 
@@ -170,7 +171,7 @@ setDatabaseForClusterReplication(db, true)
 schema(db).clusterReplicationEnabled
 ```
 
-若执行结果返回 true，则说明异步复制功能已启用。也可以通过 [getDatabaseClusterReplicationStatus](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/g/getDatabaseClusterReplicationStatus.html) 查看所有数据库的异步复制开启状态，但请注意，使用该函数的前提是数据库中存在数据。
+若执行结果返回 true，则说明异步复制功能已启用。也可以通过 [getDatabaseClusterReplicationStatus](https://docs.dolphindb.cn/zh/funcs/g/getDatabaseClusterReplicationStatus.html) 查看所有数据库的异步复制开启状态，但请注意，使用该函数的前提是数据库中存在数据。
 
 ```
 getDatabaseClusterReplicationStatus()
@@ -249,13 +250,13 @@ select count(*) from loadTable("dfs://testDB", "testTB")
 rpc(getControllerAlias(), getMasterReplicationStatus)
 ```
 
-[getMasterReplicationStatus](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/g/getMasterReplicationStatus.html) 只能在控制节点上执行，用户可以通过 `rpc` 函数在控制节点上进行调用。返回结果如下。
+[getMasterReplicationStatus](https://docs.dolphindb.cn/zh/funcs/g/getMasterReplicationStatus.html) 只能在控制节点上执行，用户可以通过 `rpc` 函数在控制节点上进行调用。返回结果如下。
 
 <img src="./images/Asynchronous_Replication/3_3.png" width=80%>
 
-主集群生成了三个异步复制任务，分别对应创建数据库、创建表和插入数据。关于上图中各参数的介绍请参考[函数介绍](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/g/getMasterReplicationStatus.html)。
+主集群生成了三个异步复制任务，分别对应创建数据库、创建表和插入数据。关于上图中各参数的介绍请参考[函数介绍](https://docs.dolphindb.cn/zh/funcs/g/getMasterReplicationStatus.html)。
 
-与之相对应，在 dataNodeSlave 上使用 [getSlaveReplicationStatus](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/g/getSlaveReplicationStatus.html)[ ](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/g/getSlaveReplicationStatus.html?highlight=异步复制)可以查询从集群任务执行队列的状态：
+与之相对应，在 dataNodeSlave 上使用 [getSlaveReplicationStatus](https://docs.dolphindb.cn/zh/funcs/g/getSlaveReplicationStatus.html)[ ](https://docs.dolphindb.cn/zh/funcs/g/getSlaveReplicationStatus.html?highlight=异步复制)可以查询从集群任务执行队列的状态：
 
 ```
 rpc(getControllerAlias(), getSlaveReplicationStatus)
@@ -267,7 +268,7 @@ rpc(getControllerAlias(), getSlaveReplicationStatus)
 
 从集群拉取了主集群上生成的三个任务并完成执行。
 
-在 dataNodeMaster 上使用 [getRecentSlaveReplicationInfo](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/g/getRecentSlaveReplicationInfo.html) 可以查看跨集群异步复制进程中，连接到主集群的各从集群最近一次的任务状态。
+在 dataNodeMaster 上使用 [getRecentSlaveReplicationInfo](https://docs.dolphindb.cn/zh/funcs/g/getRecentSlaveReplicationInfo.html) 可以查看跨集群异步复制进程中，连接到主集群的各从集群最近一次的任务状态。
 
 ```
 rpc(getControllerAlias(), getRecentSlaveReplicationInfo)
@@ -279,7 +280,7 @@ rpc(getControllerAlias(), getRecentSlaveReplicationInfo)
 
 从集群最近一次拉取任务时通过控制节点 10.0.0.3:8711 进行连接，最近完成任务的 taskID 为 3。
 
-若想获取从集群异步复制的任务进度和耗时，可以在 dataNodeSlave 上使用 [getClusterReplicationMetrics](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/g/getClusterReplicationMetrics.html) 进行查询。
+若想获取从集群异步复制的任务进度和耗时，可以在 dataNodeSlave 上使用 [getClusterReplicationMetrics](https://docs.dolphindb.cn/zh/funcs/g/getClusterReplicationMetrics.html) 进行查询。
 
 ```
 rpc(getControllerAlias(), getClusterReplicationMetrics, 30)
@@ -302,17 +303,17 @@ rpc(getControllerAlias(), getClusterReplicationMetrics, 30)
 rpc(getControllerAlias(), stopClusterReplication)
 ```
 
-若在主集群上执行 [stopClusterReplication](https://www.dolphindb.cn/cn/help/FunctionsandCommands/CommandsReferences/s/stopClusterReplication.html)，集群异步复制状态转为 "DISABLED"，在此之后创建的任务将不会放到发送队列中；若在从集群上执行，从集群停止从主集群读取新任务，但正在执行中的任务不会停止。
+若在主集群上执行 [stopClusterReplication](https://docs.dolphindb.cn/zh/funcs/s/stopClusterReplication.html)，集群异步复制状态转为 "DISABLED"，在此之后创建的任务将不会放到发送队列中；若在从集群上执行，从集群停止从主集群读取新任务，但正在执行中的任务不会停止。
 
-若希望重新开启异步复制，可通过 [startClusterReplication](https://www.dolphindb.cn/cn/help/FunctionsandCommands/CommandsReferences/s/startClusterReplication.html)  重新启动，集群状态将转为 "ENABLED"。该函数同样只能在控制节点上调用。
+若希望重新开启异步复制，可通过 [startClusterReplication](https://docs.dolphindb.cn/zh/funcs/s/startClusterReplication.html)  重新启动，集群状态将转为 "ENABLED"。该函数同样只能在控制节点上调用。
 
-当完成异步复制任务之后希望关闭数据库的异步复制功能时，可使用 [setDatabaseForClusterReplication](https://www.dolphindb.cn/cn/help/FunctionsandCommands/CommandsReferences/s/setDatabaseForClusterReplication.html) 来关闭。
+当完成异步复制任务之后希望关闭数据库的异步复制功能时，可使用 [setDatabaseForClusterReplication](https://docs.dolphindb.cn/zh/funcs/s/setDatabaseForClusterReplication.html) 来关闭。
 
 ```
 setDatabaseForClusterReplication(db, false)
 ```
 
-以上通过一些简单的例子对如何使用异步复制功能进行了介绍，若希望了解更多异步复制支持的操作，请参考 [DolphinDB用户手册](https://www.dolphindb.cn/cn/help/index.html)。
+以上通过一些简单的例子对如何使用异步复制功能进行了介绍，若希望了解更多异步复制支持的操作，请参考 [DolphinDB用户手册](https://docs.dolphindb.cn/zh/about/ddb_intro.html)。
 
 ## 4. 常见问题
 
@@ -341,7 +342,7 @@ rpc(getControllerAlias(), skipClusterReplicationTask, 938)
 rpc(getControllerAlias(), startClusterReplication)
 ```
 
-首先通过 [skipClusterReplicationTask](https://www.dolphindb.cn/cn/help/FunctionsandCommands/CommandsReferences/s/skipClusterReplicationTask.html) 跳过了失败的任务，接着调用 `startClusterReplication` 重启了异步复制。跳过的任务将被标记为完成状态。
+首先通过 [skipClusterReplicationTask](https://docs.dolphindb.cn/zh/funcs/s/skipClusterReplicationTask.html) 跳过了失败的任务，接着调用 `startClusterReplication` 重启了异步复制。跳过的任务将被标记为完成状态。
 
 ## 5. 附录
 

@@ -29,7 +29,7 @@ DolphinDB 针对不同场景提供了多种流计算引擎，例如用户可以�
 
 StreamEngineParser 很好地解决了这一问题，用户只需实现因子的批计算，就可以自动构建对应的流计算方案，无需自己转写即可轻松实现流批一体，同时严格保证了流批计算结果的一致性。
 
-StreamEngineParser 相关使用语法请参考 [streamEngineParser — DolphinDB 2.0 documentation](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/s/streamEngineParser.html?highlight=streamengineparser)。
+StreamEngineParser 相关使用语法请参考 [streamEngineParser — DolphinDB 2.0 documentation](https://docs.dolphindb.cn/zh/funcs/s/streamEngineParser.html?highlight=streamengineparser)。
 
 # 2 流计算引擎计算规则
 

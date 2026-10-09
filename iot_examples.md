@@ -73,7 +73,7 @@ localSite=localhost:8900:local8900
 - 上述命令中采用前台运行的方式，若要后台运行，修改`./dolphindb`命令为`nohup ./dolphindb -console 0 &`或`sh startSingle.sh`，然后用命令`ps aux | grep dolphindb`查看 dolphindb 进程是否已启动。若启动失败，请打开安装目录下的日志文件 dolphindb.log，查看日志中的错误提示信息。
 - 数据文件默认存放在<DolphinDB 安装包>/server/local8848/storage/CHUNKS。请选择容量较大的磁盘存放数据文件，并通过参数 volumes 配置数据文件存放目录。
 - DolphinDB 通过参数 maxMemSize 设置节点的最大内存使用量，默认设置为 0，表示内存使用没有限制。内存对于改进节点的计算性能非常明显，尽可能高配，但也不能设置太大。例如一台机器内存为 16GB，并且只部署 1 个节点，建议将该参数设置为 12GB 左右。否则使用内存接近或超过实际物理内存，有可能会触发操作系统强制关闭进程。如果在数据库使用过程中发生奔溃，可以用`dmesg -T  | grep dolphindb`查看一下 Linux 日志，确认一下是否被操作系统 kill。
-- 其他配置项请参见[用户手册](https://www.dolphindb.cn/cn/help/DatabaseandDistributedComputing/Configuration/StandaloneMode.html)。修改配置后，需要重启 DolphinDB 服务。前台用`quit`命令退出，后台用`kill -9 <进程号>`退出。
+- 其他配置项请参见[用户手册](https://docs.dolphindb.cn/zh/db_distr_comp/cfg/function_configuration.html)。修改配置后，需要重启 DolphinDB 服务。前台用`quit`命令退出，后台用`kill -9 <进程号>`退出。
 
 ### 1.2 测试 GUI 和 Web 连接
 
@@ -146,7 +146,7 @@ DolphinDB 采用数据分区技术，按照用户指定的规则将大规模数�
 
 DolphinDB 的每个分布式数据库采用一种分区机制，一个数据库内的多个事实表（fact table）共享这种分区机制，而且同一个分区的多个子表（tablet chunk）数据落在同一个节点上，保证同一个数据库的多个事实表连接 (join) 的效率非常高。除了分布式的事实表，DolphinDB 还提供了不分区的维度表（dimension table），通常用于存储不经常更新的小数据集。这类数据的数据量通常不会随着时间的积累而增长，而且数据内容变化较小。维度表可与任何采用分区机制的事实表关联。
 
-在 DolphinDB 中，数据库使用[`database`](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/d/database.html)函数创建，分区表和维度表分别使用[`createPartitionedTable`](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/c/createPartitionedTable.html)和[`createTable`](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/c/createTable.html)函数创建。具体请参考用户手册中[创建数据库和表](https://www.dolphindb.cn/cn/help/DatabaseandDistributedComputing/DatabaseOperations/CreateDatabasesandTables.html)这一节。
+在 DolphinDB 中，数据库使用[`database`](https://docs.dolphindb.cn/zh/funcs/d/database.html)函数创建，分区表和维度表分别使用[`createPartitionedTable`](https://docs.dolphindb.cn/zh/funcs/c/createPartitionedTable.html)和[`createTable`](https://docs.dolphindb.cn/zh/funcs/c/createTable.html)函数创建。具体请参考用户手册中[创建数据库和表](https://www.dolphindb.cn/cn/help/DatabaseandDistributedComputing/DatabaseOperations/CreateDatabasesandTables.html)这一节。
 
 DolphinDB 不提供行级的索引，而是将分区作为数据库的物理索引。一个分区字段相当于数据表的一个物理索引。如果查询时用到了该分区字段做数据过滤，SQL 引擎就能快速定位需要的数据块，而无需对整表进行扫描。为提高查询和计算性能，每个分区的数据量不宜过大、也不宜过小，一般建议每个分区压缩前的数据量控制在 100MB 左右（第 2 章会详细介绍，亦可参阅[分区数据库教程](./database.md)）。
 
@@ -227,9 +227,9 @@ schema=table(
 ```
 login(`admin, `123456)
 ```
-登录后使用函数[`changePwd`](https://www.dolphindb.cn/cn/help/FunctionsandCommands/CommandsReferences/changePwd.html)修改密码。更多权限管理细节，请参阅[权限管理和安全](./ACL_and_Security.md)。
+登录后使用函数[`changePwd`](https://docs.dolphindb.cn/zh/funcs/changePwd.html)修改密码。更多权限管理细节，请参阅[权限管理和安全](./ACL_and_Security.md)。
 
-- 库表创建后，可使用函数`getAllDBs()`显示当前所有数据库，使用函数[`schema`](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/s/schema.html)显示某个表或某个数据库的结构信息。例如查询上述`dfs://iot`数据库的设备分区信息可用如下代码：
+- 库表创建后，可使用函数`getAllDBs()`显示当前所有数据库，使用函数[`schema`](https://docs.dolphindb.cn/zh/funcs/s/schema.html)显示某个表或某个数据库的结构信息。例如查询上述`dfs://iot`数据库的设备分区信息可用如下代码：
 ```
 database("dfs://iot").schema().partitionSchema[1]
 ```
@@ -237,13 +237,13 @@ database("dfs://iot").schema().partitionSchema[1]
 ```
 loadTable("dfs://iot","machines").schema().colDefs
 ```
-- 数据库创建后，无法通过`database`函数修改分区类型或分区方案，若要修改，请先删库再重新创建。删除数据库可使用[`dropDatabase`](https://www.dolphindb.cn/cn/help/FunctionsandCommands/CommandsReferences/d/dropDatabase.html)函数。若删除某个数据表，可使用[`dropTable`](https://www.dolphindb.cn/cn/help/FunctionsandCommands/CommandsReferences/d/dropTable.html)。分布式表支持增加列，不支持修改列和删除列。增加列可使用[`addColumn`](https://www.dolphindb.cn/cn/help/FunctionsandCommands/CommandsReferences/a/addColumn.html)函数。
+- 数据库创建后，无法通过`database`函数修改分区类型或分区方案，若要修改，请先删库再重新创建。删除数据库可使用[`dropDatabase`](https://docs.dolphindb.cn/zh/funcs/d/dropDatabase.html)函数。若删除某个数据表，可使用[`dropTable`](https://docs.dolphindb.cn/zh/funcs/d/dropTable.html)。分布式表支持增加列，不支持修改列和删除列。增加列可使用[`addColumn`](https://docs.dolphindb.cn/zh/funcs/a/addColumn.html)函数。
 
 有关数据库操作更详细的说明，请参阅用户手册中[数据库操作](https://www.dolphindb.cn/cn/help/DatabaseandDistributedComputing/DatabaseOperations/index.html)。
 
 ### 1.4 数据库增删改查
 
-分布式表 (DFS table) 不支持使用`insert into`插入数据，仅支持使用[`append!`](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/a/append!.html)或[`tableInsert`](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/t/tableInsert.html)函数插入数据。即使只插入一条数据，也要用表的形式来表示新增的数据。插入数据的代码示例如下，其中自定义函数`genData`输入设备编号集，开始时间和每台设备记录数，返回一个包含所有模拟记录的内存表。
+分布式表 (DFS table) 不支持使用`insert into`插入数据，仅支持使用[`append!`](https://docs.dolphindb.cn/zh/funcs/a/append!.html)或[`tableInsert`](https://docs.dolphindb.cn/zh/funcs/t/tableInsert.html)函数插入数据。即使只插入一条数据，也要用表的形式来表示新增的数据。插入数据的代码示例如下，其中自定义函数`genData`输入设备编号集，开始时间和每台设备记录数，返回一个包含所有模拟记录的内存表。
 
 下面首先为 1000 个设备产生 1 小时的数据，然后举例说明如何查询、修改和删除数据库记录：
 ```
@@ -263,7 +263,7 @@ t=genData(1..1000, datetime(2020.10.05), 3600)
 machines.append!(t)
 ```
 
-与其他关系数据库、NoSQL、NewSQL 等数据库不同，DolphinDB 将数据库、编程语言和分布式计算三者融为一体，这种设计使得 DolphinDB 可以一站式轻量化的解决海量大数据的存储与计算。但也使得数据库和表在 DolphinDB 中只是一个普通变量，引用数据库和表时，有可能会与脚本中的其他变量名发生冲突，所以不能直接使用数据库或表名，必须使用[`loadTable`](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/l/loadTable.html)函数先加载数据表。上例中，加载数据库 dfs://iot 中的数据表 machines，并把这个表对象赋值给变量 machines，之后就可以使用变量 machines 来访问这个数据表。
+与其他关系数据库、NoSQL、NewSQL 等数据库不同，DolphinDB 将数据库、编程语言和分布式计算三者融为一体，这种设计使得 DolphinDB 可以一站式轻量化的解决海量大数据的存储与计算。但也使得数据库和表在 DolphinDB 中只是一个普通变量，引用数据库和表时，有可能会与脚本中的其他变量名发生冲突，所以不能直接使用数据库或表名，必须使用[`loadTable`](https://docs.dolphindb.cn/zh/funcs/l/loadTable.html)函数先加载数据表。上例中，加载数据库 dfs://iot 中的数据表 machines，并把这个表对象赋值给变量 machines，之后就可以使用变量 machines 来访问这个数据表。
 
 例 1. 查询每个设备的记录总数：
 ```
@@ -317,7 +317,7 @@ SQL 的`context by`子句为 DolphinDB 对标准 SQL 进行的拓展，在处理
 ```
 select top 1 * from machines where datetime >= datetimeAdd(now().datetime(),-1,`h) context by machineId csort datetime desc 
 ```
-若数据是按时间顺序插入，系统内存资源充足，此查询也可使用[快照引擎](https://www.dolphindb.cn/cn/help/FunctionsandCommands/CommandsReferences/r/registerSnapshotEngine.html)实现。快照引擎性能更佳，但目前仅支持单节点服务模式。
+若数据是按时间顺序插入，系统内存资源充足，此查询也可使用[快照引擎](https://docs.dolphindb.cn/zh/funcs/r/registerSnapshotEngine.html)实现。快照引擎性能更佳，但目前仅支持单节点服务模式。
 
 另外，在测试查询性能时，DolphinDB 提供了[`timer`](https://www.dolphindb.cn/cn/help/ProgrammingStatements/timer.html)函数用于计算查询耗费的时间。譬如在 GUI 中查询 21 号设备在 2020.10.05 的记录：
 ```
@@ -355,7 +355,7 @@ DolphinDB 为了支持使用 Grafana 来实时展示时序数据，提供了 Gra
 
 #### 1.5.2 显示数据
 
-在 GUI 中运行以下脚本模拟 1 号设备每一秒产生一条数据，其中 gen 为 1.4 节描述的自定义函数，使用`submitJob`函数把自定义的`writeIOTData`函数提交[批处理作业](https://www.dolphindb.cn/cn/help/SystemManagement/BatchJobManagement.html)：
+在 GUI 中运行以下脚本模拟 1 号设备每一秒产生一条数据，其中 gen 为 1.4 节描述的自定义函数，使用`submitJob`函数把自定义的`writeIOTData`函数提交[批处理作业](https://docs.dolphindb.cn/zh/sys_man/BatchJobManagement.html)：
 ```
 def writeIoTData(){
 	login("admin", "123456")
@@ -378,7 +378,7 @@ login('admin', '123456'); select gmtime(timestamp(datetime)) as time_sec, tag1  
 ![datasource1](./images/iotExam/newDashboard.png?raw=true)
 
 上图若不能正常显示，请检查：
-- 在 GUI 中运行函数[`getRecentJobs`](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/g/getRecentJobs.html)，查看作业运行是否有错，若有错，返回结果中 errorMsg 会显示错误信息。取消作业用[`cancelJob`](https://www.dolphindb.cn/cn/help/FunctionsandCommands/CommandsReferences/cancelJob.html)。
+- 在 GUI 中运行函数[`getRecentJobs`](https://docs.dolphindb.cn/zh/funcs/g/getRecentJobs.html)，查看作业运行是否有错，若有错，返回结果中 errorMsg 会显示错误信息。取消作业用[`cancelJob`](https://docs.dolphindb.cn/zh/funcs/cancelJob.html)。
 - Grafana 默认返回 timer_series 格式，SQL 中返回的第一个字段必须是 timestamp 类型。
 - DFS 数据库需要登录后才能访问，所以 select 语句前需要先登录。
 - 检查查询语句中是否含有双引号，若有双引号，改其为单引号。
@@ -388,7 +388,7 @@ login('admin', '123456'); select gmtime(timestamp(datetime)) as time_sec, tag1  
 
 物联网历史数据有可能达到几百 TB 甚至 PB 级别。传统的关系型数据库（如 Oracle，SQL Server，MySQL 等）受到行式存储和数据索引的限制，处理如此量级数据的性能非常低下，即使分库分表，效果也不理想。DolphinDB 采用了分区机制，可以轻松应对 PB 级别的海量数据。DolphinDB 通过数据分区而不是索引的方式来快速定位数据，适合海量数据的存储，检索和计算。在数据量不是非常大时，创建索引可以显著提高系统的性能，但在海量数据场景下，随着数据量的不断增加，索引会不断膨胀（需要占用的内存甚至可能超过了服务器的内存），反而导致系统性能下降。
 
-DolphinDB 将分布式数据库、分布式计算和编程语言从底层进行一体化设计，这种设计使得 DolphinDB 可以一站式轻量化的解决海量大数据的存储与计算。但是，引用数据库和表时，因为可能会与脚本中的变量名发生冲突，所以不能直接使用数据库或表名，必须使用[`loadTable`](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/l/loadTable.html)函数先加载数据表。
+DolphinDB 将分布式数据库、分布式计算和编程语言从底层进行一体化设计，这种设计使得 DolphinDB 可以一站式轻量化的解决海量大数据的存储与计算。但是，引用数据库和表时，因为可能会与脚本中的变量名发生冲突，所以不能直接使用数据库或表名，必须使用[`loadTable`](https://docs.dolphindb.cn/zh/funcs/l/loadTable.html)函数先加载数据表。
 
 与关系型数据库不同，DolphinDB 分布式表不支持使用`insert into`插入数据，仅支持使用`append!`或`tableInsert`函数以表的形式插入数据。DolphinDB 支持事务，客户端每次写入都是一个事务但是用户层面不提供事务操作，不需要用户像关系数据库一样显式地开始事务、提交事务等。
 
@@ -523,9 +523,9 @@ createDatabase("dfs://mvmDemo","machines", ps1, ps2, 50)
 
 * 单值模型的脚本见[附件 1](./script/singleValueModeWrite.txt)
 
-此脚本生成分布式表 dfs://svmDemo/sensors 多天的模拟数据。函数 generate1DayData 用于产生一天的模拟数据；函数 singleThreadWriting 调用 generate1DayData 产生模拟数据，并将数据用单线程写入分布式表中。singleThreadWriting 中每次写入操作写入一个分区的全部数据，这样每个分区的数据文件只需打开一次就全部写入，可提高写入性能。多线程并行写入能进一步提升写入性能。函数 multipleThreadWriting 用[`cut`](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/c/cut.html)函数把测点标号向量按线程数平均分隔，然后用[`ploop`](https://www.dolphindb.cn/cn/help/Functionalprogramming/TemplateFunctions/loopPloop.html)并行调用 singleThreadWriting 多线程写入数据库。
+此脚本生成分布式表 dfs://svmDemo/sensors 多天的模拟数据。函数 generate1DayData 用于产生一天的模拟数据；函数 singleThreadWriting 调用 generate1DayData 产生模拟数据，并将数据用单线程写入分布式表中。singleThreadWriting 中每次写入操作写入一个分区的全部数据，这样每个分区的数据文件只需打开一次就全部写入，可提高写入性能。多线程并行写入能进一步提升写入性能。函数 multipleThreadWriting 用[`cut`](https://docs.dolphindb.cn/zh/funcs/c/cut.html)函数把测点标号向量按线程数平均分隔，然后用[`ploop`](https://www.dolphindb.cn/cn/help/Functionalprogramming/TemplateFunctions/loopPloop.html)并行调用 singleThreadWriting 多线程写入数据库。
 
-代码中线程数设为 20，实际写入时请根据主机内存情况调整。写入开始后，可以使用[`getRecentJobs`](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/g/getRecentJobs.html)函数查看作业处理情况，若返回结果中 endtime 等 endtime 全部显示出来了。使用[`getClusterPerf`](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/g/getClusterPerf.html)函数查看系统 CPU 与内存等资源使用情况。
+代码中线程数设为 20，实际写入时请根据主机内存情况调整。写入开始后，可以使用[`getRecentJobs`](https://docs.dolphindb.cn/zh/funcs/g/getRecentJobs.html)函数查看作业处理情况，若返回结果中 endtime 等 endtime 全部显示出来了。使用[`getClusterPerf`](https://docs.dolphindb.cn/zh/funcs/g/getClusterPerf.html)函数查看系统 CPU 与内存等资源使用情况。
 
 若有 1000 台机器，50 个指标，写入 5 天，在普通台式机上约需 50-100 分钟左右写入，在 I/O 性能较好的服务器上约需 4 分钟写入。磁盘上数据文件约为 160GB。
 
@@ -632,7 +632,7 @@ from (
 注意这里 id 查询条件用了 mod(id, 50)=1，查询时不能分区剪枝，是因为这个查询本身就需要扫描全部 id 的分区，若只在部分设备中查询，建议用 id in [1,51,...]的方式。
 ### 3.4 关联查询
 
-DolphinDB 支持如下 7 种关联查询：[equal join (`ej`)](https://www.dolphindb.cn/cn/help/SQLStatements/TableJoiners/equaljoin.html), [left join (`lj`)](https://www.dolphindb.cn/cn/help/SQLStatements/TableJoiners/leftjoin.html), [cross join (`cj`)](https://www.dolphindb.cn/cn/help/SQLStatements/TableJoiners/crossjoin.html), [full join (`fj`)](https://www.dolphindb.cn/cn/help/SQLStatements/TableJoiners/fulljoin.html), [asof join (`aj`)](https://www.dolphindb.cn/cn/help/SQLStatements/TableJoiners/asofjoin.html), [window join (`wj`)](https://www.dolphindb.cn/cn/help/SQLStatements/TableJoiners/windowjoin.html) 和 [prefix join (`pj`)](https://www.dolphindb.cn/cn/help/SQLStatements/TableJoiners/prefixjoin.html).
+DolphinDB 支持如下 7 种关联查询：[equal join (`ej`)](https://docs.dolphindb.cn/zh/progr/sql/equaljoin.html), [left join (`lj`)](https://docs.dolphindb.cn/zh/progr/sql/leftjoin.html), [cross join (`cj`)](https://docs.dolphindb.cn/zh/progr/sql/crossjoin.html), [full join (`fj`)](https://docs.dolphindb.cn/zh/progr/sql/fulljoin.html), [asof join (`aj`)](https://docs.dolphindb.cn/zh/progr/sql/asofjoin.html), [window join (`wj`)](https://docs.dolphindb.cn/zh/progr/sql/windowjoin.html) 和 [prefix join (`pj`)](https://docs.dolphindb.cn/zh/progr/sql/prefixjoin.html).
 
 例 1：分布式表 sensors 中只存储了测点编号，现提供这些测点的描述信息，在查询分析时需与这些信息进行关联查询和计算。
 
@@ -765,7 +765,7 @@ select min(avg) as minAvg from(
 
 ### 3.6 插值查询
 
-在物联网领域经常会发生采集的数据缺失。对数据中的空值，DolphinDB 提供了[`interpolate`](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/i/interpolate.html)用于插值查询，插值的方式支持：linear（线性插值），pad（使用已有的值填充），nearest（使用最接近 NULL 值的有效值填充）和 krogh（使用 krogh 多项式插值）。
+在物联网领域经常会发生采集的数据缺失。对数据中的空值，DolphinDB 提供了[`interpolate`](https://docs.dolphindb.cn/zh/funcs/i/interpolate.html)用于插值查询，插值的方式支持：linear（线性插值），pad（使用已有的值填充），nearest（使用最接近 NULL 值的有效值填充）和 krogh（使用 krogh 多项式插值）。
 
 DolphinDB 还提供了以下 4 个[填充 NULL 值](https://www.dolphindb.cn/cn/help/DataManipulation/NullValueManipulation/ReplaceNullValues.html)的函数：向前/向后取非空值（`bfill`/`ffill`），线性填充（`lfill`）和指定值填充（`nullFill`）。用户也可以通过脚本或 C++ 插件扩充新的插值函数。
 
@@ -816,7 +816,7 @@ select * from sensors where id in [1,51,101,151,201], datetime between 2020.09.0
 
 函数视图是封装了访问数据库以及相关计算语句的自定义函数。它类似关系数据库中的存储过程，可以封装复杂的业务逻辑，方便用户调用。与其他自定义函数会话隔离不同，函数视图可以实现会话之间的共享。函数视图的定义持久化存储在控制节点，因此如果 DolphinDB 集群重启，之前定义的函数视图仍然可以使用。
 
-下面例子使用[`addFunctionView`](https://www.dolphindb.cn/cn/help/FunctionsandCommands/CommandsReferences/a/addFunctionView.html)函数定义了一个函数视图 task1。其中先用 pivot by 对指定设备的第 1-6 个指标按分钟分组按列转置，然后对转置后的表进行列名修改，再对每列分别进行计算。
+下面例子使用[`addFunctionView`](https://docs.dolphindb.cn/zh/funcs/a/addFunctionView.html)函数定义了一个函数视图 task1。其中先用 pivot by 对指定设备的第 1-6 个指标按分钟分组按列转置，然后对转置后的表进行列名修改，再对每列分别进行计算。
 ```
 def task1(MachineId){
 	t=select avg(value) from loadTable("dfs://svmDemo","sensors")  
@@ -827,7 +827,7 @@ def task1(MachineId){
 }
 addFunctionView(task1)  
 ```
-有关函数视图的更多信息，请参阅[用户手册](https://www.dolphindb.cn/cn/help/DatabaseandDistributedComputing/DatabaseOperations/FunctionView.html)。
+有关函数视图的更多信息，请参阅[用户手册](https://docs.dolphindb.cn/zh/db_distr_comp/db_oper/FunctionView.html)。
 
 ### 3.9 API 查询数据
 
@@ -1151,7 +1151,7 @@ DolphinDB 提供了时序聚合引擎和横截面聚合引擎来配合流数据�
 - 2. 根据聚合引擎定义结果输出表。
 - 3. 根据需求设定订阅过滤器，仅订阅计算所需的数据。
 
-	比如下例中使用了 Speed 类测点的数据，假设一共 100 个设备，每一个设备 50 个测点，其中 1 号测点是 speed，那么在订阅时可以使用 DolphinDB 脚本：filter = (0..99)*50+1 以设定 filter 为[1,51,101,151...]。具体 filter 的用法请参考[`setStreamTableFilterColumn`](https://www.dolphindb.cn/cn/help/FunctionsandCommands/CommandsReferences/s/setStreamTableFilterColumn.html)
+	比如下例中使用了 Speed 类测点的数据，假设一共 100 个设备，每一个设备 50 个测点，其中 1 号测点是 speed，那么在订阅时可以使用 DolphinDB 脚本：filter = (0..99)*50+1 以设定 filter 为[1,51,101,151...]。具体 filter 的用法请参考[`setStreamTableFilterColumn`](https://docs.dolphindb.cn/zh/funcs/s/setStreamTableFilterColumn.html)
 - 4. 通过`subscribeTable`设立流数据订阅以及写入聚合引擎的规则。
 - 5. 数据进入流表后触发订阅及聚合引擎计算。
 
@@ -1208,7 +1208,7 @@ def alertHandler(userId, pwd, msg){
 }
 subscribeTable(, "outputTable1", "alertSub", -1, alertHandler{userId, pwd}, true)
 ```
-注意：订阅的 handler 必须是一个一元函数，仅接受一个 msg 参数 (msg 即订阅到的实时数据)，若函数有多个参数，需要将除 msg 之外的参数通过[部分应用](https://www.dolphindb.cn/cn/help/Functionalprogramming/PartialApplication.html)来固化，生成一个符合要求的一元函数。
+注意：订阅的 handler 必须是一个一元函数，仅接受一个 msg 参数 (msg 即订阅到的实时数据)，若函数有多个参数，需要将除 msg 之外的参数通过[部分应用](https://docs.dolphindb.cn/zh/progr/partial_app.html)来固化，生成一个符合要求的一元函数。
 
 
 ## 6. 高可用测试
@@ -1341,7 +1341,7 @@ s.connect(host="192.168.1.12", port=21117, userid="admin", password="123456", hi
 
 #### 6.4.1 数据备份
 
-DolphinDB 提供了[`backup`](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/b/backup.html)函数对分布式数据库进行备份。备份是以分区为单位进行的，可对指定数据表的部分或全部分区进行备份，支持全量备份与增量备份。
+DolphinDB 提供了[`backup`](https://docs.dolphindb.cn/zh/funcs/b/backup.html)函数对分布式数据库进行备份。备份是以分区为单位进行的，可对指定数据表的部分或全部分区进行备份，支持全量备份与增量备份。
 
 备份需要指定存放备份文件的路径 backupDir 与数据（用 SQL 语句表示）。备份后，系统会在`<backupDir>/<dbName>/<tbName>`目录下生成元数据文件_metaData.bin 和数据文件.bin，每个分区备份为一个数据文件。
 
@@ -1376,8 +1376,8 @@ scheduleJob(`backupJob, "backupDB", backup{"/hdd/hdd1/backupDemo/"+(today()-1).f
 #### 6.4.2 数据恢复
 
 DolphinD 提供两种数据恢复的方法：
-- 使用[`migrate`](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/m/migrate.html)函数
-- 使用[`restore`](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/r/restore.html)函数
+- 使用[`migrate`](https://docs.dolphindb.cn/zh/funcs/m/migrate.html)函数
+- 使用[`restore`](https://docs.dolphindb.cn/zh/funcs/r/restore.html)函数
 
 两者的主要区别为：
 - `migrate`函数以表为单位恢复，可以批量恢复多个表的全部数据，而`restore`函数以分区为单位恢复，每次恢复一个表中部分或全部分区的数据。

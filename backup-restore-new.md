@@ -173,7 +173,7 @@ getBackupList(backupDir,dbPath,`quotes_2)
 ![getBackupList](./images/backup_restore/getBackupList.png)
 
 ### 2.3 getBackupMeta
-使用`getBackupMeta` 可以获得某一个分区的相关信息，比如所在的表的表结构，分区的完整路径，行数，ID，版本号等等。详情参见 [DolphinDB用户手册](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/g/getBackupMeta.html)
+使用`getBackupMeta` 可以获得某一个分区的相关信息，比如所在的表的表结构，分区的完整路径，行数，ID，版本号等等。详情参见 [DolphinDB用户手册](https://docs.dolphindb.cn/zh/funcs/g/getBackupMeta.html)
 
 
 ### 2.4 checkBackup 

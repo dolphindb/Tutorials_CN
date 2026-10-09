@@ -8,14 +8,14 @@ DolphinDB 提供离线方式和在线方式实现不同集群间 DFS 数据库�
   
 使用离线方式同步集群间数据库的主要步骤如下：
 
-1. 使用 [backup](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/b/backup.html) 函数将数据库中的数据备份到系统磁盘；
+1. 使用 [backup](https://docs.dolphindb.cn/zh/funcs/b/backup.html) 函数将数据库中的数据备份到系统磁盘；
 2. 通过网络传输，将备份数据同步到远端磁盘；
-3. 使用 [restore](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/r/restore.html) 函数将备份数据恢复到另一个数据库中。
+3. 使用 [restore](https://docs.dolphindb.cn/zh/funcs/r/restore.html) 函数将备份数据恢复到另一个数据库中。
 
 ![image](./images/datasync/1.png)  
 
 ### 1.1 数据备份
-通过 [backup](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/b/backup.html) 函数将需要同步的数据表备份到磁盘上，可使用 SQL 元代码指定需要同步的数据。示例如下：  
+通过 [backup](https://docs.dolphindb.cn/zh/funcs/b/backup.html) 函数将需要同步的数据表备份到磁盘上，可使用 SQL 元代码指定需要同步的数据。示例如下：  
 
 示例1：备份数据库 db1 中表 mt 的所有数据。
 ```
@@ -93,7 +93,7 @@ restoreDir = "/home/myselfTest/backupDir"
 ```
 syncDataBases(backupNodeIP=backupNodeIP,backupNodePort=backupNodePort,backupDir=backupDir,restoreServerIP=restoreServerIP, userName=userName,restoreDir=restoreDir)
 ```
-也可通过 [scheduleJob](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/s/scheduleJob.html) 指定每天22:30定时执行
+也可通过 [scheduleJob](https://docs.dolphindb.cn/zh/funcs/s/scheduleJob.html) 指定每天22:30定时执行
 ```
 scheduleJob("syncDB","syncDB",syncDataBases{backupNodeIP,backupNodePort,backupDir,restoreServerIP, userName,restoreDir},22:30m,2019.01.01,2030.12.31,'D')
 ```
@@ -126,7 +126,7 @@ synDataBaseOnline(restoreServerIP=restoreServerIP,restoreServerPort=restoreServe
 ```
 示例8：
 
-内存不能容纳当天数据时，使用上述脚本可能会导致 OOM。可使用 [sqlDS](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/s/sqlDS.html) 将备份数据按分区生成多个数据源，通过 [mr](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/m/mr.html) 函数将数据源逐个写入远程数据库。
+内存不能容纳当天数据时，使用上述脚本可能会导致 OOM。可使用 [sqlDS](https://docs.dolphindb.cn/zh/funcs/s/sqlDS.html) 将备份数据按分区生成多个数据源，通过 [mr](https://docs.dolphindb.cn/zh/funcs/m/mr.html) 函数将数据源逐个写入远程数据库。
 ```
 def writeData(dbName,tableName,t) : loadTable(dbName,tableName).append!(t)
 def writeRemoteDB(t, ip, port, dbName,tableName,writeData){

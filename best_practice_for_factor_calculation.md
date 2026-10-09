@@ -67,7 +67,7 @@ DolphinDB 自带的数据回放和流式增量计算引擎可以方便地解决�
 本文基于国内 A 股市场各个频率的数据来演示 DolphinDB 计算和规划因子库存储的方案。根据批量因子计算、实时因子计算、多因子建模、因子库存储规划、因子计算工程化等各个场景的实操演练，以及针对不同方案的对比分析，本文总结出了在 DolphinDB 中进行因子计算的最佳实践。
 
 ## 2. 测试数据集
-本文的因子计算基于三类国内 A 股行情数据集：逐笔数据、快照数据和 K 线数据（分钟 K 线和日 K 线）。快照数据以两种形式存储：（1）各档数据分别存储为一列；（2）用 [array vector](https://www.dolphindb.cn/cn/help/200/DataTypesandStructures/DataForms/Vector/arrayVector.html) 将所有档位的数据存储为一列。
+本文的因子计算基于三类国内 A 股行情数据集：逐笔数据、快照数据和 K 线数据（分钟 K 线和日 K 线）。快照数据以两种形式存储：（1）各档数据分别存储为一列；（2）用 [array vector](https://docs.dolphindb.cn/zh/progr/data_types_forms/arrayVector.html) 将所有档位的数据存储为一列。
 
 | 数据集|简称|代码样例中的分区数据库路径|代码样例中的表名|分区机制|
 | :-----| :-----| ----: | ----: |----: |
@@ -449,7 +449,7 @@ SecurityID TradeTime smallBuyOrderAmount smallSellOrderAmount totalOrderAmount f
 
 #### 4.1.3 复杂因子Alpha #1流式计算的快捷实现 <!-- omit in toc -->
 
-从前一个大小单的例子可以看到，有些因子的流式实现比较复杂，需要创建多个引擎进行流水线处理来完成。完全用手工的方式来创建多个引擎其实是一件耗时的工作。如果输入的指标计算只涉及一个分组键，DolphinDB提供了一个解析引擎[`streamEngineParser`](https://www.dolphindb.cn/cn/help/200/FunctionsandCommands/FunctionReferences/s/streamEngineParser.html)来解决此问题。下面我们以第三章3.1面板数据模式的alpha #1因子为例，展示`streamEngineParser`的使用方法。完整代码参考[Alpha #1流式计算](script/factorPractice/appendix_4.1.3_StreamComputationOfAlpha1Factor_main.dos)。以下为核心代码。
+从前一个大小单的例子可以看到，有些因子的流式实现比较复杂，需要创建多个引擎进行流水线处理来完成。完全用手工的方式来创建多个引擎其实是一件耗时的工作。如果输入的指标计算只涉及一个分组键，DolphinDB提供了一个解析引擎[`streamEngineParser`](https://docs.dolphindb.cn/zh/funcs/s/streamEngineParser.html)来解决此问题。下面我们以第三章3.1面板数据模式的alpha #1因子为例，展示`streamEngineParser`的使用方法。完整代码参考[Alpha #1流式计算](script/factorPractice/appendix_4.1.3_StreamComputationOfAlpha1Factor_main.dos)。以下为核心代码。
 
 ```
 @state
@@ -548,7 +548,7 @@ demoEngine = createReactiveStateEngine(name="reactiveDemo", metrics=<[TradeTime,
 
 在实际考虑数据存储方案，我们需要从以下三个方面考虑：  
 * 选择 OLAP 引擎还是 TSDB 引擎。OLAP 最适合全量跑批计算，TSDB 则在序列查询上优势突出，性能和功能上比较全面。
-* 因子的存储方式是单值纵表方式还是多值宽表方式。 单值方式的最大优点是灵活性强，增加因子和股票时，不用修改表结构；缺点是数据冗余度高。多值宽表的数据冗余度很低，配合 TSDB 引擎的 [array vector](https://www.dolphindb.cn/cn/help/200/DataTypesandStructures/DataForms/Vector/arrayVector.html)，使用宽表结构节省了行数，提高了存储效率，但若出现新因子或新股票，需要重新生成因子表。
+* 因子的存储方式是单值纵表方式还是多值宽表方式。 单值方式的最大优点是灵活性强，增加因子和股票时，不用修改表结构；缺点是数据冗余度高。多值宽表的数据冗余度很低，配合 TSDB 引擎的 [array vector](https://docs.dolphindb.cn/zh/progr/data_types_forms/arrayVector.html)，使用宽表结构节省了行数，提高了存储效率，但若出现新因子或新股票，需要重新生成因子表。
 * 分区方式选择。可用于分区的列包括时间列，股票代码列和因子列。OLAP 引擎推荐的分区大小为原始数据100MB左右。为保证最佳性能，TSDB 引擎推荐单分区数据量大小保持在 100MB-1GB 范围内性能最佳。 
 
 
@@ -825,7 +825,7 @@ assert 1, eqObj(out.price, NULL NULL NULL NULL NULL 5.788743 -7.291889 7.031123 
 
 分布式SQL的第一个应用是计算无状态的因子。对于无状态的因子，即计算本身可能只涉及单条记录内一个或者几个字段。这样的计算可以利用分布式表的机制，在各分区内并行计算。
 
-以[第三章中的权重偏度因子](#333-快照数据的多档赋权无状态因子计算)为例，此因子计算只用了一个字段，且计算逻辑不涉及前后数据，所以在SQL中调用时，DolphinDB会自动在各分区内并行计算。如果目标数据是内存表，可以使其变为内存分区表，使之并行计算。内存分区表的创建，参考[`createPartitionedTable`](https://www.dolphindb.cn/cn/help/200/FunctionsandCommands/FunctionReferences/c/createPartitionedTable.html)。
+以[第三章中的权重偏度因子](#333-快照数据的多档赋权无状态因子计算)为例，此因子计算只用了一个字段，且计算逻辑不涉及前后数据，所以在SQL中调用时，DolphinDB会自动在各分区内并行计算。如果目标数据是内存表，可以使其变为内存分区表，使之并行计算。内存分区表的创建，参考[`createPartitionedTable`](https://docs.dolphindb.cn/zh/funcs/c/createPartitionedTable.html)。
 
 ```
 resWeight =  select TradeTime, SecurityID, `mathWghtSkew as factorname, mathWghtSkew(BidPrice, w)  as val from loadTable("dfs://LEVEL2_Snapshot_ArrayVector","Snap")  where date(TradeTime) = 2020.01.02
@@ -956,7 +956,7 @@ factor1_tab=getFactor1Table()
 
 因子任务可以通过以下三种方式执行:   
 - (1) 通过交互的方式执行。   
-- (2) 通过 [submitJob](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/s/submitJob.html)   提交一个Job来执行。   
+- (2) 通过 [submitJob](https://docs.dolphindb.cn/zh/funcs/s/submitJob.html)   提交一个Job来执行。   
 - (3) 通过 [scheduleJob](scheduledJob.md)   提交一个定时任务来进行周期性的执行。
 
 #### 7.6.1 全量计算 <!-- omit in toc -->
@@ -964,7 +964,7 @@ factor1_tab=getFactor1Table()
 因子的全量跑批任务，通常是系统初始化因子数据时的一次性任务，或者较长周期进行一次的任务，这类任务可以通过单次触发或者定时任务(scheduleJob)的方式进行管理。  
 
 
-* 单次触发的任务：这种任务可以通过 gui 直接执行，也可以通过 api 来调用命令，最好的方式是通过 `submitJob` 函数提交任务。通过 `submitJob` 提交的任务，会提交到服务器的Job 队列中执行，不再受客户端影响，并且可以通过 [getRecentJobs](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/g/getRecentJobs.html) 观察到任务是否完成。
+* 单次触发的任务：这种任务可以通过 gui 直接执行，也可以通过 api 来调用命令，最好的方式是通过 `submitJob` 函数提交任务。通过 `submitJob` 提交的任务，会提交到服务器的Job 队列中执行，不再受客户端影响，并且可以通过 [getRecentJobs](https://docs.dolphindb.cn/zh/funcs/g/getRecentJobs.html) 观察到任务是否完成。
 
 ```
 //对于跑批的任务封装函数
@@ -987,7 +987,7 @@ scheduleJob(jobId=`daily, jobDesc="Daily Job 1", jobFunc=bacthExeCute, scheduleT
 
 * 因子的数据频率较高，数据量很大
   
-  因子的数据频率较高，数据量很大时，我们推荐在因子数据分区时拉长时间维度，以因子名进行VALUE分区。这样可以使每个因子的数据独立的保存在一个分区中，控制分区大小在一个合适的范围。当我们碰到因子重算的情况，便可以用 [`dropPartition`](https://www.dolphindb.cn/cn/help/FunctionsandCommands/CommandsReferences/d/dropPartition.html) 函数先删除这个因子所对应的分区数据，然后直接重算这个因子并保存到数据表中。   
+  因子的数据频率较高，数据量很大时，我们推荐在因子数据分区时拉长时间维度，以因子名进行VALUE分区。这样可以使每个因子的数据独立的保存在一个分区中，控制分区大小在一个合适的范围。当我们碰到因子重算的情况，便可以用 [`dropPartition`](https://docs.dolphindb.cn/zh/funcs/d/dropPartition.html) 函数先删除这个因子所对应的分区数据，然后直接重算这个因子并保存到数据表中。   
 
 
 * 因子的数据频率较低，因子的总数据量较小   

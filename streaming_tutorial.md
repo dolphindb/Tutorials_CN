@@ -114,7 +114,7 @@ undef函数能够将变量或者函数定义从内存中释放。但是，若要
 
 ### 2.2 流数据订阅
 
-订阅流数据通过[`subscribeTable`](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/s/subscribeTable.html)函数来实现。
+订阅流数据通过[`subscribeTable`](https://docs.dolphindb.cn/zh/funcs/s/subscribeTable.html)函数来实现。
 ```
 subscribeTable([server],tableName,[actionName],[offset=-1],handler,[msgAsTable=false],[batchSize=0],[throttle=1],[hash=-1],[reconnect=false],[filter],[persistOffset=false],[timeTrigger=false],[handlerNeedMsgId=false],[raftGroup],[userId=""],[password=""])
 ```
@@ -331,7 +331,7 @@ removeTopicOffset(topic)
 ```
 persistenceDir = /data/streamCache
 ```
-然后执行[`enableTableShareAndPersistence`](https://www.dolphindb.cn/cn/help/FunctionsandCommands/CommandsReferences/e/enableTableShareAndPersistence.html)函数。下面的示例将pubTable共享为sharedPubTable，并把sharedPubTable持久化到磁盘。其中参数cacheSize=1000000，asynWrite与compress默认值均为true，表示当流数据表数据量达到100万行时启用持久化，将其中50%的数据采用异步方式压缩保存到磁盘。
+然后执行[`enableTableShareAndPersistence`](https://docs.dolphindb.cn/zh/funcs/e/enableTableShareAndPersistence.html)函数。下面的示例将pubTable共享为sharedPubTable，并把sharedPubTable持久化到磁盘。其中参数cacheSize=1000000，asynWrite与compress默认值均为true，表示当流数据表数据量达到100万行时启用持久化，将其中50%的数据采用异步方式压缩保存到磁盘。
 ```
 pubTable=streamTable(10000:0,`timestamp`temperature, [TIMESTAMP,DOUBLE])
 enableTableShareAndPersistence(table=pubTable, tableName=`sharedPubTable, cacheSize=1000000, preCache=500000)
@@ -345,7 +345,7 @@ enableTableShareAndPersistence(table=pubTable, tableName=`sharedPubTable, cacheS
 ```
 clearTablePersistence(pubTable)
 ```
-关闭持久化，可以使用[`disableTablePersistence`](https://www.dolphindb.cn/cn/help/FunctionsandCommands/CommandsReferences/d/disableTablePersistence.html)函数：
+关闭持久化，可以使用[`disableTablePersistence`](https://docs.dolphindb.cn/zh/funcs/d/disableTablePersistence.html)函数：
 ```
 disableTablePersistence(pubTable)
 ```
@@ -706,8 +706,8 @@ clears(`mem_stream_f,`action_to_ticksStream_tfe)
 
 当通过订阅方式对流数据进行实时处理时，所有的计算都在后台进行，用户无法直观的看到运行的情况。DolphinDB提供以下函数监控流数据处理及流计算引擎的状态：
 
-* [getStreamingStat](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/g/getStreamingStat.html)：全方位监控流数据处理过程。
-* [getStreamEngineStat](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/g/getStreamEngineStat.html)：可以查看系统中定义的全部流计算引擎、各个引擎的内存占用等状态，每一类引擎对应一张表。
+* [getStreamingStat](https://docs.dolphindb.cn/zh/funcs/g/getStreamingStat.html)：全方位监控流数据处理过程。
+* [getStreamEngineStat](https://docs.dolphindb.cn/zh/funcs/g/getStreamEngineStat.html)：可以查看系统中定义的全部流计算引擎、各个引擎的内存占用等状态，每一类引擎对应一张表。
 
 ### 7.1 流数据处理状态
 
@@ -841,7 +841,7 @@ act_getdata"。那么当订阅完成之后，用getStreamingStat().pubTables 查
 
 ### 7.2 流数据引擎状态
 
-调用 [getStreamEngineStat()](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/g/getStreamEngineStat.html) 会返回一个字典，其key为引擎类型名称，value为一个表，包含key对应引擎的状态。
+调用 [getStreamEngineStat()](https://docs.dolphindb.cn/zh/funcs/g/getStreamEngineStat.html) 会返回一个字典，其key为引擎类型名称，value为一个表，包含key对应引擎的状态。
 
 以getStreamEngineStat().DailyTimeSeriesEngine为例，查看内容为：
 

@@ -7,7 +7,7 @@ DolphinDB是新一代高性能分布式时序数据库，集成了功能强大�
 ## 1. 用户手册
 
 用户手册分中英文两个版本：
-- [中文使用手册](https://dolphindb.cn/cn/help/index.html)
+- [中文使用手册](https://docs.dolphindb.cn/zh/about/ddb_intro.html)
 - [英文使用手册](http://dolphindb.com/help/index.html)
 
 DolphinDB融编程语言、数据库和分布式计算三者为一体，用户手册对三者的基本概念和基本操作进行了详细介绍，以帮助用户了解系统和入门。其中第2-9章介绍编程语言，包括DolphinDB支持的数据类型与结构、运算符、控制语句、函数、SQL语句、文件IO等。第10章介绍数据库和分布式计算。数据库操作包括增删改查、函数视图等；计算包括分布式计算、内存计算和流计算。第11章介绍了系统管理，包括批处理作业、定时任务、性能监控、权限与安全管理等。第12章提供了API教程链接。
@@ -100,7 +100,7 @@ DolphinDB计算功能极其丰富，目前提供了近千个函数。用户手�
 
 ## 8. 小结
 
-如果您正在产品选型，希望进一步了解DolphinDB, 请阅读我们在知乎上发布的[相关文章](https://www.zhihu.com/org/zhe-jiang-zhi-yu-ke-ji-you-xian-gong-si/posts)，尤其是与其他产品的对比文章。如果您是新用户，希望了解基本的语法，数据结构，或者某一个函数的使用，请使用在线的[用户手册](https://www.dolphindb.cn/cn/help/index.html)。如果您了解了DolphinDB的基本用法，希望对某一个领域有深入了解，请参阅[Github](https://github.com/dolphindb/Tutorials_CN)或[Gitee](https://gitee.com/dolphindb/Tutorials_CN)上的相关教程。如果您遇到问题，自己无法独立解决，那就到[问答社区](https://segmentfault.com/t/dolphindb/questions)搜索答案、提问，或者发[邮件](mailto:support@dolphindb.com)给我们。我们鼓励您自己解决问题，但若以上方式还不能解决您的问题，请加入我们微信群寻求支持。帮您解决问题，我们将竭尽全力!
+如果您正在产品选型，希望进一步了解DolphinDB, 请阅读我们在知乎上发布的[相关文章](https://www.zhihu.com/org/zhe-jiang-zhi-yu-ke-ji-you-xian-gong-si/posts)，尤其是与其他产品的对比文章。如果您是新用户，希望了解基本的语法，数据结构，或者某一个函数的使用，请使用在线的[用户手册](https://docs.dolphindb.cn/zh/about/ddb_intro.html)。如果您了解了DolphinDB的基本用法，希望对某一个领域有深入了解，请参阅[Github](https://github.com/dolphindb/Tutorials_CN)或[Gitee](https://gitee.com/dolphindb/Tutorials_CN)上的相关教程。如果您遇到问题，自己无法独立解决，那就到[问答社区](https://segmentfault.com/t/dolphindb/questions)搜索答案、提问，或者发[邮件](mailto:support@dolphindb.com)给我们。我们鼓励您自己解决问题，但若以上方式还不能解决您的问题，请加入我们微信群寻求支持。帮您解决问题，我们将竭尽全力!
 
 ## 附录
 

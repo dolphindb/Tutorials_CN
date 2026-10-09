@@ -117,7 +117,7 @@ Orders2 = kdb::loadFile(DATA_DIR + "/2022.06.17/Orders/", DATA_DIR + "/sym")
 
 ## 3. 给 kdb+ 使用者的 DolphinDB 语法参考
 
-本节基于 [kdb+ 和 q 官方参考文档](https://code.kx.com/q/ref/)和 [DolphinDB 2.0用户手册](https://www.dolphindb.cn/cn/help/index.html)，所提及的 kdb+ 函数或关键字在 DolphinDB 中的对应，仅保证功能上的可替代性，使用方法可能与原函数略有差异。建议在使用前查阅 [DolphinDB 2.0用户手册](https://www.dolphindb.cn/cn/help/index.html)。
+本节基于 [kdb+ 和 q 官方参考文档](https://code.kx.com/q/ref/)和 [DolphinDB 2.0用户手册](https://docs.dolphindb.cn/zh/about/ddb_intro.html)，所提及的 kdb+ 函数或关键字在 DolphinDB 中的对应，仅保证功能上的可替代性，使用方法可能与原函数略有差异。建议在使用前查阅 [DolphinDB 2.0用户手册](https://docs.dolphindb.cn/zh/about/ddb_intro.html)。
  
 ### 3.1 数据类型
 
@@ -155,7 +155,7 @@ Orders2 = kdb::loadFile(DATA_DIR + "/2022.06.17/Orders/", DATA_DIR + "/sym")
 - kdb+ 中的 long 类型与 DolphinDB 的 LONG 数据类型的后缀标识不同。一个值为42的长型整数若表示为 `42j`，则无法被 DolphinDB 识别。
 - kdb+ 中的 month 类型后缀标识为 m，而 DolphinDB 使用 m 作为 MINUTE 类型的后缀，使用 M 作为 MONTH 类型的后缀。故 2006.07m 在 DolphinDB 中会报错。
 - DolphinDB 使用4个字节存放 DATETIME 类型，而 kdb+ 使用8个字节存放 datetime 类型。
-- DolphinDB 的 SYMBOL 类型是特殊的字符串类型，相当于枚举类型。通过 SYMBOL，将字符串存储为一个整数，因此可更高效地进行数据排序。具体使用请参照[数据类型](https://dolphindb.cn/cn/help/DataTypesandStructures/DataTypes/index.html)。
+- DolphinDB 的 SYMBOL 类型是特殊的字符串类型，相当于枚举类型。通过 SYMBOL，将字符串存储为一个整数，因此可更高效地进行数据排序。具体使用请参照[数据类型](https://docs.dolphindb.cn/zh/progr/data_types.html)。
 
 ##### 关于 NULL 和 INF <!-- omit in toc -->
 
@@ -163,7 +163,7 @@ DolphinDB 不提供表示各个类型正负无穷值的字面量。对于整型�
 
 通过函数 `isVoid` 判断是否为 VOID 类型的 NULL，通过函数 `isNull` 和 `isValid` 可以检查所有 NULL 值，包括 VOID 和有类型的 NULL。对于不关心 NULL 类型的用户，建议使用 `isNull` 或 `isValid` 进行条件判断。
 
-对于 NULL 值的初始化、运算，以及在普通向量函数、聚合函数和高阶函数中的使用方法，参考[NULL 值的操作](https://dolphindb.cn/cn/help/DataManipulation/NullValueManipulation/index.html)。
+对于 NULL 值的初始化、运算，以及在普通向量函数、聚合函数和高阶函数中的使用方法，参考[NULL 值的操作](https://docs.dolphindb.cn/zh/progr/data_mani/null_oper.html)。
 
 #### 3.1.2 其他数据类型 <!-- omit in toc -->
 
@@ -179,7 +179,7 @@ DolphinDB 不提供表示各个类型正负无穷值的字面量。对于整型�
 - DolphinDB 的 ANY DICTIONARY 表示 JSON 数据类型。
 - DolphinDB 字典的键必须是标量，值可以是任何数据形式与数据类型。支持字典嵌套。kdb+ 的字典在输出或进行遍历时，键值对会保留输入时的顺序，但 DolphinDB 的字典是否保留键值顺序由创建时用户传入的 ordered 参数决定。字典默认不保留键值输入顺序，按照 key 在 bucket 内的顺序输出键值对。若创建字典时用户指定 ordered = true，则键值对的顺序与输入顺序保持一致。
 - kdb+ 的矩阵由嵌套的 list 表示，遵循行优先。DolphinDB 的矩阵提供数据类型 matrix 存放矩阵，遵循列优先。kdb+ 矩阵输入到 DolphinDB 时需要转换方向。
-- DolphinDB 支持包括标量、向量、数据对、矩阵、集合、字典和表在内的多种数据形式，并针对不同的使用场景做了具体优化。请参考[数据形式](https://dolphindb.cn/cn/help/DataTypesandStructures/DataForms/index.html)。
+- DolphinDB 支持包括标量、向量、数据对、矩阵、集合、字典和表在内的多种数据形式，并针对不同的使用场景做了具体优化。请参考[数据形式](https://docs.dolphindb.cn/zh/progr/data_forms.html)。
  
 #### 3.1.3 数据类型检查函数 <!-- omit in toc -->
 
@@ -328,7 +328,7 @@ DolphinDB提供了 `typestr` 和 `type` 函数用于检查数据类型。`typest
 **说明：**
 - DolphinDB 的 TA-lib 系列函数窗口确定规则与 kdb+ 不同。DolphinDB 会忽略元素开头的空值，并将这些空值保留到结果中，然后从第一个非空元素开始进行滑动窗口的计算。当以元素个数衡量窗口时，根据滑动窗口的计算规则，只有当 window 内的元素填满窗口时，才开始第一次计算，即前（window - 1）个元素的计算结果默认为 NULL。
 - DolphinDB 的 m 系列（滑动窗口系列）函数的窗口确定规则：在没有指定 minPeriods 参数的情况下，将前（window - 1）个元素视为 NULL。若要得到与 kdb+ 相同的计算结果，请将 minPeriods 参数指定为1。
-- DolphinDB 的 [ratios](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/r/ratio.html) 函数，若输入参数是向量，返回结果的第一个元素是 NULL。
+- DolphinDB 的 [ratios](https://docs.dolphindb.cn/zh/funcs/r/ratio.html) 函数，若输入参数是向量，返回结果的第一个元素是 NULL。
 
 #### 3.2.8 meta 类 <!-- omit in toc -->
 
@@ -578,4 +578,4 @@ timer x, y = y, x;        // Time elapsed: 1240.119 ms
 timer {&t=x;&x=y;&y=t;}      // Time elapsed: 0.004 ms
 ```
 
-- DolphinDB 允许用户通过取消变量或函数定义来手动释放内存。使用 `undef` 或 `<variable>=NULL`，详情请参考[DolphinDB 2.0用户手册](https://dolphindb.cn/cn/help/FunctionsandCommands/CommandsReferences/u/undef.html)。
+- DolphinDB 允许用户通过取消变量或函数定义来手动释放内存。使用 `undef` 或 `<variable>=NULL`，详情请参考[DolphinDB　用户手册](https://docs.dolphindb.cn/zh/funcs/s/scheduleJob.html)。

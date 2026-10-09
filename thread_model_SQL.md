@@ -43,7 +43,7 @@
 
   本地执行线程。
   
-  worker 拆解完任务后生成的本地子任务队列，由同节点下的 local executor 执行。每个 local executor 一次只能处理一个子任务。[`ploop`](https://www.dolphindb.cn/cn/help/200/Functionalprogramming/TemplateFunctions/loopPloop.html)、[`peach`](https://www.dolphindb.cn/cn/help/200/Functionalprogramming/TemplateFunctions/each.html) 等并行计算函数的计算任务在本地执行线程完成。
+  worker 拆解完任务后生成的本地子任务队列，由同节点下的 local executor 执行。每个 local executor 一次只能处理一个子任务。[`ploop`](https://docs.dolphindb.cn/zh/funcs/ho_funcs/ploop.html)、[`peach`](https://docs.dolphindb.cn/zh/funcs/ho_funcs/peach.html) 等并行计算函数的计算任务在本地执行线程完成。
 
 * **remote executor**
 
@@ -53,7 +53,7 @@
 
 * **batch job worker**
 
-  使用 [`submitJob`](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/s/submitJob.html) 或 [`submitJobEx`](https://www.dolphindb.cn/cn/help/FunctionsandCommands/FunctionReferences/s/submitJobEx.html) 创建批处理作业的工作线程。
+  使用 [`submitJob`](https://docs.dolphindb.cn/zh/funcs/s/submitJob.html) 或 [`submitJobEx`](https://docs.dolphindb.cn/zh/funcs/s/submitJobEx.html) 创建批处理作业的工作线程。
   
   该线程在任务执行完后若闲置 60 秒，将被系统自动回收，不再占用系统资源。
 
@@ -79,7 +79,7 @@
 
   紧急工作线程。
   
-  接收时间敏感度高的系统级别任务，如登录 [`login`](https://www.dolphindb.cn/cn/help/200/FunctionsandCommands/CommandsReferences/l/login.html) ，取消作业 [`cancelJob`](https://www.dolphindb.cn/cn/help/FunctionsandCommands/CommandsReferences/c/cancelJob.html)、[`cancelConsoleJob`](https://www.dolphindb.cn/cn/help/FunctionsandCommands/CommandsReferences/c/cancelConsoleJob.html) 。
+  接收时间敏感度高的系统级别任务，如登录 [`login`](https://docs.dolphindb.cn/zh/funcs/l/login.html) ，取消作业 [`cancelJob`](https://docs.dolphindb.cn/zh/funcs/c/cancelJob.html)、[`cancelConsoleJob`](https://docs.dolphindb.cn/zh/funcs/c/cancelConsoleJob.html) 。
 
 * **diskIO worker**
 

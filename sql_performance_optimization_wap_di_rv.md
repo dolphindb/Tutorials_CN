@@ -248,7 +248,7 @@ createPartitionedTable(dbHandle=db, table=tbTemp, tableName=tableName, partition
 
 ### 3.4 高性能2：V2.00的TSDB使用Array Vector存储和计算
 
-DolphinDB从V2.00.4开始，分布式表的存储支持[数组向量（array vector）](https://www.dolphindb.cn/cn/help/200/DataTypesandStructures/DataForms/Vector/arrayVector.html)，因此在数据存储时可以把`BidPrice0-9`、`BidOrderQty0-9`、`OfferPrice0-9`、`OfferOrderQty0-9`共40列数据以array vector形式存储为`BidPrice`、`BidOrderQty`、`OfferPrice`、`OfferOrderQty`4列，SQL的示例代码如下：
+DolphinDB从V2.00.4开始，分布式表的存储支持[数组向量（array vector）](https://docs.dolphindb.cn/zh/progr/data_types_forms/arrayVector.html)，因此在数据存储时可以把`BidPrice0-9`、`BidOrderQty0-9`、`OfferPrice0-9`、`OfferOrderQty0-9`共40列数据以array vector形式存储为`BidPrice`、`BidOrderQty`、`OfferPrice`、`OfferOrderQty`4列，SQL的示例代码如下：
 
 ```
 /**
@@ -342,7 +342,7 @@ tableName = "snapshot_SH_L2_TSDB"
 createPartitionedTable(dbHandle=db, table=tbTemp, tableName=tableName, partitionColumns=`TradeTime`SecurityID, sortColumns=`SecurityID`TradeTime)
 ```
 
-在使用[DolphinDB V2.00 TSDB存储引擎](https://www.dolphindb.cn/cn/help/200/DatabaseandDistributedComputing/Database/DataModel.html)创建分区数据表时，设置了```sortColumns=`SecurityID`TradeTime```，`sortColumns`一般由两部分组成：
+在使用[DolphinDB V2.00 TSDB存储引擎](https://docs.dolphindb.cn/zh/db_distr_comp/db/tsdb.html)创建分区数据表时，设置了```sortColumns=`SecurityID`TradeTime```，`sortColumns`一般由两部分组成：
 
 * `sortKey`：可以由一个或多个查询索引列组成，不包含数据的时间列
 * 时间列：数据中的时间列，作为分区内数据按时间顺序的排序列
@@ -370,9 +370,9 @@ TSDB存储引擎设置了```sortColumns=`SecurityID`TradeTime```，对同一个`
 
 * 本案例计算场景中，查询数据表中存储了上交所2020年所有证券的level2快照数据，14460个证券共2,874,861,174条数据。计算的样本数据为2020年上证50指数的成分股，共58,257,708条数据。在没有任何缓存的前提下，与OLAP存储引擎相比，TSDB存储引擎仅仅只需要去磁盘上读取58,257,708条数据。
 
-* DolphinDB从V2.00.4开始，分布式表的存储支持[数组向量（array vector）](https://www.dolphindb.cn/cn/help/200/DataTypesandStructures/DataForms/Vector/arrayVector.html)，特别适用于金融快照数据多档量价数据的存储。针对上交所level2快照数据，采用array vector存储后，压缩比可以提升到9~11。在没有任何缓存的前提下，与多列存储方案相比，采用TSDB的array vector存储后，单位时间内从磁盘上读取的数据条数提升。
+* DolphinDB从V2.00.4开始，分布式表的存储支持[数组向量（array vector）](https://docs.dolphindb.cn/zh/progr/data_types_forms/arrayVector.html)，特别适用于金融快照数据多档量价数据的存储。针对上交所level2快照数据，采用array vector存储后，压缩比可以提升到9~11。在没有任何缓存的前提下，与多列存储方案相比，采用TSDB的array vector存储后，单位时间内从磁盘上读取的数据条数提升。
 
-* level2快照数据中的多档量价数据采用[DolphinDB2.00TSDB存储引擎](https://www.dolphindb.cn/cn/help/200/DatabaseandDistributedComputing/Database/DataModel.html)的array vector存储后，从某种意义上实现了数据的三维存储，即在分布式表的某列某行中存储了一个[向量](https://www.dolphindb.cn/cn/help/200/DataTypesandStructures/DataForms/Vector/index.html)对象，所以在对多档量价数据做矩阵运算时，取某一列的多行数据返回的对象就是一个矩阵，与多列存储方案相比，省去了矩阵拼接的过程。
+* level2快照数据中的多档量价数据采用[DolphinDB2.00TSDB存储引擎](https://docs.dolphindb.cn/zh/db_distr_comp/db/tsdb.html)的array vector存储后，从某种意义上实现了数据的三维存储，即在分布式表的某列某行中存储了一个[向量](https://docs.dolphindb.cn/zh/progr/data_types_forms/vector.html)对象，所以在对多档量价数据做矩阵运算时，取某一列的多行数据返回的对象就是一个矩阵，与多列存储方案相比，省去了矩阵拼接的过程。
 
 ## 5. 总结
 
@@ -381,6 +381,6 @@ TSDB存储引擎设置了```sortColumns=`SecurityID`TradeTime```，对同一个`
 * **新手篇**代码数据存储采用DolphinDB的OLAP存储引擎，基于列式计算思想，代码开发难度简单，但是存在代码冗长、修改困难的问题，计算时间为450秒。
 * **进阶篇**代码数据存储采用DolphinDB的OLAP存储引擎，基于矩阵计算思想，代码开发难度一般，代码量减少，计算逻辑表达更加清晰，计算耗时为450秒。
 * **高性能1篇**代码数据存储采用DolphinDB的TSDB存储引擎，基于矩阵计算思想，脚本代码与进阶篇代码完全相同，无level file索引缓存下计算耗时为27秒，有level file索引缓存下计算耗时为16秒。
-* **高性能2篇**代码数据存储采用DolphinDB的TSDB存储引擎，且多档量价数据采用[array vector](https://www.dolphindb.cn/cn/help/200/DataTypesandStructures/DataForms/Vector/arrayVector.html)进行存储，基于矩阵计算思想，代码精简，方便后期的修改和维护，无level file索引缓存下计算耗时为25秒，有level file索引缓存下计算耗时为15秒。
+* **高性能2篇**代码数据存储采用DolphinDB的TSDB存储引擎，且多档量价数据采用[array vector](https://docs.dolphindb.cn/zh/progr/data_types_forms/arrayVector.html)进行存储，基于矩阵计算思想，代码精简，方便后期的修改和维护，无level file索引缓存下计算耗时为25秒，有level file索引缓存下计算耗时为15秒。
 
 旨在为DolphinDB使用者在开发其他类似因子计算脚本时提供参考范例，提高开发效率。

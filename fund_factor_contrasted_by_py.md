@@ -10,9 +10,14 @@
   - [1. 测试环境](#1-测试环境)
   - [2. 基金日频因子背景介绍及代码实现](#2-基金日频因子背景介绍及代码实现)
   - [3. DolphinDB 中因子计算实现及性能测试](#3-dolphindb-中因子计算实现及性能测试)
+    - [3.1 数据导入及概览](#31-数据导入及概览)
+    - [3.2 数据处理](#32-数据处理)
+    - [3.3 性能测试](#33-性能测试)
+    - [3.4 结果展示](#34-结果展示)
   - [4. Python 中因子计算实现及性能测试](#4-python-中因子计算实现及性能测试)
   - [5. 性能计算结果对比分析](#5-性能计算结果对比分析)
   - [6. 总结](#6-总结)
+    - [附件](#附件)
 
 ## 1. 测试环境
 
@@ -495,7 +500,7 @@
 
 ### 3.2 数据处理
 
-分别从两张表中取出数据，同沪深300指数按日期对齐（[aj](https://dolphindb.cn/cn/help/SQLStatements/TableJoiners/asofjoin.html)），填充空缺值，仅保留两表中日期相同的数据：
+分别从两张表中取出数据，同沪深300指数按日期对齐（[aj](https://docs.dolphindb.cn/zh/progr/sql/asofjoin.html)），填充空缺值，仅保留两表中日期相同的数据：
 
 ```
 fund_OLAP=select * from loadTable("dfs://fund_OLAP", "fund_OLAP")
@@ -528,7 +533,7 @@ mlog =  m_log[1:,]
 本节测试了DolphinDB的性能与任务量以及cpu核数的关系。
 
 - 任务量：修改提交作业的数量。
-- CPU 核数：修改 `dolphindb.cfg` 文件中的 [*workerNum* ](https://dolphindb.cn/cn/help/DatabaseandDistributedComputing/Configuration/Thread.html)参数，其配置值表示计算时所用到的CPU 核数。注意：每次参数修改后，需要重启 DolphinDB Server 才能生效。
+- CPU 核数：修改 `dolphindb.cfg` 文件中的 [*workerNum* ](https://docs.dolphindb.cn/zh/db_distr_comp/cfg/function_configuration.html)参数，其配置值表示计算时所用到的CPU 核数。注意：每次参数修改后，需要重启 DolphinDB Server 才能生效。
 
 本教程以提交后台作业的计算时间来反映 DolphinDB 性能。完整脚本可参考附录：[基于 DolphinDB 的基金日频因子实现与性能测试](https://dolphindb1.atlassian.net/wiki/spaces/document/pages/523042851/draft+Python10+DolphinDB#)。
 
